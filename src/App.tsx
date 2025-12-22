@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Auth from "@/pages/Auth";
+import AuthCallback from "@/pages/AuthCallback";
+import ResetPassword from "@/pages/ResetPassword";
 import CaixaDashboard from "@/pages/CaixaDashboard";
 import FinancasDashboard from "@/pages/FinancasDashboard";
 import FocoDashboard from "@/pages/FocoDashboard";
@@ -25,6 +27,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/" element={<Navigate to="/caixa" replace />} />
           <Route
             element={
