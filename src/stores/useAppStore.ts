@@ -1,0 +1,248 @@
+import { create } from 'zustand';
+import type { 
+  Category, Income, Expense, Debt, Saving, Goal, 
+  Task, TimeBlock, ProjectCategory, Project, Script, UserPreference 
+} from '@/types/database';
+
+interface AppState {
+  // Data
+  categories: Category[];
+  incomes: Income[];
+  expenses: Expense[];
+  debts: Debt[];
+  savings: Saving[];
+  goals: Goal[];
+  tasks: Task[];
+  timeBlocks: TimeBlock[];
+  projectCategories: ProjectCategory[];
+  projects: Project[];
+  scripts: Script[];
+  userPreferences: UserPreference | null;
+  
+  // Loading states
+  isLoading: boolean;
+  dataInitialized: boolean;
+  
+  // Actions - Categories
+  setCategories: (categories: Category[]) => void;
+  addCategory: (category: Category) => void;
+  updateCategory: (id: string, updates: Partial<Category>) => void;
+  deleteCategory: (id: string) => void;
+  
+  // Actions - Incomes
+  setIncomes: (incomes: Income[]) => void;
+  addIncome: (income: Income) => void;
+  updateIncome: (id: string, updates: Partial<Income>) => void;
+  deleteIncome: (id: string) => void;
+  
+  // Actions - Expenses
+  setExpenses: (expenses: Expense[]) => void;
+  addExpense: (expense: Expense) => void;
+  updateExpense: (id: string, updates: Partial<Expense>) => void;
+  deleteExpense: (id: string) => void;
+  
+  // Actions - Debts
+  setDebts: (debts: Debt[]) => void;
+  addDebt: (debt: Debt) => void;
+  updateDebt: (id: string, updates: Partial<Debt>) => void;
+  deleteDebt: (id: string) => void;
+  
+  // Actions - Savings
+  setSavings: (savings: Saving[]) => void;
+  addSaving: (saving: Saving) => void;
+  updateSaving: (id: string, updates: Partial<Saving>) => void;
+  deleteSaving: (id: string) => void;
+  
+  // Actions - Goals
+  setGoals: (goals: Goal[]) => void;
+  addGoal: (goal: Goal) => void;
+  updateGoal: (id: string, updates: Partial<Goal>) => void;
+  deleteGoal: (id: string) => void;
+  
+  // Actions - Tasks
+  setTasks: (tasks: Task[]) => void;
+  addTask: (task: Task) => void;
+  updateTask: (id: string, updates: Partial<Task>) => void;
+  deleteTask: (id: string) => void;
+  
+  // Actions - TimeBlocks
+  setTimeBlocks: (timeBlocks: TimeBlock[]) => void;
+  addTimeBlock: (timeBlock: TimeBlock) => void;
+  updateTimeBlock: (id: string, updates: Partial<TimeBlock>) => void;
+  deleteTimeBlock: (id: string) => void;
+  
+  // Actions - ProjectCategories
+  setProjectCategories: (projectCategories: ProjectCategory[]) => void;
+  addProjectCategory: (projectCategory: ProjectCategory) => void;
+  updateProjectCategory: (id: string, updates: Partial<ProjectCategory>) => void;
+  deleteProjectCategory: (id: string) => void;
+  
+  // Actions - Projects
+  setProjects: (projects: Project[]) => void;
+  addProject: (project: Project) => void;
+  updateProject: (id: string, updates: Partial<Project>) => void;
+  deleteProject: (id: string) => void;
+  
+  // Actions - Scripts
+  setScripts: (scripts: Script[]) => void;
+  addScript: (script: Script) => void;
+  updateScript: (id: string, updates: Partial<Script>) => void;
+  deleteScript: (id: string) => void;
+  
+  // Actions - UserPreferences
+  setUserPreferences: (preferences: UserPreference | null) => void;
+  updateUserPreferences: (updates: Partial<UserPreference>) => void;
+  
+  // Actions - Loading
+  setIsLoading: (loading: boolean) => void;
+  setDataInitialized: (initialized: boolean) => void;
+  
+  // Actions - Reset
+  resetStore: () => void;
+}
+
+const initialState = {
+  categories: [],
+  incomes: [],
+  expenses: [],
+  debts: [],
+  savings: [],
+  goals: [],
+  tasks: [],
+  timeBlocks: [],
+  projectCategories: [],
+  projects: [],
+  scripts: [],
+  userPreferences: null,
+  isLoading: false,
+  dataInitialized: false,
+};
+
+export const useAppStore = create<AppState>((set) => ({
+  ...initialState,
+  
+  // Categories
+  setCategories: (categories) => set({ categories }),
+  addCategory: (category) => set((state) => ({ categories: [...state.categories, category] })),
+  updateCategory: (id, updates) => set((state) => ({
+    categories: state.categories.map((c) => c.id === id ? { ...c, ...updates } : c)
+  })),
+  deleteCategory: (id) => set((state) => ({
+    categories: state.categories.filter((c) => c.id !== id)
+  })),
+  
+  // Incomes
+  setIncomes: (incomes) => set({ incomes }),
+  addIncome: (income) => set((state) => ({ incomes: [...state.incomes, income] })),
+  updateIncome: (id, updates) => set((state) => ({
+    incomes: state.incomes.map((i) => i.id === id ? { ...i, ...updates } : i)
+  })),
+  deleteIncome: (id) => set((state) => ({
+    incomes: state.incomes.filter((i) => i.id !== id)
+  })),
+  
+  // Expenses
+  setExpenses: (expenses) => set({ expenses }),
+  addExpense: (expense) => set((state) => ({ expenses: [...state.expenses, expense] })),
+  updateExpense: (id, updates) => set((state) => ({
+    expenses: state.expenses.map((e) => e.id === id ? { ...e, ...updates } : e)
+  })),
+  deleteExpense: (id) => set((state) => ({
+    expenses: state.expenses.filter((e) => e.id !== id)
+  })),
+  
+  // Debts
+  setDebts: (debts) => set({ debts }),
+  addDebt: (debt) => set((state) => ({ debts: [...state.debts, debt] })),
+  updateDebt: (id, updates) => set((state) => ({
+    debts: state.debts.map((d) => d.id === id ? { ...d, ...updates } : d)
+  })),
+  deleteDebt: (id) => set((state) => ({
+    debts: state.debts.filter((d) => d.id !== id)
+  })),
+  
+  // Savings
+  setSavings: (savings) => set({ savings }),
+  addSaving: (saving) => set((state) => ({ savings: [...state.savings, saving] })),
+  updateSaving: (id, updates) => set((state) => ({
+    savings: state.savings.map((s) => s.id === id ? { ...s, ...updates } : s)
+  })),
+  deleteSaving: (id) => set((state) => ({
+    savings: state.savings.filter((s) => s.id !== id)
+  })),
+  
+  // Goals
+  setGoals: (goals) => set({ goals }),
+  addGoal: (goal) => set((state) => ({ goals: [...state.goals, goal] })),
+  updateGoal: (id, updates) => set((state) => ({
+    goals: state.goals.map((g) => g.id === id ? { ...g, ...updates } : g)
+  })),
+  deleteGoal: (id) => set((state) => ({
+    goals: state.goals.filter((g) => g.id !== id)
+  })),
+  
+  // Tasks
+  setTasks: (tasks) => set({ tasks }),
+  addTask: (task) => set((state) => ({ tasks: [...state.tasks, task] })),
+  updateTask: (id, updates) => set((state) => ({
+    tasks: state.tasks.map((t) => t.id === id ? { ...t, ...updates } : t)
+  })),
+  deleteTask: (id) => set((state) => ({
+    tasks: state.tasks.filter((t) => t.id !== id)
+  })),
+  
+  // TimeBlocks
+  setTimeBlocks: (timeBlocks) => set({ timeBlocks }),
+  addTimeBlock: (timeBlock) => set((state) => ({ timeBlocks: [...state.timeBlocks, timeBlock] })),
+  updateTimeBlock: (id, updates) => set((state) => ({
+    timeBlocks: state.timeBlocks.map((tb) => tb.id === id ? { ...tb, ...updates } : tb)
+  })),
+  deleteTimeBlock: (id) => set((state) => ({
+    timeBlocks: state.timeBlocks.filter((tb) => tb.id !== id)
+  })),
+  
+  // ProjectCategories
+  setProjectCategories: (projectCategories) => set({ projectCategories }),
+  addProjectCategory: (projectCategory) => set((state) => ({ 
+    projectCategories: [...state.projectCategories, projectCategory] 
+  })),
+  updateProjectCategory: (id, updates) => set((state) => ({
+    projectCategories: state.projectCategories.map((pc) => pc.id === id ? { ...pc, ...updates } : pc)
+  })),
+  deleteProjectCategory: (id) => set((state) => ({
+    projectCategories: state.projectCategories.filter((pc) => pc.id !== id)
+  })),
+  
+  // Projects
+  setProjects: (projects) => set({ projects }),
+  addProject: (project) => set((state) => ({ projects: [...state.projects, project] })),
+  updateProject: (id, updates) => set((state) => ({
+    projects: state.projects.map((p) => p.id === id ? { ...p, ...updates } : p)
+  })),
+  deleteProject: (id) => set((state) => ({
+    projects: state.projects.filter((p) => p.id !== id)
+  })),
+  
+  // Scripts
+  setScripts: (scripts) => set({ scripts }),
+  addScript: (script) => set((state) => ({ scripts: [...state.scripts, script] })),
+  updateScript: (id, updates) => set((state) => ({
+    scripts: state.scripts.map((s) => s.id === id ? { ...s, ...updates } : s)
+  })),
+  deleteScript: (id) => set((state) => ({
+    scripts: state.scripts.filter((s) => s.id !== id)
+  })),
+  
+  // UserPreferences
+  setUserPreferences: (preferences) => set({ userPreferences: preferences }),
+  updateUserPreferences: (updates) => set((state) => ({
+    userPreferences: state.userPreferences ? { ...state.userPreferences, ...updates } : null
+  })),
+  
+  // Loading
+  setIsLoading: (isLoading) => set({ isLoading }),
+  setDataInitialized: (dataInitialized) => set({ dataInitialized }),
+  
+  // Reset
+  resetStore: () => set(initialState),
+}));
