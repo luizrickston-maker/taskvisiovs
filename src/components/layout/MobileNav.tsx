@@ -1,10 +1,12 @@
-import { Wallet, TrendingUp, Target, FolderKanban, MoreHorizontal, Pen, Calendar, Settings } from 'lucide-react';
+import { Wallet, TrendingUp, Target, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuthContext } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -24,7 +26,13 @@ const moreNavItems = [
 export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut } = useAuthContext();
   const isMoreActive = moreNavItems.some(item => location.pathname === item.url);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth', { replace: true });
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border md:hidden">
@@ -79,6 +87,14 @@ export function MobileNav() {
                 </DropdownMenuItem>
               );
             })}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={handleSignOut}
+              className="flex items-center gap-3 w-full cursor-pointer text-destructive focus:text-destructive"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sair</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

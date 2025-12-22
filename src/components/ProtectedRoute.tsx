@@ -1,4 +1,5 @@
-import { Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useAppStore } from '@/stores/useAppStore';
 import { Loader2 } from 'lucide-react';
@@ -10,8 +11,21 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading: authLoading } = useAuthContext();
   const { isLoading } = useAppStore();
+  const location = useLocation();
+  const [isInitialCheck, setIsInitialCheck] = useState(true);
 
-  if (authLoading) {
+  // Aguardar um ciclo para garantir que o estado de auth foi propagado
+  useEffect(() => {
+    if (!authLoading) {
+      const timer = setTimeout(() => {
+        setIsInitialCheck(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading]);
+
+  // Mostrar loading enquanto verifica autenticação inicial
+  if (authLoading || isInitialCheck) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -23,7 +37,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   if (isLoading) {
