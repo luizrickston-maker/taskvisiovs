@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Clock, Plus, Check, Trash2, Settings2, Palette } from 'lucide-react';
+import { Calendar, CheckCircle, Plus, Trash2, Settings2, Palette } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,9 +12,8 @@ import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import type { TimeBlockType } from '@/types/database';
 
-const defaultTypes: { value: TimeBlockType; label: string; color: string }[] = [
+const defaultTypes = [
   { value: 'cash', label: 'Caixa', color: '#22c55e' },
   { value: 'client', label: 'Cliente', color: '#3b82f6' },
   { value: 'project', label: 'Projeto', color: '#8b5cf6' },
@@ -49,18 +48,19 @@ export default function Agenda48h() {
   const todayStr = format(today, 'yyyy-MM-dd');
   const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
 
+  // Filter only non-completed blocks for 48h view
   const todayBlocks = timeBlocks
-    .filter(b => b.date === todayStr)
+    .filter(b => b.date === todayStr && !b.completed)
     .sort((a, b) => a.start_time.localeCompare(b.start_time));
 
   const tomorrowBlocks = timeBlocks
-    .filter(b => b.date === tomorrowStr)
+    .filter(b => b.date === tomorrowStr && !b.completed)
     .sort((a, b) => a.start_time.localeCompare(b.start_time));
 
-  // Combine default and custom types
+  // Combine default and custom types - ensure all values are strings
   const allTypes = [
     ...defaultTypes,
-    ...customTimeBlockTypes.map(t => ({ value: t.id, label: t.name, color: t.color }))
+    ...customTimeBlockTypes.map(t => ({ value: t.id, label: t.name, color: t.color || '#6366f1' }))
   ];
 
   const getTypeInfo = (typeValue: string) => {
@@ -101,18 +101,19 @@ export default function Agenda48h() {
     toast.success('Bloco criado!');
   };
 
-  const handleToggleComplete = async (blockId: string, currentCompleted: boolean) => {
+  const handleCompleteBlock = async (blockId: string) => {
     const { error } = await supabase
       .from('time_blocks')
-      .update({ completed: !currentCompleted })
+      .update({ completed: true })
       .eq('id', blockId);
 
     if (error) {
-      toast.error('Erro ao atualizar bloco');
+      toast.error('Erro ao concluir bloco');
       return;
     }
 
-    updateTimeBlock(blockId, { completed: !currentCompleted });
+    updateTimeBlock(blockId, { completed: true });
+    toast.success('Compromisso concluído!');
   };
 
   const handleDelete = async (blockId: string) => {
@@ -175,7 +176,6 @@ export default function Agenda48h() {
     return {
       backgroundColor: `${blockColor}20`,
       borderColor: `${blockColor}50`,
-      '--block-color': blockColor,
     } as React.CSSProperties;
   };
 
@@ -184,7 +184,7 @@ export default function Agenda48h() {
       <h3 className="text-sm font-medium text-muted-foreground">{dayLabel}</h3>
       {blocks.length === 0 ? (
         <p className="text-xs text-muted-foreground/60 text-center py-2">
-          Nenhum bloco agendado
+          Nenhum bloco pendente
         </p>
       ) : (
         <div className="space-y-2">
@@ -193,33 +193,24 @@ export default function Agenda48h() {
             return (
               <div
                 key={block.id}
-                className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border transition-all",
-                  block.completed && "opacity-50"
-                )}
+                className="flex items-center gap-3 p-3 rounded-lg border transition-all"
                 style={getBlockStyle(block)}
               >
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 flex-shrink-0"
-                  onClick={() => handleToggleComplete(block.id, block.completed)}
+                  className="h-7 w-7 flex-shrink-0 text-success hover:bg-success/20"
+                  onClick={() => handleCompleteBlock(block.id)}
+                  title="Concluir compromisso"
                 >
-                  {block.completed ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Clock className="w-4 h-4" />
-                  )}
+                  <CheckCircle className="w-4 h-4" />
                 </Button>
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
                   style={{ backgroundColor: block.color || typeInfo.color }}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className={cn(
-                    "text-sm font-medium truncate",
-                    block.completed && "line-through"
-                  )}>
+                  <p className="text-sm font-medium truncate">
                     {block.title}
                   </p>
                   <p className="text-xs opacity-70">
