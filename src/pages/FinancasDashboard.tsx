@@ -1,7 +1,7 @@
 import { SavingsManager } from '@/components/financas/SavingsManager';
 import { EarningsSummary } from '@/components/financas/EarningsSummary';
-import { FinanceChart } from '@/components/financas/FinanceChart';
 import { DebtList } from '@/components/financas/DebtList';
+import { TransactionsFilter } from '@/components/financas/TransactionsFilter';
 
 export default function FinancasDashboard() {
   return (
@@ -9,18 +9,11 @@ export default function FinancasDashboard() {
       {/* Earnings Summary Cards */}
       <EarningsSummary />
 
-      {/* Main Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Savings Manager */}
-        <div className="lg:col-span-1">
-          <SavingsManager />
-        </div>
+      {/* Savings Manager - Full width, adjusted size */}
+      <SavingsManager />
 
-        {/* Finance Chart */}
-        <div className="lg:col-span-2">
-          <FinanceChart />
-        </div>
-      </div>
+      {/* Transactions Filter */}
+      <TransactionsFilter />
 
       {/* Debt List */}
       <DebtList />

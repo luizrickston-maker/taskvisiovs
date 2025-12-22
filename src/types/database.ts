@@ -92,8 +92,17 @@ export interface TimeBlock {
   start_time: string;
   end_time: string;
   date: string;
-  type: TimeBlockType;
+  type: TimeBlockType | string;
   completed: boolean;
+  color?: string;
+  created_at: string;
+}
+
+export interface CustomTimeBlockType {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
   created_at: string;
 }
 

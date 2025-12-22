@@ -1,6 +1,7 @@
 import InboxMental from '@/components/foco/InboxMental';
 import AcoesHoje from '@/components/foco/AcoesHoje';
 import Agenda48h from '@/components/foco/Agenda48h';
+import ActivityHistory from '@/components/foco/ActivityHistory';
 
 export default function FocoDashboard() {
   return (
@@ -11,8 +12,11 @@ export default function FocoDashboard() {
         <AcoesHoje />
       </div>
 
-      {/* Bottom Section: 48h Agenda */}
+      {/* Middle Section: 48h Agenda */}
       <Agenda48h />
+
+      {/* Bottom Section: Activity History */}
+      <ActivityHistory />
     </div>
   );
 }

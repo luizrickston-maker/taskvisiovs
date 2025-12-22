@@ -423,8 +423,33 @@ export type Database = {
         }
         Relationships: []
       }
+      time_block_types: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       time_blocks: {
         Row: {
+          color: string | null
           completed: boolean
           created_at: string
           date: string
@@ -436,6 +461,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          color?: string | null
           completed?: boolean
           created_at?: string
           date: string
@@ -447,6 +473,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          color?: string | null
           completed?: boolean
           created_at?: string
           date?: string
