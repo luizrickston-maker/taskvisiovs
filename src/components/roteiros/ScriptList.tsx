@@ -45,9 +45,11 @@ const statusColors: Record<ScriptStatus, string> = {
 
 interface ScriptListProps {
   onEdit: (script: Script) => void;
+  platformFilter?: string;
+  statusFilter?: string;
 }
 
-export function ScriptList({ onEdit }: ScriptListProps) {
+export function ScriptList({ onEdit, platformFilter = 'all', statusFilter = 'all' }: ScriptListProps) {
   const { scripts, projectCategories, deleteScript } = useAppStore();
 
   const handleDelete = async (id: string) => {
@@ -71,6 +73,13 @@ export function ScriptList({ onEdit }: ScriptListProps) {
     new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime()
   );
 
+  // Aplicar filtros
+  const filteredScripts = sortedScripts.filter(script => {
+    const matchesPlatform = platformFilter === 'all' || script.platform === platformFilter;
+    const matchesStatus = statusFilter === 'all' || script.status === statusFilter;
+    return matchesPlatform && matchesStatus;
+  });
+
   if (scripts.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -81,9 +90,18 @@ export function ScriptList({ onEdit }: ScriptListProps) {
     );
   }
 
+  if (filteredScripts.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <Pen className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p>Nenhum roteiro encontrado com os filtros selecionados.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      {sortedScripts.map((script) => {
+      {filteredScripts.map((script) => {
         const project = getProjectName(script.project_id);
         const wordCount = script.content.trim() ? script.content.trim().split(/\s+/).length : 0;
         

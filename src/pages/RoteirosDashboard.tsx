@@ -133,7 +133,11 @@ export default function RoteirosDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <ScriptList onEdit={handleEditScript} />
+            <ScriptList 
+              onEdit={handleEditScript} 
+              platformFilter={platformFilter}
+              statusFilter={statusFilter}
+            />
           </CardContent>
         </Card>
       )}
