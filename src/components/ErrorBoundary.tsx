@@ -12,23 +12,43 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  errorId: string | null;
+}
+
+// Gera hash simples e determinístico a partir de uma string
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36).toUpperCase().slice(0, 8);
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false, error: null, errorInfo: null, errorId: null };
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
-    return { hasError: true, error };
+    // Gera errorId determinístico baseado no erro
+    const errorContent = `${error.message || ''}${error.stack || ''}`;
+    const errorId = `ERR-${simpleHash(errorContent)}`;
+    return { hasError: true, error, errorId };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ errorInfo });
     
-    // Log para debugging (não sensível)
-    console.error('[ErrorBoundary] Erro capturado:', {
+    // Atualiza errorId com componentStack para ser mais específico
+    const fullContent = `${error.message || ''}${error.stack || ''}${errorInfo.componentStack || ''}`;
+    const errorId = `ERR-${simpleHash(fullContent)}`;
+    this.setState({ errorId });
+    
+    // Log para debugging com errorId estável
+    console.error(`[ErrorBoundary] Erro capturado (${errorId}):`, {
       message: error.message,
       componentStack: errorInfo.componentStack?.slice(0, 500),
     });
@@ -43,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   handleRetry = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
+    this.setState({ hasError: false, error: null, errorInfo: null, errorId: null });
   };
 
   render() {
@@ -53,7 +73,7 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       const isDev = import.meta.env.DEV;
-      const errorId = `ERR-${Date.now().toString(36).toUpperCase()}`;
+      const errorId = this.state.errorId || 'UNKNOWN';
 
       return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -95,7 +115,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 Tentar novamente
               </Button>
 
-              {/* Informações de debug (apenas em desenvolvimento) */}
+              {/* Informações de debug */}
               <div className="pt-4 border-t border-border">
                 <p className="text-xs text-muted-foreground text-center">
                   Código do erro: <code className="bg-muted px-1 rounded">{errorId}</code>
