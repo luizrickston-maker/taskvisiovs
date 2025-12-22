@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAppStore } from '@/stores/useAppStore';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Income } from '@/types/database';
@@ -18,7 +18,7 @@ export function QuickIncomeForm() {
   const [categoryId, setCategoryId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { incomes, categories, addIncome, deleteIncome } = useAppStore();
 
   const incomeCategories = categories.filter((c) => c.type === 'income');

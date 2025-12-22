@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { useAppStore } from '@/stores/useAppStore';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Debt, DebtType } from '@/types/database';
@@ -28,7 +28,7 @@ export function DebtForm() {
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { categories, addDebt } = useAppStore();
 
   const debtCategories = categories.filter((c) => c.type === 'debt');

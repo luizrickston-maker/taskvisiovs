@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { Script, ScriptPlatform, ScriptStatus } from '@/types/database';
 
@@ -40,7 +40,7 @@ interface ScriptEditorProps {
 }
 
 export function ScriptEditor({ script, onSave, onCancel }: ScriptEditorProps) {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { projectCategories, addScript, updateScript } = useAppStore();
   
   const [title, setTitle] = useState(script?.title || '');

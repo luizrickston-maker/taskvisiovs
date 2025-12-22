@@ -4,22 +4,16 @@ import { AppSidebar } from './AppSidebar';
 import { MobileNav } from './MobileNav';
 import { RealtimeIndicator } from './RealtimeIndicator';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { useRealtimeSync } from '@/hooks/useRealtimeSync';
-import { useRealtimeStatus } from '@/hooks/useRealtimeStatus';
-import { useAuth } from '@/hooks/useAuth';
+import { useRealtimeContext } from '@/contexts/RealtimeContext';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 export function AppLayout() {
-  // Hooks chamados de forma canônica - NUNCA em try/catch
+  // Hooks chamados de forma canônica
   const preferences = useUserPreferences();
-  const { user } = useAuth();
-  const userId = user?.id;
-  
-  // Sincronização cross-device em tempo real
-  useRealtimeSync(userId);
-  
-  // Status realtime
-  const realtimeStatus = useRealtimeStatus(userId);
-  
+
+  // Status realtime vem do bootstrap
+  const { status: realtimeStatus } = useRealtimeContext();
+
   // Fallback seguro para appName
   const appName = preferences?.appName ?? 'Meu App';
 
