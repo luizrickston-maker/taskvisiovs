@@ -35,16 +35,11 @@ export default function ActivityHistory() {
   const today = new Date();
   const tomorrow = addDays(today, 1);
 
-  // Filter blocks: exclude today and tomorrow (they're in Agenda48h)
+  // Filter blocks - show all dates (including today/tomorrow for full visibility)
   const filteredBlocks = useMemo(() => {
     return timeBlocks
       .filter((block) => {
         const blockDate = parseISO(block.date);
-        
-        // Exclude today and tomorrow
-        if (isSameDay(blockDate, today) || isSameDay(blockDate, tomorrow)) {
-          return false;
-        }
 
         // Filter by selected date if one is selected
         if (selectedDate && !isSameDay(blockDate, selectedDate)) {
@@ -62,7 +57,7 @@ export default function ActivityHistory() {
         if (dateCompare !== 0) return dateCompare;
         return a.start_time.localeCompare(b.start_time);
       });
-  }, [timeBlocks, selectedDate, statusFilter, today, tomorrow]);
+  }, [timeBlocks, selectedDate, statusFilter]);
 
   // Group by date
   const groupedBlocks = useMemo(() => {
@@ -108,15 +103,10 @@ export default function ActivityHistory() {
     setRelocateOpen(true);
   };
 
-  // Dates with activities (for calendar highlighting) - excluding today/tomorrow
+  // Dates with activities (for calendar highlighting)
   const datesWithActivities = useMemo(() => {
-    return timeBlocks
-      .filter(block => {
-        const blockDate = parseISO(block.date);
-        return !isSameDay(blockDate, today) && !isSameDay(blockDate, tomorrow);
-      })
-      .map(block => parseISO(block.date));
-  }, [timeBlocks, today, tomorrow]);
+    return timeBlocks.map(block => parseISO(block.date));
+  }, [timeBlocks]);
 
   return (
     <Card className="glass-card">
@@ -130,7 +120,7 @@ export default function ActivityHistory() {
         {/* Calendar and Filter Row */}
         <div className="flex flex-col md:flex-row gap-4">
           {/* Calendar */}
-          <div className="flex-1">
+          <div className="w-fit">
             <Calendar
               mode="single"
               selected={selectedDate}
@@ -146,14 +136,11 @@ export default function ActivityHistory() {
                   textDecoration: 'underline',
                 },
               }}
-              disabled={(date) => 
-                isSameDay(date, today) || isSameDay(date, tomorrow)
-              }
             />
           </div>
 
           {/* Filter */}
-          <div className="flex flex-col gap-3 min-w-[180px]">
+          <div className="flex flex-col gap-3 flex-1 min-w-[180px]">
             <div className="space-y-2">
               <Label className="text-sm">Filtrar por status</Label>
               <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
