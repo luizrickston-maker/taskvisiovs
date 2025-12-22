@@ -1,5 +1,5 @@
 import { Wallet, TrendingUp, Target, FolderKanban, MoreHorizontal, Pen, Calendar, Settings } from 'lucide-react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -23,6 +23,7 @@ const moreNavItems = [
 
 export function MobileNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isMoreActive = moreNavItems.some(item => location.pathname === item.url);
 
   return (
@@ -65,17 +66,16 @@ export function MobileNav() {
             {moreNavItems.map((item) => {
               const isActive = location.pathname === item.url;
               return (
-                <DropdownMenuItem key={item.title} asChild>
-                  <NavLink
-                    to={item.url}
-                    className={cn(
-                      "flex items-center gap-3 w-full cursor-pointer",
-                      isActive && "text-primary font-medium"
-                    )}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.title}</span>
-                  </NavLink>
+                <DropdownMenuItem 
+                  key={item.title} 
+                  onClick={() => navigate(item.url)}
+                  className={cn(
+                    "flex items-center gap-3 w-full cursor-pointer",
+                    isActive && "text-primary font-medium"
+                  )}
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.title}</span>
                 </DropdownMenuItem>
               );
             })}
