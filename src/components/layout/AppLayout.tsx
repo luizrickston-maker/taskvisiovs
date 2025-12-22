@@ -7,14 +7,48 @@ import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useRealtimeStatus } from '@/hooks/useRealtimeStatus';
 import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
 
 export function AppLayout() {
-  const { appName } = useUserPreferences();
-  const { user } = useAuth();
+  const [realtimeStatus, setRealtimeStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   
-  // Sincronização cross-device em tempo real
-  useRealtimeSync(user?.id);
-  const realtimeStatus = useRealtimeStatus(user?.id);
+  let appName = 'Meu App';
+  let userId: string | undefined;
+  
+  try {
+    const preferences = useUserPreferences();
+    appName = preferences.appName;
+  } catch (error) {
+    console.error('[AppLayout] Erro ao carregar preferências:', error);
+  }
+  
+  try {
+    const auth = useAuth();
+    userId = auth.user?.id;
+  } catch (error) {
+    console.error('[AppLayout] Erro ao carregar auth:', error);
+  }
+  
+  // Sincronização cross-device em tempo real com tratamento de erro
+  try {
+    useRealtimeSync(userId);
+  } catch (error) {
+    console.error('[AppLayout] Erro no useRealtimeSync:', error);
+  }
+  
+  // Status realtime com tratamento defensivo
+  const rawRealtimeStatus = useRealtimeStatus(userId);
+  
+  useEffect(() => {
+    try {
+      if (rawRealtimeStatus) {
+        setRealtimeStatus(rawRealtimeStatus);
+      }
+    } catch (error) {
+      console.error('[AppLayout] Erro ao atualizar status realtime:', error);
+      setRealtimeStatus('disconnected');
+    }
+  }, [rawRealtimeStatus]);
 
   return (
     <SidebarProvider>
