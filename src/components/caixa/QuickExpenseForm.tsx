@@ -73,12 +73,12 @@ export function QuickExpenseForm() {
   };
 
   const handleDelete = async (id: string) => {
-    deleteExpense(id);
-
     const { error } = await supabase.from('expenses').delete().eq('id', id);
 
     if (error) {
       toast.error('Erro ao remover custo');
+    } else {
+      deleteExpense(id);
     }
   };
 

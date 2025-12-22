@@ -73,12 +73,12 @@ export function QuickIncomeForm() {
   };
 
   const handleDelete = async (id: string) => {
-    deleteIncome(id);
-
     const { error } = await supabase.from('incomes').delete().eq('id', id);
 
     if (error) {
       toast.error('Erro ao remover entrada');
+    } else {
+      deleteIncome(id);
     }
   };
 

@@ -39,11 +39,11 @@ export function DebtList() {
   };
 
   const handleDelete = async (id: string) => {
-    deleteDebt(id);
     const { error } = await supabase.from('debts').delete().eq('id', id);
     if (error) {
       toast.error('Erro ao remover dívida');
     } else {
+      deleteDebt(id);
       toast.success('Dívida removida');
     }
   };
