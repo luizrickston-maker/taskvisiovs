@@ -143,12 +143,15 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Categoria</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
+              <Select 
+                value={categoryId || "none"} 
+                onValueChange={(v) => setCategoryId(v === "none" ? "" : v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value="none">Nenhuma</SelectItem>
                   {projectCategories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       <div className="flex items-center gap-2">
