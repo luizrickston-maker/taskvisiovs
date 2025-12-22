@@ -102,17 +102,18 @@ export class ErrorBoundary extends Component<Props, State> {
                 </p>
                 
                 {isDev && this.state.error && (
-                  <details className="mt-4">
+                  <details className="mt-4" open>
                     <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
                       Detalhes técnicos (dev only)
                     </summary>
-                    <div className="mt-2 p-3 bg-muted rounded-lg overflow-auto max-h-48">
+                    <div className="mt-2 p-3 bg-muted rounded-lg overflow-auto max-h-60">
                       <pre className="text-xs text-destructive whitespace-pre-wrap break-words">
                         {this.state.error.message}
+                        {this.state.error.stack ? `\n\n${this.state.error.stack}` : ''}
                       </pre>
                       {this.state.errorInfo?.componentStack && (
                         <pre className="text-xs text-muted-foreground mt-2 whitespace-pre-wrap break-words">
-                          {this.state.errorInfo.componentStack.slice(0, 800)}
+                          {this.state.errorInfo.componentStack.slice(0, 1200)}
                         </pre>
                       )}
                     </div>

@@ -3,10 +3,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { RealtimeStatus } from '@/hooks/useRealtimeStatus';
 
 interface RealtimeIndicatorProps {
-  status: RealtimeStatus;
+  status?: RealtimeStatus;
 }
 
-export function RealtimeIndicator({ status }: RealtimeIndicatorProps) {
+export function RealtimeIndicator({ status = 'disconnected' }: RealtimeIndicatorProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>

@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
@@ -33,7 +33,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { appName } = useUserPreferences();
-  const { signOut } = useAuth();
+  const { signOut } = useAuthContext();
   const collapsed = state === 'collapsed';
 
   return (

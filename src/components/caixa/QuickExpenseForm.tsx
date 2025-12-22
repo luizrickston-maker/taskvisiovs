@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAppStore } from '@/stores/useAppStore';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Expense } from '@/types/database';
@@ -18,7 +18,7 @@ export function QuickExpenseForm() {
   const [categoryId, setCategoryId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { expenses, categories, addExpense, deleteExpense } = useAppStore();
 
   const expenseCategories = categories.filter((c) => c.type === 'expense');
