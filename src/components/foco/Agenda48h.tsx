@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { Calendar, CheckCircle, Plus, Trash2, Settings2, Palette } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle, Plus, Trash2, Settings2, Palette } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, addDays } from 'date-fns';
+import { format, addDays, parseISO, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
@@ -64,8 +66,15 @@ export default function Agenda48h() {
   ];
 
   const getTypeInfo = (typeValue: string) => {
-    const found = allTypes.find(t => t.value === typeValue);
-    return found || { label: typeValue, color: '#6b7280' };
+    // First check default types
+    const defaultMatch = defaultTypes.find(t => t.value === typeValue);
+    if (defaultMatch) return defaultMatch;
+    
+    // Then check custom types by id
+    const customMatch = customTimeBlockTypes.find(t => t.id === typeValue);
+    if (customMatch) return { value: customMatch.id, label: customMatch.name, color: customMatch.color || '#6366f1' };
+    
+    return { value: typeValue, label: typeValue, color: '#6b7280' };
   };
 
   const handleAddBlock = async (e: React.FormEvent) => {
@@ -237,7 +246,7 @@ export default function Agenda48h() {
     <Card className="glass-card h-full">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <Calendar className="w-5 h-5 text-primary" />
+          <CalendarIcon className="w-5 h-5 text-primary" />
           Agenda 48h
           <div className="ml-auto flex gap-1">
             {/* Type Manager */}
@@ -341,19 +350,25 @@ export default function Agenda48h() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Data</Label>
-                      <Select value={date} onValueChange={setDate}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={todayStr}>
-                            Hoje ({format(today, 'dd/MM', { locale: ptBR })})
-                          </SelectItem>
-                          <SelectItem value={tomorrowStr}>
-                            Amanhã ({format(tomorrow, 'dd/MM', { locale: ptBR })})
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {format(parseISO(date), "dd/MM/yyyy")}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={parseISO(date)}
+                            onSelect={(d) => d && setDate(format(d, 'yyyy-MM-dd'))}
+                            disabled={(d) => startOfDay(d) < startOfDay(new Date())}
+                            initialFocus
+                            locale={ptBR}
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                     <div className="space-y-2">
                       <Label>Tipo</Label>
