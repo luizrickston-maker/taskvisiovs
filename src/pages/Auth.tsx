@@ -19,6 +19,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showEmailSent, setShowEmailSent] = useState(false);
 
   if (loading) {
     return (
@@ -65,8 +66,6 @@ export default function Auth() {
       toast.success('Login realizado com sucesso!');
     }
   };
-
-  const [showEmailSent, setShowEmailSent] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
