@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ const passwordSchema = z.string().min(6, 'Senha deve ter no mínimo 6 caracteres
 
 export default function Auth() {
   const { user, loading, signIn, signUp, resetPassword } = useAuthContext();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,9 +55,9 @@ export default function Auth() {
 
     setIsSubmitting(true);
     const { error } = await signIn(email, password);
-    setIsSubmitting(false);
 
     if (error) {
+      setIsSubmitting(false);
       if (error.message.includes('Invalid login credentials')) {
         toast.error('Email ou senha incorretos');
       } else {
@@ -64,6 +65,8 @@ export default function Auth() {
       }
     } else {
       toast.success('Login realizado com sucesso!');
+      // Navegar imediatamente após sucesso, antes do state update
+      navigate('/caixa', { replace: true });
     }
   };
 
