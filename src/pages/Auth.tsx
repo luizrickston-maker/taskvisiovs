@@ -65,8 +65,8 @@ export default function Auth() {
       }
     } else {
       toast.success('Login realizado com sucesso!');
-      // Navegar imediatamente após sucesso, antes do state update
-      navigate('/caixa', { replace: true });
+      // Usar window.location para garantir navegação limpa após login
+      window.location.replace('/caixa');
     }
   };
 
