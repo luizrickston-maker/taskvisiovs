@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { FolderKanban, Plus, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -8,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const colorOptions = [
   '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16',
@@ -15,7 +15,12 @@ const colorOptions = [
   '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e',
 ];
 
-export default function CategoryManager() {
+interface CategoryManagerProps {
+  selectedCategory: string | null;
+  onSelectCategory: (id: string | null) => void;
+}
+
+export default function CategoryManager({ selectedCategory, onSelectCategory }: CategoryManagerProps) {
   const { projectCategories, addProjectCategory, deleteProjectCategory } = useAppStore();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
@@ -53,7 +58,8 @@ export default function CategoryManager() {
     toast.success('Categoria criada!');
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     const { error } = await supabase
       .from('project_categories')
       .delete()
@@ -65,106 +71,101 @@ export default function CategoryManager() {
     }
 
     deleteProjectCategory(id);
+    if (selectedCategory === id) {
+      onSelectCategory(null);
+    }
     toast.success('Categoria excluída');
   };
 
+  const handleCategoryClick = (id: string) => {
+    onSelectCategory(selectedCategory === id ? null : id);
+  };
+
   return (
-    <Card className="glass-card">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <FolderKanban className="w-5 h-5 text-primary" />
-          Categorias
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="ml-auto h-8 w-8">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Nova Categoria</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreate} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Nome</Label>
-                  <Input
-                    placeholder="Ex: Desenvolvimento"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
+    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+      {/* Add Category Button */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="flex-shrink-0 gap-1">
+            <Plus className="w-4 h-4" />
+            Categoria
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Categoria</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome</Label>
+              <Input
+                placeholder="Ex: Desenvolvimento"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Descrição (opcional)</Label>
+              <Input
+                placeholder="Ex: Projetos de código"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Cor</Label>
+              <div className="flex flex-wrap gap-2">
+                {colorOptions.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className="w-8 h-8 rounded-full transition-transform hover:scale-110"
+                    style={{
+                      backgroundColor: c,
+                      outline: color === c ? '2px solid white' : 'none',
+                      outlineOffset: '2px',
+                    }}
+                    onClick={() => setColor(c)}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label>Descrição (opcional)</Label>
-                  <Input
-                    placeholder="Ex: Projetos de código"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Cor</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {colorOptions.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        className="w-8 h-8 rounded-full transition-transform hover:scale-110"
-                        style={{
-                          backgroundColor: c,
-                          outline: color === c ? '2px solid white' : 'none',
-                          outlineOffset: '2px',
-                        }}
-                        onClick={() => setColor(c)}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={!name.trim()}>
-                  Criar Categoria
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {projectCategories.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Nenhuma categoria criada
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {projectCategories.map((cat) => (
-              <div
-                key={cat.id}
-                className="flex items-center gap-3 p-2 rounded-lg bg-secondary/50 group"
-              >
-                <div
-                  className="w-4 h-4 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: cat.color }}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{cat.name}</p>
-                  {cat.description && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {cat.description}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleDelete(cat.id)}
-                >
-                  <Trash2 className="w-3 h-3 text-destructive" />
-                </Button>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            </div>
+            <Button type="submit" className="w-full" disabled={!name.trim()}>
+              Criar Categoria
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Pills */}
+      {projectCategories.length === 0 ? (
+        <span className="text-sm text-muted-foreground">Nenhuma categoria</span>
+      ) : (
+        projectCategories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => handleCategoryClick(cat.id)}
+            className={cn(
+              'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all flex-shrink-0 group',
+              'bg-secondary/60 hover:bg-secondary',
+              selectedCategory === cat.id && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+            )}
+          >
+            <span
+              className="w-3 h-3 rounded-full flex-shrink-0"
+              style={{ backgroundColor: cat.color }}
+            />
+            <span className="truncate max-w-[120px]">{cat.name}</span>
+            <button
+              onClick={(e) => handleDelete(e, cat.id)}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-destructive/20 rounded"
+            >
+              <Trash2 className="w-3 h-3 text-destructive" />
+            </button>
+          </button>
+        ))
+      )}
+    </div>
   );
 }
