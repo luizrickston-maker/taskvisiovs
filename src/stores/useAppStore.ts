@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { 
   Category, Income, Expense, Debt, Saving, Goal, 
-  Task, TimeBlock, ProjectCategory, Project, Script, UserPreference 
+  Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType 
 } from '@/types/database';
 
 interface AppState {
@@ -14,6 +14,7 @@ interface AppState {
   goals: Goal[];
   tasks: Task[];
   timeBlocks: TimeBlock[];
+  customTimeBlockTypes: CustomTimeBlockType[];
   projectCategories: ProjectCategory[];
   projects: Project[];
   scripts: Script[];
@@ -71,6 +72,12 @@ interface AppState {
   updateTimeBlock: (id: string, updates: Partial<TimeBlock>) => void;
   deleteTimeBlock: (id: string) => void;
   
+  // Actions - CustomTimeBlockTypes
+  setCustomTimeBlockTypes: (types: CustomTimeBlockType[]) => void;
+  addCustomTimeBlockType: (type: CustomTimeBlockType) => void;
+  updateCustomTimeBlockType: (id: string, updates: Partial<CustomTimeBlockType>) => void;
+  deleteCustomTimeBlockType: (id: string) => void;
+  
   // Actions - ProjectCategories
   setProjectCategories: (projectCategories: ProjectCategory[]) => void;
   addProjectCategory: (projectCategory: ProjectCategory) => void;
@@ -110,6 +117,7 @@ const initialState = {
   goals: [],
   tasks: [],
   timeBlocks: [],
+  customTimeBlockTypes: [],
   projectCategories: [],
   projects: [],
   scripts: [],
@@ -199,6 +207,18 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   deleteTimeBlock: (id) => set((state) => ({
     timeBlocks: state.timeBlocks.filter((tb) => tb.id !== id)
+  })),
+  
+  // CustomTimeBlockTypes
+  setCustomTimeBlockTypes: (customTimeBlockTypes) => set({ customTimeBlockTypes }),
+  addCustomTimeBlockType: (type) => set((state) => ({ 
+    customTimeBlockTypes: [...state.customTimeBlockTypes, type] 
+  })),
+  updateCustomTimeBlockType: (id, updates) => set((state) => ({
+    customTimeBlockTypes: state.customTimeBlockTypes.map((t) => t.id === id ? { ...t, ...updates } : t)
+  })),
+  deleteCustomTimeBlockType: (id) => set((state) => ({
+    customTimeBlockTypes: state.customTimeBlockTypes.filter((t) => t.id !== id)
   })),
   
   // ProjectCategories

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Calendar, CalendarDays, CalendarRange } from 'lucide-react';
-import { startOfDay, startOfWeek, startOfMonth, isAfter, parseISO } from 'date-fns';
+import { startOfDay, subDays, isAfter, parseISO, isSameDay } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppStore } from '@/stores/useAppStore';
 
@@ -17,42 +17,61 @@ export function EarningsSummary() {
   const summary = useMemo(() => {
     const now = new Date();
     const todayStart = startOfDay(now);
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-    const monthStart = startOfMonth(now);
+    const weekStart = subDays(todayStart, 7);
+    const monthStart = subDays(todayStart, 30);
 
-    const calcNet = (start: Date) => {
-      const totalIncome = incomes
-        .filter((i) => isAfter(parseISO(i.date), start) || parseISO(i.date).getTime() === start.getTime())
-        .reduce((acc, i) => acc + Number(i.amount), 0);
+    const calcValues = (start: Date, isToday = false) => {
+      let totalIncome = 0;
+      let totalExpense = 0;
 
-      const totalExpense = expenses
-        .filter((e) => isAfter(parseISO(e.date), start) || parseISO(e.date).getTime() === start.getTime())
-        .reduce((acc, e) => acc + Number(e.amount), 0);
+      if (isToday) {
+        totalIncome = incomes
+          .filter((i) => isSameDay(parseISO(i.date), now))
+          .reduce((acc, i) => acc + Number(i.amount), 0);
 
-      return totalIncome - totalExpense;
+        totalExpense = expenses
+          .filter((e) => isSameDay(parseISO(e.date), now))
+          .reduce((acc, e) => acc + Number(e.amount), 0);
+      } else {
+        totalIncome = incomes
+          .filter((i) => {
+            const d = parseISO(i.date);
+            return isAfter(d, start) || isSameDay(d, start);
+          })
+          .reduce((acc, i) => acc + Number(i.amount), 0);
+
+        totalExpense = expenses
+          .filter((e) => {
+            const d = parseISO(e.date);
+            return isAfter(d, start) || isSameDay(d, start);
+          })
+          .reduce((acc, e) => acc + Number(e.amount), 0);
+      }
+
+      return { income: totalIncome, expense: totalExpense, net: totalIncome - totalExpense };
     };
 
     return {
-      daily: calcNet(todayStart),
-      weekly: calcNet(weekStart),
-      monthly: calcNet(monthStart),
+      daily: calcValues(todayStart, true),
+      weekly: calcValues(weekStart),
+      monthly: calcValues(monthStart),
     };
   }, [incomes, expenses]);
 
   const cards = [
     {
       title: 'Hoje',
-      value: summary.daily,
+      data: summary.daily,
       icon: Calendar,
     },
     {
       title: 'Esta Semana',
-      value: summary.weekly,
+      data: summary.weekly,
       icon: CalendarDays,
     },
     {
       title: 'Este Mês',
-      value: summary.monthly,
+      data: summary.monthly,
       icon: CalendarRange,
     },
   ];
@@ -67,14 +86,17 @@ export function EarningsSummary() {
               {card.title}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-1">
             <p
               className={`text-2xl font-bold ${
-                card.value >= 0 ? 'text-success' : 'text-destructive'
+                card.data.net >= 0 ? 'text-success' : 'text-destructive'
               }`}
             >
-              {card.value >= 0 ? '+' : ''}
-              {formatCurrency(card.value)}
+              {card.data.net >= 0 ? '+' : ''}
+              {formatCurrency(card.data.net)}
+            </p>
+            <p className="text-sm text-destructive">
+              Gastos: {formatCurrency(card.data.expense)}
             </p>
           </CardContent>
         </Card>

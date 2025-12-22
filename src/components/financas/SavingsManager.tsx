@@ -82,7 +82,7 @@ export function SavingsManager() {
   };
 
   return (
-    <Card className="glass-card animate-fade-in">
+    <Card className="glass-card animate-fade-in w-full">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between text-lg">
           <div className="flex items-center gap-2">
