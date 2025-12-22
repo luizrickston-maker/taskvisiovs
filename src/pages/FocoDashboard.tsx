@@ -1,20 +1,18 @@
-import { Target } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import InboxMental from '@/components/foco/InboxMental';
+import AcoesHoje from '@/components/foco/AcoesHoje';
+import Agenda48h from '@/components/foco/Agenda48h';
 
 export default function FocoDashboard() {
   return (
-    <div className="p-4 md:p-6">
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5 text-primary" />
-            Foco & Produtividade
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Em breve: Inbox Mental, Ações de Hoje e Agenda 48h.</p>
-        </CardContent>
-      </Card>
+    <div className="p-4 md:p-6 space-y-6">
+      {/* Top Section: Inbox + Today's Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <InboxMental />
+        <AcoesHoje />
+      </div>
+
+      {/* Bottom Section: 48h Agenda */}
+      <Agenda48h />
     </div>
   );
 }
