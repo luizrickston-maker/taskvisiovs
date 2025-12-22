@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Wallet, Loader2 } from 'lucide-react';
+import { Wallet, Loader2, Mail } from 'lucide-react';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Email inválido');
@@ -66,6 +66,8 @@ export default function Auth() {
     }
   };
 
+  const [showEmailSent, setShowEmailSent] = useState(false);
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateInputs()) return;
@@ -81,7 +83,7 @@ export default function Auth() {
         toast.error(error.message);
       }
     } else {
-      toast.success('Conta criada com sucesso!');
+      setShowEmailSent(true);
     }
   };
 
@@ -145,6 +147,42 @@ export default function Auth() {
                 Voltar ao Login
               </Button>
             </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show email sent confirmation
+  if (showEmailSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md glass-card animate-scale-in">
+          <CardHeader className="text-center">
+            <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-6 h-6 text-green-500" />
+            </div>
+            <CardTitle className="text-2xl font-display">Verifique seu Email</CardTitle>
+            <CardDescription className="text-base">
+              Enviamos um link de confirmação para <strong>{email}</strong>. 
+              Clique no link para ativar sua conta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center text-sm text-muted-foreground">
+              <p>Não recebeu o email? Verifique sua pasta de spam.</p>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setShowEmailSent(false);
+                setEmail('');
+                setPassword('');
+              }}
+            >
+              Voltar ao Login
+            </Button>
           </CardContent>
         </Card>
       </div>
