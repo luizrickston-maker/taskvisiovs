@@ -74,10 +74,11 @@ export function SavingsManager() {
   };
 
   const handleDelete = async (id: string) => {
-    deleteSaving(id);
     const { error } = await supabase.from('savings').delete().eq('id', id);
     if (error) {
       toast.error('Erro ao remover');
+    } else {
+      deleteSaving(id);
     }
   };
 

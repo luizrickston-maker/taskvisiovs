@@ -3,9 +3,15 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/s
 import { AppSidebar } from './AppSidebar';
 import { MobileNav } from './MobileNav';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+import { useAuth } from '@/hooks/useAuth';
 
 export function AppLayout() {
   const { appName } = useUserPreferences();
+  const { user } = useAuth();
+  
+  // Sincronização cross-device em tempo real
+  useRealtimeSync(user?.id);
 
   return (
     <SidebarProvider>
