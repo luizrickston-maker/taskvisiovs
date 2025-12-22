@@ -1,3 +1,4 @@
+import { SectionBoundary } from '@/components/SectionBoundary';
 import InboxMental from '@/components/foco/InboxMental';
 import AcoesHoje from '@/components/foco/AcoesHoje';
 import Agenda48h from '@/components/foco/Agenda48h';
@@ -8,15 +9,23 @@ export default function FocoDashboard() {
     <div className="p-4 md:p-6 space-y-6">
       {/* Top Section: Inbox + Today's Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <InboxMental />
-        <AcoesHoje />
+        <SectionBoundary name="Inbox Mental">
+          <InboxMental />
+        </SectionBoundary>
+        <SectionBoundary name="Ações de Hoje">
+          <AcoesHoje />
+        </SectionBoundary>
       </div>
 
       {/* Middle Section: 48h Agenda */}
-      <Agenda48h />
+      <SectionBoundary name="Agenda 48h">
+        <Agenda48h />
+      </SectionBoundary>
 
       {/* Bottom Section: Activity History */}
-      <ActivityHistory />
+      <SectionBoundary name="Histórico">
+        <ActivityHistory />
+      </SectionBoundary>
     </div>
   );
 }
