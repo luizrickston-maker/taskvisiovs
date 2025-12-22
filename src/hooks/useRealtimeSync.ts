@@ -24,8 +24,6 @@ export function useRealtimeSync(userId: string | undefined) {
     addScript, updateScript, deleteScript,
     addGoal, updateGoal, deleteGoal,
     addCategory, updateCategory, deleteCategory,
-    incomes, expenses, debts, savings, tasks, 
-    timeBlocks, projects, scripts, goals, categories,
   } = useAppStore();
 
   useEffect(() => {
@@ -40,7 +38,7 @@ export function useRealtimeSync(userId: string | undefined) {
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Income>;
           if (eventType === 'INSERT') {
-            const exists = incomes.some(i => i.id === newRecord.id);
+            const exists = useAppStore.getState().incomes.some(i => i.id === newRecord.id);
             if (!exists) addIncome(newRecord);
           } else if (eventType === 'UPDATE') {
             updateIncome(newRecord.id, newRecord);
@@ -56,7 +54,7 @@ export function useRealtimeSync(userId: string | undefined) {
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Expense>;
           if (eventType === 'INSERT') {
-            const exists = expenses.some(e => e.id === newRecord.id);
+            const exists = useAppStore.getState().expenses.some(e => e.id === newRecord.id);
             if (!exists) addExpense(newRecord);
           } else if (eventType === 'UPDATE') {
             updateExpense(newRecord.id, newRecord);
@@ -72,7 +70,7 @@ export function useRealtimeSync(userId: string | undefined) {
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Debt>;
           if (eventType === 'INSERT') {
-            const exists = debts.some(d => d.id === newRecord.id);
+            const exists = useAppStore.getState().debts.some(d => d.id === newRecord.id);
             if (!exists) addDebt(newRecord);
           } else if (eventType === 'UPDATE') {
             updateDebt(newRecord.id, newRecord);
@@ -88,7 +86,7 @@ export function useRealtimeSync(userId: string | undefined) {
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Saving>;
           if (eventType === 'INSERT') {
-            const exists = savings.some(s => s.id === newRecord.id);
+            const exists = useAppStore.getState().savings.some(s => s.id === newRecord.id);
             if (!exists) addSaving(newRecord);
           } else if (eventType === 'DELETE') {
             deleteSaving(oldRecord.id);
@@ -102,7 +100,7 @@ export function useRealtimeSync(userId: string | undefined) {
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Task>;
           if (eventType === 'INSERT') {
-            const exists = tasks.some(t => t.id === newRecord.id);
+            const exists = useAppStore.getState().tasks.some(t => t.id === newRecord.id);
             if (!exists) addTask(newRecord);
           } else if (eventType === 'UPDATE') {
             updateTask(newRecord.id, newRecord);
@@ -118,7 +116,7 @@ export function useRealtimeSync(userId: string | undefined) {
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<TimeBlock>;
           if (eventType === 'INSERT') {
-            const exists = timeBlocks.some(tb => tb.id === newRecord.id);
+            const exists = useAppStore.getState().timeBlocks.some(tb => tb.id === newRecord.id);
             if (!exists) addTimeBlock(newRecord);
           } else if (eventType === 'UPDATE') {
             updateTimeBlock(newRecord.id, newRecord);
@@ -134,7 +132,7 @@ export function useRealtimeSync(userId: string | undefined) {
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Project>;
           if (eventType === 'INSERT') {
-            const exists = projects.some(p => p.id === newRecord.id);
+            const exists = useAppStore.getState().projects.some(p => p.id === newRecord.id);
             if (!exists) addProject(newRecord);
           } else if (eventType === 'UPDATE') {
             updateProject(newRecord.id, newRecord);
@@ -150,7 +148,7 @@ export function useRealtimeSync(userId: string | undefined) {
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Script>;
           if (eventType === 'INSERT') {
-            const exists = scripts.some(s => s.id === newRecord.id);
+            const exists = useAppStore.getState().scripts.some(s => s.id === newRecord.id);
             if (!exists) addScript(newRecord);
           } else if (eventType === 'UPDATE') {
             updateScript(newRecord.id, newRecord);
@@ -166,7 +164,7 @@ export function useRealtimeSync(userId: string | undefined) {
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Goal>;
           if (eventType === 'INSERT') {
-            const exists = goals.some(g => g.id === newRecord.id);
+            const exists = useAppStore.getState().goals.some(g => g.id === newRecord.id);
             if (!exists) addGoal(newRecord);
           } else if (eventType === 'UPDATE') {
             updateGoal(newRecord.id, newRecord);
@@ -182,7 +180,7 @@ export function useRealtimeSync(userId: string | undefined) {
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Category>;
           if (eventType === 'INSERT') {
-            const exists = categories.some(c => c.id === newRecord.id);
+            const exists = useAppStore.getState().categories.some(c => c.id === newRecord.id);
             if (!exists) addCategory(newRecord);
           } else if (eventType === 'UPDATE') {
             updateCategory(newRecord.id, newRecord);
