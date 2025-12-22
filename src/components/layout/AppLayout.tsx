@@ -2,8 +2,10 @@ import { Outlet } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { MobileNav } from './MobileNav';
+import { RealtimeIndicator } from './RealtimeIndicator';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+import { useRealtimeStatus } from '@/hooks/useRealtimeStatus';
 import { useAuth } from '@/hooks/useAuth';
 
 export function AppLayout() {
@@ -12,6 +14,7 @@ export function AppLayout() {
   
   // Sincronização cross-device em tempo real
   useRealtimeSync(user?.id);
+  const realtimeStatus = useRealtimeStatus(user?.id);
 
   return (
     <SidebarProvider>
@@ -28,6 +31,7 @@ export function AppLayout() {
             <div className="flex-1">
               <h1 className="font-display font-semibold text-lg md:hidden">{appName}</h1>
             </div>
+            <RealtimeIndicator status={realtimeStatus} />
           </header>
 
           {/* Main Content */}
