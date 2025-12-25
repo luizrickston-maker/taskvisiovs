@@ -1,0 +1,203 @@
+import { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Plus, MoreHorizontal, Pencil, Trash2, Building2, User } from 'lucide-react';
+import { useAppStore } from '@/stores/useAppStore';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import type { Prospect, ProspectStatus } from '@/types/database';
+
+const statusConfig: Record<ProspectStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  novo: { label: 'Novo', variant: 'outline' },
+  em_negociacao: { label: 'Em Negociação', variant: 'secondary' },
+  proposta_enviada: { label: 'Proposta Enviada', variant: 'default' },
+  fechado: { label: 'Fechado', variant: 'default' },
+  perdido: { label: 'Perdido', variant: 'destructive' },
+};
+
+interface ProspectListProps {
+  onAddProspect: () => void;
+  onEditProspect: (prospect: Prospect) => void;
+}
+
+export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProps) {
+  const { prospects, projects, deleteProspect, updateProspect } = useAppStore();
+  const [statusFilter, setStatusFilter] = useState<ProspectStatus | 'all'>('all');
+
+  const filteredProspects = useMemo(() => {
+    if (statusFilter === 'all') return prospects;
+    return prospects.filter(p => p.status === statusFilter);
+  }, [prospects, statusFilter]);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  };
+
+  const getProjectName = (projectId?: string) => {
+    if (!projectId) return '-';
+    const project = projects.find(p => p.id === projectId);
+    return project?.project || '-';
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase.from('prospects').delete().eq('id', id);
+      if (error) throw error;
+      deleteProspect(id);
+      toast.success('Prospect excluído!');
+    } catch (error) {
+      console.error('Error deleting prospect:', error);
+      toast.error('Erro ao excluir prospect');
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: ProspectStatus) => {
+    try {
+      const { error } = await supabase
+        .from('prospects')
+        .update({ status: newStatus })
+        .eq('id', id);
+      
+      if (error) throw error;
+      updateProspect(id, { status: newStatus });
+      toast.success('Status atualizado!');
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Erro ao atualizar status');
+    }
+  };
+
+  return (
+    <Card className="glass-card">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <CardTitle className="text-lg font-semibold">Pipeline de Prospecção</CardTitle>
+        <div className="flex items-center gap-2">
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ProspectStatus | 'all')}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrar por status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Status</SelectItem>
+              {Object.entries(statusConfig).map(([value, config]) => (
+                <SelectItem key={value} value={value}>{config.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={onAddProspect} size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Prospecção
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {filteredProspects.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-4">
+            <Building2 className="w-12 h-12 text-muted-foreground" />
+            <p className="text-muted-foreground text-center">
+              {statusFilter === 'all' 
+                ? 'Nenhuma prospecção cadastrada' 
+                : 'Nenhuma prospecção com este status'}
+            </p>
+            <Button onClick={onAddProspect} variant="outline" size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Prospecção
+            </Button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Empresa</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Projeto</TableHead>
+                  <TableHead className="text-right">Valor Estimado</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProspects.map((prospect) => {
+                  const config = statusConfig[prospect.status];
+                  return (
+                    <TableRow key={prospect.id} className="animate-fade-in">
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">{prospect.client_name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {prospect.company_name || '-'}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {format(parseISO(prospect.prospection_date), 'dd/MM/yyyy', { locale: ptBR })}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Badge 
+                              variant={config.variant} 
+                              className={`cursor-pointer ${prospect.status === 'fechado' ? 'bg-success text-success-foreground' : ''}`}
+                            >
+                              {config.label}
+                            </Badge>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            {Object.entries(statusConfig).map(([value, cfg]) => (
+                              <DropdownMenuItem 
+                                key={value} 
+                                onClick={() => handleStatusChange(prospect.id, value as ProspectStatus)}
+                              >
+                                {cfg.label}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {prospect.project_type || getProjectName(prospect.project_id)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(prospect.estimated_value)}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onEditProspect(prospect)}>
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(prospect.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

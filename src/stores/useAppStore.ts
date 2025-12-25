@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import type { 
   Category, Income, Expense, Debt, Saving, Goal, 
-  Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask 
+  Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask,
+  SalesGoal, Prospect
 } from '@/types/database';
 
 interface AppState {
@@ -20,6 +21,8 @@ interface AppState {
   projectTasks: ProjectTask[];
   scripts: Script[];
   userPreferences: UserPreference | null;
+  salesGoals: SalesGoal[];
+  prospects: Prospect[];
   
   // Loading states
   isLoading: boolean;
@@ -107,6 +110,18 @@ interface AppState {
   setUserPreferences: (preferences: UserPreference | null) => void;
   updateUserPreferences: (updates: Partial<UserPreference>) => void;
   
+  // Actions - SalesGoals
+  setSalesGoals: (salesGoals: SalesGoal[]) => void;
+  addSalesGoal: (salesGoal: SalesGoal) => void;
+  updateSalesGoal: (id: string, updates: Partial<SalesGoal>) => void;
+  deleteSalesGoal: (id: string) => void;
+  
+  // Actions - Prospects
+  setProspects: (prospects: Prospect[]) => void;
+  addProspect: (prospect: Prospect) => void;
+  updateProspect: (id: string, updates: Partial<Prospect>) => void;
+  deleteProspect: (id: string) => void;
+  
   // Actions - Loading
   setIsLoading: (loading: boolean) => void;
   setDataInitialized: (initialized: boolean) => void;
@@ -130,6 +145,8 @@ const initialState = {
   projectTasks: [],
   scripts: [],
   userPreferences: null,
+  salesGoals: [],
+  prospects: [],
   isLoading: false,
   dataInitialized: false,
 };
@@ -275,6 +292,26 @@ export const useAppStore = create<AppState>((set) => ({
   setUserPreferences: (preferences) => set({ userPreferences: preferences }),
   updateUserPreferences: (updates) => set((state) => ({
     userPreferences: state.userPreferences ? { ...state.userPreferences, ...updates } : null
+  })),
+  
+  // SalesGoals
+  setSalesGoals: (salesGoals) => set({ salesGoals }),
+  addSalesGoal: (salesGoal) => set((state) => ({ salesGoals: [...state.salesGoals, salesGoal] })),
+  updateSalesGoal: (id, updates) => set((state) => ({
+    salesGoals: state.salesGoals.map((sg) => sg.id === id ? { ...sg, ...updates } : sg)
+  })),
+  deleteSalesGoal: (id) => set((state) => ({
+    salesGoals: state.salesGoals.filter((sg) => sg.id !== id)
+  })),
+  
+  // Prospects
+  setProspects: (prospects) => set({ prospects }),
+  addProspect: (prospect) => set((state) => ({ prospects: [...state.prospects, prospect] })),
+  updateProspect: (id, updates) => set((state) => ({
+    prospects: state.prospects.map((p) => p.id === id ? { ...p, ...updates } : p)
+  })),
+  deleteProspect: (id) => set((state) => ({
+    prospects: state.prospects.filter((p) => p.id !== id)
   })),
   
   // Loading

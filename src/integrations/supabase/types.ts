@@ -360,6 +360,95 @@ export type Database = {
           },
         ]
       }
+      prospects: {
+        Row: {
+          client_name: string
+          company_name: string | null
+          created_at: string
+          estimated_value: number
+          id: string
+          notes: string | null
+          project_id: string | null
+          project_type: string | null
+          prospection_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_name: string
+          company_name?: string | null
+          created_at?: string
+          estimated_value?: number
+          id?: string
+          notes?: string | null
+          project_id?: string | null
+          project_type?: string | null
+          prospection_date?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_name?: string
+          company_name?: string | null
+          created_at?: string
+          estimated_value?: number
+          id?: string
+          notes?: string | null
+          project_id?: string | null
+          project_type?: string | null
+          prospection_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_goals: {
+        Row: {
+          created_at: string
+          current_amount: number
+          end_date: string
+          goal_type: string
+          id: string
+          start_date: string
+          target_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_amount?: number
+          end_date: string
+          goal_type: string
+          id?: string
+          start_date: string
+          target_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_amount?: number
+          end_date?: string
+          goal_type?: string
+          id?: string
+          start_date?: string
+          target_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       savings: {
         Row: {
           amount: number

@@ -7,7 +7,8 @@ export type ScriptPlatform = 'youtube' | 'youtube_shorts' | 'tiktok' | 'tiktok_a
 export type ScriptStatus = 'draft' | 'scheduled' | 'published';
 export type GoalType = 'financial' | 'savings' | 'custom';
 export type ProjectTaskStatus = 'todo' | 'in_progress' | 'done';
-
+export type ProspectStatus = 'novo' | 'em_negociacao' | 'proposta_enviada' | 'fechado' | 'perdido';
+export type SalesGoalType = 'faturamento_mensal' | 'vendas_fechadas' | 'novos_clientes';
 export interface Category {
   id: string;
   user_id: string;
@@ -137,6 +138,33 @@ export interface ProjectTask {
   description?: string;
   priority: number;
   status: ProjectTaskStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SalesGoal {
+  id: string;
+  user_id: string;
+  goal_type: SalesGoalType;
+  target_amount: number;
+  current_amount: number;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Prospect {
+  id: string;
+  user_id: string;
+  client_name: string;
+  company_name?: string;
+  prospection_date: string;
+  status: ProspectStatus;
+  project_id?: string;
+  project_type?: string;
+  estimated_value: number;
+  notes?: string;
   created_at: string;
   updated_at: string;
 }

@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
 import type { 
   Income, Expense, Debt, Saving, Task, 
-  TimeBlock, Project, Script, Goal, Category, ProjectTask 
+  TimeBlock, Project, Script, Goal, Category, ProjectTask, SalesGoal, Prospect 
 } from '@/types/database';
 
 type RealtimePayload<T> = {
@@ -25,6 +25,8 @@ export function useRealtimeSync(userId: string | undefined) {
     addScript, updateScript, deleteScript,
     addGoal, updateGoal, deleteGoal,
     addCategory, updateCategory, deleteCategory,
+    addSalesGoal, updateSalesGoal, deleteSalesGoal,
+    addProspect, updateProspect, deleteProspect,
   } = useAppStore();
 
   useEffect(() => {
@@ -203,6 +205,38 @@ export function useRealtimeSync(userId: string | undefined) {
             updateCategory(newRecord.id, newRecord);
           } else if (eventType === 'DELETE') {
             deleteCategory(oldRecord.id);
+          }
+        }
+      )
+      // SalesGoals
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sales_goals', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<SalesGoal>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().salesGoals.some(sg => sg.id === newRecord.id);
+            if (!exists) addSalesGoal(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateSalesGoal(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteSalesGoal(oldRecord.id);
+          }
+        }
+      )
+      // Prospects
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'prospects', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Prospect>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().prospects.some(p => p.id === newRecord.id);
+            if (!exists) addProspect(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateProspect(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteProspect(oldRecord.id);
           }
         }
       )

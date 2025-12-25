@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
-import type { Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask } from '@/types/database';
+import type { Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask, SalesGoal, Prospect } from '@/types/database';
 
 export function useInitializeData(userId: string | undefined) {
   const loadingRef = useRef(false);
@@ -20,6 +20,8 @@ export function useInitializeData(userId: string | undefined) {
     setProjectTasks,
     setScripts,
     setUserPreferences,
+    setSalesGoals,
+    setProspects,
     setIsLoading,
     setDataInitialized,
     dataInitialized,
@@ -56,6 +58,8 @@ export function useInitializeData(userId: string | undefined) {
           projectTasksRes,
           scriptsRes,
           preferencesRes,
+          salesGoalsRes,
+          prospectsRes,
         ] = await Promise.all([
           supabase.from('categories').select('*').order('created_at', { ascending: true }),
           supabase.from('incomes').select('*').order('date', { ascending: false }),
@@ -71,6 +75,8 @@ export function useInitializeData(userId: string | undefined) {
           supabase.from('project_tasks').select('*').order('priority', { ascending: true }),
           supabase.from('scripts').select('*').order('scheduled_date', { ascending: true }),
           supabase.from('user_preferences').select('*').maybeSingle(),
+          supabase.from('sales_goals').select('*').order('start_date', { ascending: false }),
+          supabase.from('prospects').select('*').order('prospection_date', { ascending: false }),
         ]);
 
         if (categoriesRes.data) setCategories(categoriesRes.data as Category[]);
@@ -87,6 +93,8 @@ export function useInitializeData(userId: string | undefined) {
         if (projectTasksRes.data) setProjectTasks(projectTasksRes.data as ProjectTask[]);
         if (scriptsRes.data) setScripts(scriptsRes.data as Script[]);
         if (preferencesRes.data) setUserPreferences(preferencesRes.data as UserPreference);
+        if (salesGoalsRes.data) setSalesGoals(salesGoalsRes.data as SalesGoal[]);
+        if (prospectsRes.data) setProspects(prospectsRes.data as Prospect[]);
 
         setDataInitialized(true);
       } catch (error) {
@@ -98,5 +106,5 @@ export function useInitializeData(userId: string | undefined) {
     };
 
     loadAllData();
-  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setIsLoading, setDataInitialized]);
+  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setSalesGoals, setProspects, setIsLoading, setDataInitialized]);
 }
