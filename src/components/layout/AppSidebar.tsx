@@ -19,11 +19,11 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
 const mainNavItems = [
+  { title: 'Comercial', url: '/comercial', icon: Briefcase },
   { title: 'Caixa', url: '/caixa', icon: Wallet },
   { title: 'Finanças', url: '/financas', icon: TrendingUp },
   { title: 'Foco', url: '/foco', icon: Target },
   { title: 'Projetos', url: '/projetos', icon: FolderKanban },
-  { title: 'Comercial', url: '/comercial', icon: Briefcase },
   { title: 'Conteúdos', url: '/conteudos', icon: FileText },
   { title: 'Roteiros', url: '/roteiros', icon: Pen },
 ];

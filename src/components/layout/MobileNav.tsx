@@ -11,14 +11,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const mainNavItems = [
+  { title: 'Comercial', url: '/comercial', icon: Briefcase },
   { title: 'Caixa', url: '/caixa', icon: Wallet },
   { title: 'Finanças', url: '/financas', icon: TrendingUp },
   { title: 'Foco', url: '/foco', icon: Target },
-  { title: 'Projetos', url: '/projetos', icon: FolderKanban },
 ];
 
 const moreNavItems = [
-  { title: 'Comercial', url: '/comercial', icon: Briefcase },
+  { title: 'Projetos', url: '/projetos', icon: FolderKanban },
   { title: 'Roteiros', url: '/roteiros', icon: Pen },
   { title: 'Conteúdos', url: '/conteudos', icon: Calendar },
   { title: 'Config', url: '/config', icon: Settings },
