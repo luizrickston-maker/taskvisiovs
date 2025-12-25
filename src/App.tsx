@@ -14,6 +14,7 @@ import CaixaDashboard from "@/pages/CaixaDashboard";
 import FinancasDashboard from "@/pages/FinancasDashboard";
 import FocoDashboard from "@/pages/FocoDashboard";
 import ProjetosDashboard from "@/pages/ProjetosDashboard";
+import ComercialDashboard from "@/pages/ComercialDashboard";
 import ConteudosDashboard from "@/pages/ConteudosDashboard";
 import RoteirosDashboard from "@/pages/RoteirosDashboard";
 import ConfigPage from "@/pages/ConfigPage";
@@ -64,6 +65,7 @@ const App = () => {
                 <Route path="/financas" element={<FinancasDashboard />} />
                 <Route path="/foco" element={<FocoDashboard />} />
                 <Route path="/projetos" element={<ProjetosDashboard />} />
+                <Route path="/comercial" element={<ComercialDashboard />} />
                 <Route path="/conteudos" element={<ConteudosDashboard />} />
                 <Route path="/roteiros" element={<RoteirosDashboard />} />
                 <Route path="/config" element={<ConfigPage />} />
