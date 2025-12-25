@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { History, Check, Clock, Calendar as CalendarIcon, MoveRight } from 'lucide-react';
+import { History, Check, Clock, Calendar as CalendarIcon, MoveRight, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -30,7 +30,7 @@ export default function ActivityHistory() {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [newDate, setNewDate] = useState<Date | undefined>(undefined);
 
-  const { timeBlocks, customTimeBlockTypes, updateTimeBlock } = useAppStore();
+  const { timeBlocks, customTimeBlockTypes, updateTimeBlock, deleteTimeBlock } = useAppStore();
 
   const today = new Date();
   const tomorrow = addDays(today, 1);
@@ -101,6 +101,21 @@ export default function ActivityHistory() {
   const openRelocateDialog = (blockId: string) => {
     setSelectedBlockId(blockId);
     setRelocateOpen(true);
+  };
+
+  const handleDelete = async (blockId: string) => {
+    const { error } = await supabase
+      .from('time_blocks')
+      .delete()
+      .eq('id', blockId);
+
+    if (error) {
+      toast.error('Erro ao excluir compromisso');
+      return;
+    }
+
+    deleteTimeBlock(blockId);
+    toast.success('Compromisso excluído!');
   };
 
   // Dates with activities (for calendar highlighting)
@@ -231,15 +246,26 @@ export default function ActivityHistory() {
                                 {block.start_time} - {block.end_time} • {typeInfo.label}
                               </p>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 flex-shrink-0"
-                              onClick={() => openRelocateDialog(block.id)}
-                              title="Realocar"
-                            >
-                              <MoveRight className="w-3 h-3" />
-                            </Button>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => openRelocateDialog(block.id)}
+                                title="Realocar"
+                              >
+                                <MoveRight className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-destructive hover:text-destructive"
+                                onClick={() => handleDelete(block.id)}
+                                title="Excluir"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
                           </div>
                         );
                       })}
