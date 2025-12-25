@@ -3,12 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Target, TrendingUp, Users, Trash2, FolderOpen } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Plus, Target, TrendingUp, Users, Trash2, FolderOpen, CalendarIcon, X } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, isWithinInterval, parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import type { SalesGoalType } from '@/types/database';
 
 const goalTypeConfig: Record<SalesGoalType, { label: string; icon: typeof Target; colorClass: string }> = {
@@ -17,65 +20,65 @@ const goalTypeConfig: Record<SalesGoalType, { label: string; icon: typeof Target
   novos_clientes: { label: 'Novos Clientes', icon: Users, colorClass: 'text-warning' },
 };
 
-type PeriodFilter = 'all' | 'today' | 'week' | 'month';
-
 interface SalesGoalsSummaryProps {
   onAddGoal: () => void;
 }
 
 export function SalesGoalsSummary({ onAddGoal }: SalesGoalsSummaryProps) {
   const { salesGoals, projects, deleteSalesGoal } = useAppStore();
-  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+  
+  // New filter states
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [projectFilter, setProjectFilter] = useState<string>('all');
+  const [startDateFilter, setStartDateFilter] = useState<Date | undefined>(undefined);
+  const [endDateFilter, setEndDateFilter] = useState<Date | undefined>(undefined);
+  
+  const hasActiveFilters = typeFilter !== 'all' || projectFilter !== 'all' || startDateFilter || endDateFilter;
+  
+  const clearFilters = () => {
+    setTypeFilter('all');
+    setProjectFilter('all');
+    setStartDateFilter(undefined);
+    setEndDateFilter(undefined);
+  };
   
   const filteredGoals = useMemo(() => {
-    const today = new Date();
-    
-    // First filter by active goals (date range includes today)
-    const activeGoals = salesGoals.filter(goal => {
-      try {
-        const start = parseISO(goal.start_date);
-        const end = parseISO(goal.end_date);
-        return isWithinInterval(today, { start, end });
-      } catch {
+    return salesGoals.filter(goal => {
+      // 1. Filter by type
+      if (typeFilter !== 'all' && goal.goal_type !== typeFilter) {
         return false;
       }
-    });
-
-    // Then filter by period
-    if (periodFilter === 'all') return activeGoals;
-
-    return activeGoals.filter(goal => {
+      
+      // 2. Filter by project
+      if (projectFilter !== 'all') {
+        if (projectFilter === 'none' && goal.project_id !== null) {
+          return false;
+        } else if (projectFilter !== 'none' && goal.project_id !== projectFilter) {
+          return false;
+        }
+      }
+      
+      // 3. Filter by date range
       try {
         const goalStart = parseISO(goal.start_date);
         const goalEnd = parseISO(goal.end_date);
         
-        let periodStart: Date;
-        let periodEnd: Date;
-        
-        switch (periodFilter) {
-          case 'today':
-            periodStart = startOfDay(today);
-            periodEnd = endOfDay(today);
-            break;
-          case 'week':
-            periodStart = startOfWeek(today, { locale: ptBR });
-            periodEnd = endOfWeek(today, { locale: ptBR });
-            break;
-          case 'month':
-            periodStart = startOfMonth(today);
-            periodEnd = endOfMonth(today);
-            break;
-          default:
-            return true;
+        // If start date filter is set, goal must end after or on that date
+        if (startDateFilter && goalEnd < startDateFilter) {
+          return false;
         }
         
-        // Check if goal period overlaps with selected period
-        return goalStart <= periodEnd && goalEnd >= periodStart;
+        // If end date filter is set, goal must start before or on that date
+        if (endDateFilter && goalStart > endDateFilter) {
+          return false;
+        }
       } catch {
         return false;
       }
+      
+      return true;
     });
-  }, [salesGoals, periodFilter]);
+  }, [salesGoals, typeFilter, projectFilter, startDateFilter, endDateFilter]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -99,13 +102,13 @@ export function SalesGoalsSummary({ onAddGoal }: SalesGoalsSummaryProps) {
     }
   };
 
-  if (filteredGoals.length === 0 && periodFilter === 'all') {
+  if (filteredGoals.length === 0 && !hasActiveFilters) {
     return (
       <Card className="glass-card">
         <CardContent className="flex flex-col items-center justify-center py-8 gap-4">
           <Target className="w-12 h-12 text-muted-foreground" />
           <p className="text-muted-foreground text-center">
-            Nenhuma meta ativa no momento
+            Nenhuma meta cadastrada
           </p>
           <Button onClick={onAddGoal} variant="outline" size="sm">
             <Plus className="w-4 h-4 mr-2" />
@@ -118,19 +121,86 @@ export function SalesGoalsSummary({ onAddGoal }: SalesGoalsSummaryProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filter */}
-      <div className="flex items-center justify-between">
-        <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Filtrar período" />
+      {/* Filters Bar */}
+      <div className="flex flex-wrap items-center gap-3 p-4 bg-muted/30 rounded-lg">
+        {/* Type Filter */}
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Tipo da Meta" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas Ativas</SelectItem>
-            <SelectItem value="today">Hoje</SelectItem>
-            <SelectItem value="week">Esta Semana</SelectItem>
-            <SelectItem value="month">Este Mês</SelectItem>
+            <SelectItem value="all">Todos os tipos</SelectItem>
+            <SelectItem value="faturamento_mensal">Faturamento Mensal</SelectItem>
+            <SelectItem value="vendas_fechadas">Vendas Fechadas</SelectItem>
+            <SelectItem value="novos_clientes">Novos Clientes</SelectItem>
           </SelectContent>
         </Select>
+        
+        {/* Project Filter */}
+        <Select value={projectFilter} onValueChange={setProjectFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Projeto" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os projetos</SelectItem>
+            <SelectItem value="none">Sem projeto</SelectItem>
+            {projects.map(project => (
+              <SelectItem key={project.id} value={project.id}>
+                {project.project}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        {/* Start Date Picker */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className={cn("w-[150px] justify-start text-left font-normal", !startDateFilter && "text-muted-foreground")}>
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {startDateFilter ? format(startDateFilter, 'dd/MM/yyyy') : 'Data início'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={startDateFilter}
+              onSelect={setStartDateFilter}
+              initialFocus
+              className="pointer-events-auto"
+              locale={ptBR}
+            />
+          </PopoverContent>
+        </Popover>
+        
+        <span className="text-muted-foreground text-sm">até</span>
+        
+        {/* End Date Picker */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className={cn("w-[150px] justify-start text-left font-normal", !endDateFilter && "text-muted-foreground")}>
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {endDateFilter ? format(endDateFilter, 'dd/MM/yyyy') : 'Data fim'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={endDateFilter}
+              onSelect={setEndDateFilter}
+              initialFocus
+              className="pointer-events-auto"
+              locale={ptBR}
+            />
+          </PopoverContent>
+        </Popover>
+        
+        {/* Clear Filters Button */}
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-foreground">
+            <X className="h-4 w-4 mr-1" />
+            Limpar
+          </Button>
+        )}
       </div>
 
       {/* Goals Grid */}
