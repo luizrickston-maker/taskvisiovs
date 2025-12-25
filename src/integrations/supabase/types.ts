@@ -420,6 +420,7 @@ export type Database = {
           end_date: string
           goal_type: string
           id: string
+          project_id: string | null
           start_date: string
           target_amount: number
           updated_at: string
@@ -431,6 +432,7 @@ export type Database = {
           end_date: string
           goal_type: string
           id?: string
+          project_id?: string | null
           start_date: string
           target_amount: number
           updated_at?: string
@@ -442,12 +444,21 @@ export type Database = {
           end_date?: string
           goal_type?: string
           id?: string
+          project_id?: string | null
           start_date?: string
           target_amount?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sales_goals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       savings: {
         Row: {

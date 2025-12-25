@@ -150,6 +150,7 @@ export interface SalesGoal {
   current_amount: number;
   start_date: string;
   end_date: string;
+  project_id?: string;
   created_at: string;
   updated_at: string;
 }
