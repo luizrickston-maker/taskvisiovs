@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, Building2, User } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, Building2, User, ChevronDown } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -145,9 +145,10 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
                           <DropdownMenuTrigger asChild>
                             <Badge 
                               variant={config.variant} 
-                              className={`cursor-pointer ${prospect.status === 'fechado' ? 'bg-success text-success-foreground' : ''}`}
+                              className={`cursor-pointer inline-flex items-center gap-1 hover:opacity-80 hover:ring-2 ring-offset-1 ring-offset-background ring-primary/20 transition-all ${prospect.status === 'fechado' ? 'bg-success text-success-foreground' : ''}`}
                             >
                               {config.label}
+                              <ChevronDown className="w-3 h-3" />
                             </Badge>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>

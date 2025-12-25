@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,14 +25,28 @@ const goalTypeOptions: { value: SalesGoalType; label: string }[] = [
 
 export function SalesGoalForm({ open, onOpenChange, editingGoal }: SalesGoalFormProps) {
   const { user } = useAuthContext();
-  const { addSalesGoal, updateSalesGoal } = useAppStore();
+  const { projects, addSalesGoal, updateSalesGoal } = useAppStore();
   
-  const [goalType, setGoalType] = useState<SalesGoalType>(editingGoal?.goal_type || 'faturamento_mensal');
-  const [targetAmount, setTargetAmount] = useState(editingGoal?.target_amount?.toString() || '');
-  const [currentAmount, setCurrentAmount] = useState(editingGoal?.current_amount?.toString() || '0');
-  const [startDate, setStartDate] = useState(editingGoal?.start_date || format(new Date(), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(editingGoal?.end_date || '');
+  const [goalType, setGoalType] = useState<SalesGoalType>('faturamento_mensal');
+  const [targetAmount, setTargetAmount] = useState('');
+  const [currentAmount, setCurrentAmount] = useState('0');
+  const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState('');
+  const [projectId, setProjectId] = useState<string>('none');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (editingGoal) {
+      setGoalType(editingGoal.goal_type);
+      setTargetAmount(editingGoal.target_amount?.toString() || '');
+      setCurrentAmount(editingGoal.current_amount?.toString() || '0');
+      setStartDate(editingGoal.start_date || format(new Date(), 'yyyy-MM-dd'));
+      setEndDate(editingGoal.end_date || '');
+      setProjectId(editingGoal.project_id || 'none');
+    } else {
+      resetForm();
+    }
+  }, [editingGoal, open]);
 
   const resetForm = () => {
     setGoalType('faturamento_mensal');
@@ -40,6 +54,7 @@ export function SalesGoalForm({ open, onOpenChange, editingGoal }: SalesGoalForm
     setCurrentAmount('0');
     setStartDate(format(new Date(), 'yyyy-MM-dd'));
     setEndDate('');
+    setProjectId('none');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,40 +66,32 @@ export function SalesGoalForm({ open, onOpenChange, editingGoal }: SalesGoalForm
 
     setIsSubmitting(true);
 
+    const goalData = {
+      goal_type: goalType,
+      target_amount: parseFloat(targetAmount),
+      current_amount: parseFloat(currentAmount),
+      start_date: startDate,
+      end_date: endDate,
+      project_id: projectId === 'none' ? null : projectId,
+    };
+
     try {
       if (editingGoal) {
         const { error } = await supabase
           .from('sales_goals')
-          .update({
-            goal_type: goalType,
-            target_amount: parseFloat(targetAmount),
-            current_amount: parseFloat(currentAmount),
-            start_date: startDate,
-            end_date: endDate,
-          })
+          .update(goalData)
           .eq('id', editingGoal.id);
 
         if (error) throw error;
         
-        updateSalesGoal(editingGoal.id, {
-          goal_type: goalType,
-          target_amount: parseFloat(targetAmount),
-          current_amount: parseFloat(currentAmount),
-          start_date: startDate,
-          end_date: endDate,
-        });
-        
+        updateSalesGoal(editingGoal.id, goalData);
         toast.success('Meta atualizada com sucesso!');
       } else {
         const { data, error } = await supabase
           .from('sales_goals')
           .insert({
             user_id: user.id,
-            goal_type: goalType,
-            target_amount: parseFloat(targetAmount),
-            current_amount: parseFloat(currentAmount),
-            start_date: startDate,
-            end_date: endDate,
+            ...goalData,
           })
           .select()
           .single();
@@ -122,6 +129,21 @@ export function SalesGoalForm({ open, onOpenChange, editingGoal }: SalesGoalForm
               <SelectContent>
                 {goalTypeOptions.map(opt => (
                   <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="projectId">Projeto Vinculado</Label>
+            <Select value={projectId} onValueChange={setProjectId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um projeto (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum</SelectItem>
+                {projects.map(project => (
+                  <SelectItem key={project.id} value={project.id}>{project.project}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
