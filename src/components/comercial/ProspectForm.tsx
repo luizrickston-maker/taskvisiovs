@@ -34,7 +34,7 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
   const [companyName, setCompanyName] = useState('');
   const [prospectionDate, setProspectionDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [status, setStatus] = useState<ProspectStatus>('novo');
-  const [projectId, setProjectId] = useState<string>('');
+  const [projectId, setProjectId] = useState<string>('none');
   const [projectType, setProjectType] = useState('');
   const [estimatedValue, setEstimatedValue] = useState('');
   const [notes, setNotes] = useState('');
@@ -46,7 +46,7 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
       setCompanyName(editingProspect.company_name || '');
       setProspectionDate(editingProspect.prospection_date);
       setStatus(editingProspect.status);
-      setProjectId(editingProspect.project_id || '');
+      setProjectId(editingProspect.project_id || 'none');
       setProjectType(editingProspect.project_type || '');
       setEstimatedValue(editingProspect.estimated_value?.toString() || '');
       setNotes(editingProspect.notes || '');
@@ -60,7 +60,7 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
     setCompanyName('');
     setProspectionDate(format(new Date(), 'yyyy-MM-dd'));
     setStatus('novo');
-    setProjectId('');
+    setProjectId('none');
     setProjectType('');
     setEstimatedValue('');
     setNotes('');
@@ -80,7 +80,7 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
       company_name: companyName.trim() || null,
       prospection_date: prospectionDate,
       status,
-      project_id: projectId || null,
+      project_id: projectId === 'none' ? null : projectId,
       project_type: projectType.trim() || null,
       estimated_value: parseFloat(estimatedValue) || 0,
       notes: notes.trim() || null,
@@ -187,7 +187,7 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
                   <SelectValue placeholder="Selecione um projeto" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="none">Nenhum</SelectItem>
                   {projects.map(project => (
                     <SelectItem key={project.id} value={project.id}>{project.project}</SelectItem>
                   ))}
