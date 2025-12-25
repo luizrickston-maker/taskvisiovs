@@ -6,6 +6,7 @@ export type ProjectStatus = 'todo' | 'progress' | 'blocked' | 'done';
 export type ScriptPlatform = 'youtube' | 'youtube_shorts' | 'tiktok' | 'tiktok_ads' | 'instagram_reels' | 'instagram_post' | 'instagram_boost' | 'facebook_ads';
 export type ScriptStatus = 'draft' | 'scheduled' | 'published';
 export type GoalType = 'financial' | 'savings' | 'custom';
+export type ProjectTaskStatus = 'todo' | 'in_progress' | 'done';
 
 export interface Category {
   id: string;
@@ -124,6 +125,18 @@ export interface Project {
   priority: number;
   status: ProjectStatus;
   estimated_time?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectTask {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  title: string;
+  description?: string;
+  priority: number;
+  status: ProjectTaskStatus;
   created_at: string;
   updated_at: string;
 }

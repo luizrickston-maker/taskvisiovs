@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
 import type { 
   Income, Expense, Debt, Saving, Task, 
-  TimeBlock, Project, Script, Goal, Category 
+  TimeBlock, Project, Script, Goal, Category, ProjectTask 
 } from '@/types/database';
 
 type RealtimePayload<T> = {
@@ -21,6 +21,7 @@ export function useRealtimeSync(userId: string | undefined) {
     addTask, updateTask, deleteTask,
     addTimeBlock, updateTimeBlock, deleteTimeBlock,
     addProject, updateProject, deleteProject,
+    addProjectTask, updateProjectTask, deleteProjectTask,
     addScript, updateScript, deleteScript,
     addGoal, updateGoal, deleteGoal,
     addCategory, updateCategory, deleteCategory,
@@ -138,6 +139,22 @@ export function useRealtimeSync(userId: string | undefined) {
             updateProject(newRecord.id, newRecord);
           } else if (eventType === 'DELETE') {
             deleteProject(oldRecord.id);
+          }
+        }
+      )
+      // ProjectTasks
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'project_tasks', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<ProjectTask>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().projectTasks.some(pt => pt.id === newRecord.id);
+            if (!exists) addProjectTask(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateProjectTask(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteProjectTask(oldRecord.id);
           }
         }
       )

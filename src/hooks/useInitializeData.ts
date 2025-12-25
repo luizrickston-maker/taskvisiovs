@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
-import type { Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType } from '@/types/database';
+import type { Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask } from '@/types/database';
 
 export function useInitializeData(userId: string | undefined) {
   const loadingRef = useRef(false);
@@ -17,6 +17,7 @@ export function useInitializeData(userId: string | undefined) {
     setCustomTimeBlockTypes,
     setProjectCategories,
     setProjects,
+    setProjectTasks,
     setScripts,
     setUserPreferences,
     setIsLoading,
@@ -52,6 +53,7 @@ export function useInitializeData(userId: string | undefined) {
           customTimeBlockTypesRes,
           projectCategoriesRes,
           projectsRes,
+          projectTasksRes,
           scriptsRes,
           preferencesRes,
         ] = await Promise.all([
@@ -66,6 +68,7 @@ export function useInitializeData(userId: string | undefined) {
           supabase.from('time_block_types').select('*').order('created_at', { ascending: true }),
           supabase.from('project_categories').select('*').order('created_at', { ascending: true }),
           supabase.from('projects').select('*').order('priority', { ascending: true }),
+          supabase.from('project_tasks').select('*').order('priority', { ascending: true }),
           supabase.from('scripts').select('*').order('scheduled_date', { ascending: true }),
           supabase.from('user_preferences').select('*').maybeSingle(),
         ]);
@@ -81,6 +84,7 @@ export function useInitializeData(userId: string | undefined) {
         if (customTimeBlockTypesRes.data) setCustomTimeBlockTypes(customTimeBlockTypesRes.data as CustomTimeBlockType[]);
         if (projectCategoriesRes.data) setProjectCategories(projectCategoriesRes.data as ProjectCategory[]);
         if (projectsRes.data) setProjects(projectsRes.data as Project[]);
+        if (projectTasksRes.data) setProjectTasks(projectTasksRes.data as ProjectTask[]);
         if (scriptsRes.data) setScripts(scriptsRes.data as Script[]);
         if (preferencesRes.data) setUserPreferences(preferencesRes.data as UserPreference);
 
@@ -94,5 +98,5 @@ export function useInitializeData(userId: string | undefined) {
     };
 
     loadAllData();
-  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setScripts, setUserPreferences, setIsLoading, setDataInitialized]);
+  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setIsLoading, setDataInitialized]);
 }

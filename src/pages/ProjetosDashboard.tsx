@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import KanbanColumn from '@/components/projetos/KanbanColumn';
 import ProjectForm from '@/components/projetos/ProjectForm';
 import CategoryManager from '@/components/projetos/CategoryManager';
+import ProjectTasksSection from '@/components/projetos/ProjectTasksSection';
 import type { Project, ProjectStatus } from '@/types/database';
 
 const columns: { status: ProjectStatus; title: string; icon: typeof ListTodo; color: string }[] = [
@@ -127,6 +128,9 @@ export default function ProjetosDashboard() {
           />
         ))}
       </div>
+
+      {/* Project Tasks Section */}
+      <ProjectTasksSection />
 
       {/* Project Form Dialog */}
       <ProjectForm
