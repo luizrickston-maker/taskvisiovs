@@ -143,13 +143,19 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Badge 
-                              variant={config.variant} 
-                              className={`cursor-pointer inline-flex items-center gap-1 hover:opacity-80 hover:ring-2 ring-offset-1 ring-offset-background ring-primary/20 transition-all ${prospect.status === 'fechado' ? 'bg-success text-success-foreground' : ''}`}
+                            <button
+                              type="button"
+                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full cursor-pointer transition-all hover:opacity-80 hover:ring-2 ring-offset-1 ring-offset-background ring-primary/20 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
+                                prospect.status === 'novo' ? 'border border-input bg-background text-foreground' :
+                                prospect.status === 'em_negociacao' ? 'bg-secondary text-secondary-foreground' :
+                                prospect.status === 'proposta_enviada' ? 'bg-primary text-primary-foreground' :
+                                prospect.status === 'fechado' ? 'bg-success text-success-foreground' :
+                                prospect.status === 'perdido' ? 'bg-destructive text-destructive-foreground' : ''
+                              }`}
                             >
                               {config.label}
                               <ChevronDown className="w-3 h-3" />
-                            </Badge>
+                            </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
                             {Object.entries(statusConfig).map(([value, cfg]) => (
