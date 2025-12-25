@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { 
   Category, Income, Expense, Debt, Saving, Goal, 
-  Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType 
+  Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask 
 } from '@/types/database';
 
 interface AppState {
@@ -17,6 +17,7 @@ interface AppState {
   customTimeBlockTypes: CustomTimeBlockType[];
   projectCategories: ProjectCategory[];
   projects: Project[];
+  projectTasks: ProjectTask[];
   scripts: Script[];
   userPreferences: UserPreference | null;
   
@@ -90,6 +91,12 @@ interface AppState {
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   
+  // Actions - ProjectTasks
+  setProjectTasks: (projectTasks: ProjectTask[]) => void;
+  addProjectTask: (projectTask: ProjectTask) => void;
+  updateProjectTask: (id: string, updates: Partial<ProjectTask>) => void;
+  deleteProjectTask: (id: string) => void;
+  
   // Actions - Scripts
   setScripts: (scripts: Script[]) => void;
   addScript: (script: Script) => void;
@@ -120,6 +127,7 @@ const initialState = {
   customTimeBlockTypes: [],
   projectCategories: [],
   projects: [],
+  projectTasks: [],
   scripts: [],
   userPreferences: null,
   isLoading: false,
@@ -241,6 +249,16 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   deleteProject: (id) => set((state) => ({
     projects: state.projects.filter((p) => p.id !== id)
+  })),
+  
+  // ProjectTasks
+  setProjectTasks: (projectTasks) => set({ projectTasks }),
+  addProjectTask: (projectTask) => set((state) => ({ projectTasks: [...state.projectTasks, projectTask] })),
+  updateProjectTask: (id, updates) => set((state) => ({
+    projectTasks: state.projectTasks.map((pt) => pt.id === id ? { ...pt, ...updates } : pt)
+  })),
+  deleteProjectTask: (id) => set((state) => ({
+    projectTasks: state.projectTasks.filter((pt) => pt.id !== id)
   })),
   
   // Scripts

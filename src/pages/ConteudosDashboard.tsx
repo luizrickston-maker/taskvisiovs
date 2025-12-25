@@ -1,25 +1,25 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { FileText, Calendar, List, Filter } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ContentCalendar } from '@/components/conteudos/ContentCalendar';
 import { ContentTimeline } from '@/components/conteudos/ContentTimeline';
+import { ScriptViewModal } from '@/components/conteudos/ScriptViewModal';
 import { useAppStore } from '@/stores/useAppStore';
 import type { Script } from '@/types/database';
 
 export default function ConteudosDashboard() {
-  const navigate = useNavigate();
   const { scripts } = useAppStore();
   const [view, setView] = useState<'calendar' | 'timeline'>('calendar');
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedScript, setSelectedScript] = useState<Script | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const handleSelectScript = (script: Script) => {
-    // Navigate to roteiros with script selected
-    navigate('/roteiros', { state: { editScript: script } });
+    setSelectedScript(script);
+    setModalOpen(true);
   };
 
   // Stats
@@ -139,6 +139,13 @@ export default function ConteudosDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Script View Modal */}
+      <ScriptViewModal
+        script={selectedScript}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
     </div>
   );
 }

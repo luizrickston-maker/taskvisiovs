@@ -25,7 +25,6 @@ const statusOptions: { value: ProjectStatus; label: string }[] = [
 export default function ProjectForm({ open, onOpenChange, editProject }: ProjectFormProps) {
   const { projectCategories, addProject, updateProject } = useAppStore();
   
-  const [task, setTask] = useState('');
   const [project, setProject] = useState('');
   const [categoryId, setCategoryId] = useState<string>('');
   const [priority, setPriority] = useState('3');
@@ -35,7 +34,6 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
 
   useEffect(() => {
     if (editProject) {
-      setTask(editProject.task);
       setProject(editProject.project);
       setCategoryId(editProject.project_category_id || '');
       setPriority(String(editProject.priority));
@@ -47,7 +45,6 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
   }, [editProject, open]);
 
   const resetForm = () => {
-    setTask('');
     setProject('');
     setCategoryId('');
     setPriority('3');
@@ -57,7 +54,7 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!task.trim() || !project.trim()) return;
+    if (!project.trim()) return;
 
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -67,7 +64,7 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
     }
 
     const projectData = {
-      task: task.trim(),
+      task: project.trim(), // Use project name as task for backwards compatibility
       project: project.trim(),
       project_category_id: categoryId || null,
       priority: Number(priority),
@@ -130,15 +127,6 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Tarefa *</Label>
-            <Input
-              placeholder="Ex: Criar wireframes das páginas"
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              required
-            />
-          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -220,7 +208,7 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
             >
               Cancelar
             </Button>
-            <Button type="submit" className="flex-1" disabled={loading || !task.trim() || !project.trim()}>
+            <Button type="submit" className="flex-1" disabled={loading || !project.trim()}>
               {editProject ? 'Salvar' : 'Criar'}
             </Button>
           </div>
