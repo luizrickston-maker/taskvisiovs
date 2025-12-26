@@ -155,6 +155,8 @@ export interface SalesGoal {
   updated_at: string;
 }
 
+export type PaymentType = 'recorrente' | 'pontual';
+
 export interface Prospect {
   id: string;
   user_id: string;
@@ -166,6 +168,9 @@ export interface Prospect {
   project_type?: string;
   estimated_value: number;
   notes?: string;
+  payment_type?: PaymentType;
+  contract_duration?: number;
+  payment_installments?: number;
   created_at: string;
   updated_at: string;
 }

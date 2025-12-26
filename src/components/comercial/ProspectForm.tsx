@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import type { Prospect, ProspectStatus } from '@/types/database';
+import type { Prospect, ProspectStatus, PaymentType } from '@/types/database';
 import { format } from 'date-fns';
 
 interface ProspectFormProps {
@@ -26,6 +26,11 @@ const statusOptions: { value: ProspectStatus; label: string }[] = [
   { value: 'perdido', label: 'Perdido' },
 ];
 
+const paymentTypeOptions: { value: PaymentType; label: string }[] = [
+  { value: 'recorrente', label: 'Recorrente' },
+  { value: 'pontual', label: 'Pontual' },
+];
+
 export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFormProps) {
   const { user } = useAuthContext();
   const { projects, addProspect, updateProspect } = useAppStore();
@@ -38,6 +43,9 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
   const [projectType, setProjectType] = useState('');
   const [estimatedValue, setEstimatedValue] = useState('');
   const [notes, setNotes] = useState('');
+  const [paymentType, setPaymentType] = useState<PaymentType | 'none'>('none');
+  const [contractDuration, setContractDuration] = useState('');
+  const [paymentInstallments, setPaymentInstallments] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -50,6 +58,9 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
       setProjectType(editingProspect.project_type || '');
       setEstimatedValue(editingProspect.estimated_value?.toString() || '');
       setNotes(editingProspect.notes || '');
+      setPaymentType(editingProspect.payment_type || 'none');
+      setContractDuration(editingProspect.contract_duration?.toString() || '');
+      setPaymentInstallments(editingProspect.payment_installments?.toString() || '');
     } else {
       resetForm();
     }
@@ -64,6 +75,9 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
     setProjectType('');
     setEstimatedValue('');
     setNotes('');
+    setPaymentType('none');
+    setContractDuration('');
+    setPaymentInstallments('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,6 +98,9 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
       project_type: projectType.trim() || null,
       estimated_value: parseFloat(estimatedValue) || 0,
       notes: notes.trim() || null,
+      payment_type: paymentType === 'none' ? null : paymentType,
+      contract_duration: paymentType === 'recorrente' && contractDuration ? parseInt(contractDuration) : null,
+      payment_installments: paymentType === 'pontual' && paymentInstallments ? parseInt(paymentInstallments) : null,
     };
 
     try {
@@ -205,18 +222,62 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="estimatedValue">Valor Estimado (R$)</Label>
-            <Input
-              id="estimatedValue"
-              type="number"
-              step="0.01"
-              min="0"
-              value={estimatedValue}
-              onChange={(e) => setEstimatedValue(e.target.value)}
-              placeholder="0.00"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="estimatedValue">Valor Estimado (R$)</Label>
+              <Input
+                id="estimatedValue"
+                type="number"
+                step="0.01"
+                min="0"
+                value={estimatedValue}
+                onChange={(e) => setEstimatedValue(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="paymentType">Tipo de Pagamento</Label>
+              <Select value={paymentType} onValueChange={(v) => setPaymentType(v as PaymentType | 'none')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Não definido</SelectItem>
+                  {paymentTypeOptions.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
+          {paymentType === 'recorrente' && (
+            <div className="space-y-2">
+              <Label htmlFor="contractDuration">Duração do Contrato (meses)</Label>
+              <Input
+                id="contractDuration"
+                type="number"
+                min="1"
+                value={contractDuration}
+                onChange={(e) => setContractDuration(e.target.value)}
+                placeholder="Ex: 12"
+              />
+            </div>
+          )}
+
+          {paymentType === 'pontual' && (
+            <div className="space-y-2">
+              <Label htmlFor="paymentInstallments">Parcelas de Pagamento</Label>
+              <Input
+                id="paymentInstallments"
+                type="number"
+                min="1"
+                value={paymentInstallments}
+                onChange={(e) => setPaymentInstallments(e.target.value)}
+                placeholder="Ex: 3"
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notas</Label>
