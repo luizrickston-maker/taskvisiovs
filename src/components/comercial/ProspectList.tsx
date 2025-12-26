@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, Building2, User, ChevronDown } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, Building2, User, ChevronDown, Repeat, CreditCard } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -118,6 +118,7 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
                   <TableHead>Empresa</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Pagamento</TableHead>
                   <TableHead>Projeto</TableHead>
                   <TableHead className="text-right">Valor Estimado</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
@@ -168,6 +169,24 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
                             ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                      </TableCell>
+                      <TableCell>
+                        {prospect.payment_type ? (
+                          <div className="flex items-center gap-1.5">
+                            {prospect.payment_type === 'recorrente' ? (
+                              <Repeat className="w-3.5 h-3.5 text-primary" />
+                            ) : (
+                              <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
+                            )}
+                            <span className="text-sm">
+                              {prospect.payment_type === 'recorrente' 
+                                ? `${prospect.contract_duration || '?'}m` 
+                                : `${prospect.payment_installments || 1}x`}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {prospect.project_type || getProjectName(prospect.project_id)}

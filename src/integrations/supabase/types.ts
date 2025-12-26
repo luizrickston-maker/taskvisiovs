@@ -364,10 +364,13 @@ export type Database = {
         Row: {
           client_name: string
           company_name: string | null
+          contract_duration: number | null
           created_at: string
           estimated_value: number
           id: string
           notes: string | null
+          payment_installments: number | null
+          payment_type: string | null
           project_id: string | null
           project_type: string | null
           prospection_date: string
@@ -378,10 +381,13 @@ export type Database = {
         Insert: {
           client_name: string
           company_name?: string | null
+          contract_duration?: number | null
           created_at?: string
           estimated_value?: number
           id?: string
           notes?: string | null
+          payment_installments?: number | null
+          payment_type?: string | null
           project_id?: string | null
           project_type?: string | null
           prospection_date?: string
@@ -392,10 +398,13 @@ export type Database = {
         Update: {
           client_name?: string
           company_name?: string | null
+          contract_duration?: number | null
           created_at?: string
           estimated_value?: number
           id?: string
           notes?: string | null
+          payment_installments?: number | null
+          payment_type?: string | null
           project_id?: string | null
           project_type?: string | null
           prospection_date?: string
