@@ -43,9 +43,9 @@ export default function InboxMental() {
   };
 
   const handleMoveToToday = async (taskId: string) => {
+    // Aviso suave em vez de bloqueio
     if (todayTasks.length >= 5) {
-      toast.error('Máximo de 5 ações por dia!');
-      return;
+      toast.info('Você já tem 5+ ações hoje. Considere priorizar!');
     }
 
     const today = new Date().toISOString().split('T')[0];
