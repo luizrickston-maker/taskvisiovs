@@ -11,7 +11,24 @@ export default function AcoesHoje() {
   const { tasks, updateTask, deleteTask } = useAppStore();
   
   const today = new Date().toISOString().split('T')[0];
-  const todayTasks = tasks.filter(t => t.type === 'today' && t.scheduled_date === today);
+  
+  // Mostrar tarefas do tipo 'today' que:
+  // - Não estão completadas, OU
+  // - Foram completadas hoje (mantém visível até o dia seguinte)
+  const todayTasks = tasks.filter(t => {
+    if (t.type !== 'today') return false;
+    
+    // Se não está completada, mostrar sempre
+    if (!t.completed) return true;
+    
+    // Se está completada, mostrar apenas se foi completada hoje
+    if (t.completed_at) {
+      const completedDate = t.completed_at.split('T')[0];
+      return completedDate === today;
+    }
+    
+    return false;
+  });
   const completedCount = todayTasks.filter(t => t.completed).length;
   const progress = todayTasks.length > 0 ? (completedCount / todayTasks.length) * 100 : 0;
   const allCompleted = todayTasks.length > 0 && completedCount === todayTasks.length;
@@ -135,10 +152,10 @@ export default function AcoesHoje() {
           )}
         </div>
 
-        {/* Limit Warning */}
-        {todayTasks.length >= 5 && !allCompleted && (
-          <p className="text-xs text-center text-amber-500">
-            Limite de 5 ações atingido. Foco total!
+        {/* Recomendação (não bloqueio) */}
+        {todayTasks.filter(t => !t.completed).length >= 5 && (
+          <p className="text-xs text-center text-amber-500/80">
+            💡 Recomendação: 5 ações por dia para máximo foco
           </p>
         )}
       </CardContent>
