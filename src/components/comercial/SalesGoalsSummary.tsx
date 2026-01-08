@@ -121,86 +121,87 @@ export function SalesGoalsSummary({ onAddGoal }: SalesGoalsSummaryProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filters Bar */}
-      <div className="flex flex-wrap items-center gap-3 p-4 bg-muted/30 rounded-lg">
-        {/* Type Filter */}
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Tipo da Meta" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os tipos</SelectItem>
-            <SelectItem value="faturamento_mensal">Faturamento Mensal</SelectItem>
-            <SelectItem value="vendas_fechadas">Vendas Fechadas</SelectItem>
-            <SelectItem value="novos_clientes">Novos Clientes</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Filters Bar - Mobile Responsive */}
+      <div className="flex flex-col gap-3 p-3 md:p-4 bg-muted/30 rounded-lg">
+        {/* Row 1: Type & Project Selects */}
+        <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:gap-3">
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-full md:w-[180px]">
+              <SelectValue placeholder="Tipo da Meta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              <SelectItem value="faturamento_mensal">Faturamento Mensal</SelectItem>
+              <SelectItem value="vendas_fechadas">Vendas Fechadas</SelectItem>
+              <SelectItem value="novos_clientes">Novos Clientes</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={projectFilter} onValueChange={setProjectFilter}>
+            <SelectTrigger className="w-full md:w-[180px]">
+              <SelectValue placeholder="Projeto" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os projetos</SelectItem>
+              <SelectItem value="none">Sem projeto</SelectItem>
+              {projects.map(project => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.project}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         
-        {/* Project Filter */}
-        <Select value={projectFilter} onValueChange={setProjectFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Projeto" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os projetos</SelectItem>
-            <SelectItem value="none">Sem projeto</SelectItem>
-            {projects.map(project => (
-              <SelectItem key={project.id} value={project.id}>
-                {project.project}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        
-        {/* Start Date Picker */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className={cn("w-[150px] justify-start text-left font-normal", !startDateFilter && "text-muted-foreground")}>
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {startDateFilter ? format(startDateFilter, 'dd/MM/yyyy') : 'Data início'}
+        {/* Row 2: Date Range & Clear */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("flex-1 md:flex-none md:w-[140px] justify-start text-left font-normal text-xs md:text-sm", !startDateFilter && "text-muted-foreground")}>
+                <CalendarIcon className="mr-1.5 h-3.5 w-3.5 md:mr-2 md:h-4 md:w-4" />
+                {startDateFilter ? format(startDateFilter, 'dd/MM/yy') : 'Início'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={startDateFilter}
+                onSelect={setStartDateFilter}
+                initialFocus
+                className="pointer-events-auto"
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
+          
+          <span className="text-muted-foreground text-xs">até</span>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("flex-1 md:flex-none md:w-[140px] justify-start text-left font-normal text-xs md:text-sm", !endDateFilter && "text-muted-foreground")}>
+                <CalendarIcon className="mr-1.5 h-3.5 w-3.5 md:mr-2 md:h-4 md:w-4" />
+                {endDateFilter ? format(endDateFilter, 'dd/MM/yy') : 'Fim'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={endDateFilter}
+                onSelect={setEndDateFilter}
+                initialFocus
+                className="pointer-events-auto"
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
+          
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-foreground h-8 px-2">
+              <X className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Limpar</span>
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={startDateFilter}
-              onSelect={setStartDateFilter}
-              initialFocus
-              className="pointer-events-auto"
-              locale={ptBR}
-            />
-          </PopoverContent>
-        </Popover>
-        
-        <span className="text-muted-foreground text-sm">até</span>
-        
-        {/* End Date Picker */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className={cn("w-[150px] justify-start text-left font-normal", !endDateFilter && "text-muted-foreground")}>
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {endDateFilter ? format(endDateFilter, 'dd/MM/yyyy') : 'Data fim'}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={endDateFilter}
-              onSelect={setEndDateFilter}
-              initialFocus
-              className="pointer-events-auto"
-              locale={ptBR}
-            />
-          </PopoverContent>
-        </Popover>
-        
-        {/* Clear Filters Button */}
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-foreground">
-            <X className="h-4 w-4 mr-1" />
-            Limpar
-          </Button>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Goals Grid */}
@@ -214,7 +215,7 @@ export function SalesGoalsSummary({ onAddGoal }: SalesGoalsSummaryProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredGoals.map((goal) => {
             const config = goalTypeConfig[goal.goal_type];
             const Icon = config.icon;
@@ -226,11 +227,11 @@ export function SalesGoalsSummary({ onAddGoal }: SalesGoalsSummaryProps) {
             
             return (
               <Card key={goal.id} className="glass-card animate-fade-in relative group">
-                {/* Delete Button */}
+                {/* Delete Button - Always visible on mobile */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  className="absolute top-2 right-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                   onClick={() => handleDeleteGoal(goal.id)}
                 >
                   <Trash2 className="w-4 h-4" />
