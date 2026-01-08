@@ -75,11 +75,12 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
 
   return (
     <Card className="glass-card">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="text-lg font-semibold">Pipeline de Prospecção</CardTitle>
-        <div className="flex items-center gap-2">
+      {/* Header - Stack vertical on mobile */}
+      <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between space-y-0 pb-4">
+        <CardTitle className="text-base md:text-lg font-semibold">Pipeline de Prospecção</CardTitle>
+        <div className="flex flex-col gap-2 w-full md:flex-row md:w-auto md:items-center">
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ProspectStatus | 'all')}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
             <SelectContent>
@@ -89,7 +90,7 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={onAddProspect} size="sm">
+          <Button onClick={onAddProspect} size="sm" className="w-full md:w-auto">
             <Plus className="w-4 h-4 mr-2" />
             Nova Prospecção
           </Button>
@@ -110,118 +111,207 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
             </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Pagamento</TableHead>
-                  <TableHead>Projeto</TableHead>
-                  <TableHead className="text-right">Valor Estimado</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProspects.map((prospect) => {
-                  const config = statusConfig[prospect.status];
-                  return (
-                    <TableRow key={prospect.id} className="animate-fade-in">
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-muted-foreground" />
-                          <span className="font-medium">{prospect.client_name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {prospect.company_name || '-'}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {format(parseISO(prospect.prospection_date), 'dd/MM/yyyy', { locale: ptBR })}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full cursor-pointer transition-all hover:opacity-80 hover:ring-2 ring-offset-1 ring-offset-background ring-primary/20 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-                                prospect.status === 'novo' ? 'border border-input bg-background text-foreground' :
-                                prospect.status === 'em_negociacao' ? 'bg-secondary text-secondary-foreground' :
-                                prospect.status === 'proposta_enviada' ? 'bg-primary text-primary-foreground' :
-                                prospect.status === 'fechado' ? 'bg-success text-success-foreground' :
-                                prospect.status === 'perdido' ? 'bg-destructive text-destructive-foreground' : ''
-                              }`}
+          <>
+            {/* Mobile: Cards */}
+            <div className="md:hidden space-y-3">
+              {filteredProspects.map((prospect) => {
+                const config = statusConfig[prospect.status];
+                return (
+                  <Card key={prospect.id} className="p-4 animate-fade-in">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">{prospect.client_name}</p>
+                        <p className="text-sm text-muted-foreground truncate">{prospect.company_name || '-'}</p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full cursor-pointer ${
+                              prospect.status === 'novo' ? 'border border-input bg-background text-foreground' :
+                              prospect.status === 'em_negociacao' ? 'bg-secondary text-secondary-foreground' :
+                              prospect.status === 'proposta_enviada' ? 'bg-primary text-primary-foreground' :
+                              prospect.status === 'fechado' ? 'bg-success text-success-foreground' :
+                              prospect.status === 'perdido' ? 'bg-destructive text-destructive-foreground' : ''
+                            }`}
+                          >
+                            {config.label}
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          {Object.entries(statusConfig).map(([value, cfg]) => (
+                            <DropdownMenuItem 
+                              key={value} 
+                              onClick={() => handleStatusChange(prospect.id, value as ProspectStatus)}
                             >
-                              {config.label}
-                              <ChevronDown className="w-3 h-3" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            {Object.entries(statusConfig).map(([value, cfg]) => (
-                              <DropdownMenuItem 
-                                key={value} 
-                                onClick={() => handleStatusChange(prospect.id, value as ProspectStatus)}
-                              >
-                                {cfg.label}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                      <TableCell>
-                        {prospect.payment_type ? (
-                          <div className="flex items-center gap-1.5">
-                            {prospect.payment_type === 'recorrente' ? (
-                              <Repeat className="w-3.5 h-3.5 text-primary" />
-                            ) : (
-                              <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
-                            )}
-                            <span className="text-sm">
+                              {cfg.label}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    
+                    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground text-xs">Data</span>
+                        <p>{format(parseISO(prospect.prospection_date), 'dd/MM/yy', { locale: ptBR })}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-xs">Valor</span>
+                        <p className="font-medium">{formatCurrency(prospect.estimated_value)}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-xs">Projeto</span>
+                        <p className="truncate">{prospect.project_type || getProjectName(prospect.project_id)}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-xs">Pagamento</span>
+                        <p className="flex items-center gap-1">
+                          {prospect.payment_type ? (
+                            <>
+                              {prospect.payment_type === 'recorrente' ? (
+                                <Repeat className="w-3 h-3 text-primary" />
+                              ) : (
+                                <CreditCard className="w-3 h-3 text-muted-foreground" />
+                              )}
                               {prospect.payment_type === 'recorrente' 
                                 ? `${prospect.contract_duration || '?'}m` 
                                 : `${prospect.payment_installments || 1}x`}
-                            </span>
+                            </>
+                          ) : '-'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3 flex gap-2 justify-end">
+                      <Button variant="outline" size="sm" onClick={() => onEditProspect(prospect)}>
+                        <Pencil className="w-3.5 h-3.5 mr-1" />
+                        Editar
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(prospect.id)} className="text-destructive hover:text-destructive">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+            
+            {/* Desktop: Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Pagamento</TableHead>
+                    <TableHead>Projeto</TableHead>
+                    <TableHead className="text-right">Valor Estimado</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProspects.map((prospect) => {
+                    const config = statusConfig[prospect.status];
+                    return (
+                      <TableRow key={prospect.id} className="animate-fade-in">
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-medium">{prospect.client_name}</span>
                           </div>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {prospect.project_type || getProjectName(prospect.project_id)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(prospect.estimated_value)}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onEditProspect(prospect)}>
-                              <Pencil className="w-4 h-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDelete(prospect.id)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {prospect.company_name || '-'}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {format(parseISO(prospect.prospection_date), 'dd/MM/yyyy', { locale: ptBR })}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full cursor-pointer transition-all hover:opacity-80 hover:ring-2 ring-offset-1 ring-offset-background ring-primary/20 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
+                                  prospect.status === 'novo' ? 'border border-input bg-background text-foreground' :
+                                  prospect.status === 'em_negociacao' ? 'bg-secondary text-secondary-foreground' :
+                                  prospect.status === 'proposta_enviada' ? 'bg-primary text-primary-foreground' :
+                                  prospect.status === 'fechado' ? 'bg-success text-success-foreground' :
+                                  prospect.status === 'perdido' ? 'bg-destructive text-destructive-foreground' : ''
+                                }`}
+                              >
+                                {config.label}
+                                <ChevronDown className="w-3 h-3" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              {Object.entries(statusConfig).map(([value, cfg]) => (
+                                <DropdownMenuItem 
+                                  key={value} 
+                                  onClick={() => handleStatusChange(prospect.id, value as ProspectStatus)}
+                                >
+                                  {cfg.label}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                        <TableCell>
+                          {prospect.payment_type ? (
+                            <div className="flex items-center gap-1.5">
+                              {prospect.payment_type === 'recorrente' ? (
+                                <Repeat className="w-3.5 h-3.5 text-primary" />
+                              ) : (
+                                <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
+                              )}
+                              <span className="text-sm">
+                                {prospect.payment_type === 'recorrente' 
+                                  ? `${prospect.contract_duration || '?'}m` 
+                                  : `${prospect.payment_installments || 1}x`}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {prospect.project_type || getProjectName(prospect.project_id)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(prospect.estimated_value)}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => onEditProspect(prospect)}>
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDelete(prospect.id)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>

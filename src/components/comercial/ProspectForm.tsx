@@ -142,13 +142,13 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editingProspect ? 'Editar Prospecção' : 'Nova Prospecção'}</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label htmlFor="clientName">Nome do Cliente *</Label>
               <Input
@@ -170,7 +170,7 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label htmlFor="prospectionDate">Data da Prospecção *</Label>
               <Input
@@ -196,7 +196,7 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label htmlFor="projectId">Projeto Vinculado</Label>
               <Select value={projectId} onValueChange={setProjectId}>
@@ -222,7 +222,7 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label htmlFor="estimatedValue">Valor Estimado (R$)</Label>
               <Input
