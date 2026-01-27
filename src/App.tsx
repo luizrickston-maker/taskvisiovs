@@ -17,6 +17,7 @@ import ProjetosDashboard from "@/pages/ProjetosDashboard";
 import ComercialDashboard from "@/pages/ComercialDashboard";
 import ConteudosDashboard from "@/pages/ConteudosDashboard";
 import RoteirosDashboard from "@/pages/RoteirosDashboard";
+import AreaPJDashboard from "@/pages/AreaPJDashboard";
 import ConfigPage from "@/pages/ConfigPage";
 import NotFound from "@/pages/NotFound";
 
@@ -68,6 +69,7 @@ const App = () => {
                 <Route path="/comercial" element={<ComercialDashboard />} />
                 <Route path="/conteudos" element={<ConteudosDashboard />} />
                 <Route path="/roteiros" element={<RoteirosDashboard />} />
+                <Route path="/area-pj" element={<AreaPJDashboard />} />
                 <Route path="/config" element={<ConfigPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />

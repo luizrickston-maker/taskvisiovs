@@ -9,6 +9,10 @@ export type GoalType = 'financial' | 'savings' | 'custom';
 export type ProjectTaskStatus = 'todo' | 'in_progress' | 'done';
 export type ProspectStatus = 'novo' | 'em_negociacao' | 'proposta_enviada' | 'fechado' | 'perdido';
 export type SalesGoalType = 'faturamento_mensal' | 'vendas_fechadas' | 'novos_clientes';
+
+// Área PJ Types
+export type InvestmentCategory = 'equipamento' | 'software' | 'mobilia' | 'marketing' | 'outro';
+export type ContractType = 'pj' | 'clt' | 'freelancer';
 export interface Category {
   id: string;
   user_id: string;
@@ -192,6 +196,48 @@ export interface UserPreference {
   id: string;
   user_id: string;
   app_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Área PJ Interfaces
+export interface CorporatePricing {
+  id: string;
+  user_id: string;
+  item_name: string;
+  cost: number;
+  tax_rate: number;
+  margin_percent: number;
+  final_price: number;
+  profit: number;
+  real_margin: number;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CorporateInvestment {
+  id: string;
+  user_id: string;
+  item_name: string;
+  category: InvestmentCategory;
+  amount: number;
+  purchase_date: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CorporateTeamMember {
+  id: string;
+  user_id: string;
+  name: string;
+  role: string;
+  contract_type: ContractType;
+  cost: number;
+  payment_day: number;
+  notes?: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }

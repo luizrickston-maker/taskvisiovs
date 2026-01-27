@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
 import type { 
   Income, Expense, Debt, Saving, Task, 
-  TimeBlock, Project, Script, Goal, Category, ProjectTask, SalesGoal, Prospect 
+  TimeBlock, Project, Script, Goal, Category, ProjectTask, SalesGoal, Prospect,
+  CorporatePricing, CorporateInvestment, CorporateTeamMember
 } from '@/types/database';
 
 type RealtimePayload<T> = {
@@ -27,6 +28,9 @@ export function useRealtimeSync(userId: string | undefined) {
     addCategory, updateCategory, deleteCategory,
     addSalesGoal, updateSalesGoal, deleteSalesGoal,
     addProspect, updateProspect, deleteProspect,
+    addCorporatePricing, updateCorporatePricing, deleteCorporatePricing,
+    addCorporateInvestment, updateCorporateInvestment, deleteCorporateInvestment,
+    addCorporateTeamMember, updateCorporateTeamMember, deleteCorporateTeamMember,
   } = useAppStore();
 
   useEffect(() => {
@@ -236,7 +240,55 @@ export function useRealtimeSync(userId: string | undefined) {
           } else if (eventType === 'UPDATE') {
             updateProspect(newRecord.id, newRecord);
           } else if (eventType === 'DELETE') {
-            deleteProspect(oldRecord.id);
+          deleteProspect(oldRecord.id);
+          }
+        }
+      )
+      // Corporate Pricing
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'corporate_pricing', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<CorporatePricing>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().corporatePricings.some(cp => cp.id === newRecord.id);
+            if (!exists) addCorporatePricing(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateCorporatePricing(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteCorporatePricing(oldRecord.id);
+          }
+        }
+      )
+      // Corporate Investments
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'corporate_investments', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<CorporateInvestment>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().corporateInvestments.some(ci => ci.id === newRecord.id);
+            if (!exists) addCorporateInvestment(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateCorporateInvestment(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteCorporateInvestment(oldRecord.id);
+          }
+        }
+      )
+      // Corporate Team
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'corporate_team', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<CorporateTeamMember>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().corporateTeam.some(ct => ct.id === newRecord.id);
+            if (!exists) addCorporateTeamMember(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateCorporateTeamMember(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteCorporateTeamMember(oldRecord.id);
           }
         }
       )
