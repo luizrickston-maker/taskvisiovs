@@ -103,10 +103,16 @@ export default function Auth() {
     setIsSubmitting(false);
 
     if (error) {
-      toast.error(error.message);
+      console.error('[Auth] Reset password error:', error);
+      if (error.message?.includes('rate limit')) {
+        toast.error('Muitas tentativas. Aguarde alguns minutos.');
+      } else {
+        toast.error(error.message || 'Erro ao enviar email de recuperação');
+      }
     } else {
-      toast.success('Email de recuperação enviado!');
+      toast.success('Se o email existir, você receberá um link de recuperação.');
       setShowResetPassword(false);
+      setEmail('');
     }
   };
 
