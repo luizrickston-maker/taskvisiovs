@@ -1,8 +1,9 @@
-import { Building2, Calculator, TrendingUp, Users } from 'lucide-react';
+import { Building2, Calculator, TrendingUp, Users, Package } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PricingCalculator } from '@/components/areapj/PricingCalculator';
 import { InvestmentManager } from '@/components/areapj/InvestmentManager';
 import { TeamManager } from '@/components/areapj/TeamManager';
+import { PlansManager } from '@/components/areapj/PlansManager';
 
 export default function AreaPJDashboard() {
   return (
@@ -18,10 +19,14 @@ export default function AreaPJDashboard() {
       </div>
 
       <Tabs defaultValue="pricing" className="space-y-4">
-        <TabsList className="grid grid-cols-3 w-full md:w-auto md:inline-grid">
+        <TabsList className="grid grid-cols-4 w-full md:w-auto md:inline-grid">
           <TabsTrigger value="pricing" className="flex items-center gap-2">
             <Calculator className="w-4 h-4" />
             <span className="hidden sm:inline">Precificador</span>
+          </TabsTrigger>
+          <TabsTrigger value="plans" className="flex items-center gap-2">
+            <Package className="w-4 h-4" />
+            <span className="hidden sm:inline">Planos</span>
           </TabsTrigger>
           <TabsTrigger value="investments" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
@@ -35,6 +40,10 @@ export default function AreaPJDashboard() {
 
         <TabsContent value="pricing" className="space-y-4">
           <PricingCalculator />
+        </TabsContent>
+        
+        <TabsContent value="plans" className="space-y-4">
+          <PlansManager />
         </TabsContent>
         
         <TabsContent value="investments" className="space-y-4">

@@ -4,7 +4,7 @@ import { useAppStore } from '@/stores/useAppStore';
 import type { 
   Income, Expense, Debt, Saving, Task, 
   TimeBlock, Project, Script, Goal, Category, ProjectTask, SalesGoal, Prospect,
-  CorporatePricing, CorporateInvestment, CorporateTeamMember
+  CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem
 } from '@/types/database';
 
 type RealtimePayload<T> = {
@@ -31,6 +31,8 @@ export function useRealtimeSync(userId: string | undefined) {
     addCorporatePricing, updateCorporatePricing, deleteCorporatePricing,
     addCorporateInvestment, updateCorporateInvestment, deleteCorporateInvestment,
     addCorporateTeamMember, updateCorporateTeamMember, deleteCorporateTeamMember,
+    addServicePlan, updateServicePlan, deleteServicePlan,
+    addServicePlanItem, updateServicePlanItem, deleteServicePlanItem,
   } = useAppStore();
 
   useEffect(() => {
@@ -289,6 +291,38 @@ export function useRealtimeSync(userId: string | undefined) {
             updateCorporateTeamMember(newRecord.id, newRecord);
           } else if (eventType === 'DELETE') {
             deleteCorporateTeamMember(oldRecord.id);
+          }
+        }
+      )
+      // Service Plans
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'service_plans', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<ServicePlan>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().servicePlans.some(sp => sp.id === newRecord.id);
+            if (!exists) addServicePlan(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateServicePlan(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteServicePlan(oldRecord.id);
+          }
+        }
+      )
+      // Service Plan Items
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'service_plan_items', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<ServicePlanItem>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().servicePlanItems.some(spi => spi.id === newRecord.id);
+            if (!exists) addServicePlanItem(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateServicePlanItem(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteServicePlanItem(oldRecord.id);
           }
         }
       )

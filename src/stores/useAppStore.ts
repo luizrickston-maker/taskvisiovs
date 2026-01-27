@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import type { 
   Category, Income, Expense, Debt, Saving, Goal, 
   Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask,
-  SalesGoal, Prospect, CorporatePricing, CorporateInvestment, CorporateTeamMember
+  SalesGoal, Prospect, CorporatePricing, CorporateInvestment, CorporateTeamMember,
+  ServicePlan, ServicePlanItem
 } from '@/types/database';
 
 interface AppState {
@@ -28,6 +29,8 @@ interface AppState {
   corporatePricings: CorporatePricing[];
   corporateInvestments: CorporateInvestment[];
   corporateTeam: CorporateTeamMember[];
+  servicePlans: ServicePlan[];
+  servicePlanItems: ServicePlanItem[];
   
   // Loading states
   isLoading: boolean;
@@ -145,6 +148,18 @@ interface AppState {
   updateCorporateTeamMember: (id: string, updates: Partial<CorporateTeamMember>) => void;
   deleteCorporateTeamMember: (id: string) => void;
   
+  // Actions - Service Plans
+  setServicePlans: (plans: ServicePlan[]) => void;
+  addServicePlan: (plan: ServicePlan) => void;
+  updateServicePlan: (id: string, updates: Partial<ServicePlan>) => void;
+  deleteServicePlan: (id: string) => void;
+  
+  // Actions - Service Plan Items
+  setServicePlanItems: (items: ServicePlanItem[]) => void;
+  addServicePlanItem: (item: ServicePlanItem) => void;
+  updateServicePlanItem: (id: string, updates: Partial<ServicePlanItem>) => void;
+  deleteServicePlanItem: (id: string) => void;
+  
   // Actions - Loading
   setIsLoading: (loading: boolean) => void;
   setDataInitialized: (initialized: boolean) => void;
@@ -173,6 +188,8 @@ const initialState = {
   corporatePricings: [],
   corporateInvestments: [],
   corporateTeam: [],
+  servicePlans: [],
+  servicePlanItems: [],
   isLoading: false,
   dataInitialized: false,
 };
@@ -374,6 +391,30 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   deleteCorporateTeamMember: (id) => set((state) => ({
     corporateTeam: state.corporateTeam.filter((m) => m.id !== id)
+  })),
+  
+  // Service Plans
+  setServicePlans: (servicePlans) => set({ servicePlans }),
+  addServicePlan: (plan) => set((state) => ({ 
+    servicePlans: [...state.servicePlans, plan] 
+  })),
+  updateServicePlan: (id, updates) => set((state) => ({
+    servicePlans: state.servicePlans.map((p) => p.id === id ? { ...p, ...updates } : p)
+  })),
+  deleteServicePlan: (id) => set((state) => ({
+    servicePlans: state.servicePlans.filter((p) => p.id !== id)
+  })),
+  
+  // Service Plan Items
+  setServicePlanItems: (servicePlanItems) => set({ servicePlanItems }),
+  addServicePlanItem: (item) => set((state) => ({ 
+    servicePlanItems: [...state.servicePlanItems, item] 
+  })),
+  updateServicePlanItem: (id, updates) => set((state) => ({
+    servicePlanItems: state.servicePlanItems.map((i) => i.id === id ? { ...i, ...updates } : i)
+  })),
+  deleteServicePlanItem: (id) => set((state) => ({
+    servicePlanItems: state.servicePlanItems.filter((i) => i.id !== id)
   })),
   
   // Loading
