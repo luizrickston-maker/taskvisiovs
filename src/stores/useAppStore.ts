@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { 
   Category, Income, Expense, Debt, Saving, Goal, 
   Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask,
-  SalesGoal, Prospect
+  SalesGoal, Prospect, CorporatePricing, CorporateInvestment, CorporateTeamMember
 } from '@/types/database';
 
 interface AppState {
@@ -23,6 +23,11 @@ interface AppState {
   userPreferences: UserPreference | null;
   salesGoals: SalesGoal[];
   prospects: Prospect[];
+  
+  // Área PJ Data
+  corporatePricings: CorporatePricing[];
+  corporateInvestments: CorporateInvestment[];
+  corporateTeam: CorporateTeamMember[];
   
   // Loading states
   isLoading: boolean;
@@ -122,6 +127,24 @@ interface AppState {
   updateProspect: (id: string, updates: Partial<Prospect>) => void;
   deleteProspect: (id: string) => void;
   
+  // Actions - Corporate Pricing
+  setCorporatePricings: (pricings: CorporatePricing[]) => void;
+  addCorporatePricing: (pricing: CorporatePricing) => void;
+  updateCorporatePricing: (id: string, updates: Partial<CorporatePricing>) => void;
+  deleteCorporatePricing: (id: string) => void;
+  
+  // Actions - Corporate Investments
+  setCorporateInvestments: (investments: CorporateInvestment[]) => void;
+  addCorporateInvestment: (investment: CorporateInvestment) => void;
+  updateCorporateInvestment: (id: string, updates: Partial<CorporateInvestment>) => void;
+  deleteCorporateInvestment: (id: string) => void;
+  
+  // Actions - Corporate Team
+  setCorporateTeam: (team: CorporateTeamMember[]) => void;
+  addCorporateTeamMember: (member: CorporateTeamMember) => void;
+  updateCorporateTeamMember: (id: string, updates: Partial<CorporateTeamMember>) => void;
+  deleteCorporateTeamMember: (id: string) => void;
+  
   // Actions - Loading
   setIsLoading: (loading: boolean) => void;
   setDataInitialized: (initialized: boolean) => void;
@@ -147,6 +170,9 @@ const initialState = {
   userPreferences: null,
   salesGoals: [],
   prospects: [],
+  corporatePricings: [],
+  corporateInvestments: [],
+  corporateTeam: [],
   isLoading: false,
   dataInitialized: false,
 };
@@ -312,6 +338,42 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   deleteProspect: (id) => set((state) => ({
     prospects: state.prospects.filter((p) => p.id !== id)
+  })),
+  
+  // Corporate Pricing
+  setCorporatePricings: (corporatePricings) => set({ corporatePricings }),
+  addCorporatePricing: (pricing) => set((state) => ({ 
+    corporatePricings: [...state.corporatePricings, pricing] 
+  })),
+  updateCorporatePricing: (id, updates) => set((state) => ({
+    corporatePricings: state.corporatePricings.map((p) => p.id === id ? { ...p, ...updates } : p)
+  })),
+  deleteCorporatePricing: (id) => set((state) => ({
+    corporatePricings: state.corporatePricings.filter((p) => p.id !== id)
+  })),
+  
+  // Corporate Investments
+  setCorporateInvestments: (corporateInvestments) => set({ corporateInvestments }),
+  addCorporateInvestment: (investment) => set((state) => ({ 
+    corporateInvestments: [...state.corporateInvestments, investment] 
+  })),
+  updateCorporateInvestment: (id, updates) => set((state) => ({
+    corporateInvestments: state.corporateInvestments.map((i) => i.id === id ? { ...i, ...updates } : i)
+  })),
+  deleteCorporateInvestment: (id) => set((state) => ({
+    corporateInvestments: state.corporateInvestments.filter((i) => i.id !== id)
+  })),
+  
+  // Corporate Team
+  setCorporateTeam: (corporateTeam) => set({ corporateTeam }),
+  addCorporateTeamMember: (member) => set((state) => ({ 
+    corporateTeam: [...state.corporateTeam, member] 
+  })),
+  updateCorporateTeamMember: (id, updates) => set((state) => ({
+    corporateTeam: state.corporateTeam.map((m) => m.id === id ? { ...m, ...updates } : m)
+  })),
+  deleteCorporateTeamMember: (id) => set((state) => ({
+    corporateTeam: state.corporateTeam.filter((m) => m.id !== id)
   })),
   
   // Loading

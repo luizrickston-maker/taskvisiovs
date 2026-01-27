@@ -77,6 +77,129 @@ export type Database = {
         }
         Relationships: []
       }
+      corporate_investments: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          id: string
+          item_name: string
+          notes: string | null
+          purchase_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          item_name: string
+          notes?: string | null
+          purchase_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          item_name?: string
+          notes?: string | null
+          purchase_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      corporate_pricing: {
+        Row: {
+          cost: number
+          created_at: string
+          final_price: number
+          id: string
+          item_name: string
+          margin_percent: number
+          notes: string | null
+          profit: number
+          real_margin: number
+          tax_rate: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          final_price?: number
+          id?: string
+          item_name: string
+          margin_percent?: number
+          notes?: string | null
+          profit?: number
+          real_margin?: number
+          tax_rate?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          final_price?: number
+          id?: string
+          item_name?: string
+          margin_percent?: number
+          notes?: string | null
+          profit?: number
+          real_margin?: number
+          tax_rate?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      corporate_team: {
+        Row: {
+          contract_type: string
+          cost: number
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          payment_day: number
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contract_type?: string
+          cost?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          payment_day?: number
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contract_type?: string
+          cost?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          payment_day?: number
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       debts: {
         Row: {
           amount: number

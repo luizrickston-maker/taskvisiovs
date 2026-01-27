@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
-import type { Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask, SalesGoal, Prospect } from '@/types/database';
+import type { 
+  Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, 
+  UserPreference, CustomTimeBlockType, ProjectTask, SalesGoal, Prospect,
+  CorporatePricing, CorporateInvestment, CorporateTeamMember
+} from '@/types/database';
 
 export function useInitializeData(userId: string | undefined) {
   const loadingRef = useRef(false);
@@ -22,6 +26,9 @@ export function useInitializeData(userId: string | undefined) {
     setUserPreferences,
     setSalesGoals,
     setProspects,
+    setCorporatePricings,
+    setCorporateInvestments,
+    setCorporateTeam,
     setIsLoading,
     setDataInitialized,
     dataInitialized,
@@ -60,6 +67,9 @@ export function useInitializeData(userId: string | undefined) {
           preferencesRes,
           salesGoalsRes,
           prospectsRes,
+          corporatePricingsRes,
+          corporateInvestmentsRes,
+          corporateTeamRes,
         ] = await Promise.all([
           supabase.from('categories').select('*').order('created_at', { ascending: true }),
           supabase.from('incomes').select('*').order('date', { ascending: false }),
@@ -77,6 +87,9 @@ export function useInitializeData(userId: string | undefined) {
           supabase.from('user_preferences').select('*').maybeSingle(),
           supabase.from('sales_goals').select('*').order('start_date', { ascending: false }),
           supabase.from('prospects').select('*').order('prospection_date', { ascending: false }),
+          supabase.from('corporate_pricing').select('*').order('created_at', { ascending: false }),
+          supabase.from('corporate_investments').select('*').order('purchase_date', { ascending: false }),
+          supabase.from('corporate_team').select('*').order('name', { ascending: true }),
         ]);
 
         if (categoriesRes.data) setCategories(categoriesRes.data as Category[]);
@@ -95,6 +108,9 @@ export function useInitializeData(userId: string | undefined) {
         if (preferencesRes.data) setUserPreferences(preferencesRes.data as UserPreference);
         if (salesGoalsRes.data) setSalesGoals(salesGoalsRes.data as SalesGoal[]);
         if (prospectsRes.data) setProspects(prospectsRes.data as Prospect[]);
+        if (corporatePricingsRes.data) setCorporatePricings(corporatePricingsRes.data as CorporatePricing[]);
+        if (corporateInvestmentsRes.data) setCorporateInvestments(corporateInvestmentsRes.data as CorporateInvestment[]);
+        if (corporateTeamRes.data) setCorporateTeam(corporateTeamRes.data as CorporateTeamMember[]);
 
         setDataInitialized(true);
       } catch (error) {
@@ -106,5 +122,5 @@ export function useInitializeData(userId: string | undefined) {
     };
 
     loadAllData();
-  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setSalesGoals, setProspects, setIsLoading, setDataInitialized]);
+  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setSalesGoals, setProspects, setCorporatePricings, setCorporateInvestments, setCorporateTeam, setIsLoading, setDataInitialized]);
 }
