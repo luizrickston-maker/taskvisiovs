@@ -35,11 +35,27 @@ export function QuickIncomeForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!source.trim() || !amount || !user) return;
+    if (!user) return;
 
+    // Validate source
+    const trimmedSource = source.trim();
+    if (!trimmedSource) {
+      toast.error('Fonte é obrigatória');
+      return;
+    }
+    if (trimmedSource.length > 200) {
+      toast.error('Fonte muito longa (máx. 200 caracteres)');
+      return;
+    }
+
+    // Validate amount
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       toast.error('Valor inválido');
+      return;
+    }
+    if (numAmount > 999999999.99) {
+      toast.error('Valor muito alto');
       return;
     }
 
@@ -47,7 +63,7 @@ export function QuickIncomeForm() {
 
     const newIncome: Omit<Income, 'id' | 'created_at'> = {
       user_id: user.id,
-      source: source.trim(),
+      source: trimmedSource,
       amount: numAmount,
       date: format(new Date(), 'yyyy-MM-dd'),
       category_id: categoryId || undefined,

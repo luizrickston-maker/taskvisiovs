@@ -74,7 +74,9 @@ export default function ResetPassword() {
         navigate('/caixa', { replace: true });
       }, 2000);
     } catch (err) {
-      console.error('Reset password error:', err);
+      if (import.meta.env.DEV) {
+        console.error('Reset password error:', err);
+      }
       toast.error('Ocorreu um erro inesperado');
     } finally {
       setIsSubmitting(false);

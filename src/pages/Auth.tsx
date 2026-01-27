@@ -103,7 +103,9 @@ export default function Auth() {
     setIsSubmitting(false);
 
     if (error) {
-      console.error('[Auth] Reset password error:', error);
+      if (import.meta.env.DEV) {
+        console.error('[Auth] Reset password error:', error);
+      }
       if (error.message?.includes('rate limit')) {
         toast.error('Muitas tentativas. Aguarde alguns minutos.');
       } else {
