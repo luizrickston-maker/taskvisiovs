@@ -46,11 +46,33 @@ export function DebtForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !amount || !dueDate || !user) return;
+    if (!dueDate || !user) return;
 
+    // Validate name
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      toast.error('Nome é obrigatório');
+      return;
+    }
+    if (trimmedName.length > 200) {
+      toast.error('Nome muito longo (máx. 200 caracteres)');
+      return;
+    }
+
+    // Validate amount
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       toast.error('Valor inválido');
+      return;
+    }
+    if (numAmount > 999999999.99) {
+      toast.error('Valor muito alto');
+      return;
+    }
+
+    // Validate notes length
+    if (notes.length > 500) {
+      toast.error('Observações muito longas (máx. 500 caracteres)');
       return;
     }
 
@@ -61,13 +83,17 @@ export function DebtForm() {
         toast.error('Parcelas inválidas');
         return;
       }
+      if (current > 9999 || total > 9999) {
+        toast.error('Número de parcelas muito alto');
+        return;
+      }
     }
 
     setIsSubmitting(true);
 
     const newDebt: Omit<Debt, 'id' | 'created_at' | 'updated_at'> = {
       user_id: user.id,
-      name: name.trim(),
+      name: trimmedName,
       amount: numAmount,
       due_date: format(dueDate, 'yyyy-MM-dd'),
       paid: false,

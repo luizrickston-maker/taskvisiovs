@@ -82,21 +82,71 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.id || !clientName.trim()) {
+    
+    // Validate client name
+    const trimmedClientName = clientName.trim();
+    if (!user?.id || !trimmedClientName) {
       toast.error('Nome do cliente é obrigatório');
       return;
+    }
+    if (trimmedClientName.length > 200) {
+      toast.error('Nome do cliente muito longo (máx. 200 caracteres)');
+      return;
+    }
+
+    // Validate company name
+    if (companyName.length > 200) {
+      toast.error('Nome da empresa muito longo (máx. 200 caracteres)');
+      return;
+    }
+
+    // Validate project type
+    if (projectType.length > 100) {
+      toast.error('Tipo de projeto muito longo (máx. 100 caracteres)');
+      return;
+    }
+
+    // Validate estimated value
+    const parsedValue = parseFloat(estimatedValue) || 0;
+    if (parsedValue > 999999999.99) {
+      toast.error('Valor estimado muito alto');
+      return;
+    }
+
+    // Validate notes
+    if (notes.length > 1000) {
+      toast.error('Notas muito longas (máx. 1000 caracteres)');
+      return;
+    }
+
+    // Validate contract duration
+    if (paymentType === 'recorrente' && contractDuration) {
+      const duration = parseInt(contractDuration);
+      if (duration > 9999) {
+        toast.error('Duração do contrato muito longa');
+        return;
+      }
+    }
+
+    // Validate installments
+    if (paymentType === 'pontual' && paymentInstallments) {
+      const installments = parseInt(paymentInstallments);
+      if (installments > 9999) {
+        toast.error('Número de parcelas muito alto');
+        return;
+      }
     }
 
     setIsSubmitting(true);
 
     const prospectData = {
-      client_name: clientName.trim(),
+      client_name: trimmedClientName,
       company_name: companyName.trim() || null,
       prospection_date: prospectionDate,
       status,
       project_id: projectId === 'none' ? null : projectId,
       project_type: projectType.trim() || null,
-      estimated_value: parseFloat(estimatedValue) || 0,
+      estimated_value: parsedValue,
       notes: notes.trim() || null,
       payment_type: paymentType === 'none' ? null : paymentType,
       contract_duration: paymentType === 'recorrente' && contractDuration ? parseInt(contractDuration) : null,

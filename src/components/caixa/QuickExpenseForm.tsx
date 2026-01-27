@@ -35,11 +35,27 @@ export function QuickExpenseForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description.trim() || !amount || !user) return;
+    if (!user) return;
 
+    // Validate description
+    const trimmedDesc = description.trim();
+    if (!trimmedDesc) {
+      toast.error('Descrição é obrigatória');
+      return;
+    }
+    if (trimmedDesc.length > 200) {
+      toast.error('Descrição muito longa (máx. 200 caracteres)');
+      return;
+    }
+
+    // Validate amount
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       toast.error('Valor inválido');
+      return;
+    }
+    if (numAmount > 999999999.99) {
+      toast.error('Valor muito alto');
       return;
     }
 
@@ -47,7 +63,7 @@ export function QuickExpenseForm() {
 
     const newExpense: Omit<Expense, 'id' | 'created_at'> = {
       user_id: user.id,
-      description: description.trim(),
+      description: trimmedDesc,
       amount: numAmount,
       date: format(new Date(), 'yyyy-MM-dd'),
       category_id: categoryId || undefined,

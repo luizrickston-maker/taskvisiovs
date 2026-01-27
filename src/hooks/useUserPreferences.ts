@@ -60,7 +60,7 @@ export function useUserPreferences() {
       .update({ app_name: appName })
       .eq('id', userPreferences.id);
 
-    if (error) {
+    if (error && import.meta.env.DEV) {
       console.error('Error updating app name:', error);
     }
   };

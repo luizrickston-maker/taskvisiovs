@@ -54,7 +54,22 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!project.trim()) return;
+    
+    // Validate project name
+    const trimmedProject = project.trim();
+    if (!trimmedProject) {
+      return;
+    }
+    if (trimmedProject.length > 200) {
+      toast.error('Nome do projeto muito longo (máx. 200 caracteres)');
+      return;
+    }
+
+    // Validate estimated time if provided
+    if (estimatedTime && estimatedTime.length > 50) {
+      toast.error('Tempo estimado muito longo (máx. 50 caracteres)');
+      return;
+    }
 
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -64,12 +79,12 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
     }
 
     const projectData = {
-      task: project.trim(), // Use project name as task for backwards compatibility
-      project: project.trim(),
+      task: trimmedProject, // Use project name as task for backwards compatibility
+      project: trimmedProject,
       project_category_id: categoryId || null,
       priority: Number(priority),
       status,
-      estimated_time: estimatedTime || null,
+      estimated_time: estimatedTime?.trim() || null,
     };
 
     if (editProject) {
