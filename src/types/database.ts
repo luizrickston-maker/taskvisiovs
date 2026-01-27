@@ -13,6 +13,8 @@ export type SalesGoalType = 'faturamento_mensal' | 'vendas_fechadas' | 'novos_cl
 // Área PJ Types
 export type InvestmentCategory = 'equipamento' | 'software' | 'mobilia' | 'marketing' | 'outro';
 export type ContractType = 'pj' | 'clt' | 'freelancer';
+export type PlanTier = 'bronze' | 'silver' | 'gold';
+export type PlanType = 'recorrente' | 'pontual';
 export interface Category {
   id: string;
   user_id: string;
@@ -240,4 +242,33 @@ export interface CorporateTeamMember {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// Service Plans Interfaces
+export interface ServicePlan {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  tier: PlanTier;
+  plan_type: PlanType;
+  base_cost: number;
+  final_price: number;
+  profit: number;
+  profit_margin: number;
+  monthly_limit?: string;
+  is_active: boolean;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServicePlanItem {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  pricing_id: string;
+  quantity: number;
+  custom_price?: number;
+  created_at: string;
 }

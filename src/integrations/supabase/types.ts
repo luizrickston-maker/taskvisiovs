@@ -666,6 +666,105 @@ export type Database = {
           },
         ]
       }
+      service_plan_items: {
+        Row: {
+          created_at: string
+          custom_price: number | null
+          id: string
+          plan_id: string
+          pricing_id: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_price?: number | null
+          id?: string
+          plan_id: string
+          pricing_id: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_price?: number | null
+          id?: string
+          plan_id?: string
+          pricing_id?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_plan_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "service_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_plan_items_pricing_id_fkey"
+            columns: ["pricing_id"]
+            isOneToOne: false
+            referencedRelation: "corporate_pricing"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_plans: {
+        Row: {
+          base_cost: number
+          created_at: string
+          description: string | null
+          final_price: number
+          id: string
+          is_active: boolean
+          monthly_limit: string | null
+          name: string
+          notes: string | null
+          plan_type: string
+          profit: number
+          profit_margin: number
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_cost?: number
+          created_at?: string
+          description?: string | null
+          final_price?: number
+          id?: string
+          is_active?: boolean
+          monthly_limit?: string | null
+          name: string
+          notes?: string | null
+          plan_type?: string
+          profit?: number
+          profit_margin?: number
+          tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_cost?: number
+          created_at?: string
+          description?: string | null
+          final_price?: number
+          id?: string
+          is_active?: boolean
+          monthly_limit?: string | null
+          name?: string
+          notes?: string | null
+          plan_type?: string
+          profit?: number
+          profit_margin?: number
+          tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           completed: boolean
