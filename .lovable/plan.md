@@ -1,171 +1,403 @@
 
 
-## Correcao: Loop Infinito e Context Switcher
+## Plano: Transformar Precificador em Modulo Financeiro Empresarial Completo
 
-### Problema Identificado
+### Visao Geral
 
-O erro "Maximum update depth exceeded" ocorre por duas causas principais:
-
-#### Causa 1: Rota `/config` causa conflito na logica de auto-switch
-
-A rota `/config` esta presente em AMBOS os contextos (pessoal e empresarial), causando conflito na logica:
-
-```typescript
-// AppSidebar.tsx e MobileNav.tsx - useEffect problematico
-const isBusinessRoute = businessNavItems.some(item => currentPath.startsWith(item.url));
-const isPersonalRoute = personalNavItems.some(item => currentPath.startsWith(item.url));
-
-// Quando em /config:
-// - isBusinessRoute = false (config nao esta no array business)
-// - isPersonalRoute = false (config nao esta no array personal)
-// - Nenhuma condicao e acionada, MAS...
-```
-
-O problema real esta no `MobileNav.tsx`:
-```typescript
-const allPersonalRoutes = [...personalMainNavItems, ...personalMoreNavItems];
-// personalMoreNavItems inclui /config
-
-const allBusinessRoutes = [...businessMainNavItems, ...businessMoreNavItems];  
-// businessMoreNavItems TAMBEM inclui /config
-
-// Resultado: /config e detectado como AMBOS personal E business!
-```
-
-#### Causa 2: ContextSwitcher nao navega ao trocar modo
-
-O `ContextSwitcher` apenas chama `setMode(context.value)` sem navegar para uma rota valida do novo contexto. Isso deixa o usuario em uma rota que pode nao existir no novo contexto.
+Expandir o modulo "Precificador" atual para um sistema completo de gestao financeira empresarial que permita:
+1. Gerenciar custos operacionais detalhados (funcionarios, energia, internet, etc.)
+2. Criar categorias de custos personalizadas
+3. Classificar custos por tipo (recorrente, fixo, pontual)
+4. Calcular precificacao baseada no custo real da operacao
+5. Reorganizar navegacao com menu "Financeiro" contendo sub-modulos
 
 ---
 
-### Plano de Correcao
+### Nova Estrutura de Navegacao
 
-#### 1. Remover auto-switch do useEffect
-
-A logica de auto-switch baseada em rota esta causando o loop infinito. Vamos remover completamente e deixar o usuario controlar manualmente o contexto.
-
-**Arquivos afetados:**
-- `src/components/layout/AppSidebar.tsx` - remover useEffect lines 54-65
-- `src/components/layout/MobileNav.tsx` - remover useEffect lines 51-65
-
-#### 2. Adicionar navegacao ao ContextSwitcher
-
-Quando o usuario troca de contexto, navegar automaticamente para a rota padrao:
-
-```typescript
-// ContextSwitcher.tsx
-import { useNavigate } from 'react-router-dom';
-
-export function ContextSwitcher({ collapsed = false }: ContextSwitcherProps) {
-  const { mode, setMode } = useAppContext();
-  const navigate = useNavigate();
-  
-  const handleModeChange = (newMode: AppContextMode) => {
-    if (newMode !== mode) {
-      setMode(newMode);
-      // Navegar para rota padrao do novo contexto
-      const defaultRoute = newMode === 'personal' ? '/caixa' : '/comercial';
-      navigate(defaultRoute);
-    }
-  };
-  
-  // onClick={() => handleModeChange(context.value)}
-}
+```text
+Modo Empresarial (Sidebar):
++------------------------+
+| Comercial              |
+| Financeiro      >      |  <-- Novo menu agrupador
+|   - Custos             |
+|   - Precificador       |
+| Planos                 |
+| Investimentos          |
+| Time                   |
++------------------------+
 ```
 
-#### 3. Excluir `/config` da logica de deteccao de contexto
+**Alternativa simplificada (recomendada para consistencia com estrutura atual):**
 
-Se quisermos manter alguma logica de auto-switch no futuro, `/config` deve ser tratada como rota neutra:
-
-```typescript
-// Rotas que pertencem a ambos os contextos (neutras)
-const neutralRoutes = ['/config'];
-
-// No useEffect, verificar antes:
-if (neutralRoutes.some(r => currentPath.startsWith(r))) {
-  return; // Nao fazer nada para rotas neutras
-}
+```text
+Modo Empresarial (Sidebar):
++------------------------+
+| Comercial              |
+| Financeiro             |  <-- Dashboard financeiro (custos + precificador)
+| Planos                 |
+| Investimentos          |
+| Time                   |
++------------------------+
 ```
 
 ---
 
-### Arquivos a Modificar
+### Parte 1: Banco de Dados
 
-| Arquivo | Modificacao |
-|---------|-------------|
-| `src/components/layout/AppSidebar.tsx` | Remover useEffect de auto-switch (lines 54-65) e import do useEffect |
-| `src/components/layout/MobileNav.tsx` | Remover useEffect de auto-switch (lines 51-65) |
-| `src/components/layout/ContextSwitcher.tsx` | Adicionar useNavigate e navegar ao trocar contexto |
+#### Nova Tabela: `corporate_cost_categories`
+Categorias de custos personalizaveis:
+
+```sql
+CREATE TABLE public.corporate_cost_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  name TEXT NOT NULL,
+  color TEXT DEFAULT '#6366f1',
+  icon TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS policies
+ALTER TABLE corporate_cost_categories ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own cost categories"
+  ON corporate_cost_categories FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own cost categories"
+  ON corporate_cost_categories FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own cost categories"
+  ON corporate_cost_categories FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own cost categories"
+  ON corporate_cost_categories FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Enable realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE corporate_cost_categories;
+```
+
+#### Nova Tabela: `corporate_costs`
+Custos operacionais detalhados:
+
+```sql
+CREATE TABLE public.corporate_costs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  name TEXT NOT NULL,
+  category_id UUID REFERENCES corporate_cost_categories(id) ON DELETE SET NULL,
+  amount NUMERIC NOT NULL DEFAULT 0,
+  cost_type TEXT NOT NULL DEFAULT 'recorrente', -- 'recorrente', 'fixo', 'pontual'
+  frequency TEXT DEFAULT 'mensal', -- 'mensal', 'anual', 'semanal', 'diario' (para recorrentes)
+  start_date DATE,
+  end_date DATE, -- NULL para custos sem fim
+  is_active BOOLEAN DEFAULT true,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS policies (mesmo padrao)
+ALTER TABLE corporate_costs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own costs"
+  ON corporate_costs FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own costs"
+  ON corporate_costs FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own costs"
+  ON corporate_costs FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own costs"
+  ON corporate_costs FOR DELETE USING (auth.uid() = user_id);
+
+-- Enable realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE corporate_costs;
+
+-- Trigger para updated_at
+CREATE TRIGGER set_updated_at
+  BEFORE UPDATE ON corporate_costs
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+```
 
 ---
 
-### Codigo Final
+### Parte 2: Tipos TypeScript
 
-#### AppSidebar.tsx (remover auto-switch)
+Adicionar ao `src/types/database.ts`:
 
 ```typescript
-// REMOVER estas linhas:
-// import { useEffect } from 'react';
+// Tipos de custo empresarial
+export type CorporateCostType = 'recorrente' | 'fixo' | 'pontual';
+export type CostFrequency = 'diario' | 'semanal' | 'mensal' | 'anual';
 
-// REMOVER este useEffect:
-// useEffect(() => {
-//   const currentPath = location.pathname;
-//   const isBusinessRoute = businessNavItems.some(item => currentPath.startsWith(item.url));
-//   const isPersonalRoute = personalNavItems.some(item => currentPath.startsWith(item.url));
-//   
-//   if (isBusinessRoute && mode === 'personal') {
-//     setMode('business');
-//   } else if (isPersonalRoute && mode === 'business') {
-//     setMode('personal');
-//   }
-// }, [location.pathname, mode, setMode]);
+export interface CorporateCostCategory {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  icon?: string;
+  created_at: string;
+}
 
-// REMOVER funcao nao utilizada:
-// const handleModeChange = ...
+export interface CorporateCost {
+  id: string;
+  user_id: string;
+  name: string;
+  category_id?: string;
+  amount: number;
+  cost_type: CorporateCostType;
+  frequency?: CostFrequency;
+  start_date?: string;
+  end_date?: string;
+  is_active: boolean;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
 ```
 
-#### ContextSwitcher.tsx (adicionar navegacao)
+---
+
+### Parte 3: Estado Global (Zustand)
+
+Adicionar ao `useAppStore.ts`:
 
 ```typescript
-import { User, Building2, ChevronDown, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { useAppContext, type AppContextMode } from '@/hooks/useAppContext';
-import { ... } from '@/components/ui/dropdown-menu';
+// State
+corporateCostCategories: CorporateCostCategory[];
+corporateCosts: CorporateCost[];
 
-export function ContextSwitcher({ collapsed = false }: ContextSwitcherProps) {
-  const { mode, setMode } = useAppContext();
-  const navigate = useNavigate();
-  
-  const handleModeChange = (newMode: AppContextMode) => {
-    if (newMode !== mode) {
-      setMode(newMode);
-      const defaultRoute = newMode === 'personal' ? '/caixa' : '/comercial';
-      navigate(defaultRoute);
-    }
-  };
+// Actions
+setCorporateCostCategories: (categories: CorporateCostCategory[]) => void;
+addCorporateCostCategory: (category: CorporateCostCategory) => void;
+updateCorporateCostCategory: (id: string, updates: Partial<CorporateCostCategory>) => void;
+deleteCorporateCostCategory: (id: string) => void;
 
-  return (
-    <DropdownMenu>
-      {/* ... */}
-      <DropdownMenuItem
-        key={context.value}
-        onClick={() => handleModeChange(context.value)}
-        {/* ... */}
-      >
-    </DropdownMenu>
-  );
-}
+setCorporateCosts: (costs: CorporateCost[]) => void;
+addCorporateCost: (cost: CorporateCost) => void;
+updateCorporateCost: (id: string, updates: Partial<CorporateCost>) => void;
+deleteCorporateCost: (id: string) => void;
+```
+
+---
+
+### Parte 4: Nova Pagina Financeiro
+
+Criar `src/pages/PJ/FinanceiroPage.tsx` com abas internas:
+
+```text
++------------------------------------------------------------------+
+| [Wallet] Financeiro                                              |
+| Gestao completa de custos e precificacao                         |
++------------------------------------------------------------------+
+| [Custos] [Precificador] [Categorias]                             |
++------------------------------------------------------------------+
+| Conteudo da aba selecionada...                                   |
++------------------------------------------------------------------+
+```
+
+#### Aba "Custos" - Componentes:
+
+1. **KPIs no topo:**
+   - Total Custos Mensais (recorrentes + fixos ativos)
+   - Total Custos Pontuais (mes atual)
+   - Custo com Equipe (vinculado ao Time)
+   - Custo Operacional (energia, internet, etc.)
+
+2. **Formulario de Novo Custo:**
+   - Nome do custo
+   - Categoria (dropdown com categorias personalizadas)
+   - Valor (R$)
+   - Tipo: Recorrente | Fixo | Pontual
+   - Frequencia (se recorrente): Mensal | Anual | Semanal
+   - Data inicio / Data fim (opcional)
+   - Observacoes
+
+3. **Lista de Custos:**
+   - Agrupados por categoria
+   - Filtros: Tipo, Categoria, Status (ativo/inativo)
+   - Toggle ativo/inativo
+   - Editar / Excluir
+
+4. **Categorias pre-definidas sugeridas:**
+   - Funcionarios CLT
+   - Prestadores PJ
+   - Freelancers
+   - Energia
+   - Internet
+   - Aluguel
+   - Software/SaaS
+   - Marketing
+   - Outros
+
+#### Aba "Precificador" - Melhorias:
+
+1. **Integracao com custos:**
+   - Campo "Custo Base" pode ser calculado automaticamente
+   - Botao "Usar custo operacional mensal"
+   - Mostra divisao do custo por hora (se informar horas trabalhadas)
+
+2. **Campos adicionais:**
+   - Horas estimadas do servico
+   - Custo por hora da operacao (calculado)
+   - Custo direto do servico + proporcional operacional
+
+3. **Calculos aprimorados:**
+   ```
+   Custo Total = Custo Direto + (Custo Operacional Mensal / Servicos por Mes)
+   Preco Sugerido = Custo Total * (1 + Impostos%) * (1 + Margem%)
+   Lucro = Preco - Custo Total - Impostos
+   ```
+
+#### Aba "Categorias":
+
+- Gerenciar categorias de custos
+- Nome, cor, icone
+- Ver quantos custos estao vinculados
+
+---
+
+### Parte 5: Componentes a Criar
+
+```text
+src/components/areapj/
+├── CostCategoryManager.tsx      # Gerenciar categorias
+├── CostForm.tsx                 # Modal de adicionar/editar custo
+├── CostList.tsx                 # Lista de custos com filtros
+├── CostSummaryCards.tsx         # KPIs de custos
+├── FinanceiroDashboard.tsx      # Dashboard principal com abas
+└── PricingCalculatorEnhanced.tsx # Precificador melhorado
+```
+
+---
+
+### Parte 6: Navegacao
+
+Modificar `AppSidebar.tsx` e `MobileNav.tsx`:
+
+```typescript
+const businessNavItems = [
+  { title: 'Comercial', url: '/comercial', icon: Briefcase },
+  { title: 'Financeiro', url: '/pj/financeiro', icon: Wallet },  // NOVO (substituir Precificador)
+  { title: 'Planos', url: '/pj/planos', icon: Package },
+  { title: 'Investimentos', url: '/pj/investimentos', icon: TrendingUp },
+  { title: 'Time', url: '/pj/time', icon: Users },
+];
+```
+
+Adicionar rota em `App.tsx`:
+```typescript
+<Route path="/pj/financeiro" element={<FinanceiroPage />} />
+```
+
+Remover rota antiga `/pj/precificador` ou redirecionar para `/pj/financeiro`.
+
+---
+
+### Resumo de Arquivos
+
+| Arquivo | Acao |
+|---------|------|
+| `src/types/database.ts` | Adicionar tipos CorporateCost e CorporateCostCategory |
+| `src/stores/useAppStore.ts` | Adicionar state e actions para custos |
+| `src/hooks/useInitializeData.ts` | Carregar dados de custos |
+| `src/hooks/useRealtimeSync.ts` | Adicionar sync para novas tabelas |
+| `src/pages/PJ/FinanceiroPage.tsx` | CRIAR - Nova pagina principal |
+| `src/pages/PJ/PrecificadorPage.tsx` | REMOVER ou redirecionar |
+| `src/components/areapj/FinanceiroDashboard.tsx` | CRIAR - Dashboard com abas |
+| `src/components/areapj/CostCategoryManager.tsx` | CRIAR - Gerenciar categorias |
+| `src/components/areapj/CostForm.tsx` | CRIAR - Formulario de custo |
+| `src/components/areapj/CostList.tsx` | CRIAR - Lista de custos |
+| `src/components/areapj/CostSummaryCards.tsx` | CRIAR - Cards KPI |
+| `src/components/areapj/PricingCalculator.tsx` | MODIFICAR - Integrar com custos |
+| `src/components/layout/AppSidebar.tsx` | MODIFICAR - Trocar navegacao |
+| `src/components/layout/MobileNav.tsx` | MODIFICAR - Trocar navegacao |
+| `src/App.tsx` | MODIFICAR - Adicionar nova rota |
+
+---
+
+### Secao Tecnica: Migrations SQL
+
+```sql
+-- Migration 1: Criar tabelas de custos empresariais
+
+-- Tabela de categorias de custos
+CREATE TABLE IF NOT EXISTS public.corporate_cost_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  name TEXT NOT NULL,
+  color TEXT DEFAULT '#6366f1',
+  icon TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.corporate_cost_categories ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "cost_cat_select" ON corporate_cost_categories 
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "cost_cat_insert" ON corporate_cost_categories 
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "cost_cat_update" ON corporate_cost_categories 
+  FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "cost_cat_delete" ON corporate_cost_categories 
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Tabela de custos
+CREATE TABLE IF NOT EXISTS public.corporate_costs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  name TEXT NOT NULL,
+  category_id UUID REFERENCES corporate_cost_categories(id) ON DELETE SET NULL,
+  amount NUMERIC NOT NULL DEFAULT 0,
+  cost_type TEXT NOT NULL DEFAULT 'recorrente',
+  frequency TEXT DEFAULT 'mensal',
+  start_date DATE,
+  end_date DATE,
+  is_active BOOLEAN DEFAULT true,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.corporate_costs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "costs_select" ON corporate_costs 
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "costs_insert" ON corporate_costs 
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "costs_update" ON corporate_costs 
+  FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "costs_delete" ON corporate_costs 
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Trigger updated_at
+CREATE TRIGGER set_corporate_costs_updated_at
+  BEFORE UPDATE ON corporate_costs
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE corporate_cost_categories;
+ALTER PUBLICATION supabase_realtime ADD TABLE corporate_costs;
 ```
 
 ---
 
 ### Resultado Esperado
 
-Apos as correcoes:
-1. Nao havera mais loop infinito ao acessar `/config`
-2. A selecao "Empresarial" funcionara corretamente
-3. Ao trocar de contexto, o usuario sera navegado para a pagina inicial do contexto
-4. A rota `/config` sera acessivel em ambos os contextos
-5. O estado do contexto sera mantido via localStorage (ja implementado)
+Apos implementacao:
+1. Menu lateral tera "Financeiro" em vez de "Precificador"
+2. Pagina Financeiro com 3 abas: Custos, Precificador, Categorias
+3. Usuario pode cadastrar custos detalhados (energia, internet, funcionarios, etc.)
+4. Categorias de custos personalizaveis
+5. Classificacao por tipo: recorrente, fixo, pontual
+6. Precificador integrado com custos reais da operacao
+7. KPIs mostrando custo operacional total
+8. Dados sincronizados em tempo real entre dispositivos
 
