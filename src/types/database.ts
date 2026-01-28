@@ -16,6 +16,35 @@ export type ContractType = 'pj' | 'clt' | 'freelancer';
 export type PlanTier = 'bronze' | 'silver' | 'gold';
 export type PlanType = 'recorrente' | 'pontual';
 
+// Corporate Costs Types
+export type CorporateCostType = 'recorrente' | 'fixo' | 'pontual';
+export type CostFrequency = 'diario' | 'semanal' | 'mensal' | 'anual';
+
+export interface CorporateCostCategory {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  icon?: string;
+  created_at: string;
+}
+
+export interface CorporateCost {
+  id: string;
+  user_id: string;
+  name: string;
+  category_id?: string;
+  amount: number;
+  cost_type: CorporateCostType;
+  frequency?: CostFrequency;
+  start_date?: string;
+  end_date?: string;
+  is_active: boolean;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Document Types
 export interface DocumentType {
   id: string;

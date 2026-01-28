@@ -3,7 +3,8 @@ import type {
   Category, Income, Expense, Debt, Saving, Goal, 
   Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask,
   SalesGoal, Prospect, CorporatePricing, CorporateInvestment, CorporateTeamMember,
-  ServicePlan, ServicePlanItem, DocumentType, ProspectDocument
+  ServicePlan, ServicePlanItem, DocumentType, ProspectDocument,
+  CorporateCostCategory, CorporateCost
 } from '@/types/database';
 
 interface AppState {
@@ -35,6 +36,10 @@ interface AppState {
   // Document Types
   documentTypes: DocumentType[];
   prospectDocuments: ProspectDocument[];
+  
+  // Corporate Costs
+  corporateCostCategories: CorporateCostCategory[];
+  corporateCosts: CorporateCost[];
   
   // Loading states
   isLoading: boolean;
@@ -175,6 +180,18 @@ interface AppState {
   addProspectDocument: (doc: ProspectDocument) => void;
   deleteProspectDocument: (id: string) => void;
   
+  // Actions - Corporate Cost Categories
+  setCorporateCostCategories: (categories: CorporateCostCategory[]) => void;
+  addCorporateCostCategory: (category: CorporateCostCategory) => void;
+  updateCorporateCostCategory: (id: string, updates: Partial<CorporateCostCategory>) => void;
+  deleteCorporateCostCategory: (id: string) => void;
+  
+  // Actions - Corporate Costs
+  setCorporateCosts: (costs: CorporateCost[]) => void;
+  addCorporateCost: (cost: CorporateCost) => void;
+  updateCorporateCost: (id: string, updates: Partial<CorporateCost>) => void;
+  deleteCorporateCost: (id: string) => void;
+  
   // Actions - Loading
   setIsLoading: (loading: boolean) => void;
   setDataInitialized: (initialized: boolean) => void;
@@ -207,6 +224,8 @@ const initialState = {
   servicePlanItems: [],
   documentTypes: [],
   prospectDocuments: [],
+  corporateCostCategories: [],
+  corporateCosts: [],
   isLoading: false,
   dataInitialized: false,
 };
@@ -453,6 +472,30 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   deleteProspectDocument: (id) => set((state) => ({
     prospectDocuments: state.prospectDocuments.filter((d) => d.id !== id)
+  })),
+  
+  // Corporate Cost Categories
+  setCorporateCostCategories: (corporateCostCategories) => set({ corporateCostCategories }),
+  addCorporateCostCategory: (category) => set((state) => ({ 
+    corporateCostCategories: [...state.corporateCostCategories, category] 
+  })),
+  updateCorporateCostCategory: (id, updates) => set((state) => ({
+    corporateCostCategories: state.corporateCostCategories.map((c) => c.id === id ? { ...c, ...updates } : c)
+  })),
+  deleteCorporateCostCategory: (id) => set((state) => ({
+    corporateCostCategories: state.corporateCostCategories.filter((c) => c.id !== id)
+  })),
+  
+  // Corporate Costs
+  setCorporateCosts: (corporateCosts) => set({ corporateCosts }),
+  addCorporateCost: (cost) => set((state) => ({ 
+    corporateCosts: [...state.corporateCosts, cost] 
+  })),
+  updateCorporateCost: (id, updates) => set((state) => ({
+    corporateCosts: state.corporateCosts.map((c) => c.id === id ? { ...c, ...updates } : c)
+  })),
+  deleteCorporateCost: (id) => set((state) => ({
+    corporateCosts: state.corporateCosts.filter((c) => c.id !== id)
   })),
   
   // Loading
