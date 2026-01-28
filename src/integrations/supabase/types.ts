@@ -454,6 +454,48 @@ export type Database = {
           },
         ]
       }
+      payment_fee_settings: {
+        Row: {
+          created_at: string | null
+          discount_percent: number | null
+          fee_fixed: number | null
+          fee_percent: number | null
+          id: string
+          installment_ranges: Json | null
+          is_active: boolean | null
+          method: string
+          receiving_days: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          discount_percent?: number | null
+          fee_fixed?: number | null
+          fee_percent?: number | null
+          id?: string
+          installment_ranges?: Json | null
+          is_active?: boolean | null
+          method: string
+          receiving_days?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          discount_percent?: number | null
+          fee_fixed?: number | null
+          fee_percent?: number | null
+          id?: string
+          installment_ranges?: Json | null
+          is_active?: boolean | null
+          method?: string
+          receiving_days?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       project_categories: {
         Row: {
           color: string
@@ -670,12 +712,14 @@ export type Database = {
           id: string
           notes: string | null
           payment_installments: number | null
+          payment_methods: Json | null
           payment_type: string | null
           plan_id: string | null
           project_id: string | null
           project_type: string | null
           prospection_date: string
           status: string
+          total_fees: number | null
           updated_at: string
           user_id: string
         }
@@ -688,12 +732,14 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_installments?: number | null
+          payment_methods?: Json | null
           payment_type?: string | null
           plan_id?: string | null
           project_id?: string | null
           project_type?: string | null
           prospection_date?: string
           status?: string
+          total_fees?: number | null
           updated_at?: string
           user_id: string
         }
@@ -706,12 +752,14 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_installments?: number | null
+          payment_methods?: Json | null
           payment_type?: string | null
           plan_id?: string | null
           project_id?: string | null
           project_type?: string | null
           prospection_date?: string
           status?: string
+          total_fees?: number | null
           updated_at?: string
           user_id?: string
         }

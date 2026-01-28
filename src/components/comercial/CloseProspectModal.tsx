@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -12,7 +13,8 @@ import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
 import { Building2, User, Package, Calendar, CheckCircle2, FolderKanban, Percent } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
-import type { Prospect, PaymentType, Project } from '@/types/database';
+import { PaymentMethodSelector } from './PaymentMethodSelector';
+import type { Prospect, PaymentType, Project, PaymentMethodEntry } from '@/types/database';
 
 type DurationUnit = 'meses' | 'horas' | 'dias';
 
@@ -45,6 +47,7 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
   const [projectName, setProjectName] = useState('');
   const [projectDeadline, setProjectDeadline] = useState(format(addDays(new Date(), 30), 'yyyy-MM-dd'));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodEntry[]>([]);
 
   const activePlans = servicePlans.filter(p => p.is_active);
   
@@ -53,6 +56,12 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
   const planPrice = selectedPlan?.final_price || 0;
   const discountValue = parseFloat(discount) || 0;
   const finalValue = Math.max(0, planPrice - discountValue);
+  
+  // Calculate total fees from payment methods
+  const totalFees = useMemo(() => 
+    paymentMethods.reduce((sum, m) => sum + (m.fee || 0), 0),
+    [paymentMethods]
+  );
   
   // Check if prospect already has a linked project
   const hasExistingProject = prospect?.project_id && projects.some(p => p.id === prospect.project_id);
@@ -67,6 +76,7 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
       setDurationUnit('meses');
       setPaymentInstallments(prospect.payment_installments?.toString() || '1');
       setCreateProject(!hasExistingProject);
+      setPaymentMethods([]);
       
       // Generate suggested project name
       const suggestedName = prospect.project_type 
@@ -88,6 +98,7 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
   const handlePlanChange = (value: string) => {
     setPlanId(value);
     setDiscount('0'); // Reset discount when plan changes
+    setPaymentMethods([]); // Reset payment methods
     const plan = activePlans.find(p => p.id === value);
     if (plan) {
       setPaymentType(plan.plan_type as PaymentType);
@@ -160,6 +171,8 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
         contract_duration: paymentType === 'recorrente' ? parseInt(contractDuration) || null : null,
         payment_installments: paymentType === 'pontual' ? parseInt(paymentInstallments) || null : null,
         notes: updatedNotes,
+        payment_methods: paymentMethods.length > 0 ? paymentMethods : null,
+        total_fees: totalFees,
       };
 
       // Link to new project if created
@@ -199,8 +212,8 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-4 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-success" />
             Confirmar Fechamento de Venda
@@ -210,198 +223,209 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
           </DialogDescription>
         </DialogHeader>
 
-        {/* Client Info Summary */}
-        <div className="bg-muted/50 rounded-lg p-3 space-y-1">
-          <div className="flex items-center gap-2 text-sm">
-            <User className="w-4 h-4 text-muted-foreground" />
-            <span className="font-medium">{prospect.client_name}</span>
-          </div>
-          {prospect.company_name && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Building2 className="w-4 h-4" />
-              <span>{prospect.company_name}</span>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-4 pt-2">
-          {/* Plan Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="plan" className="flex items-center gap-1">
-              <Package className="w-4 h-4" />
-              Plano Vendido *
-            </Label>
-            <Select value={planId} onValueChange={handlePlanChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o plano" />
-              </SelectTrigger>
-              <SelectContent>
-                {activePlans.map(plan => (
-                  <SelectItem key={plan.id} value={plan.id}>
-                    <div className="flex items-center justify-between gap-4">
-                      <span>{plan.name} ({plan.tier})</span>
-                      <span className="text-muted-foreground text-xs">
-                        {formatCurrency(plan.final_price)}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Discount (optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="discount" className="flex items-center gap-1">
-              <Percent className="w-4 h-4" />
-              Desconto (opcional)
-            </Label>
-            <Input
-              id="discount"
-              type="number"
-              step="0.01"
-              min="0"
-              max={planPrice}
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
-              placeholder="0.00"
-            />
-          </div>
-
-          {/* Final Value Display */}
-          {planId && (
-            <div className="bg-success/10 border border-success/20 rounded-lg p-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Valor Final:</span>
-                <span className="text-lg font-bold text-success">
-                  {formatCurrency(finalValue)}
-                </span>
+        <ScrollArea className="flex-1 px-4 pb-4">
+          <div className="space-y-4">
+            {/* Client Info Summary */}
+            <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+              <div className="flex items-center gap-2 text-sm">
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">{prospect.client_name}</span>
               </div>
-              {discountValue > 0 && (
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs text-muted-foreground">
-                    Original: {formatCurrency(planPrice)}
-                  </span>
-                  <span className="text-xs text-destructive">
-                    -{formatCurrency(discountValue)}
-                  </span>
+              {prospect.company_name && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Building2 className="w-4 h-4" />
+                  <span>{prospect.company_name}</span>
                 </div>
               )}
             </div>
-          )}
 
-          {/* Payment Type */}
-          <div className="space-y-2">
-            <Label>Tipo de Pagamento</Label>
-            <Select value={paymentType} onValueChange={(v) => setPaymentType(v as PaymentType)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recorrente">Recorrente</SelectItem>
-                <SelectItem value="pontual">Pontual</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Duration with unit selector for recurrent */}
-          {paymentType === 'recorrente' ? (
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-2">
-                <Label htmlFor="duration">Duração</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  min="1"
-                  value={contractDuration}
-                  onChange={(e) => setContractDuration(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Unidade</Label>
-                <Select value={durationUnit} onValueChange={(v) => setDurationUnit(v as DurationUnit)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="meses">Meses</SelectItem>
-                    <SelectItem value="horas">Horas</SelectItem>
-                    <SelectItem value="dias">Dias</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          ) : (
+            {/* Plan Selection */}
             <div className="space-y-2">
-              <Label htmlFor="installments">Parcelas</Label>
+              <Label htmlFor="plan" className="flex items-center gap-1">
+                <Package className="w-4 h-4" />
+                Plano Vendido *
+              </Label>
+              <Select value={planId} onValueChange={handlePlanChange}>
+                <SelectTrigger id="plan">
+                  <SelectValue placeholder="Selecione o plano" />
+                </SelectTrigger>
+                <SelectContent className="z-[200]">
+                  {activePlans.map(plan => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      <div className="flex items-center justify-between gap-4">
+                        <span>{plan.name} ({plan.tier})</span>
+                        <span className="text-muted-foreground text-xs">
+                          {formatCurrency(plan.final_price)}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Discount (optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="discount" className="flex items-center gap-1">
+                <Percent className="w-4 h-4" />
+                Desconto (opcional)
+              </Label>
               <Input
-                id="installments"
+                id="discount"
                 type="number"
-                min="1"
-                value={paymentInstallments}
-                onChange={(e) => setPaymentInstallments(e.target.value)}
+                step="0.01"
+                min="0"
+                max={planPrice}
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+                placeholder="0.00"
               />
             </div>
-          )}
 
-          {/* Create Project Checkbox */}
-          {!hasExistingProject && (
-            <>
-              <div className="flex items-center space-x-2 pt-2">
-                <Checkbox
-                  id="createProject"
-                  checked={createProject}
-                  onCheckedChange={(checked) => setCreateProject(checked as boolean)}
-                />
-                <Label 
-                  htmlFor="createProject" 
-                  className="flex items-center gap-1.5 cursor-pointer"
-                >
-                  <FolderKanban className="w-4 h-4" />
-                  Criar projeto automaticamente
-                </Label>
-              </div>
-
-              {/* Project Fields (conditional) */}
-              {createProject && (
-                <div className="space-y-3 pl-6 border-l-2 border-primary/20">
-                  <div className="space-y-2">
-                    <Label htmlFor="projectName">Nome do Projeto</Label>
-                    <Input
-                      id="projectName"
-                      value={projectName}
-                      onChange={(e) => setProjectName(e.target.value)}
-                      placeholder="Nome do projeto"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="projectDeadline" className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      Prazo Inicial
-                    </Label>
-                    <Input
-                      id="projectDeadline"
-                      type="date"
-                      value={projectDeadline}
-                      onChange={(e) => setProjectDeadline(e.target.value)}
-                    />
-                  </div>
+            {/* Final Value Display */}
+            {planId && (
+              <div className="bg-success/10 border border-success/20 rounded-lg p-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Valor Final:</span>
+                  <span className="text-lg font-bold text-success">
+                    {formatCurrency(finalValue)}
+                  </span>
                 </div>
-              )}
-            </>
-          )}
+                {discountValue > 0 && (
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-xs text-muted-foreground">
+                      Original: {formatCurrency(planPrice)}
+                    </span>
+                    <span className="text-xs text-destructive">
+                      -{formatCurrency(discountValue)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {hasExistingProject && (
-            <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
-              <FolderKanban className="w-4 h-4 inline mr-2" />
-              Esta prospecção já possui um projeto vinculado
+            {/* Payment Methods */}
+            {finalValue > 0 && (
+              <PaymentMethodSelector
+                totalValue={finalValue}
+                selectedMethods={paymentMethods}
+                onChange={setPaymentMethods}
+              />
+            )}
+
+            {/* Payment Type */}
+            <div className="space-y-2">
+              <Label>Tipo de Contrato</Label>
+              <Select value={paymentType} onValueChange={(v) => setPaymentType(v as PaymentType)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="z-[200]">
+                  <SelectItem value="recorrente">Recorrente</SelectItem>
+                  <SelectItem value="pontual">Pontual</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </div>
+
+            {/* Duration with unit selector for recurrent */}
+            {paymentType === 'recorrente' ? (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Duração</Label>
+                  <Input
+                    id="duration"
+                    type="number"
+                    min="1"
+                    value={contractDuration}
+                    onChange={(e) => setContractDuration(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Unidade</Label>
+                  <Select value={durationUnit} onValueChange={(v) => setDurationUnit(v as DurationUnit)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="z-[200]">
+                      <SelectItem value="meses">Meses</SelectItem>
+                      <SelectItem value="horas">Horas</SelectItem>
+                      <SelectItem value="dias">Dias</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="installments">Parcelas</Label>
+                <Input
+                  id="installments"
+                  type="number"
+                  min="1"
+                  value={paymentInstallments}
+                  onChange={(e) => setPaymentInstallments(e.target.value)}
+                />
+              </div>
+            )}
+
+            {/* Create Project Checkbox */}
+            {!hasExistingProject && (
+              <>
+                <div className="flex items-center space-x-2 pt-2">
+                  <Checkbox
+                    id="createProject"
+                    checked={createProject}
+                    onCheckedChange={(checked) => setCreateProject(checked as boolean)}
+                  />
+                  <Label 
+                    htmlFor="createProject" 
+                    className="flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <FolderKanban className="w-4 h-4" />
+                    Criar projeto automaticamente
+                  </Label>
+                </div>
+
+                {/* Project Fields (conditional) */}
+                {createProject && (
+                  <div className="space-y-3 pl-6 border-l-2 border-primary/20">
+                    <div className="space-y-2">
+                      <Label htmlFor="projectName">Nome do Projeto</Label>
+                      <Input
+                        id="projectName"
+                        value={projectName}
+                        onChange={(e) => setProjectName(e.target.value)}
+                        placeholder="Nome do projeto"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="projectDeadline" className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        Prazo Inicial
+                      </Label>
+                      <Input
+                        id="projectDeadline"
+                        type="date"
+                        value={projectDeadline}
+                        onChange={(e) => setProjectDeadline(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {hasExistingProject && (
+              <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
+                <FolderKanban className="w-4 h-4 inline mr-2" />
+                Esta prospecção já possui um projeto vinculado
+              </div>
+            )}
+          </div>
+        </ScrollArea>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-4">
+        <div className="flex gap-2 p-4 pt-2 border-t">
           <Button 
             type="button" 
             variant="outline" 
