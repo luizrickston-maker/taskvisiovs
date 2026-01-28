@@ -135,7 +135,11 @@ export function PaymentMethodSelector({ totalValue, selectedMethods, onChange }:
             <Card 
               key={method} 
               className={`cursor-pointer transition-colors ${selected ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground/50'}`}
-              onClick={() => handleToggle(method, !selected)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleToggle(method, !selected);
+              }}
             >
               <CardContent className="p-2">
                 <div className="flex items-center gap-2">
@@ -168,7 +172,7 @@ export function PaymentMethodSelector({ totalValue, selectedMethods, onChange }:
                         <SelectTrigger className="h-7 text-xs">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[300]">
                           {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
                             <SelectItem key={n} value={String(n)}>
                               {n}x {n === 1 ? '(à vista)' : ''}

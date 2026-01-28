@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -212,8 +211,8 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="p-4 pb-0">
+      <DialogContent className="w-[95vw] max-w-lg max-h-[85vh] flex flex-col p-0">
+        <DialogHeader className="p-4 pb-2 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-success" />
             Confirmar Fechamento de Venda
@@ -223,8 +222,8 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-4 pb-4">
-          <div className="space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
+          <div className="space-y-4 pb-2">
             {/* Client Info Summary */}
             <div className="bg-muted/50 rounded-lg p-3 space-y-1">
               <div className="flex items-center gap-2 text-sm">
@@ -422,10 +421,10 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Actions */}
-        <div className="flex gap-2 p-4 pt-2 border-t">
+        <div className="flex gap-2 p-4 pt-2 border-t shrink-0">
           <Button 
             type="button" 
             variant="outline" 
