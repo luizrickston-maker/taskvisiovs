@@ -1,403 +1,409 @@
 
 
-## Plano: Transformar Precificador em Modulo Financeiro Empresarial Completo
+## Analise Completa: Logica Financeira, Comercial e UX
 
-### Visao Geral
+### Resumo Executivo
 
-Expandir o modulo "Precificador" atual para um sistema completo de gestao financeira empresarial que permita:
-1. Gerenciar custos operacionais detalhados (funcionarios, energia, internet, etc.)
-2. Criar categorias de custos personalizadas
-3. Classificar custos por tipo (recorrente, fixo, pontual)
-4. Calcular precificacao baseada no custo real da operacao
-5. Reorganizar navegacao com menu "Financeiro" contendo sub-modulos
+Esta analise avalia a logica de precos, custos, cobranca, lucro, faturamento e pro-labore em todos os modulos do contexto Empresarial, bem como a qualidade da UI/UX em cada tela.
 
 ---
 
-### Nova Estrutura de Navegacao
+## 1. ANALISE DO MODULO COMERCIAL
 
+### 1.1 Pipeline de Prospecao (ProspectList/ProspectForm)
+
+**Logica Atual:**
+- Prospecao registra: cliente, empresa, data, status, tipo de pagamento (recorrente/pontual), valor estimado
+- Quando status muda para "fechado", triggers automaticos atualizam metas de vendas
+
+**Pontos Positivos:**
+- Automacao via triggers PostgreSQL funciona corretamente
+- Reversao automatica se status mudar de "fechado" para outro
+- Validacao de inputs com limites de caracteres
+
+**Problemas Identificados:**
+
+| Problema | Impacto | Severidade |
+|----------|---------|------------|
+| "Valor Estimado" nao diferencia valor total vs mensal para contratos recorrentes | Usuario nao sabe se R$ 5.000 e o valor total do contrato ou mensal | Alto |
+| Falta campo "valor total do contrato" para recorrentes | Calculo de faturamento fica impreciso | Alto |
+| Duracao do contrato (meses) nao e usada no calculo de faturamento | Meta de faturamento recebe apenas 1x o valor, nao considera recorrencia | Critico |
+| Nao ha vinculo entre prospecao fechada e os Planos criados | Perde rastreabilidade de qual plano foi vendido | Medio |
+
+**Recomendacao de Logica:**
 ```text
-Modo Empresarial (Sidebar):
-+------------------------+
-| Comercial              |
-| Financeiro      >      |  <-- Novo menu agrupador
-|   - Custos             |
-|   - Precificador       |
-| Planos                 |
-| Investimentos          |
-| Time                   |
-+------------------------+
+Para contratos RECORRENTES:
+  - Valor Mensal: R$ 2.000
+  - Duracao: 12 meses
+  - Valor Total Contrato: R$ 24.000 (calculado)
+  - Na meta de faturamento mensal: adiciona R$ 2.000/mes (nao valor total)
+
+Para contratos PONTUAIS:
+  - Valor Total: R$ 6.000
+  - Parcelas: 3x
+  - Na meta de faturamento: adiciona R$ 6.000 (uma vez)
 ```
 
-**Alternativa simplificada (recomendada para consistencia com estrutura atual):**
+### 1.2 Metas de Vendas (SalesGoalsSummary/SalesGoalForm)
 
+**Logica Atual:**
+- Tres tipos: Faturamento Mensal, Vendas Fechadas, Novos Clientes
+- Atualizado automaticamente via triggers quando prospect fecha
+
+**Problemas Identificados:**
+
+| Problema | Impacto | Severidade |
+|----------|---------|------------|
+| "Novos Clientes" nao e atualizado automaticamente | Usuario precisa atualizar manualmente | Medio |
+| Meta de "Faturamento Mensal" recebe valor pontual, nao mensal recorrente | Calculo incorreto para contratos recorrentes | Critico |
+| Nao ha visualizacao de tendencia/projecao | Usuario nao ve se esta no ritmo de bater a meta | Baixo |
+
+**UX da Tela:**
+- Cards de meta com progress bar sao claros e bem desenhados
+- Filtros avancados funcionam bem
+- Falta indicador visual de "atrasado" vs "adiantado" em relacao ao tempo
+
+---
+
+## 2. ANALISE DO MODULO FINANCEIRO
+
+### 2.1 Custos Operacionais (CostList/CostForm)
+
+**Logica Atual:**
+- Custos classificados como: Recorrente, Fixo, Pontual
+- Frequencia: diario, semanal, mensal, anual
+- Custo de equipe vem do modulo Time
+- KPIs mostram totais corretos
+
+**Pontos Positivos:**
+- Separacao clara entre tipos de custo
+- Integracao com custo de equipe automatica
+- Filtros funcionais e completos
+
+**Problemas Identificados:**
+
+| Problema | Impacto | Severidade |
+|----------|---------|------------|
+| Diferenca entre "Recorrente" e "Fixo" nao e clara para usuario | Confusao sobre qual usar | Medio |
+| Custos anuais nao sao divididos por 12 no KPI mensal | Custo mensal total fica errado se houver custos anuais | Alto |
+| Custos pontuais nao sao filtrados por mes atual | Soma custos pontuais de todos os tempos | Medio |
+| Nao ha campo para associar custo a um Plano/Servico especifico | Precificador nao consegue calcular custo real por servico | Alto |
+
+**Recomendacao de Logica:**
 ```text
-Modo Empresarial (Sidebar):
-+------------------------+
-| Comercial              |
-| Financeiro             |  <-- Dashboard financeiro (custos + precificador)
-| Planos                 |
-| Investimentos          |
-| Time                   |
-+------------------------+
+Custo Mensal Total = 
+  + Recorrentes mensais
+  + Recorrentes semanais * 4.33
+  + Recorrentes diarios * 30
+  + Recorrentes anuais / 12
+  + Fixos (que sao por definicao mensais)
+  + Pontuais do mes atual
+  + Custo de equipe
 ```
 
----
+### 2.2 Precificador (PricingCalculator)
 
-### Parte 1: Banco de Dados
-
-#### Nova Tabela: `corporate_cost_categories`
-Categorias de custos personalizaveis:
-
-```sql
-CREATE TABLE public.corporate_cost_categories (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
-  name TEXT NOT NULL,
-  color TEXT DEFAULT '#6366f1',
-  icon TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- RLS policies
-ALTER TABLE corporate_cost_categories ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own cost categories"
-  ON corporate_cost_categories FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own cost categories"
-  ON corporate_cost_categories FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own cost categories"
-  ON corporate_cost_categories FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own cost categories"
-  ON corporate_cost_categories FOR DELETE
-  USING (auth.uid() = user_id);
-
--- Enable realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE corporate_cost_categories;
-```
-
-#### Nova Tabela: `corporate_costs`
-Custos operacionais detalhados:
-
-```sql
-CREATE TABLE public.corporate_costs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
-  name TEXT NOT NULL,
-  category_id UUID REFERENCES corporate_cost_categories(id) ON DELETE SET NULL,
-  amount NUMERIC NOT NULL DEFAULT 0,
-  cost_type TEXT NOT NULL DEFAULT 'recorrente', -- 'recorrente', 'fixo', 'pontual'
-  frequency TEXT DEFAULT 'mensal', -- 'mensal', 'anual', 'semanal', 'diario' (para recorrentes)
-  start_date DATE,
-  end_date DATE, -- NULL para custos sem fim
-  is_active BOOLEAN DEFAULT true,
-  notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- RLS policies (mesmo padrao)
-ALTER TABLE corporate_costs ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own costs"
-  ON corporate_costs FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own costs"
-  ON corporate_costs FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own costs"
-  ON corporate_costs FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own costs"
-  ON corporate_costs FOR DELETE USING (auth.uid() = user_id);
-
--- Enable realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE corporate_costs;
-
--- Trigger para updated_at
-CREATE TRIGGER set_updated_at
-  BEFORE UPDATE ON corporate_costs
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-```
-
----
-
-### Parte 2: Tipos TypeScript
-
-Adicionar ao `src/types/database.ts`:
-
-```typescript
-// Tipos de custo empresarial
-export type CorporateCostType = 'recorrente' | 'fixo' | 'pontual';
-export type CostFrequency = 'diario' | 'semanal' | 'mensal' | 'anual';
-
-export interface CorporateCostCategory {
-  id: string;
-  user_id: string;
-  name: string;
-  color: string;
-  icon?: string;
-  created_at: string;
-}
-
-export interface CorporateCost {
-  id: string;
-  user_id: string;
-  name: string;
-  category_id?: string;
-  amount: number;
-  cost_type: CorporateCostType;
-  frequency?: CostFrequency;
-  start_date?: string;
-  end_date?: string;
-  is_active: boolean;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-}
-```
-
----
-
-### Parte 3: Estado Global (Zustand)
-
-Adicionar ao `useAppStore.ts`:
-
-```typescript
-// State
-corporateCostCategories: CorporateCostCategory[];
-corporateCosts: CorporateCost[];
-
-// Actions
-setCorporateCostCategories: (categories: CorporateCostCategory[]) => void;
-addCorporateCostCategory: (category: CorporateCostCategory) => void;
-updateCorporateCostCategory: (id: string, updates: Partial<CorporateCostCategory>) => void;
-deleteCorporateCostCategory: (id: string) => void;
-
-setCorporateCosts: (costs: CorporateCost[]) => void;
-addCorporateCost: (cost: CorporateCost) => void;
-updateCorporateCost: (id: string, updates: Partial<CorporateCost>) => void;
-deleteCorporateCost: (id: string) => void;
-```
-
----
-
-### Parte 4: Nova Pagina Financeiro
-
-Criar `src/pages/PJ/FinanceiroPage.tsx` com abas internas:
-
+**Logica Atual:**
 ```text
-+------------------------------------------------------------------+
-| [Wallet] Financeiro                                              |
-| Gestao completa de custos e precificacao                         |
-+------------------------------------------------------------------+
-| [Custos] [Precificador] [Categorias]                             |
-+------------------------------------------------------------------+
-| Conteudo da aba selecionada...                                   |
-+------------------------------------------------------------------+
+custoComImpostos = custo * (1 + impostos/100)
+precoFinal = custoComImpostos * (1 + margem/100)
+lucroLiquido = precoFinal - custoComImpostos
+margemReal = (lucroLiquido / precoFinal) * 100
 ```
 
-#### Aba "Custos" - Componentes:
+**Pontos Positivos:**
+- Calculo basico de precificacao correto
+- Historico de precificacoes salvo
+- Interface limpa com KPIs em tempo real
 
-1. **KPIs no topo:**
-   - Total Custos Mensais (recorrentes + fixos ativos)
-   - Total Custos Pontuais (mes atual)
-   - Custo com Equipe (vinculado ao Time)
-   - Custo Operacional (energia, internet, etc.)
+**Problemas Identificados:**
 
-2. **Formulario de Novo Custo:**
-   - Nome do custo
-   - Categoria (dropdown com categorias personalizadas)
-   - Valor (R$)
-   - Tipo: Recorrente | Fixo | Pontual
-   - Frequencia (se recorrente): Mensal | Anual | Semanal
-   - Data inicio / Data fim (opcional)
-   - Observacoes
+| Problema | Impacto | Severidade |
+|----------|---------|------------|
+| Nao integra custos operacionais do modulo Financeiro | Precificacao ignora overhead da empresa | Critico |
+| Nao considera custo de horas da equipe | Servicos baseados em tempo nao tem custo real | Critico |
+| Falta campo de horas estimadas do servico | Nao calcula custo/hora | Alto |
+| Nao ha opcao de usar custo operacional proporcional | Cada servico deveria absorver parte do custo fixo | Alto |
 
-3. **Lista de Custos:**
-   - Agrupados por categoria
-   - Filtros: Tipo, Categoria, Status (ativo/inativo)
-   - Toggle ativo/inativo
-   - Editar / Excluir
-
-4. **Categorias pre-definidas sugeridas:**
-   - Funcionarios CLT
-   - Prestadores PJ
-   - Freelancers
-   - Energia
-   - Internet
-   - Aluguel
-   - Software/SaaS
-   - Marketing
-   - Outros
-
-#### Aba "Precificador" - Melhorias:
-
-1. **Integracao com custos:**
-   - Campo "Custo Base" pode ser calculado automaticamente
-   - Botao "Usar custo operacional mensal"
-   - Mostra divisao do custo por hora (se informar horas trabalhadas)
-
-2. **Campos adicionais:**
-   - Horas estimadas do servico
-   - Custo por hora da operacao (calculado)
-   - Custo direto do servico + proporcional operacional
-
-3. **Calculos aprimorados:**
-   ```
-   Custo Total = Custo Direto + (Custo Operacional Mensal / Servicos por Mes)
-   Preco Sugerido = Custo Total * (1 + Impostos%) * (1 + Margem%)
-   Lucro = Preco - Custo Total - Impostos
-   ```
-
-#### Aba "Categorias":
-
-- Gerenciar categorias de custos
-- Nome, cor, icone
-- Ver quantos custos estao vinculados
-
----
-
-### Parte 5: Componentes a Criar
-
+**Recomendacao de Logica Integrada:**
 ```text
-src/components/areapj/
-├── CostCategoryManager.tsx      # Gerenciar categorias
-├── CostForm.tsx                 # Modal de adicionar/editar custo
-├── CostList.tsx                 # Lista de custos com filtros
-├── CostSummaryCards.tsx         # KPIs de custos
-├── FinanceiroDashboard.tsx      # Dashboard principal com abas
-└── PricingCalculatorEnhanced.tsx # Precificador melhorado
+Custo Direto do Servico: R$ 500 (materiais, etc)
+Horas Estimadas: 10h
+Custo Hora da Operacao: R$ 50/h (calculado: custo mensal total / horas disponiveis)
+Custo Operacional Proporcional: R$ 500 (10h * R$ 50)
+Custo Total Real: R$ 1.000 (direto + operacional)
+Impostos: 15% = R$ 150
+Margem: 30% = R$ 300
+Preco Sugerido: R$ 1.450
+```
+
+### 2.3 Categorias de Custos (CostCategoryManager)
+
+**Pontos Positivos:**
+- Interface simples e funcional
+- Cores personalizaveis
+
+**Problemas:**
+- Nao mostra quantos custos usam cada categoria
+- Nao permite reordenar categorias
+
+---
+
+## 3. ANALISE DO MODULO PLANOS
+
+### 3.1 Gerenciamento de Planos (PlansManager/PlanForm/PlanCard)
+
+**Logica Atual:**
+- Planos agregam itens do Precificador
+- Calcula custo base (soma dos itens selecionados)
+- Usuario define preco final manualmente
+- Calcula lucro e margem
+
+**Pontos Positivos:**
+- Conceito de tiers (Bronze/Prata/Ouro) e visualmente claro
+- Permite duplicar planos
+- Toggle de ativo/inativo funcional
+- Calculo de margem em tempo real
+
+**Problemas Identificados:**
+
+| Problema | Impacto | Severidade |
+|----------|---------|------------|
+| "Custo Base" usa preco final dos itens, nao custo real | Lucro calculado e falso (nao considera custo operacional) | Critico |
+| Nao vincula plano vendido a prospecao fechada | Perde rastreabilidade de vendas por plano | Alto |
+| "Receita Potencial Mensal" soma precos de planos, nao vendas reais | Metrica enganosa | Medio |
+| Nao ha historico de vendas por plano | Usuario nao sabe qual plano vende mais | Medio |
+
+**Recomendacao de Logica:**
+```text
+Custo Base do Plano = Soma dos CUSTOS dos itens (nao precos finais)
+Preco Final = definido pelo usuario
+Lucro Real = Preco Final - Custo Base
+Margem = (Lucro / Preco Final) * 100
+
+Ao fechar prospecao, vincular ao plano vendido para:
+- Contabilizar vendas por plano
+- Calcular receita real vs potencial
 ```
 
 ---
 
-### Parte 6: Navegacao
+## 4. ANALISE DO MODULO INVESTIMENTOS
 
-Modificar `AppSidebar.tsx` e `MobileNav.tsx`:
+### 4.1 Gestao de Investimentos (InvestmentManager)
 
-```typescript
-const businessNavItems = [
-  { title: 'Comercial', url: '/comercial', icon: Briefcase },
-  { title: 'Financeiro', url: '/pj/financeiro', icon: Wallet },  // NOVO (substituir Precificador)
-  { title: 'Planos', url: '/pj/planos', icon: Package },
-  { title: 'Investimentos', url: '/pj/investimentos', icon: TrendingUp },
-  { title: 'Time', url: '/pj/time', icon: Users },
-];
-```
+**Logica Atual:**
+- Registra gastos por categoria (Equipamento, Software, etc)
+- Soma total investido
+- Mostra breakdown por categoria
 
-Adicionar rota em `App.tsx`:
-```typescript
-<Route path="/pj/financeiro" element={<FinanceiroPage />} />
-```
+**Pontos Positivos:**
+- Interface clara com tabela e cards mobile
+- Categorias visuais com icones
+- Total geral bem destacado
 
-Remover rota antiga `/pj/precificador` ou redirecionar para `/pj/financeiro`.
+**Problemas Identificados:**
 
----
+| Problema | Impacto | Severidade |
+|----------|---------|------------|
+| Nao calcula depreciacao de ativos | Usuario nao sabe custo mensal de equipamentos | Alto |
+| Investimentos nao sao considerados no custo operacional | Precificacao ignora amortizacao de equipamentos | Alto |
+| Falta periodo de analise (filtro por ano/mes) | Dificil ver investimentos por periodo | Medio |
+| Nao diferencia CAPEX (capital) vs OPEX (operacional) | Mistura gastos de naturezas diferentes | Medio |
 
-### Resumo de Arquivos
-
-| Arquivo | Acao |
-|---------|------|
-| `src/types/database.ts` | Adicionar tipos CorporateCost e CorporateCostCategory |
-| `src/stores/useAppStore.ts` | Adicionar state e actions para custos |
-| `src/hooks/useInitializeData.ts` | Carregar dados de custos |
-| `src/hooks/useRealtimeSync.ts` | Adicionar sync para novas tabelas |
-| `src/pages/PJ/FinanceiroPage.tsx` | CRIAR - Nova pagina principal |
-| `src/pages/PJ/PrecificadorPage.tsx` | REMOVER ou redirecionar |
-| `src/components/areapj/FinanceiroDashboard.tsx` | CRIAR - Dashboard com abas |
-| `src/components/areapj/CostCategoryManager.tsx` | CRIAR - Gerenciar categorias |
-| `src/components/areapj/CostForm.tsx` | CRIAR - Formulario de custo |
-| `src/components/areapj/CostList.tsx` | CRIAR - Lista de custos |
-| `src/components/areapj/CostSummaryCards.tsx` | CRIAR - Cards KPI |
-| `src/components/areapj/PricingCalculator.tsx` | MODIFICAR - Integrar com custos |
-| `src/components/layout/AppSidebar.tsx` | MODIFICAR - Trocar navegacao |
-| `src/components/layout/MobileNav.tsx` | MODIFICAR - Trocar navegacao |
-| `src/App.tsx` | MODIFICAR - Adicionar nova rota |
-
----
-
-### Secao Tecnica: Migrations SQL
-
-```sql
--- Migration 1: Criar tabelas de custos empresariais
-
--- Tabela de categorias de custos
-CREATE TABLE IF NOT EXISTS public.corporate_cost_categories (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
-  name TEXT NOT NULL,
-  color TEXT DEFAULT '#6366f1',
-  icon TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
-ALTER TABLE public.corporate_cost_categories ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "cost_cat_select" ON corporate_cost_categories 
-  FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "cost_cat_insert" ON corporate_cost_categories 
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "cost_cat_update" ON corporate_cost_categories 
-  FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "cost_cat_delete" ON corporate_cost_categories 
-  FOR DELETE USING (auth.uid() = user_id);
-
--- Tabela de custos
-CREATE TABLE IF NOT EXISTS public.corporate_costs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
-  name TEXT NOT NULL,
-  category_id UUID REFERENCES corporate_cost_categories(id) ON DELETE SET NULL,
-  amount NUMERIC NOT NULL DEFAULT 0,
-  cost_type TEXT NOT NULL DEFAULT 'recorrente',
-  frequency TEXT DEFAULT 'mensal',
-  start_date DATE,
-  end_date DATE,
-  is_active BOOLEAN DEFAULT true,
-  notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
-ALTER TABLE public.corporate_costs ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "costs_select" ON corporate_costs 
-  FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "costs_insert" ON corporate_costs 
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "costs_update" ON corporate_costs 
-  FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "costs_delete" ON corporate_costs 
-  FOR DELETE USING (auth.uid() = user_id);
-
--- Trigger updated_at
-CREATE TRIGGER set_corporate_costs_updated_at
-  BEFORE UPDATE ON corporate_costs
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE corporate_cost_categories;
-ALTER PUBLICATION supabase_realtime ADD TABLE corporate_costs;
+**Recomendacao:**
+```text
+Para equipamentos com vida util:
+  - Valor: R$ 12.000
+  - Vida Util: 36 meses
+  - Depreciacao Mensal: R$ 333,33
+  
+Esse valor de depreciacao deveria compor o "Custo Operacional" no Financeiro
 ```
 
 ---
 
-### Resultado Esperado
+## 5. ANALISE DO MODULO TIME
 
-Apos implementacao:
-1. Menu lateral tera "Financeiro" em vez de "Precificador"
-2. Pagina Financeiro com 3 abas: Custos, Precificador, Categorias
-3. Usuario pode cadastrar custos detalhados (energia, internet, funcionarios, etc.)
-4. Categorias de custos personalizaveis
-5. Classificacao por tipo: recorrente, fixo, pontual
-6. Precificador integrado com custos reais da operacao
-7. KPIs mostrando custo operacional total
-8. Dados sincronizados em tempo real entre dispositivos
+### 5.1 Gestao de Equipe (TeamManager)
+
+**Logica Atual:**
+- Registra colaboradores com tipo de contrato (PJ, CLT, Freelancer)
+- Calcula custo mensal total da equipe
+- Integrado ao modulo Financeiro (custo de equipe aparece no KPI)
+
+**Pontos Positivos:**
+- Toggle ativo/inativo funcional
+- Custo integrado automaticamente no Financeiro
+- Cards visuais claros
+
+**Problemas Identificados:**
+
+| Problema | Impacto | Severidade |
+|----------|---------|------------|
+| Freelancers nao sao contados no custo mensal | Logica atual exclui freelancers do calculo | Medio |
+| Nao ha campo de horas disponiveis por colaborador | Nao calcula custo/hora da equipe | Critico |
+| Nao ha campo de encargos para CLT | Custo real de CLT e ~70% maior que salario | Alto |
+| Dia de pagamento nao e usado para projecao de fluxo de caixa | Campo existe mas nao tem funcao | Baixo |
+
+**Recomendacao de Logica para CLT:**
+```text
+Salario Bruto: R$ 5.000
+Encargos Trabalhistas (~70%): R$ 3.500
+Beneficios (VA, VT, Plano): R$ 1.000
+Custo Real CLT: R$ 9.500/mes
+Horas Disponiveis: 160h/mes
+Custo Hora Real: R$ 59,37/h
+```
+
+---
+
+## 6. ANALISE DE PRO-LABORE (AUSENTE)
+
+**Status:** NAO IMPLEMENTADO
+
+O sistema atualmente nao tem funcionalidade para:
+- Definir retirada mensal do socio (pro-labore)
+- Considerar pro-labore como custo operacional fixo
+- Diferenciar lucro bruto vs lucro liquido (apos pro-labore)
+
+**Impacto:** Usuario nao tem visibilidade real do lucro que "sobra" apos sua propria remuneracao
+
+**Recomendacao:**
+Adicionar secao no modulo Financeiro ou Time para:
+```text
+Pro-Labore Mensal: R$ 10.000
+Impostos sobre Pro-Labore (~11%): R$ 1.100
+Custo Total Pro-Labore: R$ 11.100
+
+Este valor deve compor o Custo Operacional Mensal
+```
+
+---
+
+## 7. ANALISE DE UI/UX
+
+### 7.1 Pontos Positivos Gerais
+
+| Aspecto | Avaliacao |
+|---------|-----------|
+| Responsividade | Excelente - todas telas adaptam para mobile |
+| Consistencia Visual | Boa - uso consistente de shadcn/ui |
+| Feedback ao Usuario | Boa - toasts para sucesso/erro |
+| Acessibilidade | Boa - labels nos forms, contraste adequado |
+| Hierarquia Visual | Boa - KPIs no topo, listas abaixo |
+
+### 7.2 Problemas de UX Identificados
+
+| Tela | Problema | Recomendacao |
+|------|----------|--------------|
+| Comercial | Status da prospecao muda com 1 clique sem confirmacao | Adicionar confirmacao para mudanca para "fechado" |
+| Comercial | Valor estimado sem contexto (mensal vs total) | Adicionar tooltip ou label explicativo |
+| Financeiro | "Recorrente" vs "Fixo" confunde usuario | Unificar ou adicionar explicacao |
+| Financeiro | KPIs nao explicam o calculo | Adicionar tooltip com formula |
+| Planos | "Custo Base" parece ser o custo real mas e o preco | Renomear para "Valor Base" ou clarificar |
+| Planos | Preco final aceita formato texto livre | Usar input de moeda formatado |
+| Time | Freelancers aparecem mas nao somam no custo | Clarificar na UI ou incluir no calculo |
+| Investimentos | Cor vermelha para total pode confundir | Usar cor neutra, vermelho e para prejuizo |
+
+### 7.3 Fluxos que Precisam Melhoria
+
+**Fluxo: Vender um Servico**
+```text
+Atual:
+1. Cria prospecao no Comercial
+2. Fecha prospecao (status = fechado)
+3. Meta de faturamento atualiza automaticamente
+4. Fim
+
+Problema: Nao vincula qual PLANO foi vendido
+
+Ideal:
+1. Cria prospecao no Comercial
+2. Vincula plano (dropdown com planos ativos)
+3. Valor estimado preenche automaticamente do plano
+4. Fecha prospecao
+5. Meta atualiza + contador de vendas do plano atualiza
+6. Relatorio mostra: "Plano Gold vendido 5x este mes"
+```
+
+**Fluxo: Precificar Servico Corretamente**
+```text
+Atual:
+1. Vai no Precificador
+2. Digita custo, impostos, margem
+3. Ve preco sugerido
+4. Salva
+
+Problema: Ignora completamente custos operacionais
+
+Ideal:
+1. Vai no Precificador
+2. Digita custo direto do servico
+3. Informa horas estimadas
+4. Sistema calcula custo operacional proporcional
+5. Sistema sugere preco considerando todos custos
+6. Usuario ajusta margem desejada
+7. Ve breakdown completo: custo direto, operacional, impostos, lucro
+```
+
+---
+
+## 8. RESUMO DAS MELHORIAS PRIORITARIAS
+
+### Prioridade CRITICA (afeta calculo de lucro)
+
+1. **Integrar custos operacionais no Precificador**
+   - Custo hora da operacao
+   - Rateio de custos fixos por servico
+
+2. **Corrigir logica de faturamento recorrente**
+   - Diferenciar valor mensal vs total do contrato
+   - Meta de faturamento deve considerar recorrencia
+
+3. **Adicionar horas disponiveis no Time**
+   - Calcular custo/hora real da equipe
+   - Usar no rateio de custos
+
+### Prioridade ALTA
+
+4. **Adicionar Pro-Labore**
+   - Campo para retirada do socio
+   - Incluir no custo operacional
+
+5. **Vincular Plano a Prospecao**
+   - Dropdown de planos no form de prospecao
+   - Rastrear vendas por plano
+
+6. **Corrigir calculo de custo mensal**
+   - Converter custos anuais para mensal (/12)
+   - Filtrar pontuais por mes
+
+### Prioridade MEDIA
+
+7. **Adicionar encargos CLT**
+   - Campo de percentual de encargos
+   - Calcular custo real do funcionario
+
+8. **Depreciacao de investimentos**
+   - Campo vida util
+   - Calcular depreciacao mensal
+
+9. **Melhorar UX de confirmacoes**
+   - Confirmar mudanca de status para "fechado"
+   - Tooltips explicativos nos KPIs
+
+---
+
+## 9. CONCLUSAO
+
+O sistema possui uma base solida de UI/UX com componentes bem construidos e responsivos. Porem, a **logica financeira esta incompleta**, especialmente na integracao entre modulos. Os principais gaps sao:
+
+1. **Precificacao isolada** - nao considera custos operacionais reais
+2. **Faturamento recorrente mal calculado** - trata igual a pontual
+3. **Custo de equipe sem hora** - impossibilita rateio por servico
+4. **Pro-labore ausente** - lucro mostrado nao e o lucro real
+5. **Planos nao vinculados a vendas** - perde rastreabilidade
+
+A implementacao das melhorias prioritarias transformaria o sistema de uma ferramenta de registro para uma **plataforma de gestao financeira empresarial completa**.
 
