@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,10 +56,13 @@ export function ProspectDetailModal({
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="space-y-3">
             <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0">
                 <DialogTitle className="text-xl truncate">
                   {prospect.client_name}
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Detalhes do prospect {prospect.client_name}
+                </DialogDescription>
                 {prospect.company_name && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                     <Building2 className="w-3.5 h-3.5" />
