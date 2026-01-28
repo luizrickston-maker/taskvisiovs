@@ -26,12 +26,13 @@ const personalMoreNavItems = [
 
 const businessMainNavItems = [
   { title: 'Comercial', url: '/comercial', icon: Briefcase },
+  { title: 'Projetos', url: '/pj/projetos', icon: FolderKanban },
   { title: 'Financeiro', url: '/pj/financeiro', icon: Wallet },
-  { title: 'Planos', url: '/pj/planos', icon: Package },
   { title: 'Time', url: '/pj/time', icon: Users },
 ];
 
 const businessMoreNavItems = [
+  { title: 'Planos', url: '/pj/planos', icon: Package },
   { title: 'Investimentos', url: '/pj/investimentos', icon: TrendingUp },
   { title: 'Config', url: '/config', icon: Settings },
 ];
