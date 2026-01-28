@@ -1,328 +1,155 @@
 
 
-## Plano: Correcoes e Novas Formas de Pagamento com Taxas de Cartao
+## Plano: Correção de Interatividade do Modal de Fechamento de Venda
 
-### Resumo dos Problemas Identificados
+### Diagnóstico
 
-#### 1. PlanItemSelector - Warning de Ref
-O console mostra um erro sobre "Function components cannot be given refs" no `PlanItemSelector`. Isso ocorre porque o componente nao usa `forwardRef`, mas esta sendo passado como filho para um componente que tenta passar uma ref (provavelmente o `ScrollArea`).
+Após testes automatizados extensivos no browser, constatei que **os controles do modal estão funcionando tecnicamente**, mas podem haver problemas de UX em dispositivos móveis reais. Os problemas potenciais identificados são:
 
-#### 2. CloseProspectModal - Controles nao funcionam
-O usuario reporta que os selects de unidade, duracao e tipo de pagamento nao estao funcionando. Apos analise do codigo, os componentes estao estruturados corretamente com `onValueChange`, mas pode haver um problema de z-index ou conflito de eventos dentro do modal com `overflow-y-auto`.
+1. **ScrollArea dentro de DialogContent sem altura fixa definida** - O `ScrollArea` tem `className="flex-1"` mas não tem altura definida, o que pode causar problemas de scroll e clipping de elementos em portais (como dropdowns do Radix)
 
-#### 3. Criacao/Edicao de Valores no Plano
-O campo de preco final ja existe no `PlanForm` e funciona. O usuario pode estar confundindo com outro cenario.
+2. **Estrutura do DialogContent com `p-0`** - A remoção do padding padrão pode afetar a área de toque dos elementos internos
 
----
+3. **Dropdowns podem ser clicados através do ScrollArea** - O viewport do ScrollArea pode estar interceptando eventos de clique em alguns navegadores/dispositivos
 
-### Solucao Proposta
-
-#### Parte 1: Correcao dos Problemas de Interatividade
-
-**1.1 Corrigir PlanItemSelector com forwardRef:**
-```typescript
-export const PlanItemSelector = React.forwardRef<HTMLDivElement, PlanItemSelectorProps>(
-  ({ pricings, selectedItems, onChange }, ref) => {
-    // ... implementacao
-  }
-);
-PlanItemSelector.displayName = 'PlanItemSelector';
-```
-
-**1.2 Corrigir z-index dos SelectContent no CloseProspectModal:**
-O problema esta no `SelectContent` que pode estar sendo cortado pelo `overflow-y-auto` do DialogContent. Solucao:
-- Remover `overflow-y-auto` do DialogContent principal
-- Usar `ScrollArea` interno apenas no conteudo
-- Garantir que os portais do Radix Select funcionem corretamente
+4. **PaymentMethodSelector não aparece para planos com valor R$ 0,00** - Isso é comportamento esperado (condição `{finalValue > 0 && ...}`), mas pode confundir o usuário se o plano não tem preço configurado
 
 ---
 
-#### Parte 2: Novas Formas de Pagamento
+### Correções a Implementar
 
-**Nova estrutura de pagamento:**
+#### 1. Melhorar estrutura do DialogContent e ScrollArea
 
-```text
-Forma de Pagamento (multipla selecao):
-[x] Cartao de Credito
-    Bandeira: [Visa/Master/Elo/Amex] Taxa: [2.99%] Parcelas: [12]
-[x] Pix
-    Desconto: [5%]  (opcional)
-[ ] Debito
-    Taxa: [1.29%]
-[ ] Dinheiro
-[ ] Boleto
-    Taxa: [R$ 3,50]
+**Problema**: O `flex-col` com `overflow-hidden` no `DialogContent` combinado com `flex-1` no `ScrollArea` pode não calcular corretamente a altura em todos os dispositivos.
+
+**Solução**: Usar altura fixa máxima no ScrollArea e garantir que os portais dos Select funcionem corretamente:
+
+```tsx
+// Antes
+<DialogContent className="w-[95vw] max-w-lg max-h-[90vh] flex flex-col p-0">
+  <DialogHeader className="p-4 pb-0">...</DialogHeader>
+  <ScrollArea className="flex-1 px-4 pb-4">
+    ...
+  </ScrollArea>
+  <div className="flex gap-2 p-4 pt-2 border-t">...</div>
+</DialogContent>
+
+// Depois
+<DialogContent className="w-[95vw] max-w-lg max-h-[90vh] flex flex-col p-0 overflow-visible">
+  <DialogHeader className="p-4 pb-2 shrink-0">...</DialogHeader>
+  <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
+    <div className="space-y-4">
+      ...
+    </div>
+  </div>
+  <div className="flex gap-2 p-4 pt-2 border-t shrink-0">...</div>
+</DialogContent>
 ```
 
-**Modelo de dados proposto:**
+#### 2. Adicionar z-index explícito aos SelectContent aninhados
 
-```typescript
-// Novas interfaces
-interface PaymentMethodConfig {
-  id: string;
-  method: 'credito' | 'debito' | 'pix' | 'dinheiro' | 'boleto';
-  fee_percent?: number;      // Taxa percentual (cartoes)
-  fee_fixed?: number;        // Taxa fixa (boleto)
-  discount_percent?: number; // Desconto (Pix, dinheiro)
-  installments?: number;     // Parcelas (credito)
-  card_brand?: string;       // Bandeira (para referencia)
-}
+**Problema**: Os dropdowns podem estar renderizando atrás do modal ou sendo clipados.
 
-// Atualizar Prospect
-interface Prospect {
-  // ... campos existentes
-  payment_methods?: PaymentMethodConfig[]; // JSON array
-  total_fees?: number;                     // Total de taxas calculado
-}
+**Solução**: Garantir z-index alto em todos os `SelectContent`:
+
+```tsx
+<SelectContent className="z-[200]">
+  {/* Já está assim, mas verificar todos */}
+</SelectContent>
 ```
+
+#### 3. Prevenir propagação de eventos no PaymentMethodSelector
+
+**Problema**: Os cliques dentro dos cards do `PaymentMethodSelector` podem estar sendo interceptados.
+
+**Solução**: Adicionar `stopPropagation` mais abrangente:
+
+```tsx
+<Card 
+  key={method} 
+  className={`cursor-pointer transition-colors ${selected ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground/50'}`}
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleToggle(method, !selected);
+  }}
+>
+```
+
+#### 4. Adicionar portal container explícito para os Selects
+
+**Problema**: Os portais do Radix podem estar renderizando em lugares inesperados.
+
+**Solução**: Usar `container` prop nos `SelectContent` para garantir renderização correta.
 
 ---
 
-#### Parte 3: Gestao de Taxas de Cartao
+### Arquivos a Modificar
 
-**Local ideal: Financeiro > Nova aba "Taxas"**
+| Arquivo | Alterações |
+|---------|-----------|
+| `src/components/comercial/CloseProspectModal.tsx` | Reestruturar DialogContent, remover ScrollArea, usar div com overflow-y-auto, adicionar shrink-0 no header/footer |
+| `src/components/comercial/PaymentMethodSelector.tsx` | Melhorar event handling, adicionar z-index alto no SelectContent do cartão de crédito |
 
-```text
-src/pages/PJ/FinanceiroPage.tsx
-├── Custos
-├── Precificador  
-├── Categorias
-└── Taxas de Pagamento   <-- NOVA ABA
-```
+---
 
-**UI da Configuracao de Taxas:**
+### Mudanças Específicas no CloseProspectModal.tsx
 
-```text
-+------------------------------------------------------------------+
-| Taxas de Formas de Pagamento                                      |
-+------------------------------------------------------------------+
-| Configure as taxas que sua empresa paga por forma de pagamento    |
-+------------------------------------------------------------------+
-|                                                                  |
-| CARTAO DE CREDITO                                                |
-| +--------------------------------------+                         |
-| | Taxa a vista:        [2.99] %        |                         |
-| | Taxa parcelado (2-6x): [3.49] %      |                         |
-| | Taxa parcelado (7-12x): [4.49] %     |                         |
-| | Prazo de recebimento: [30] dias      |                         |
-| +--------------------------------------+                         |
-|                                                                  |
-| CARTAO DE DEBITO                                                 |
-| +--------------------------------------+                         |
-| | Taxa:                [1.29] %        |                         |
-| | Prazo de recebimento: [1] dia        |                         |
-| +--------------------------------------+                         |
-|                                                                  |
-| PIX                                                              |
-| +--------------------------------------+                         |
-| | Taxa:                [0.00] %        |                         |
-| | Desconto sugerido:   [5.00] %        |                         |
-| +--------------------------------------+                         |
-|                                                                  |
-| BOLETO                                                           |
-| +--------------------------------------+                         |
-| | Taxa fixa:           R$ [3.50]       |                         |
-| | Prazo de compensacao: [3] dias       |                         |
-| +--------------------------------------+                         |
-|                                                                  |
-| [Salvar Configuracoes]                                           |
-+------------------------------------------------------------------+
+```tsx
+// Linha 215: Alterar DialogContent
+<DialogContent className="w-[95vw] max-w-lg max-h-[90vh] flex flex-col p-0">
+
+// Para:
+<DialogContent className="w-[95vw] max-w-lg max-h-[85vh] flex flex-col p-0">
+
+// Linha 226: Remover ScrollArea e usar div com overflow-y-auto
+// De:
+<ScrollArea className="flex-1 px-4 pb-4">
+  <div className="space-y-4">
+    ...
+  </div>
+</ScrollArea>
+
+// Para:
+<div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
+  <div className="space-y-4 pb-2">
+    ...
+  </div>
+</div>
 ```
 
 ---
 
-#### Parte 4: Integracao no Fechamento de Venda
+### Mudanças no PaymentMethodSelector.tsx
 
-**Novo layout do CloseProspectModal:**
-
-```text
-+------------------------------------------+
-|   Confirmar Fechamento de Venda          |
-+------------------------------------------+
-| Cliente: Joao Silva | Empresa: XYZ       |
-+------------------------------------------+
-| Plano Vendido *                          |
-| [Dropdown: Pacote Gold - R$ 2.000]       |
-|                                          |
-| Desconto (opcional)      R$ [0.00]       |
-|                                          |
-| VALOR BASE: R$ 2.000,00                  |
-+------------------------------------------+
-| FORMAS DE PAGAMENTO                      |
-|                                          |
-| [x] Cartao de Credito                    |
-|     Valor: R$ [1.500,00]  Parcelas: [6]  |
-|     Taxa: 3.49% = -R$ 52,35              |
-|                                          |
-| [x] Pix                                  |
-|     Valor: R$ [500,00]                   |
-|     Desconto: 5% = +R$ 25,00 (cliente)   |
-|                                          |
-| [ ] Debito   [ ] Dinheiro   [ ] Boleto   |
-+------------------------------------------+
-| RESUMO FINANCEIRO                        |
-| Valor Bruto: R$ 2.000,00                 |
-| Total Taxas: -R$ 52,35                   |
-| Valor Liquido: R$ 1.947,65               |
-+------------------------------------------+
-| Duracao: [12] [meses v]                  |
-| Tipo: [Recorrente v]                     |
-+------------------------------------------+
-| [x] Criar projeto automaticamente        |
-| Nome: [Projeto Gold - XYZ]               |
-| Prazo: [2026-02-28]                      |
-+------------------------------------------+
-| [Cancelar]        [Confirmar Venda] $    |
-+------------------------------------------+
+```tsx
+// Linha 171: Adicionar z-index alto no SelectContent do cartão de crédito
+<SelectContent className="z-[300]">
+  {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
+    <SelectItem key={n} value={String(n)}>
+      {n}x {n === 1 ? '(à vista)' : ''}
+    </SelectItem>
+  ))}
+</SelectContent>
 ```
 
 ---
 
-### Banco de Dados
+### Testes a Realizar
 
-**Nova tabela: payment_fee_settings**
-```sql
-CREATE TABLE public.payment_fee_settings (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  method TEXT NOT NULL, -- 'credito', 'debito', 'pix', 'dinheiro', 'boleto'
-  fee_percent NUMERIC DEFAULT 0,
-  fee_fixed NUMERIC DEFAULT 0,
-  discount_percent NUMERIC DEFAULT 0,
-  installment_ranges JSONB, -- {"1": 2.99, "2-6": 3.49, "7-12": 4.49}
-  receiving_days INTEGER DEFAULT 30,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(user_id, method)
-);
-
--- RLS policies
-ALTER TABLE public.payment_fee_settings ENABLE ROW LEVEL SECURITY;
--- (policies similares as outras tabelas)
-```
-
-**Adicionar campo a prospects:**
-```sql
-ALTER TABLE public.prospects 
-ADD COLUMN payment_methods JSONB,
-ADD COLUMN total_fees NUMERIC DEFAULT 0;
-```
+1. **Testar no mobile real**: Abrir o modal em dispositivo móvel físico
+2. **Testar todos os dropdowns**: Plano, Tipo de Contrato, Unidade
+3. **Testar checkbox**: Criar projeto automaticamente
+4. **Testar com plano com valor > 0**: Para ver as formas de pagamento
+5. **Testar confirmação**: Verificar se o som toca e os dados são salvos
 
 ---
 
-### Logica de Calculo de Taxas
+### Resultado Esperado
 
-```typescript
-const calculateFees = (
-  payments: PaymentMethodConfig[],
-  feeSettings: PaymentFeeSettings[]
-) => {
-  let totalFees = 0;
-  
-  payments.forEach(payment => {
-    const setting = feeSettings.find(s => s.method === payment.method);
-    if (!setting) return;
-    
-    const value = payment.value || 0;
-    
-    switch (payment.method) {
-      case 'credito':
-        // Buscar taxa baseada no numero de parcelas
-        const installments = payment.installments || 1;
-        const rate = getInstallmentRate(setting.installment_ranges, installments);
-        totalFees += value * (rate / 100);
-        break;
-        
-      case 'debito':
-        totalFees += value * (setting.fee_percent / 100);
-        break;
-        
-      case 'pix':
-        // Pix geralmente nao tem taxa, mas pode ter
-        totalFees += value * (setting.fee_percent / 100);
-        break;
-        
-      case 'boleto':
-        totalFees += setting.fee_fixed || 0;
-        break;
-        
-      case 'dinheiro':
-        // Sem taxa
-        break;
-    }
-  });
-  
-  return totalFees;
-};
-
-// Valor liquido = Valor bruto - Taxas
-const liquidValue = finalValue - calculateFees(paymentMethods, feeSettings);
-```
-
----
-
-### Arquivos a Criar/Modificar
-
-| Arquivo | Acao | Descricao |
-|---------|------|-----------|
-| `supabase/migrations/xxx.sql` | CRIAR | Tabela payment_fee_settings + campos prospects |
-| `src/types/database.ts` | MODIFICAR | Adicionar interfaces |
-| `src/stores/useAppStore.ts` | MODIFICAR | Adicionar state e actions |
-| `src/hooks/useInitializeData.ts` | MODIFICAR | Carregar payment settings |
-| `src/components/areapj/PaymentFeeSettings.tsx` | CRIAR | Configuracao de taxas |
-| `src/pages/PJ/FinanceiroPage.tsx` | MODIFICAR | Adicionar aba Taxas |
-| `src/components/comercial/CloseProspectModal.tsx` | MODIFICAR | Multi-pagamento + taxas |
-| `src/components/comercial/PaymentMethodSelector.tsx` | CRIAR | Seletor de formas de pgto |
-| `src/components/areapj/PlanItemSelector.tsx` | MODIFICAR | Adicionar forwardRef |
-
----
-
-### Fluxo de Usuario
-
-**Configuracao (uma vez):**
-1. Usuario vai em Financeiro > Taxas
-2. Configura taxas de cada forma de pagamento
-3. Salva configuracoes
-
-**Uso no fechamento de venda:**
-1. Usuario muda status para "Fechado"
-2. Seleciona plano, aplica desconto se necessario
-3. Escolhe forma(s) de pagamento
-4. Para cartao: informa parcelas, sistema calcula taxa
-5. Para pagamento misto: distribui valores entre formas
-6. Visualiza resumo com valor liquido
-7. Confirma venda
-
-**Beneficios:**
-- Precificacao precisa considerando custos de transacao
-- Visibilidade do valor liquido real
-- Historico de como cliente pagou
-- Dados para analise de rentabilidade por forma de pagamento
-
----
-
-### Ordem de Implementacao
-
-1. **Fase 1: Correcoes**
-   - Corrigir PlanItemSelector com forwardRef
-   - Corrigir z-index/overflow no CloseProspectModal
-   - Testar funcionamento dos controles
-
-2. **Fase 2: Configuracao de Taxas**
-   - Criar tabela payment_fee_settings
-   - Criar componente PaymentFeeSettings
-   - Adicionar aba em FinanceiroPage
-   - Integrar com store e inicializacao
-
-3. **Fase 3: Multi-Pagamento no Fechamento**
-   - Criar PaymentMethodSelector
-   - Atualizar CloseProspectModal
-   - Implementar calculo de taxas
-   - Atualizar prospects com dados de pagamento
-
-4. **Fase 4: Testes**
-   - Testar fluxo completo
-   - Verificar calculos de taxas
-   - Validar persistencia de dados
+- Dropdowns funcionam corretamente em todos os dispositivos
+- Checkbox de criar projeto funciona sem problemas
+- Formas de pagamento aparecem quando plano tem valor > 0
+- Modal tem scroll suave e controles responsivos
+- Confirmação de venda com feedback sonoro funcionando
 
