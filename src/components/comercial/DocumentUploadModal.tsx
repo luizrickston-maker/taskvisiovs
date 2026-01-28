@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -101,6 +101,9 @@ export function DocumentUploadModal({
     setUploading(true);
     setUploadProgress(0);
 
+    // Garantir que o React renderize o estado de loading antes de iniciar
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     try {
       // Generate unique filename
       const fileExt = selectedFile.name.split('.').pop();
@@ -170,10 +173,25 @@ export function DocumentUploadModal({
   const FileIcon = selectedFile ? getFileIcon(selectedFile) : Upload;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      // Prevenir fechamento durante upload
+      if (uploading && !newOpen) return;
+      onOpenChange(newOpen);
+    }}>
+      <DialogContent 
+        className="sm:max-w-md"
+        onInteractOutside={(e) => {
+          if (uploading) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (uploading) e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Anexar Documento</DialogTitle>
+          <DialogDescription>
+            Selecione um arquivo PDF, Excel ou imagem (máx. 10MB)
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
