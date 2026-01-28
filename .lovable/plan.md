@@ -1,34 +1,31 @@
 
 
-## Plano: Automacao "Fechado" -> Criar Projeto + Atualizar Financeiro
+## Plano: Melhorias no Modal de Fechamento de Venda
 
-### Resumo da Funcionalidade
+### Resumo das Alteracoes
 
-Quando o usuario mudar o status de uma prospecao para **"Fechado"**, o sistema ira:
+Modificar o `CloseProspectModal.tsx` para:
 
-1. **Exibir modal de confirmacao** com opcoes de:
-   - Selecionar/confirmar o **Plano vendido** (obrigatorio)
-   - Escolher criar um novo projeto automaticamente
-   - Definir prazo inicial do projeto
+1. **Substituir "Valor da Venda" por "Desconto" (opcional)**
+   - Campo opcional abaixo do plano vendido
+   - Valor final = `plan.final_price - desconto`
+   - Exibir valor final calculado em tempo real
 
-2. **Criar projeto automaticamente** (opcional) com:
-   - Nome do projeto = Nome do cliente + Empresa
-   - Cliente/Empresa preenchidos
-   - Vinculado a prospecao (prospect_id)
-   - Status = "Em Progresso"
+2. **Adicionar unidades de duracao selecionaveis**
+   - Opcoes: meses, horas, dias
+   - Aplicavel para consultorias e mentorias
+   - Layout em grid: [Duracao] [Unidade]
 
-3. **Atualizar dados financeiros** via triggers existentes:
-   - Meta de faturamento mensal atualizada
-   - Contador de vendas fechadas incrementado
+3. **Tocar som de dinheiro ao confirmar venda**
+   - Usar HTML5 Audio API
+   - Arquivo de som hospedado em URL publica (royalty-free)
+   - Tocar antes de exibir toast de sucesso
 
 ---
 
-### Fluxo Visual Proposto
+### Interface Visual Atualizada
 
 ```text
-Usuario clica em "Fechado" no status
-          |
-          v
 +------------------------------------------+
 |   Confirmar Fechamento de Venda          |
 +------------------------------------------+
@@ -37,220 +34,218 @@ Usuario clica em "Fechado" no status
 +------------------------------------------+
 |                                          |
 | Plano Vendido *                          |
-| [Dropdown: Selecione o plano]            |
+| [Dropdown: Consultoria Gold - R$ 500]    |
 |                                          |
-| Valor da Venda: R$ 5.000,00 (auto)       |
-| Tipo: Recorrente - 12 meses (auto)       |
+| Desconto (opcional)         R$           |
+| [100.00]                                 |
+|                                          |
+| Valor Final: R$ 400,00     <-- calculado |
+|                                          |
++------------------------------------------+
+| Tipo de Pagamento       | Duracao        |
+| [Recorrente v]          | [12] [meses v] |
+|                         |                |
+|                         | [4] [horas v]  | <- para consultorias
 +------------------------------------------+
 |                                          |
 | [x] Criar projeto automaticamente        |
-|                                          |
-| Nome do Projeto                          |
-| [Website - XYZ Ltda]  (auto-preenchido)  |
-|                                          |
-| Prazo Inicial                            |
-| [Calendario: 30 dias a frente]           |
-|                                          |
+| ...                                      |
 +------------------------------------------+
-| [Cancelar]           [Confirmar Venda]   |
+| [Cancelar]        [Confirmar Venda] $$$  |
 +------------------------------------------+
-          |
-          v
-    Sistema executa:
-    1. Atualiza status para "fechado"
-    2. Atualiza plan_id e estimated_value
-    3. Trigger atualiza metas de vendas
-    4. Cria projeto (se selecionado)
-    5. Vincula projeto a prospecao
 ```
-
----
-
-### Componentes a Criar/Modificar
-
-| Arquivo | Acao | Descricao |
-|---------|------|-----------|
-| `src/components/comercial/CloseProspectModal.tsx` | CRIAR | Modal de confirmacao com opcoes |
-| `src/components/comercial/ProspectList.tsx` | MODIFICAR | Interceptar mudanca para "fechado" |
-| `src/components/comercial/ProspectForm.tsx` | MODIFICAR | Mesmo comportamento no form |
-| `src/pages/ComercialDashboard.tsx` | MODIFICAR | Gerenciar estado do modal |
 
 ---
 
 ### Detalhes Tecnicos
 
-#### 1. Novo Componente: CloseProspectModal
+#### 1. Substituir Valor por Desconto
 
+**Remover:**
 ```typescript
-interface CloseProspectModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  prospect: Prospect;
-  onConfirm: (data: {
-    plan_id: string;
-    estimated_value: number;
-    payment_type: PaymentType;
-    createProject: boolean;
-    projectName?: string;
-    projectDeadline?: string;
-  }) => void;
-}
+const [estimatedValue, setEstimatedValue] = useState('');
 ```
 
-**Campos do Modal:**
-- Plano Vendido (obrigatorio) - Select dos planos ativos
-- Valor da Venda (auto-preenchido do plano, editavel)
-- Tipo de Pagamento (auto do plano)
-- Duracao/Parcelas (condicional)
-- Checkbox: Criar projeto automaticamente
-- Nome do Projeto (se checkbox ativo)
-- Prazo do Projeto (se checkbox ativo)
-
-#### 2. Logica de Criacao de Projeto
-
+**Adicionar:**
 ```typescript
-const handleConfirmClose = async (data) => {
-  // 1. Atualizar prospect para "fechado"
-  await supabase.from('prospects').update({
-    status: 'fechado',
-    plan_id: data.plan_id,
-    estimated_value: data.estimated_value,
-    payment_type: data.payment_type,
-    // ... outros campos
-  }).eq('id', prospect.id);
+const [discount, setDiscount] = useState('0');
+
+// Calcular valor final
+const selectedPlan = activePlans.find(p => p.id === planId);
+const planPrice = selectedPlan?.final_price || 0;
+const discountValue = parseFloat(discount) || 0;
+const finalValue = Math.max(0, planPrice - discountValue);
+```
+
+**UI:**
+```tsx
+{/* Desconto Opcional */}
+<div className="space-y-2">
+  <Label htmlFor="discount" className="flex items-center gap-1">
+    <Percent className="w-4 h-4" />
+    Desconto (opcional)
+  </Label>
+  <Input
+    id="discount"
+    type="number"
+    step="0.01"
+    min="0"
+    value={discount}
+    onChange={(e) => setDiscount(e.target.value)}
+    placeholder="0.00"
+  />
+</div>
+
+{/* Valor Final Calculado */}
+{planId && (
+  <div className="bg-success/10 border border-success/20 rounded-lg p-3">
+    <div className="flex justify-between items-center">
+      <span className="text-sm text-muted-foreground">Valor Final:</span>
+      <span className="text-lg font-bold text-success">
+        {formatCurrency(finalValue)}
+      </span>
+    </div>
+  </div>
+)}
+```
+
+#### 2. Unidades de Duracao Selecionaveis
+
+**Novo estado:**
+```typescript
+type DurationUnit = 'meses' | 'horas' | 'dias';
+const [durationUnit, setDurationUnit] = useState<DurationUnit>('meses');
+```
+
+**UI Grid:**
+```tsx
+{paymentType === 'recorrente' && (
+  <div className="grid grid-cols-2 gap-2">
+    <div className="space-y-2">
+      <Label htmlFor="duration">Duracao</Label>
+      <Input
+        id="duration"
+        type="number"
+        min="1"
+        value={contractDuration}
+        onChange={(e) => setContractDuration(e.target.value)}
+      />
+    </div>
+    <div className="space-y-2">
+      <Label>Unidade</Label>
+      <Select value={durationUnit} onValueChange={(v) => setDurationUnit(v as DurationUnit)}>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="meses">Meses</SelectItem>
+          <SelectItem value="horas">Horas</SelectItem>
+          <SelectItem value="dias">Dias</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
+)}
+```
+
+**Nota sobre banco de dados:**
+- O campo `contract_duration` ja e um numero inteiro
+- A unidade pode ser armazenada como parte das `notes` ou criado novo campo
+- Para MVP: armazenar no formato "12 meses" ou "4 horas" nas notes
+
+#### 3. Som de Dinheiro ao Confirmar
+
+**Implementacao com Audio API:**
+```typescript
+const playMoneySound = () => {
+  // URL de som royalty-free de caixa registradora/dinheiro
+  const audio = new Audio('https://cdn.pixabay.com/download/audio/2022/03/15/audio_942bb987c4.mp3');
+  audio.volume = 0.5;
+  audio.play().catch(() => {
+    // Silenciosamente ignora se autoplay bloqueado
+  });
+};
+
+const handleConfirm = async () => {
+  // ... validacoes ...
   
-  // 2. Criar projeto se solicitado
-  if (data.createProject) {
-    const projectData = await supabase.from('projects').insert({
-      user_id: user.id,
-      project: data.projectName,
-      task: data.projectName,
-      client_name: prospect.client_name,
-      company_name: prospect.company_name,
-      deadline: data.projectDeadline,
-      priority: 2, // Alta prioridade para vendas fechadas
-      status: 'progress',
-      is_corporate: true,
-      prospect_id: prospect.id,
-    }).select().single();
+  try {
+    // ... salvar dados ...
     
-    // 3. Vincular projeto a prospecao
-    await supabase.from('prospects').update({
-      project_id: projectData.id
-    }).eq('id', prospect.id);
+    // Tocar som de sucesso
+    playMoneySound();
+    
+    toast.success(...);
+  } catch (error) {
+    // ... erro ...
   }
-  
-  // 4. Triggers do banco atualizam metas automaticamente
 };
 ```
 
-#### 3. Integracao Financeira (Ja Existente)
+**Alternativa com arquivo local:**
+- Adicionar `public/sounds/cash-register.mp3`
+- Usar `new Audio('/sounds/cash-register.mp3')`
 
-Os triggers PostgreSQL ja implementados fazem:
+---
 
-```sql
--- Quando status muda para 'fechado':
-UPDATE sales_goals SET 
-  current_amount = current_amount + NEW.estimated_value
-WHERE goal_type = 'faturamento_mensal'
-  AND start_date <= NEW.prospection_date
-  AND end_date >= NEW.prospection_date;
+### Validacao Atualizada
 
-UPDATE sales_goals SET 
-  current_amount = current_amount + 1
-WHERE goal_type = 'vendas_fechadas'
-  -- mesmas condicoes
+```typescript
+const handleConfirm = async () => {
+  if (!prospect || !user?.id) return;
+  
+  if (!planId) {
+    toast.error('Selecione um plano vendido');
+    return;
+  }
+  
+  // Valor vem do plano - desconto (sempre positivo)
+  if (finalValue <= 0) {
+    toast.error('O desconto nao pode ser maior que o valor do plano');
+    return;
+  }
+
+  // ... resto da logica ...
+  
+  const prospectUpdate: Partial<Prospect> = {
+    status: 'fechado',
+    plan_id: planId,
+    estimated_value: finalValue, // Valor final apos desconto
+    payment_type: paymentType,
+    contract_duration: paymentType === 'recorrente' ? parseInt(contractDuration) || null : null,
+    payment_installments: paymentType === 'pontual' ? parseInt(paymentInstallments) || null : null,
+    notes: durationUnit !== 'meses' 
+      ? `Duracao: ${contractDuration} ${durationUnit}` 
+      : prospect.notes,
+  };
+};
 ```
 
 ---
 
-### Validacoes e Regras de Negocio
+### Arquivos a Modificar
 
-1. **Plano e obrigatorio** para fechar venda
-   - Impede fechamento sem rastreabilidade
-   
-2. **Valor e auto-preenchido** do plano selecionado
-   - Usuario pode editar se negociou diferente
-   
-3. **Projeto e opcional** mas recomendado
-   - Nome sugerido: "{Tipo do Projeto} - {Empresa}"
-   - Se nao tiver tipo: "{Cliente} - {Empresa}"
-   
-4. **Prazo padrao**: 30 dias a partir de hoje
-   - Usuario pode alterar
+| Arquivo | Alteracoes |
+|---------|------------|
+| `src/components/comercial/CloseProspectModal.tsx` | Todas as mudancas descritas |
+| `public/sounds/cash-register.mp3` | Opcional - arquivo de audio local |
 
-5. **Prevencao de duplicatas**:
-   - Se ja existe projeto vinculado, nao mostrar opcao de criar
+---
+
+### Resumo das Mudancas no Estado
+
+| Antes | Depois |
+|-------|--------|
+| `estimatedValue` | `discount` |
+| - | `durationUnit` |
+| - | `finalValue` (calculado) |
 
 ---
 
 ### Experiencia do Usuario
 
-**Cenario 1: Nova venda sem projeto**
-1. Usuario edita prospecao ou clica no badge de status
-2. Seleciona "Fechado"
-3. Modal abre pedindo plano
-4. Seleciona plano, valor preenche automaticamente
-5. Marca "Criar projeto automaticamente"
-6. Ajusta nome/prazo se necessario
-7. Confirma
-8. Projeto aparece em Projetos, metas atualizadas
-
-**Cenario 2: Venda com projeto ja vinculado**
-1. Usuario ja tinha criado projeto antes
-2. Muda status para "Fechado"
-3. Modal abre sem opcao de criar projeto
-4. Apenas confirma plano e valor
-5. Metas atualizadas
-
-**Cenario 3: Reversao**
-1. Usuario muda de "Fechado" para outro status
-2. Nenhum modal (ja existe logica de reversao)
-3. Triggers revertem valores das metas
-
----
-
-### Integracao com Pipeline (Projeto Vinculado)
-
-Na lista de prospecoes, se houver projeto vinculado:
-- Mostrar badge com link para o projeto
-- Clicar abre detalhes do projeto no modulo Projetos
-
-```text
-| Cliente | Empresa | Status  | Projeto              |
-|---------|---------|---------|----------------------|
-| Joao    | XYZ     | Fechado | [Website XYZ] ->     |
-```
-
----
-
-### Ordem de Implementacao
-
-1. **Criar CloseProspectModal.tsx**
-   - Formulario com plano, valor, checkbox projeto
-   - Campos condicionais para nome/prazo do projeto
-
-2. **Atualizar ProspectList.tsx**
-   - Interceptar mudanca de status para "fechado"
-   - Abrir modal em vez de mudar direto
-
-3. **Atualizar ComercialDashboard.tsx**
-   - Gerenciar estado do modal de fechamento
-   - Callback para criacao de projeto
-
-4. **Testar fluxo completo**
-   - Criar prospecao
-   - Mudar para fechado
-   - Verificar projeto criado
-   - Verificar metas atualizadas
-
----
-
-### Resultado Esperado
-
-1. **Fluxo unificado**: Fechar venda + criar projeto em uma acao
-2. **Rastreabilidade**: Toda venda fechada tem plano vinculado
-3. **Dados financeiros**: Metas atualizadas automaticamente
-4. **Produtividade**: Usuario so precisa completar detalhes do projeto
-5. **Integridade**: Impossivel fechar venda sem plano
+1. **Seleciona plano** -> Valor do plano aparece
+2. **Aplica desconto** (opcional) -> Valor final atualiza em tempo real
+3. **Escolhe duracao e unidade** -> Flexivel para consultorias/mentorias
+4. **Confirma venda** -> Som de dinheiro toca + toast de sucesso
 
