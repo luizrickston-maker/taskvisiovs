@@ -30,6 +30,7 @@ const personalNavItems = [
 
 const businessNavItems = [
   { title: 'Comercial', url: '/comercial', icon: Briefcase },
+  { title: 'Projetos', url: '/pj/projetos', icon: FolderKanban },
   { title: 'Financeiro', url: '/pj/financeiro', icon: Wallet },
   { title: 'Planos', url: '/pj/planos', icon: Package },
   { title: 'Investimentos', url: '/pj/investimentos', icon: TrendingUp },

@@ -483,8 +483,12 @@ export type Database = {
       }
       project_tasks: {
         Row: {
+          actual_hours: number | null
+          completed_at: string | null
           created_at: string
+          deadline: string | null
           description: string | null
+          estimated_hours: number | null
           id: string
           priority: number
           project_id: string | null
@@ -494,8 +498,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          actual_hours?: number | null
+          completed_at?: string | null
           created_at?: string
+          deadline?: string | null
           description?: string | null
+          estimated_hours?: number | null
           id?: string
           priority?: number
           project_id?: string | null
@@ -505,8 +513,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          actual_hours?: number | null
+          completed_at?: string | null
           created_at?: string
+          deadline?: string | null
           description?: string | null
+          estimated_hours?: number | null
           id?: string
           priority?: number
           project_id?: string | null
@@ -527,36 +539,51 @@ export type Database = {
       }
       projects: {
         Row: {
+          client_name: string | null
+          company_name: string | null
           created_at: string
+          deadline: string | null
           estimated_time: string | null
           id: string
+          is_corporate: boolean | null
           priority: number
           project: string
           project_category_id: string | null
+          prospect_id: string | null
           status: string
           task: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          client_name?: string | null
+          company_name?: string | null
           created_at?: string
+          deadline?: string | null
           estimated_time?: string | null
           id?: string
+          is_corporate?: boolean | null
           priority?: number
           project: string
           project_category_id?: string | null
+          prospect_id?: string | null
           status?: string
           task: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          client_name?: string | null
+          company_name?: string | null
           created_at?: string
+          deadline?: string | null
           estimated_time?: string | null
           id?: string
+          is_corporate?: boolean | null
           priority?: number
           project?: string
           project_category_id?: string | null
+          prospect_id?: string | null
           status?: string
           task?: string
           updated_at?: string
@@ -568,6 +595,13 @@ export type Database = {
             columns: ["project_category_id"]
             isOneToOne: false
             referencedRelation: "project_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
             referencedColumns: ["id"]
           },
         ]

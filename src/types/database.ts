@@ -184,6 +184,12 @@ export interface Project {
   priority: number;
   status: ProjectStatus;
   estimated_time?: string;
+  // Corporate project fields
+  client_name?: string;
+  company_name?: string;
+  deadline?: string;
+  is_corporate: boolean;
+  prospect_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -196,6 +202,11 @@ export interface ProjectTask {
   description?: string;
   priority: number;
   status: ProjectTaskStatus;
+  // Task management fields
+  deadline?: string;
+  estimated_hours: number;
+  actual_hours: number;
+  completed_at?: string;
   created_at: string;
   updated_at: string;
 }

@@ -25,6 +25,7 @@ import FinanceiroPage from "@/pages/PJ/FinanceiroPage";
 import PlanosPage from "@/pages/PJ/PlanosPage";
 import InvestimentosPage from "@/pages/PJ/InvestimentosPage";
 import TimePage from "@/pages/PJ/TimePage";
+import ProjetosClientesPage from "@/pages/PJ/ProjetosClientesPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,6 +78,7 @@ const App = () => {
                 
                 {/* Business/PJ Routes */}
                 <Route path="/comercial" element={<ComercialDashboard />} />
+                <Route path="/pj/projetos" element={<ProjetosClientesPage />} />
                 <Route path="/pj/financeiro" element={<FinanceiroPage />} />
                 <Route path="/pj/planos" element={<PlanosPage />} />
                 <Route path="/pj/investimentos" element={<InvestimentosPage />} />
