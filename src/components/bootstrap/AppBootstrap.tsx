@@ -27,11 +27,11 @@ export function AppBootstrap({ children }: { children: React.ReactNode }) {
     }
   }, [userId, location.pathname, safeMode]);
 
-  // Em safe mode, pula inicialização de dados
-  if (!safeMode) {
-    useInitializeData(userId);
-  } else if (import.meta.env.DEV) {
-    console.log('[AppBootstrap] Safe mode ativo - pulando inicialização de dados');
+  // Hook sempre chamado (Rules of Hooks), mas passa undefined em safe mode para pular execução
+  useInitializeData(safeMode ? undefined : userId);
+  
+  if (safeMode && import.meta.env.DEV) {
+    console.log('[AppBootstrap] Safe mode ativo - inicialização de dados desabilitada');
   }
 
   return (
