@@ -103,16 +103,27 @@ export function PlanForm({ open, onOpenChange, editingPlan }: PlanFormProps) {
   const profit = finalPrice - baseCost;
   const profitMargin = finalPrice > 0 ? (profit / finalPrice) * 100 : 0;
 
-  // Auto-set final price to base cost when no custom price is set
+  // Auto-set final price to base cost ONLY if empty and items are selected
   useEffect(() => {
-    if (!editingPlan && baseCost > 0 && !finalPriceInput) {
+    if (editingPlan) return;
+    if (finalPriceInput) return;
+    if (selectedItems.length > 0 && baseCost > 0) {
       setFinalPriceInput(formatCurrency(baseCost));
     }
-  }, [baseCost, editingPlan, finalPriceInput]);
+  }, [baseCost, editingPlan, finalPriceInput, selectedItems.length]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !name.trim()) return;
+
+    if (finalPrice <= 0) {
+      toast({
+        title: 'Preço obrigatório',
+        description: 'Defina um preço final para o plano.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -315,9 +326,14 @@ export function PlanForm({ open, onOpenChange, editingPlan }: PlanFormProps) {
 
               <Separator />
 
-              {/* Service Selection */}
+              {/* Service Selection - OPTIONAL */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium">Serviços do Plano</h3>
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-sm font-medium">Serviços do Plano (opcional)</h3>
+                  <span className="text-xs text-muted-foreground">
+                    Adicione itens do precificador ou defina o preço manualmente abaixo
+                  </span>
+                </div>
                 <PlanItemSelector
                   pricings={corporatePricings}
                   selectedItems={selectedItems}
@@ -329,42 +345,49 @@ export function PlanForm({ open, onOpenChange, editingPlan }: PlanFormProps) {
 
               {/* Price Summary */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium">Resumo de Preços</h3>
+                <h3 className="text-sm font-medium">Precificação</h3>
                 
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Custo Base (soma dos itens)</span>
-                    <span className="font-medium">{formatCurrency(baseCost)}</span>
-                  </div>
+                  {baseCost > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Custo Base (soma dos itens)</span>
+                      <span className="font-medium">{formatCurrency(baseCost)}</span>
+                    </div>
+                  )}
 
-                  <div className="flex items-center justify-between gap-4">
-                    <Label htmlFor="finalPrice" className="text-sm text-muted-foreground whitespace-nowrap">
-                      Preço Final
+                  <div className="space-y-2">
+                    <Label htmlFor="finalPrice" className="text-sm font-medium">
+                      Preço Final do Plano *
                     </Label>
                     <Input
                       id="finalPrice"
                       value={finalPriceInput}
                       onChange={(e) => setFinalPriceInput(e.target.value)}
                       placeholder="R$ 0,00"
-                      className="max-w-[150px] text-right font-medium"
+                      className="text-right font-medium text-lg"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Digite o valor que será cobrado do cliente
+                    </p>
                   </div>
 
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Lucro</span>
-                    <span className={cn('font-medium', profit >= 0 ? 'text-green-600' : 'text-destructive')}>
-                      {formatCurrency(profit)}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Margem de Lucro</span>
-                    <span className={cn('font-bold text-lg', profitMargin >= 0 ? 'text-green-600' : 'text-destructive')}>
-                      {profitMargin.toFixed(1)}%
-                    </span>
-                  </div>
+                  {baseCost > 0 && (
+                    <>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Lucro</span>
+                        <span className={cn('font-medium', profit >= 0 ? 'text-green-600' : 'text-destructive')}>
+                          {formatCurrency(profit)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Margem de Lucro</span>
+                        <span className={cn('font-bold text-lg', profitMargin >= 0 ? 'text-green-600' : 'text-destructive')}>
+                          {profitMargin.toFixed(1)}%
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
