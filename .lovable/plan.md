@@ -1,409 +1,355 @@
 
+## Plano: Modulo "Projetos e Tarefas" para Gestao de Clientes
 
-## Analise Completa: Logica Financeira, Comercial e UX
+### Visao Geral
 
-### Resumo Executivo
-
-Esta analise avalia a logica de precos, custos, cobranca, lucro, faturamento e pro-labore em todos os modulos do contexto Empresarial, bem como a qualidade da UI/UX em cada tela.
-
----
-
-## 1. ANALISE DO MODULO COMERCIAL
-
-### 1.1 Pipeline de Prospecao (ProspectList/ProspectForm)
-
-**Logica Atual:**
-- Prospecao registra: cliente, empresa, data, status, tipo de pagamento (recorrente/pontual), valor estimado
-- Quando status muda para "fechado", triggers automaticos atualizam metas de vendas
-
-**Pontos Positivos:**
-- Automacao via triggers PostgreSQL funciona corretamente
-- Reversao automatica se status mudar de "fechado" para outro
-- Validacao de inputs com limites de caracteres
-
-**Problemas Identificados:**
-
-| Problema | Impacto | Severidade |
-|----------|---------|------------|
-| "Valor Estimado" nao diferencia valor total vs mensal para contratos recorrentes | Usuario nao sabe se R$ 5.000 e o valor total do contrato ou mensal | Alto |
-| Falta campo "valor total do contrato" para recorrentes | Calculo de faturamento fica impreciso | Alto |
-| Duracao do contrato (meses) nao e usada no calculo de faturamento | Meta de faturamento recebe apenas 1x o valor, nao considera recorrencia | Critico |
-| Nao ha vinculo entre prospecao fechada e os Planos criados | Perde rastreabilidade de qual plano foi vendido | Medio |
-
-**Recomendacao de Logica:**
-```text
-Para contratos RECORRENTES:
-  - Valor Mensal: R$ 2.000
-  - Duracao: 12 meses
-  - Valor Total Contrato: R$ 24.000 (calculado)
-  - Na meta de faturamento mensal: adiciona R$ 2.000/mes (nao valor total)
-
-Para contratos PONTUAIS:
-  - Valor Total: R$ 6.000
-  - Parcelas: 3x
-  - Na meta de faturamento: adiciona R$ 6.000 (uma vez)
-```
-
-### 1.2 Metas de Vendas (SalesGoalsSummary/SalesGoalForm)
-
-**Logica Atual:**
-- Tres tipos: Faturamento Mensal, Vendas Fechadas, Novos Clientes
-- Atualizado automaticamente via triggers quando prospect fecha
-
-**Problemas Identificados:**
-
-| Problema | Impacto | Severidade |
-|----------|---------|------------|
-| "Novos Clientes" nao e atualizado automaticamente | Usuario precisa atualizar manualmente | Medio |
-| Meta de "Faturamento Mensal" recebe valor pontual, nao mensal recorrente | Calculo incorreto para contratos recorrentes | Critico |
-| Nao ha visualizacao de tendencia/projecao | Usuario nao ve se esta no ritmo de bater a meta | Baixo |
-
-**UX da Tela:**
-- Cards de meta com progress bar sao claros e bem desenhados
-- Filtros avancados funcionam bem
-- Falta indicador visual de "atrasado" vs "adiantado" em relacao ao tempo
+Criar um novo modulo "Projetos" no menu empresarial (PJ) que permite gerenciar projetos de cada cliente com rastreabilidade completa de tarefas, progresso, prioridades e tempos de execucao. Este modulo se integra diretamente com o Pipeline de Prospecao, substituindo o sistema de projetos pessoais por um focado em gestao de clientes.
 
 ---
 
-## 2. ANALISE DO MODULO FINANCEIRO
+### Analise da Situacao Atual
 
-### 2.1 Custos Operacionais (CostList/CostForm)
+**O que existe hoje:**
+1. Tabela `projects` - projetos pessoais no modo Pessoal (Kanban)
+2. Tabela `project_tasks` - tarefas vinculadas a projetos
+3. Campo `project_id` em `prospects` - vinculo (nao utilizado adequadamente)
+4. Sistema de categorias de projeto (`project_categories`)
 
-**Logica Atual:**
-- Custos classificados como: Recorrente, Fixo, Pontual
-- Frequencia: diario, semanal, mensal, anual
-- Custo de equipe vem do modulo Time
-- KPIs mostram totais corretos
-
-**Pontos Positivos:**
-- Separacao clara entre tipos de custo
-- Integracao com custo de equipe automatica
-- Filtros funcionais e completos
-
-**Problemas Identificados:**
-
-| Problema | Impacto | Severidade |
-|----------|---------|------------|
-| Diferenca entre "Recorrente" e "Fixo" nao e clara para usuario | Confusao sobre qual usar | Medio |
-| Custos anuais nao sao divididos por 12 no KPI mensal | Custo mensal total fica errado se houver custos anuais | Alto |
-| Custos pontuais nao sao filtrados por mes atual | Soma custos pontuais de todos os tempos | Medio |
-| Nao ha campo para associar custo a um Plano/Servico especifico | Precificador nao consegue calcular custo real por servico | Alto |
-
-**Recomendacao de Logica:**
-```text
-Custo Mensal Total = 
-  + Recorrentes mensais
-  + Recorrentes semanais * 4.33
-  + Recorrentes diarios * 30
-  + Recorrentes anuais / 12
-  + Fixos (que sao por definicao mensais)
-  + Pontuais do mes atual
-  + Custo de equipe
-```
-
-### 2.2 Precificador (PricingCalculator)
-
-**Logica Atual:**
-```text
-custoComImpostos = custo * (1 + impostos/100)
-precoFinal = custoComImpostos * (1 + margem/100)
-lucroLiquido = precoFinal - custoComImpostos
-margemReal = (lucroLiquido / precoFinal) * 100
-```
-
-**Pontos Positivos:**
-- Calculo basico de precificacao correto
-- Historico de precificacoes salvo
-- Interface limpa com KPIs em tempo real
-
-**Problemas Identificados:**
-
-| Problema | Impacto | Severidade |
-|----------|---------|------------|
-| Nao integra custos operacionais do modulo Financeiro | Precificacao ignora overhead da empresa | Critico |
-| Nao considera custo de horas da equipe | Servicos baseados em tempo nao tem custo real | Critico |
-| Falta campo de horas estimadas do servico | Nao calcula custo/hora | Alto |
-| Nao ha opcao de usar custo operacional proporcional | Cada servico deveria absorver parte do custo fixo | Alto |
-
-**Recomendacao de Logica Integrada:**
-```text
-Custo Direto do Servico: R$ 500 (materiais, etc)
-Horas Estimadas: 10h
-Custo Hora da Operacao: R$ 50/h (calculado: custo mensal total / horas disponiveis)
-Custo Operacional Proporcional: R$ 500 (10h * R$ 50)
-Custo Total Real: R$ 1.000 (direto + operacional)
-Impostos: 15% = R$ 150
-Margem: 30% = R$ 300
-Preco Sugerido: R$ 1.450
-```
-
-### 2.3 Categorias de Custos (CostCategoryManager)
-
-**Pontos Positivos:**
-- Interface simples e funcional
-- Cores personalizaveis
-
-**Problemas:**
-- Nao mostra quantos custos usam cada categoria
-- Nao permite reordenar categorias
+**Problemas identificados:**
+1. Projetos existentes sao focados em produtividade pessoal, nao gestao de clientes
+2. Nao ha campos para vincular cliente/empresa ao projeto
+3. Tarefas nao tem data de conclusao (deadline)
+4. Nao ha campo de tempo estimado/real de execucao nas tarefas
+5. Progresso do projeto nao e calculado automaticamente
+6. Prospecao nao puxa projetos existentes de forma logica
 
 ---
 
-## 3. ANALISE DO MODULO PLANOS
+### Solucao Proposta: Nova Estrutura de Dados
 
-### 3.1 Gerenciamento de Planos (PlansManager/PlanForm/PlanCard)
+#### Opcao 1: Estender Tabela Existente (Recomendada)
+Adicionar novos campos a tabela `projects` para suportar gestao empresarial:
 
-**Logica Atual:**
-- Planos agregam itens do Precificador
-- Calcula custo base (soma dos itens selecionados)
-- Usuario define preco final manualmente
-- Calcula lucro e margem
-
-**Pontos Positivos:**
-- Conceito de tiers (Bronze/Prata/Ouro) e visualmente claro
-- Permite duplicar planos
-- Toggle de ativo/inativo funcional
-- Calculo de margem em tempo real
-
-**Problemas Identificados:**
-
-| Problema | Impacto | Severidade |
-|----------|---------|------------|
-| "Custo Base" usa preco final dos itens, nao custo real | Lucro calculado e falso (nao considera custo operacional) | Critico |
-| Nao vincula plano vendido a prospecao fechada | Perde rastreabilidade de vendas por plano | Alto |
-| "Receita Potencial Mensal" soma precos de planos, nao vendas reais | Metrica enganosa | Medio |
-| Nao ha historico de vendas por plano | Usuario nao sabe qual plano vende mais | Medio |
-
-**Recomendacao de Logica:**
 ```text
-Custo Base do Plano = Soma dos CUSTOS dos itens (nao precos finais)
-Preco Final = definido pelo usuario
-Lucro Real = Preco Final - Custo Base
-Margem = (Lucro / Preco Final) * 100
+Novos campos na tabela 'projects':
+- client_name TEXT           # Nome do cliente (para projetos PJ)
+- company_name TEXT          # Empresa do cliente
+- deadline DATE              # Data de entrega prevista
+- is_corporate BOOLEAN       # Diferencia projeto pessoal de empresarial
+- prospect_id UUID           # Vinculo reverso com prospecao fechada
+```
 
-Ao fechar prospecao, vincular ao plano vendido para:
-- Contabilizar vendas por plano
-- Calcular receita real vs potencial
+#### Novos campos na tabela `project_tasks`:
+```text
+Novos campos na tabela 'project_tasks':
+- deadline DATE              # Data limite da tarefa
+- estimated_hours NUMERIC    # Tempo estimado em horas
+- actual_hours NUMERIC       # Tempo real executado
+- completed_at TIMESTAMPTZ   # Data de conclusao
 ```
 
 ---
 
-## 4. ANALISE DO MODULO INVESTIMENTOS
+### Arquitetura do Modulo
 
-### 4.1 Gestao de Investimentos (InvestmentManager)
-
-**Logica Atual:**
-- Registra gastos por categoria (Equipamento, Software, etc)
-- Soma total investido
-- Mostra breakdown por categoria
-
-**Pontos Positivos:**
-- Interface clara com tabela e cards mobile
-- Categorias visuais com icones
-- Total geral bem destacado
-
-**Problemas Identificados:**
-
-| Problema | Impacto | Severidade |
-|----------|---------|------------|
-| Nao calcula depreciacao de ativos | Usuario nao sabe custo mensal de equipamentos | Alto |
-| Investimentos nao sao considerados no custo operacional | Precificacao ignora amortizacao de equipamentos | Alto |
-| Falta periodo de analise (filtro por ano/mes) | Dificil ver investimentos por periodo | Medio |
-| Nao diferencia CAPEX (capital) vs OPEX (operacional) | Mistura gastos de naturezas diferentes | Medio |
-
-**Recomendacao:**
 ```text
-Para equipamentos com vida util:
-  - Valor: R$ 12.000
-  - Vida Util: 36 meses
-  - Depreciacao Mensal: R$ 333,33
-  
-Esse valor de depreciacao deveria compor o "Custo Operacional" no Financeiro
+Modo Empresarial (Sidebar):
++------------------------+
+| Comercial              |
+| Projetos        [NOVO] |  <-- Novo menu
+| Financeiro             |
+| Planos                 |
+| Investimentos          |
+| Time                   |
++------------------------+
 ```
 
 ---
 
-## 5. ANALISE DO MODULO TIME
+### Estrutura da Pagina "Projetos"
 
-### 5.1 Gestao de Equipe (TeamManager)
-
-**Logica Atual:**
-- Registra colaboradores com tipo de contrato (PJ, CLT, Freelancer)
-- Calcula custo mensal total da equipe
-- Integrado ao modulo Financeiro (custo de equipe aparece no KPI)
-
-**Pontos Positivos:**
-- Toggle ativo/inativo funcional
-- Custo integrado automaticamente no Financeiro
-- Cards visuais claros
-
-**Problemas Identificados:**
-
-| Problema | Impacto | Severidade |
-|----------|---------|------------|
-| Freelancers nao sao contados no custo mensal | Logica atual exclui freelancers do calculo | Medio |
-| Nao ha campo de horas disponiveis por colaborador | Nao calcula custo/hora da equipe | Critico |
-| Nao ha campo de encargos para CLT | Custo real de CLT e ~70% maior que salario | Alto |
-| Dia de pagamento nao e usado para projecao de fluxo de caixa | Campo existe mas nao tem funcao | Baixo |
-
-**Recomendacao de Logica para CLT:**
 ```text
-Salario Bruto: R$ 5.000
-Encargos Trabalhistas (~70%): R$ 3.500
-Beneficios (VA, VT, Plano): R$ 1.000
-Custo Real CLT: R$ 9.500/mes
-Horas Disponiveis: 160h/mes
-Custo Hora Real: R$ 59,37/h
++------------------------------------------------------------------+
+| [FolderKanban] Projetos de Clientes                              |
+| Gerencie projetos e acompanhe o progresso de cada cliente        |
++------------------------------------------------------------------+
+| [+ Novo Projeto]  [Filtro: Status] [Filtro: Cliente]             |
++------------------------------------------------------------------+
+| LISTA DE PROJETOS (Cards ou Tabela)                              |
+|                                                                  |
+| +--------------------------------------------------------------+ |
+| | Projeto: Website Empresa XYZ                                 | |
+| | Cliente: Joao Silva | Empresa: XYZ Ltda                      | |
+| | Status: [Em Progresso]  Prioridade: P1                       | |
+| | Prazo: 15/02/2026   Progresso: [========    ] 65%            | |
+| | Tarefas: 6/10 concluidas                                     | |
+| +--------------------------------------------------------------+ |
+|                                                                  |
+| +--------------------------------------------------------------+ |
+| | Projeto: Automacao com IA                                    | |
+| | Cliente: Maria Costa | Empresa: ABC Corp                     | |
+| | Status: [A Fazer]  Prioridade: P2                            | |
+| | Prazo: 20/03/2026   Progresso: [          ] 0%               | |
+| | Tarefas: 0/5 concluidas                                      | |
+| +--------------------------------------------------------------+ |
++------------------------------------------------------------------+
 ```
 
 ---
 
-## 6. ANALISE DE PRO-LABORE (AUSENTE)
+### Pagina de Detalhes do Projeto (Modal ou Pagina)
 
-**Status:** NAO IMPLEMENTADO
-
-O sistema atualmente nao tem funcionalidade para:
-- Definir retirada mensal do socio (pro-labore)
-- Considerar pro-labore como custo operacional fixo
-- Diferenciar lucro bruto vs lucro liquido (apos pro-labore)
-
-**Impacto:** Usuario nao tem visibilidade real do lucro que "sobra" apos sua propria remuneracao
-
-**Recomendacao:**
-Adicionar secao no modulo Financeiro ou Time para:
 ```text
-Pro-Labore Mensal: R$ 10.000
-Impostos sobre Pro-Labore (~11%): R$ 1.100
-Custo Total Pro-Labore: R$ 11.100
-
-Este valor deve compor o Custo Operacional Mensal
++------------------------------------------------------------------+
+| [<- Voltar] Projeto: Website Empresa XYZ                         |
++------------------------------------------------------------------+
+| Cliente: Joao Silva           | Empresa: XYZ Ltda                |
+| Prazo: 15/02/2026             | Prioridade: P1 - Critica         |
+| Status: Em Progresso          | Progresso: 65%                   |
++------------------------------------------------------------------+
+|                                                                  |
+| TAREFAS DO PROJETO                          [+ Nova Tarefa]      |
+|                                                                  |
+| [A Fazer] [Em Andamento] [Concluido]   <- Tabs ou Kanban mini    |
+|                                                                  |
+| +--------------------------------------------------------------+ |
+| | [x] Configurar hospedagem                   P2 | 2h | 2.5h   | |
+| |     Concluido em 10/01/2026                                  | |
+| +--------------------------------------------------------------+ |
+| | [~] Desenvolver homepage                    P1 | 8h | 4h     | |
+| |     Prazo: 01/02/2026  (em andamento)                        | |
+| +--------------------------------------------------------------+ |
+| | [ ] Implementar formulario de contato       P3 | 3h | -      | |
+| |     Prazo: 10/02/2026                                        | |
+| +--------------------------------------------------------------+ |
++------------------------------------------------------------------+
+| RESUMO DE TEMPO                                                  |
+| Estimado Total: 25h  |  Executado: 12h  |  Restante: 13h         |
++------------------------------------------------------------------+
 ```
 
 ---
 
-## 7. ANALISE DE UI/UX
+### Integracao com Pipeline Comercial
 
-### 7.1 Pontos Positivos Gerais
+**Fluxo Ideal:**
+1. Usuario cria prospecao no Comercial
+2. Quando status muda para "Fechado", pode criar projeto automaticamente
+3. Ou seleciona projeto existente (criado previamente)
+4. Projeto aparece na lista de "Projetos de Clientes"
+5. Usuario adiciona tarefas ao projeto
+6. Progresso e calculado automaticamente
 
-| Aspecto | Avaliacao |
-|---------|-----------|
-| Responsividade | Excelente - todas telas adaptam para mobile |
-| Consistencia Visual | Boa - uso consistente de shadcn/ui |
-| Feedback ao Usuario | Boa - toasts para sucesso/erro |
-| Acessibilidade | Boa - labels nos forms, contraste adequado |
-| Hierarquia Visual | Boa - KPIs no topo, listas abaixo |
+**Modificacoes no ProspectForm:**
+- Campo "Projeto Vinculado" ja existe
+- Adicionar botao "Criar Novo Projeto" ao lado
+- Ao criar projeto, preenche cliente/empresa automaticamente
 
-### 7.2 Problemas de UX Identificados
+---
 
-| Tela | Problema | Recomendacao |
-|------|----------|--------------|
-| Comercial | Status da prospecao muda com 1 clique sem confirmacao | Adicionar confirmacao para mudanca para "fechado" |
-| Comercial | Valor estimado sem contexto (mensal vs total) | Adicionar tooltip ou label explicativo |
-| Financeiro | "Recorrente" vs "Fixo" confunde usuario | Unificar ou adicionar explicacao |
-| Financeiro | KPIs nao explicam o calculo | Adicionar tooltip com formula |
-| Planos | "Custo Base" parece ser o custo real mas e o preco | Renomear para "Valor Base" ou clarificar |
-| Planos | Preco final aceita formato texto livre | Usar input de moeda formatado |
-| Time | Freelancers aparecem mas nao somam no custo | Clarificar na UI ou incluir no calculo |
-| Investimentos | Cor vermelha para total pode confundir | Usar cor neutra, vermelho e para prejuizo |
+### Banco de Dados - Migrations Necessarias
 
-### 7.3 Fluxos que Precisam Melhoria
+```sql
+-- Adicionar campos empresariais a tabela projects
+ALTER TABLE public.projects 
+ADD COLUMN IF NOT EXISTS client_name TEXT,
+ADD COLUMN IF NOT EXISTS company_name TEXT,
+ADD COLUMN IF NOT EXISTS deadline DATE,
+ADD COLUMN IF NOT EXISTS is_corporate BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS prospect_id UUID REFERENCES prospects(id) ON DELETE SET NULL;
 
-**Fluxo: Vender um Servico**
-```text
-Atual:
-1. Cria prospecao no Comercial
-2. Fecha prospecao (status = fechado)
-3. Meta de faturamento atualiza automaticamente
-4. Fim
-
-Problema: Nao vincula qual PLANO foi vendido
-
-Ideal:
-1. Cria prospecao no Comercial
-2. Vincula plano (dropdown com planos ativos)
-3. Valor estimado preenche automaticamente do plano
-4. Fecha prospecao
-5. Meta atualiza + contador de vendas do plano atualiza
-6. Relatorio mostra: "Plano Gold vendido 5x este mes"
-```
-
-**Fluxo: Precificar Servico Corretamente**
-```text
-Atual:
-1. Vai no Precificador
-2. Digita custo, impostos, margem
-3. Ve preco sugerido
-4. Salva
-
-Problema: Ignora completamente custos operacionais
-
-Ideal:
-1. Vai no Precificador
-2. Digita custo direto do servico
-3. Informa horas estimadas
-4. Sistema calcula custo operacional proporcional
-5. Sistema sugere preco considerando todos custos
-6. Usuario ajusta margem desejada
-7. Ve breakdown completo: custo direto, operacional, impostos, lucro
+-- Adicionar campos de gestao a tabela project_tasks
+ALTER TABLE public.project_tasks
+ADD COLUMN IF NOT EXISTS deadline DATE,
+ADD COLUMN IF NOT EXISTS estimated_hours NUMERIC DEFAULT 0,
+ADD COLUMN IF NOT EXISTS actual_hours NUMERIC DEFAULT 0,
+ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
 ```
 
 ---
 
-## 8. RESUMO DAS MELHORIAS PRIORITARIAS
+### Tipos TypeScript Atualizados
 
-### Prioridade CRITICA (afeta calculo de lucro)
+```typescript
+// Atualizar interface Project
+export interface Project {
+  id: string;
+  user_id: string;
+  task: string;
+  project: string;
+  project_category_id?: string;
+  priority: number;
+  status: ProjectStatus;
+  estimated_time?: string;
+  // Novos campos PJ
+  client_name?: string;
+  company_name?: string;
+  deadline?: string;
+  is_corporate: boolean;
+  prospect_id?: string;
+  created_at: string;
+  updated_at: string;
+}
 
-1. **Integrar custos operacionais no Precificador**
-   - Custo hora da operacao
-   - Rateio de custos fixos por servico
-
-2. **Corrigir logica de faturamento recorrente**
-   - Diferenciar valor mensal vs total do contrato
-   - Meta de faturamento deve considerar recorrencia
-
-3. **Adicionar horas disponiveis no Time**
-   - Calcular custo/hora real da equipe
-   - Usar no rateio de custos
-
-### Prioridade ALTA
-
-4. **Adicionar Pro-Labore**
-   - Campo para retirada do socio
-   - Incluir no custo operacional
-
-5. **Vincular Plano a Prospecao**
-   - Dropdown de planos no form de prospecao
-   - Rastrear vendas por plano
-
-6. **Corrigir calculo de custo mensal**
-   - Converter custos anuais para mensal (/12)
-   - Filtrar pontuais por mes
-
-### Prioridade MEDIA
-
-7. **Adicionar encargos CLT**
-   - Campo de percentual de encargos
-   - Calcular custo real do funcionario
-
-8. **Depreciacao de investimentos**
-   - Campo vida util
-   - Calcular depreciacao mensal
-
-9. **Melhorar UX de confirmacoes**
-   - Confirmar mudanca de status para "fechado"
-   - Tooltips explicativos nos KPIs
+// Atualizar interface ProjectTask
+export interface ProjectTask {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  title: string;
+  description?: string;
+  priority: number;
+  status: ProjectTaskStatus;
+  // Novos campos
+  deadline?: string;
+  estimated_hours: number;
+  actual_hours: number;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+```
 
 ---
 
-## 9. CONCLUSAO
+### Componentes a Criar/Modificar
 
-O sistema possui uma base solida de UI/UX com componentes bem construidos e responsivos. Porem, a **logica financeira esta incompleta**, especialmente na integracao entre modulos. Os principais gaps sao:
+```text
+src/pages/PJ/
+├── ProjetosClientesPage.tsx    # NOVO - Pagina principal
 
-1. **Precificacao isolada** - nao considera custos operacionais reais
-2. **Faturamento recorrente mal calculado** - trata igual a pontual
-3. **Custo de equipe sem hora** - impossibilita rateio por servico
-4. **Pro-labore ausente** - lucro mostrado nao e o lucro real
-5. **Planos nao vinculados a vendas** - perde rastreabilidade
+src/components/areapj/projetos/
+├── ClientProjectList.tsx        # NOVO - Lista de projetos
+├── ClientProjectCard.tsx        # NOVO - Card de projeto com progresso
+├── ClientProjectForm.tsx        # NOVO - Form criar/editar projeto
+├── ClientProjectDetail.tsx      # NOVO - Detalhes do projeto
+├── ClientTaskList.tsx           # NOVO - Lista de tarefas
+├── ClientTaskForm.tsx           # NOVO - Form criar/editar tarefa
+└── TimeTracker.tsx              # NOVO - Resumo de tempo
 
-A implementacao das melhorias prioritarias transformaria o sistema de uma ferramenta de registro para uma **plataforma de gestao financeira empresarial completa**.
+src/components/comercial/
+├── ProspectForm.tsx             # MODIFICAR - Adicionar criacao rapida de projeto
+```
+
+---
+
+### Navegacao
+
+Adicionar ao `businessNavItems` em AppSidebar.tsx:
+
+```typescript
+const businessNavItems = [
+  { title: 'Comercial', url: '/comercial', icon: Briefcase },
+  { title: 'Projetos', url: '/pj/projetos', icon: FolderKanban },  // NOVO
+  { title: 'Financeiro', url: '/pj/financeiro', icon: Wallet },
+  { title: 'Planos', url: '/pj/planos', icon: Package },
+  { title: 'Investimentos', url: '/pj/investimentos', icon: TrendingUp },
+  { title: 'Time', url: '/pj/time', icon: Users },
+];
+```
+
+---
+
+### Funcionalidades de Calculo
+
+**Progresso do Projeto (automatico):**
+```typescript
+const calcularProgresso = (tarefas: ProjectTask[]) => {
+  if (tarefas.length === 0) return 0;
+  const concluidas = tarefas.filter(t => t.status === 'done').length;
+  return Math.round((concluidas / tarefas.length) * 100);
+};
+```
+
+**Resumo de Tempo:**
+```typescript
+const calcularTempos = (tarefas: ProjectTask[]) => {
+  const estimadoTotal = tarefas.reduce((sum, t) => sum + t.estimated_hours, 0);
+  const executadoTotal = tarefas.reduce((sum, t) => sum + t.actual_hours, 0);
+  const restante = estimadoTotal - executadoTotal;
+  return { estimadoTotal, executadoTotal, restante };
+};
+```
+
+---
+
+### UI/UX Diretrizes
+
+1. **Hierarquia Visual Clara:**
+   - Projetos com prazo proximo destacados em amarelo
+   - Projetos atrasados destacados em vermelho
+   - Barra de progresso colorida (verde > 80%, amarelo 50-80%, vermelho < 50%)
+
+2. **Responsividade:**
+   - Cards em grid no desktop (3 colunas)
+   - Cards em lista no mobile
+   - Formularios full-width em mobile
+
+3. **Filtros Praticos:**
+   - Por status (Todos, A Fazer, Em Progresso, Concluido)
+   - Por cliente/empresa
+   - Por prazo (Atrasados, Esta Semana, Este Mes)
+   - Por prioridade (P1-P5)
+
+4. **Acoes Rapidas:**
+   - Clicar no card abre detalhes
+   - Arrastar tarefa muda status (mini-kanban)
+   - Botao "Adicionar Tempo" para registrar horas
+
+---
+
+### Resumo de Arquivos a Modificar/Criar
+
+| Arquivo | Acao |
+|---------|------|
+| `supabase/migrations/xxx.sql` | CRIAR - Adicionar campos as tabelas |
+| `src/types/database.ts` | MODIFICAR - Atualizar interfaces |
+| `src/stores/useAppStore.ts` | MODIFICAR - Filtros de projetos corporativos |
+| `src/pages/PJ/ProjetosClientesPage.tsx` | CRIAR - Pagina principal |
+| `src/components/areapj/projetos/*.tsx` | CRIAR - Componentes do modulo |
+| `src/components/comercial/ProspectForm.tsx` | MODIFICAR - Criar projeto rapido |
+| `src/components/layout/AppSidebar.tsx` | MODIFICAR - Adicionar menu |
+| `src/components/layout/MobileNav.tsx` | MODIFICAR - Adicionar menu |
+| `src/App.tsx` | MODIFICAR - Adicionar rota |
+| `src/hooks/useInitializeData.ts` | VERIFICAR - Ja carrega projetos |
+| `src/hooks/useRealtimeSync.ts` | VERIFICAR - Ja sincroniza projetos |
+
+---
+
+### Resultado Esperado
+
+1. Novo menu "Projetos" no modo Empresarial
+2. Gerenciamento completo de projetos por cliente
+3. Tarefas com prazo, tempo estimado e tempo real
+4. Calculo automatico de progresso
+5. Integracao bidirecional com Pipeline Comercial
+6. Visao consolidada de tempo gasto por projeto
+7. Filtros e ordenacao praticos
+8. Interface responsiva e intuitiva
+
+---
+
+### Secao Tecnica: Ordem de Implementacao
+
+1. **Fase 1 - Banco de Dados**
+   - Executar migration para adicionar campos
+   - Atualizar tipos TypeScript
+
+2. **Fase 2 - Componentes Base**
+   - Criar ClientProjectCard
+   - Criar ClientProjectForm
+   - Criar ClientTaskForm
+
+3. **Fase 3 - Pagina Principal**
+   - Criar ProjetosClientesPage
+   - Implementar filtros e listagem
+
+4. **Fase 4 - Detalhes e Tarefas**
+   - Criar ClientProjectDetail
+   - Implementar gestao de tarefas
+
+5. **Fase 5 - Integracoes**
+   - Atualizar ProspectForm
+   - Adicionar navegacao
+   - Testar fluxo completo
 
