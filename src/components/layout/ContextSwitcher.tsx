@@ -1,4 +1,5 @@
 import { User, Building2, ChevronDown, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext, type AppContextMode } from '@/hooks/useAppContext';
 import {
@@ -19,8 +20,17 @@ const contexts: { value: AppContextMode; label: string; icon: React.ElementType 
 
 export function ContextSwitcher({ collapsed = false }: ContextSwitcherProps) {
   const { mode, setMode } = useAppContext();
+  const navigate = useNavigate();
   const current = contexts.find(c => c.value === mode) || contexts[0];
   const CurrentIcon = current.icon;
+
+  const handleModeChange = (newMode: AppContextMode) => {
+    if (newMode !== mode) {
+      setMode(newMode);
+      const defaultRoute = newMode === 'personal' ? '/caixa' : '/comercial';
+      navigate(defaultRoute);
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -53,7 +63,7 @@ export function ContextSwitcher({ collapsed = false }: ContextSwitcherProps) {
           return (
             <DropdownMenuItem
               key={context.value}
-              onClick={() => setMode(context.value)}
+              onClick={() => handleModeChange(context.value)}
               className={cn(
                 "flex items-center gap-3 cursor-pointer",
                 isActive && "bg-primary/10 text-primary font-medium"
