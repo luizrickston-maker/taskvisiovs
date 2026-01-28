@@ -38,21 +38,37 @@ export function CostList() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterActive, setFilterActive] = useState<string>('active');
 
-  // Calculate totals
+  // Calculate totals with proper frequency normalization
   const summary = useMemo(() => {
     const activeCosts = corporateCosts.filter(c => c.is_active);
     
+    // Calculate monthly equivalent for recurring costs based on frequency
     const monthlyRecurring = activeCosts
-      .filter(c => c.cost_type === 'recorrente' && c.frequency === 'mensal')
-      .reduce((sum, c) => sum + c.amount, 0);
+      .filter(c => c.cost_type === 'recorrente')
+      .reduce((sum, c) => {
+        switch (c.frequency) {
+          case 'diario': return sum + c.amount * 30;
+          case 'semanal': return sum + c.amount * 4.33;
+          case 'anual': return sum + c.amount / 12;
+          default: return sum + c.amount; // mensal
+        }
+      }, 0);
     
     const monthlyFixed = activeCosts
       .filter(c => c.cost_type === 'fixo')
       .reduce((sum, c) => sum + c.amount, 0);
     
+    // Team cost including CLT encargos
     const teamCost = corporateTeam
       .filter(m => m.is_active)
-      .reduce((sum, m) => sum + m.cost, 0);
+      .reduce((sum, m) => {
+        if (m.contract_type === 'clt') {
+          const encargos = m.cost * 0.7;
+          const benefits = m.clt_benefits || 0;
+          return sum + m.cost + encargos + benefits;
+        }
+        return sum + m.cost;
+      }, 0);
 
     const totalMonthly = monthlyRecurring + monthlyFixed + teamCost;
 

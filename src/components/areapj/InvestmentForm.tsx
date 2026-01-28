@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,10 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, Save } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { CalendarIcon, Save, HelpCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 import type { CorporateInvestment, InvestmentCategory } from '@/types/database';
 
 interface InvestmentFormProps {
@@ -28,11 +30,20 @@ const categories: { value: InvestmentCategory; label: string }[] = [
   { value: 'outro', label: 'Outro' },
 ];
 
+const usefulLifeSuggestions = [
+  { value: '12', label: '12 meses (1 ano)' },
+  { value: '24', label: '24 meses (2 anos)' },
+  { value: '36', label: '36 meses (3 anos)' },
+  { value: '48', label: '48 meses (4 anos)' },
+  { value: '60', label: '60 meses (5 anos)' },
+];
+
 export function InvestmentForm({ open, onOpenChange, onSave, investment }: InvestmentFormProps) {
   const [itemName, setItemName] = useState('');
   const [category, setCategory] = useState<InvestmentCategory>('equipamento');
   const [amount, setAmount] = useState('');
   const [purchaseDate, setPurchaseDate] = useState<Date>(new Date());
+  const [usefulLifeMonths, setUsefulLifeMonths] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -42,15 +53,28 @@ export function InvestmentForm({ open, onOpenChange, onSave, investment }: Inves
       setCategory(investment.category);
       setAmount(investment.amount.toString());
       setPurchaseDate(new Date(investment.purchase_date));
+      setUsefulLifeMonths(investment.useful_life_months?.toString() || '');
       setNotes(investment.notes || '');
     } else {
       setItemName('');
       setCategory('equipamento');
       setAmount('');
       setPurchaseDate(new Date());
+      setUsefulLifeMonths('');
       setNotes('');
     }
   }, [investment, open]);
+
+  // Calculate depreciation
+  const depreciation = useMemo(() => {
+    const value = parseFloat(amount) || 0;
+    const months = parseInt(usefulLifeMonths) || 0;
+    
+    if (months > 0 && value > 0) {
+      return value / months;
+    }
+    return 0;
+  }, [amount, usefulLifeMonths]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +88,7 @@ export function InvestmentForm({ open, onOpenChange, onSave, investment }: Inves
       category,
       amount: parseFloat(amount) || 0,
       purchase_date: format(purchaseDate, 'yyyy-MM-dd'),
+      useful_life_months: usefulLifeMonths ? parseInt(usefulLifeMonths) : undefined,
       notes: notes.trim() || undefined,
     });
     
@@ -146,6 +171,69 @@ export function InvestmentForm({ open, onOpenChange, onSave, investment }: Inves
               </PopoverContent>
             </Popover>
           </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-1">
+              <Label htmlFor="usefulLifeMonths">Vida Útil (meses)</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs text-sm">
+                      Tempo estimado de uso do ativo. A depreciação mensal será 
+                      calculada automaticamente e incluída nos custos operacionais.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                id="usefulLifeMonths"
+                type="number"
+                min="1"
+                placeholder="Ex: 36"
+                value={usefulLifeMonths}
+                onChange={(e) => setUsefulLifeMonths(e.target.value)}
+                className="flex-1"
+              />
+              <Select value={usefulLifeMonths} onValueChange={setUsefulLifeMonths}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Sugestões" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-border">
+                  {usefulLifeSuggestions.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Depreciation Preview */}
+          {depreciation > 0 && (
+            <div className="p-3 rounded-lg bg-muted/50 space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Valor do Investimento:</span>
+                <span>{formatCurrency(parseFloat(amount) || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Vida Útil:</span>
+                <span>{usefulLifeMonths} meses</span>
+              </div>
+              <div className="flex justify-between font-semibold border-t pt-1 mt-1">
+                <span>Depreciação Mensal:</span>
+                <span className="text-amber-500">{formatCurrency(depreciation)}/mês</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Este valor será incluído automaticamente nos custos operacionais.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="notes">Observações (opcional)</Label>

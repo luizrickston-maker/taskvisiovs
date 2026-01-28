@@ -137,9 +137,11 @@ export type Database = {
           created_at: string
           id: string
           item_name: string
+          monthly_depreciation: number | null
           notes: string | null
           purchase_date: string
           updated_at: string
+          useful_life_months: number | null
           user_id: string
         }
         Insert: {
@@ -148,9 +150,11 @@ export type Database = {
           created_at?: string
           id?: string
           item_name: string
+          monthly_depreciation?: number | null
           notes?: string | null
           purchase_date?: string
           updated_at?: string
+          useful_life_months?: number | null
           user_id: string
         }
         Update: {
@@ -159,9 +163,11 @@ export type Database = {
           created_at?: string
           id?: string
           item_name?: string
+          monthly_depreciation?: number | null
           notes?: string | null
           purchase_date?: string
           updated_at?: string
+          useful_life_months?: number | null
           user_id?: string
         }
         Relationships: []
@@ -213,9 +219,11 @@ export type Database = {
       }
       corporate_team: {
         Row: {
+          clt_benefits: number | null
           contract_type: string
           cost: number
           created_at: string
+          hours_available: number | null
           id: string
           is_active: boolean
           name: string
@@ -226,9 +234,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          clt_benefits?: number | null
           contract_type?: string
           cost?: number
           created_at?: string
+          hours_available?: number | null
           id?: string
           is_active?: boolean
           name: string
@@ -239,9 +249,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          clt_benefits?: number | null
           contract_type?: string
           cost?: number
           created_at?: string
+          hours_available?: number | null
           id?: string
           is_active?: boolean
           name?: string
@@ -625,6 +637,7 @@ export type Database = {
           notes: string | null
           payment_installments: number | null
           payment_type: string | null
+          plan_id: string | null
           project_id: string | null
           project_type: string | null
           prospection_date: string
@@ -642,6 +655,7 @@ export type Database = {
           notes?: string | null
           payment_installments?: number | null
           payment_type?: string | null
+          plan_id?: string | null
           project_id?: string | null
           project_type?: string | null
           prospection_date?: string
@@ -659,6 +673,7 @@ export type Database = {
           notes?: string | null
           payment_installments?: number | null
           payment_type?: string | null
+          plan_id?: string | null
           project_id?: string | null
           project_type?: string | null
           prospection_date?: string
@@ -667,6 +682,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "prospects_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "service_plans"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "prospects_project_id_fkey"
             columns: ["project_id"]

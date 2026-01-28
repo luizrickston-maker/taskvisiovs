@@ -33,13 +33,14 @@ const paymentTypeOptions: { value: PaymentType; label: string }[] = [
 
 export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFormProps) {
   const { user } = useAuthContext();
-  const { projects, addProspect, updateProspect } = useAppStore();
+  const { projects, servicePlans, addProspect, updateProspect } = useAppStore();
   
   const [clientName, setClientName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [prospectionDate, setProspectionDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [status, setStatus] = useState<ProspectStatus>('novo');
   const [projectId, setProjectId] = useState<string>('none');
+  const [planId, setPlanId] = useState<string>('none');
   const [projectType, setProjectType] = useState('');
   const [estimatedValue, setEstimatedValue] = useState('');
   const [notes, setNotes] = useState('');
@@ -47,6 +48,9 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
   const [contractDuration, setContractDuration] = useState('');
   const [paymentInstallments, setPaymentInstallments] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Get active plans
+  const activePlans = servicePlans.filter(p => p.is_active);
 
   useEffect(() => {
     if (editingProspect) {
@@ -55,6 +59,7 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
       setProspectionDate(editingProspect.prospection_date);
       setStatus(editingProspect.status);
       setProjectId(editingProspect.project_id || 'none');
+      setPlanId(editingProspect.plan_id || 'none');
       setProjectType(editingProspect.project_type || '');
       setEstimatedValue(editingProspect.estimated_value?.toString() || '');
       setNotes(editingProspect.notes || '');
@@ -72,12 +77,30 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
     setProspectionDate(format(new Date(), 'yyyy-MM-dd'));
     setStatus('novo');
     setProjectId('none');
+    setPlanId('none');
     setProjectType('');
     setEstimatedValue('');
     setNotes('');
     setPaymentType('none');
     setContractDuration('');
     setPaymentInstallments('');
+  };
+  
+  // Auto-fill value when plan is selected
+  const handlePlanChange = (value: string) => {
+    setPlanId(value);
+    if (value !== 'none') {
+      const selectedPlan = activePlans.find(p => p.id === value);
+      if (selectedPlan && selectedPlan.final_price > 0) {
+        setEstimatedValue(selectedPlan.final_price.toString());
+        // If plan is recurrent, set payment type
+        if (selectedPlan.plan_type === 'recorrente') {
+          setPaymentType('recorrente');
+        } else {
+          setPaymentType('pontual');
+        }
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -145,6 +168,7 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
       prospection_date: prospectionDate,
       status,
       project_id: projectId === 'none' ? null : projectId,
+      plan_id: planId === 'none' ? null : planId,
       project_type: projectType.trim() || null,
       estimated_value: parsedValue,
       notes: notes.trim() || null,
@@ -248,6 +272,22 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <div className="space-y-2">
+              <Label htmlFor="planId">Plano Vendido</Label>
+              <Select value={planId} onValueChange={handlePlanChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um plano" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {activePlans.map(plan => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name} ({plan.tier})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="projectId">Projeto Vinculado</Label>
               <Select value={projectId} onValueChange={setProjectId}>
                 <SelectTrigger>
@@ -261,15 +301,16 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="projectType">Tipo de Projeto</Label>
-              <Input
-                id="projectType"
-                value={projectType}
-                onChange={(e) => setProjectType(e.target.value)}
-                placeholder="Ex: Automação com IA"
-              />
-            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="projectType">Tipo de Projeto</Label>
+            <Input
+              id="projectType"
+              value={projectType}
+              onChange={(e) => setProjectType(e.target.value)}
+              placeholder="Ex: Automação com IA"
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">

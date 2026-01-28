@@ -4,7 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Calculator, DollarSign, Percent, TrendingUp, Save, Trash2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Calculator, DollarSign, Percent, TrendingUp, Save, Trash2, Clock, HelpCircle, Building2 } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,32 +26,108 @@ import {
 
 export function PricingCalculator() {
   const { user } = useAuthContext();
-  const { corporatePricings, addCorporatePricing, deleteCorporatePricing } = useAppStore();
+  const { 
+    corporatePricings, 
+    addCorporatePricing, 
+    deleteCorporatePricing,
+    corporateCosts,
+    corporateTeam,
+    corporateInvestments,
+  } = useAppStore();
   
   const [itemName, setItemName] = useState('');
   const [cost, setCost] = useState('');
   const [taxRate, setTaxRate] = useState('');
   const [marginPercent, setMarginPercent] = useState('');
+  const [estimatedHours, setEstimatedHours] = useState('');
+  const [useOperationalCost, setUseOperationalCost] = useState(false);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Cálculos em tempo real
+  // Calculate operational cost per hour
+  const operationalData = useMemo(() => {
+    // Team costs (including CLT encargos)
+    const teamCost = corporateTeam
+      .filter(m => m.is_active)
+      .reduce((sum, m) => {
+        if (m.contract_type === 'clt') {
+          const encargos = m.cost * 0.7;
+          const benefits = m.clt_benefits || 0;
+          return sum + m.cost + encargos + benefits;
+        }
+        return sum + m.cost;
+      }, 0);
+
+    // Total hours available from team
+    const totalHoursAvailable = corporateTeam
+      .filter(m => m.is_active)
+      .reduce((sum, m) => sum + (m.hours_available || 160), 0);
+
+    // Recurring/Fixed costs (monthly)
+    const activeCosts = corporateCosts.filter(c => c.is_active);
+    
+    const monthlyRecurring = activeCosts
+      .filter(c => c.cost_type === 'recorrente')
+      .reduce((sum, c) => {
+        switch (c.frequency) {
+          case 'diario': return sum + c.amount * 30;
+          case 'semanal': return sum + c.amount * 4.33;
+          case 'anual': return sum + c.amount / 12;
+          default: return sum + c.amount; // mensal
+        }
+      }, 0);
+
+    const monthlyFixed = activeCosts
+      .filter(c => c.cost_type === 'fixo')
+      .reduce((sum, c) => sum + c.amount, 0);
+
+    // Monthly depreciation from investments
+    const monthlyDepreciation = corporateInvestments
+      .filter(inv => inv.useful_life_months && inv.useful_life_months > 0)
+      .reduce((sum, inv) => sum + (inv.amount / inv.useful_life_months!), 0);
+
+    const totalMonthlyCost = teamCost + monthlyRecurring + monthlyFixed + monthlyDepreciation;
+    const costPerHour = totalHoursAvailable > 0 ? totalMonthlyCost / totalHoursAvailable : 0;
+
+    return {
+      teamCost,
+      totalHoursAvailable,
+      monthlyRecurring,
+      monthlyFixed,
+      monthlyDepreciation,
+      totalMonthlyCost,
+      costPerHour,
+    };
+  }, [corporateCosts, corporateTeam, corporateInvestments]);
+
+  // Pricing calculations
   const calculations = useMemo(() => {
     const costValue = parseFloat(cost) || 0;
     const taxValue = parseFloat(taxRate) || 0;
     const marginValue = parseFloat(marginPercent) || 0;
+    const hours = parseFloat(estimatedHours) || 0;
 
-    const custoComImpostos = costValue * (1 + taxValue / 100);
+    // Calculate operational cost based on hours
+    const operationalCostForService = useOperationalCost && hours > 0 
+      ? hours * operationalData.costPerHour 
+      : 0;
+
+    const totalCost = costValue + operationalCostForService;
+    const custoComImpostos = totalCost * (1 + taxValue / 100);
     const precoFinal = custoComImpostos * (1 + marginValue / 100);
     const lucroLiquido = precoFinal - custoComImpostos;
     const margemReal = precoFinal > 0 ? (lucroLiquido / precoFinal) * 100 : 0;
 
     return {
+      directCost: costValue,
+      operationalCost: operationalCostForService,
+      totalCost,
+      taxAmount: totalCost * (taxValue / 100),
       finalPrice: precoFinal,
       profit: lucroLiquido,
       realMargin: margemReal,
     };
-  }, [cost, taxRate, marginPercent]);
+  }, [cost, taxRate, marginPercent, estimatedHours, useOperationalCost, operationalData.costPerHour]);
 
   const handleSave = async () => {
     if (!user || !itemName.trim()) {
@@ -62,7 +140,7 @@ export function PricingCalculator() {
     const newPricing = {
       user_id: user.id,
       item_name: itemName.trim(),
-      cost: parseFloat(cost) || 0,
+      cost: calculations.totalCost, // Save total cost including operational
       tax_rate: parseFloat(taxRate) || 0,
       margin_percent: parseFloat(marginPercent) || 0,
       final_price: calculations.finalPrice,
@@ -88,6 +166,8 @@ export function PricingCalculator() {
       setCost('');
       setTaxRate('');
       setMarginPercent('');
+      setEstimatedHours('');
+      setUseOperationalCost(false);
       setNotes('');
     }
     
@@ -110,6 +190,45 @@ export function PricingCalculator() {
 
   return (
     <div className="space-y-6">
+      {/* Operational Cost Summary */}
+      <Card className="bg-muted/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-primary" />
+            Custo Operacional da Empresa
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs text-sm">
+                    Soma de todos os custos fixos, recorrentes, equipe e depreciação 
+                    de ativos dividido pelas horas disponíveis da equipe.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground">Custo Mensal Total</p>
+              <p className="font-semibold">{formatCurrency(operationalData.totalMonthlyCost)}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Horas Disponíveis</p>
+              <p className="font-semibold">{operationalData.totalHoursAvailable}h/mês</p>
+            </div>
+            <div className="col-span-2 md:col-span-2">
+              <p className="text-muted-foreground">Custo por Hora da Operação</p>
+              <p className="font-bold text-primary text-lg">{formatCurrency(operationalData.costPerHour)}/h</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Formulário e Cards de Resumo */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Formulário */}
@@ -133,7 +252,7 @@ export function PricingCalculator() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="cost">Custo (R$)</Label>
+                <Label htmlFor="cost">Custo Direto (R$)</Label>
                 <Input
                   id="cost"
                   type="number"
@@ -142,6 +261,52 @@ export function PricingCalculator() {
                   value={cost}
                   onChange={(e) => setCost(e.target.value)}
                 />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="estimatedHours">Horas Estimadas</Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs text-sm">
+                          Quantidade de horas necessárias para executar o serviço. 
+                          Usado para calcular o custo operacional proporcional.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Input
+                  id="estimatedHours"
+                  type="number"
+                  step="0.5"
+                  placeholder="0"
+                  value={estimatedHours}
+                  onChange={(e) => setEstimatedHours(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <Label htmlFor="useOperationalCost">Incluir custo operacional proporcional</Label>
+                  </div>
+                  <Switch
+                    id="useOperationalCost"
+                    checked={useOperationalCost}
+                    onCheckedChange={setUseOperationalCost}
+                  />
+                </div>
+                {useOperationalCost && parseFloat(estimatedHours) > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    + {formatCurrency(calculations.operationalCost)} ({estimatedHours}h × {formatCurrency(operationalData.costPerHour)}/h)
+                  </p>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -156,7 +321,7 @@ export function PricingCalculator() {
                 />
               </div>
               
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2">
                 <Label htmlFor="marginPercent">Margem Desejada (%)</Label>
                 <Input
                   id="marginPercent"
@@ -179,6 +344,32 @@ export function PricingCalculator() {
                 />
               </div>
             </div>
+
+            {/* Cost Breakdown */}
+            {(parseFloat(cost) > 0 || calculations.operationalCost > 0) && (
+              <div className="p-3 rounded-lg bg-muted/50 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Custo Direto:</span>
+                  <span>{formatCurrency(calculations.directCost)}</span>
+                </div>
+                {useOperationalCost && calculations.operationalCost > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Custo Operacional ({estimatedHours}h):</span>
+                    <span>{formatCurrency(calculations.operationalCost)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-medium border-t pt-1 mt-1">
+                  <span>Custo Total:</span>
+                  <span>{formatCurrency(calculations.totalCost)}</span>
+                </div>
+                {parseFloat(taxRate) > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Impostos ({taxRate}%):</span>
+                    <span>{formatCurrency(calculations.taxAmount)}</span>
+                  </div>
+                )}
+              </div>
+            )}
             
             <Button onClick={handleSave} disabled={saving} className="w-full md:w-auto">
               <Save className="w-4 h-4 mr-2" />

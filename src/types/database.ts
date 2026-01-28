@@ -223,6 +223,7 @@ export interface Prospect {
   prospection_date: string;
   status: ProspectStatus;
   project_id?: string;
+  plan_id?: string;
   project_type?: string;
   estimated_value: number;
   notes?: string;
@@ -277,6 +278,8 @@ export interface CorporateInvestment {
   category: InvestmentCategory;
   amount: number;
   purchase_date: string;
+  useful_life_months?: number;
+  monthly_depreciation?: number;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -290,6 +293,8 @@ export interface CorporateTeamMember {
   contract_type: ContractType;
   cost: number;
   payment_day: number;
+  hours_available: number;
+  clt_benefits: number;
   notes?: string;
   is_active: boolean;
   created_at: string;
