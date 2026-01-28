@@ -5,22 +5,37 @@ import { SalesGoalsSummary } from '@/components/comercial/SalesGoalsSummary';
 import { SalesGoalForm } from '@/components/comercial/SalesGoalForm';
 import { ProspectList } from '@/components/comercial/ProspectList';
 import { ProspectForm } from '@/components/comercial/ProspectForm';
+import { ProspectDetailModal } from '@/components/comercial/ProspectDetailModal';
 import type { Prospect } from '@/types/database';
 
 export default function ComercialDashboard() {
   const [goalFormOpen, setGoalFormOpen] = useState(false);
   const [prospectFormOpen, setProspectFormOpen] = useState(false);
   const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
+  const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   const handleEditProspect = (prospect: Prospect) => {
     setEditingProspect(prospect);
     setProspectFormOpen(true);
   };
 
+  const handleViewProspect = (prospect: Prospect) => {
+    setDetailProspect(prospect);
+    setDetailModalOpen(true);
+  };
+
   const handleCloseProspectForm = (open: boolean) => {
     setProspectFormOpen(open);
     if (!open) {
       setEditingProspect(null);
+    }
+  };
+
+  const handleEditFromDetail = () => {
+    if (detailProspect) {
+      setEditingProspect(detailProspect);
+      setProspectFormOpen(true);
     }
   };
 
@@ -51,6 +66,7 @@ export default function ComercialDashboard() {
           <ProspectList 
             onAddProspect={() => setProspectFormOpen(true)} 
             onEditProspect={handleEditProspect}
+            onViewProspect={handleViewProspect}
           />
         </SectionBoundary>
       </section>
@@ -61,6 +77,12 @@ export default function ComercialDashboard() {
         open={prospectFormOpen} 
         onOpenChange={handleCloseProspectForm}
         editingProspect={editingProspect}
+      />
+      <ProspectDetailModal
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        prospect={detailProspect}
+        onEdit={handleEditFromDetail}
       />
     </div>
   );

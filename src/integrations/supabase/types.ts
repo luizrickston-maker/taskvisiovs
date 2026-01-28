@@ -226,6 +226,30 @@ export type Database = {
           },
         ]
       }
+      document_types: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
@@ -449,6 +473,60 @@ export type Database = {
             columns: ["project_category_id"]
             isOneToOne: false
             referencedRelation: "project_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_documents: {
+        Row: {
+          created_at: string
+          document_type_id: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          notes: string | null
+          prospect_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_type_id?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          prospect_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_type_id?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          prospect_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_documents_document_type_id_fkey"
+            columns: ["document_type_id"]
+            isOneToOne: false
+            referencedRelation: "document_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_documents_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
             referencedColumns: ["id"]
           },
         ]
