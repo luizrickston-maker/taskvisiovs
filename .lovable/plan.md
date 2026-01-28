@@ -1,355 +1,256 @@
 
-## Plano: Modulo "Projetos e Tarefas" para Gestao de Clientes
 
-### Visao Geral
+## Plano: Automacao "Fechado" -> Criar Projeto + Atualizar Financeiro
 
-Criar um novo modulo "Projetos" no menu empresarial (PJ) que permite gerenciar projetos de cada cliente com rastreabilidade completa de tarefas, progresso, prioridades e tempos de execucao. Este modulo se integra diretamente com o Pipeline de Prospecao, substituindo o sistema de projetos pessoais por um focado em gestao de clientes.
+### Resumo da Funcionalidade
 
----
+Quando o usuario mudar o status de uma prospecao para **"Fechado"**, o sistema ira:
 
-### Analise da Situacao Atual
+1. **Exibir modal de confirmacao** com opcoes de:
+   - Selecionar/confirmar o **Plano vendido** (obrigatorio)
+   - Escolher criar um novo projeto automaticamente
+   - Definir prazo inicial do projeto
 
-**O que existe hoje:**
-1. Tabela `projects` - projetos pessoais no modo Pessoal (Kanban)
-2. Tabela `project_tasks` - tarefas vinculadas a projetos
-3. Campo `project_id` em `prospects` - vinculo (nao utilizado adequadamente)
-4. Sistema de categorias de projeto (`project_categories`)
+2. **Criar projeto automaticamente** (opcional) com:
+   - Nome do projeto = Nome do cliente + Empresa
+   - Cliente/Empresa preenchidos
+   - Vinculado a prospecao (prospect_id)
+   - Status = "Em Progresso"
 
-**Problemas identificados:**
-1. Projetos existentes sao focados em produtividade pessoal, nao gestao de clientes
-2. Nao ha campos para vincular cliente/empresa ao projeto
-3. Tarefas nao tem data de conclusao (deadline)
-4. Nao ha campo de tempo estimado/real de execucao nas tarefas
-5. Progresso do projeto nao e calculado automaticamente
-6. Prospecao nao puxa projetos existentes de forma logica
+3. **Atualizar dados financeiros** via triggers existentes:
+   - Meta de faturamento mensal atualizada
+   - Contador de vendas fechadas incrementado
 
 ---
 
-### Solucao Proposta: Nova Estrutura de Dados
-
-#### Opcao 1: Estender Tabela Existente (Recomendada)
-Adicionar novos campos a tabela `projects` para suportar gestao empresarial:
+### Fluxo Visual Proposto
 
 ```text
-Novos campos na tabela 'projects':
-- client_name TEXT           # Nome do cliente (para projetos PJ)
-- company_name TEXT          # Empresa do cliente
-- deadline DATE              # Data de entrega prevista
-- is_corporate BOOLEAN       # Diferencia projeto pessoal de empresarial
-- prospect_id UUID           # Vinculo reverso com prospecao fechada
-```
-
-#### Novos campos na tabela `project_tasks`:
-```text
-Novos campos na tabela 'project_tasks':
-- deadline DATE              # Data limite da tarefa
-- estimated_hours NUMERIC    # Tempo estimado em horas
-- actual_hours NUMERIC       # Tempo real executado
-- completed_at TIMESTAMPTZ   # Data de conclusao
-```
-
----
-
-### Arquitetura do Modulo
-
-```text
-Modo Empresarial (Sidebar):
-+------------------------+
-| Comercial              |
-| Projetos        [NOVO] |  <-- Novo menu
-| Financeiro             |
-| Planos                 |
-| Investimentos          |
-| Time                   |
-+------------------------+
-```
-
----
-
-### Estrutura da Pagina "Projetos"
-
-```text
-+------------------------------------------------------------------+
-| [FolderKanban] Projetos de Clientes                              |
-| Gerencie projetos e acompanhe o progresso de cada cliente        |
-+------------------------------------------------------------------+
-| [+ Novo Projeto]  [Filtro: Status] [Filtro: Cliente]             |
-+------------------------------------------------------------------+
-| LISTA DE PROJETOS (Cards ou Tabela)                              |
-|                                                                  |
-| +--------------------------------------------------------------+ |
-| | Projeto: Website Empresa XYZ                                 | |
-| | Cliente: Joao Silva | Empresa: XYZ Ltda                      | |
-| | Status: [Em Progresso]  Prioridade: P1                       | |
-| | Prazo: 15/02/2026   Progresso: [========    ] 65%            | |
-| | Tarefas: 6/10 concluidas                                     | |
-| +--------------------------------------------------------------+ |
-|                                                                  |
-| +--------------------------------------------------------------+ |
-| | Projeto: Automacao com IA                                    | |
-| | Cliente: Maria Costa | Empresa: ABC Corp                     | |
-| | Status: [A Fazer]  Prioridade: P2                            | |
-| | Prazo: 20/03/2026   Progresso: [          ] 0%               | |
-| | Tarefas: 0/5 concluidas                                      | |
-| +--------------------------------------------------------------+ |
-+------------------------------------------------------------------+
-```
-
----
-
-### Pagina de Detalhes do Projeto (Modal ou Pagina)
-
-```text
-+------------------------------------------------------------------+
-| [<- Voltar] Projeto: Website Empresa XYZ                         |
-+------------------------------------------------------------------+
-| Cliente: Joao Silva           | Empresa: XYZ Ltda                |
-| Prazo: 15/02/2026             | Prioridade: P1 - Critica         |
-| Status: Em Progresso          | Progresso: 65%                   |
-+------------------------------------------------------------------+
-|                                                                  |
-| TAREFAS DO PROJETO                          [+ Nova Tarefa]      |
-|                                                                  |
-| [A Fazer] [Em Andamento] [Concluido]   <- Tabs ou Kanban mini    |
-|                                                                  |
-| +--------------------------------------------------------------+ |
-| | [x] Configurar hospedagem                   P2 | 2h | 2.5h   | |
-| |     Concluido em 10/01/2026                                  | |
-| +--------------------------------------------------------------+ |
-| | [~] Desenvolver homepage                    P1 | 8h | 4h     | |
-| |     Prazo: 01/02/2026  (em andamento)                        | |
-| +--------------------------------------------------------------+ |
-| | [ ] Implementar formulario de contato       P3 | 3h | -      | |
-| |     Prazo: 10/02/2026                                        | |
-| +--------------------------------------------------------------+ |
-+------------------------------------------------------------------+
-| RESUMO DE TEMPO                                                  |
-| Estimado Total: 25h  |  Executado: 12h  |  Restante: 13h         |
-+------------------------------------------------------------------+
-```
-
----
-
-### Integracao com Pipeline Comercial
-
-**Fluxo Ideal:**
-1. Usuario cria prospecao no Comercial
-2. Quando status muda para "Fechado", pode criar projeto automaticamente
-3. Ou seleciona projeto existente (criado previamente)
-4. Projeto aparece na lista de "Projetos de Clientes"
-5. Usuario adiciona tarefas ao projeto
-6. Progresso e calculado automaticamente
-
-**Modificacoes no ProspectForm:**
-- Campo "Projeto Vinculado" ja existe
-- Adicionar botao "Criar Novo Projeto" ao lado
-- Ao criar projeto, preenche cliente/empresa automaticamente
-
----
-
-### Banco de Dados - Migrations Necessarias
-
-```sql
--- Adicionar campos empresariais a tabela projects
-ALTER TABLE public.projects 
-ADD COLUMN IF NOT EXISTS client_name TEXT,
-ADD COLUMN IF NOT EXISTS company_name TEXT,
-ADD COLUMN IF NOT EXISTS deadline DATE,
-ADD COLUMN IF NOT EXISTS is_corporate BOOLEAN DEFAULT false,
-ADD COLUMN IF NOT EXISTS prospect_id UUID REFERENCES prospects(id) ON DELETE SET NULL;
-
--- Adicionar campos de gestao a tabela project_tasks
-ALTER TABLE public.project_tasks
-ADD COLUMN IF NOT EXISTS deadline DATE,
-ADD COLUMN IF NOT EXISTS estimated_hours NUMERIC DEFAULT 0,
-ADD COLUMN IF NOT EXISTS actual_hours NUMERIC DEFAULT 0,
-ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
-```
-
----
-
-### Tipos TypeScript Atualizados
-
-```typescript
-// Atualizar interface Project
-export interface Project {
-  id: string;
-  user_id: string;
-  task: string;
-  project: string;
-  project_category_id?: string;
-  priority: number;
-  status: ProjectStatus;
-  estimated_time?: string;
-  // Novos campos PJ
-  client_name?: string;
-  company_name?: string;
-  deadline?: string;
-  is_corporate: boolean;
-  prospect_id?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// Atualizar interface ProjectTask
-export interface ProjectTask {
-  id: string;
-  user_id: string;
-  project_id: string | null;
-  title: string;
-  description?: string;
-  priority: number;
-  status: ProjectTaskStatus;
-  // Novos campos
-  deadline?: string;
-  estimated_hours: number;
-  actual_hours: number;
-  completed_at?: string;
-  created_at: string;
-  updated_at: string;
-}
+Usuario clica em "Fechado" no status
+          |
+          v
++------------------------------------------+
+|   Confirmar Fechamento de Venda          |
++------------------------------------------+
+| Cliente: Joao Silva                      |
+| Empresa: XYZ Ltda                        |
++------------------------------------------+
+|                                          |
+| Plano Vendido *                          |
+| [Dropdown: Selecione o plano]            |
+|                                          |
+| Valor da Venda: R$ 5.000,00 (auto)       |
+| Tipo: Recorrente - 12 meses (auto)       |
++------------------------------------------+
+|                                          |
+| [x] Criar projeto automaticamente        |
+|                                          |
+| Nome do Projeto                          |
+| [Website - XYZ Ltda]  (auto-preenchido)  |
+|                                          |
+| Prazo Inicial                            |
+| [Calendario: 30 dias a frente]           |
+|                                          |
++------------------------------------------+
+| [Cancelar]           [Confirmar Venda]   |
++------------------------------------------+
+          |
+          v
+    Sistema executa:
+    1. Atualiza status para "fechado"
+    2. Atualiza plan_id e estimated_value
+    3. Trigger atualiza metas de vendas
+    4. Cria projeto (se selecionado)
+    5. Vincula projeto a prospecao
 ```
 
 ---
 
 ### Componentes a Criar/Modificar
 
+| Arquivo | Acao | Descricao |
+|---------|------|-----------|
+| `src/components/comercial/CloseProspectModal.tsx` | CRIAR | Modal de confirmacao com opcoes |
+| `src/components/comercial/ProspectList.tsx` | MODIFICAR | Interceptar mudanca para "fechado" |
+| `src/components/comercial/ProspectForm.tsx` | MODIFICAR | Mesmo comportamento no form |
+| `src/pages/ComercialDashboard.tsx` | MODIFICAR | Gerenciar estado do modal |
+
+---
+
+### Detalhes Tecnicos
+
+#### 1. Novo Componente: CloseProspectModal
+
+```typescript
+interface CloseProspectModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  prospect: Prospect;
+  onConfirm: (data: {
+    plan_id: string;
+    estimated_value: number;
+    payment_type: PaymentType;
+    createProject: boolean;
+    projectName?: string;
+    projectDeadline?: string;
+  }) => void;
+}
+```
+
+**Campos do Modal:**
+- Plano Vendido (obrigatorio) - Select dos planos ativos
+- Valor da Venda (auto-preenchido do plano, editavel)
+- Tipo de Pagamento (auto do plano)
+- Duracao/Parcelas (condicional)
+- Checkbox: Criar projeto automaticamente
+- Nome do Projeto (se checkbox ativo)
+- Prazo do Projeto (se checkbox ativo)
+
+#### 2. Logica de Criacao de Projeto
+
+```typescript
+const handleConfirmClose = async (data) => {
+  // 1. Atualizar prospect para "fechado"
+  await supabase.from('prospects').update({
+    status: 'fechado',
+    plan_id: data.plan_id,
+    estimated_value: data.estimated_value,
+    payment_type: data.payment_type,
+    // ... outros campos
+  }).eq('id', prospect.id);
+  
+  // 2. Criar projeto se solicitado
+  if (data.createProject) {
+    const projectData = await supabase.from('projects').insert({
+      user_id: user.id,
+      project: data.projectName,
+      task: data.projectName,
+      client_name: prospect.client_name,
+      company_name: prospect.company_name,
+      deadline: data.projectDeadline,
+      priority: 2, // Alta prioridade para vendas fechadas
+      status: 'progress',
+      is_corporate: true,
+      prospect_id: prospect.id,
+    }).select().single();
+    
+    // 3. Vincular projeto a prospecao
+    await supabase.from('prospects').update({
+      project_id: projectData.id
+    }).eq('id', prospect.id);
+  }
+  
+  // 4. Triggers do banco atualizam metas automaticamente
+};
+```
+
+#### 3. Integracao Financeira (Ja Existente)
+
+Os triggers PostgreSQL ja implementados fazem:
+
+```sql
+-- Quando status muda para 'fechado':
+UPDATE sales_goals SET 
+  current_amount = current_amount + NEW.estimated_value
+WHERE goal_type = 'faturamento_mensal'
+  AND start_date <= NEW.prospection_date
+  AND end_date >= NEW.prospection_date;
+
+UPDATE sales_goals SET 
+  current_amount = current_amount + 1
+WHERE goal_type = 'vendas_fechadas'
+  -- mesmas condicoes
+```
+
+---
+
+### Validacoes e Regras de Negocio
+
+1. **Plano e obrigatorio** para fechar venda
+   - Impede fechamento sem rastreabilidade
+   
+2. **Valor e auto-preenchido** do plano selecionado
+   - Usuario pode editar se negociou diferente
+   
+3. **Projeto e opcional** mas recomendado
+   - Nome sugerido: "{Tipo do Projeto} - {Empresa}"
+   - Se nao tiver tipo: "{Cliente} - {Empresa}"
+   
+4. **Prazo padrao**: 30 dias a partir de hoje
+   - Usuario pode alterar
+
+5. **Prevencao de duplicatas**:
+   - Se ja existe projeto vinculado, nao mostrar opcao de criar
+
+---
+
+### Experiencia do Usuario
+
+**Cenario 1: Nova venda sem projeto**
+1. Usuario edita prospecao ou clica no badge de status
+2. Seleciona "Fechado"
+3. Modal abre pedindo plano
+4. Seleciona plano, valor preenche automaticamente
+5. Marca "Criar projeto automaticamente"
+6. Ajusta nome/prazo se necessario
+7. Confirma
+8. Projeto aparece em Projetos, metas atualizadas
+
+**Cenario 2: Venda com projeto ja vinculado**
+1. Usuario ja tinha criado projeto antes
+2. Muda status para "Fechado"
+3. Modal abre sem opcao de criar projeto
+4. Apenas confirma plano e valor
+5. Metas atualizadas
+
+**Cenario 3: Reversao**
+1. Usuario muda de "Fechado" para outro status
+2. Nenhum modal (ja existe logica de reversao)
+3. Triggers revertem valores das metas
+
+---
+
+### Integracao com Pipeline (Projeto Vinculado)
+
+Na lista de prospecoes, se houver projeto vinculado:
+- Mostrar badge com link para o projeto
+- Clicar abre detalhes do projeto no modulo Projetos
+
 ```text
-src/pages/PJ/
-├── ProjetosClientesPage.tsx    # NOVO - Pagina principal
-
-src/components/areapj/projetos/
-├── ClientProjectList.tsx        # NOVO - Lista de projetos
-├── ClientProjectCard.tsx        # NOVO - Card de projeto com progresso
-├── ClientProjectForm.tsx        # NOVO - Form criar/editar projeto
-├── ClientProjectDetail.tsx      # NOVO - Detalhes do projeto
-├── ClientTaskList.tsx           # NOVO - Lista de tarefas
-├── ClientTaskForm.tsx           # NOVO - Form criar/editar tarefa
-└── TimeTracker.tsx              # NOVO - Resumo de tempo
-
-src/components/comercial/
-├── ProspectForm.tsx             # MODIFICAR - Adicionar criacao rapida de projeto
+| Cliente | Empresa | Status  | Projeto              |
+|---------|---------|---------|----------------------|
+| Joao    | XYZ     | Fechado | [Website XYZ] ->     |
 ```
 
 ---
 
-### Navegacao
+### Ordem de Implementacao
 
-Adicionar ao `businessNavItems` em AppSidebar.tsx:
+1. **Criar CloseProspectModal.tsx**
+   - Formulario com plano, valor, checkbox projeto
+   - Campos condicionais para nome/prazo do projeto
 
-```typescript
-const businessNavItems = [
-  { title: 'Comercial', url: '/comercial', icon: Briefcase },
-  { title: 'Projetos', url: '/pj/projetos', icon: FolderKanban },  // NOVO
-  { title: 'Financeiro', url: '/pj/financeiro', icon: Wallet },
-  { title: 'Planos', url: '/pj/planos', icon: Package },
-  { title: 'Investimentos', url: '/pj/investimentos', icon: TrendingUp },
-  { title: 'Time', url: '/pj/time', icon: Users },
-];
-```
+2. **Atualizar ProspectList.tsx**
+   - Interceptar mudanca de status para "fechado"
+   - Abrir modal em vez de mudar direto
 
----
+3. **Atualizar ComercialDashboard.tsx**
+   - Gerenciar estado do modal de fechamento
+   - Callback para criacao de projeto
 
-### Funcionalidades de Calculo
-
-**Progresso do Projeto (automatico):**
-```typescript
-const calcularProgresso = (tarefas: ProjectTask[]) => {
-  if (tarefas.length === 0) return 0;
-  const concluidas = tarefas.filter(t => t.status === 'done').length;
-  return Math.round((concluidas / tarefas.length) * 100);
-};
-```
-
-**Resumo de Tempo:**
-```typescript
-const calcularTempos = (tarefas: ProjectTask[]) => {
-  const estimadoTotal = tarefas.reduce((sum, t) => sum + t.estimated_hours, 0);
-  const executadoTotal = tarefas.reduce((sum, t) => sum + t.actual_hours, 0);
-  const restante = estimadoTotal - executadoTotal;
-  return { estimadoTotal, executadoTotal, restante };
-};
-```
-
----
-
-### UI/UX Diretrizes
-
-1. **Hierarquia Visual Clara:**
-   - Projetos com prazo proximo destacados em amarelo
-   - Projetos atrasados destacados em vermelho
-   - Barra de progresso colorida (verde > 80%, amarelo 50-80%, vermelho < 50%)
-
-2. **Responsividade:**
-   - Cards em grid no desktop (3 colunas)
-   - Cards em lista no mobile
-   - Formularios full-width em mobile
-
-3. **Filtros Praticos:**
-   - Por status (Todos, A Fazer, Em Progresso, Concluido)
-   - Por cliente/empresa
-   - Por prazo (Atrasados, Esta Semana, Este Mes)
-   - Por prioridade (P1-P5)
-
-4. **Acoes Rapidas:**
-   - Clicar no card abre detalhes
-   - Arrastar tarefa muda status (mini-kanban)
-   - Botao "Adicionar Tempo" para registrar horas
-
----
-
-### Resumo de Arquivos a Modificar/Criar
-
-| Arquivo | Acao |
-|---------|------|
-| `supabase/migrations/xxx.sql` | CRIAR - Adicionar campos as tabelas |
-| `src/types/database.ts` | MODIFICAR - Atualizar interfaces |
-| `src/stores/useAppStore.ts` | MODIFICAR - Filtros de projetos corporativos |
-| `src/pages/PJ/ProjetosClientesPage.tsx` | CRIAR - Pagina principal |
-| `src/components/areapj/projetos/*.tsx` | CRIAR - Componentes do modulo |
-| `src/components/comercial/ProspectForm.tsx` | MODIFICAR - Criar projeto rapido |
-| `src/components/layout/AppSidebar.tsx` | MODIFICAR - Adicionar menu |
-| `src/components/layout/MobileNav.tsx` | MODIFICAR - Adicionar menu |
-| `src/App.tsx` | MODIFICAR - Adicionar rota |
-| `src/hooks/useInitializeData.ts` | VERIFICAR - Ja carrega projetos |
-| `src/hooks/useRealtimeSync.ts` | VERIFICAR - Ja sincroniza projetos |
+4. **Testar fluxo completo**
+   - Criar prospecao
+   - Mudar para fechado
+   - Verificar projeto criado
+   - Verificar metas atualizadas
 
 ---
 
 ### Resultado Esperado
 
-1. Novo menu "Projetos" no modo Empresarial
-2. Gerenciamento completo de projetos por cliente
-3. Tarefas com prazo, tempo estimado e tempo real
-4. Calculo automatico de progresso
-5. Integracao bidirecional com Pipeline Comercial
-6. Visao consolidada de tempo gasto por projeto
-7. Filtros e ordenacao praticos
-8. Interface responsiva e intuitiva
-
----
-
-### Secao Tecnica: Ordem de Implementacao
-
-1. **Fase 1 - Banco de Dados**
-   - Executar migration para adicionar campos
-   - Atualizar tipos TypeScript
-
-2. **Fase 2 - Componentes Base**
-   - Criar ClientProjectCard
-   - Criar ClientProjectForm
-   - Criar ClientTaskForm
-
-3. **Fase 3 - Pagina Principal**
-   - Criar ProjetosClientesPage
-   - Implementar filtros e listagem
-
-4. **Fase 4 - Detalhes e Tarefas**
-   - Criar ClientProjectDetail
-   - Implementar gestao de tarefas
-
-5. **Fase 5 - Integracoes**
-   - Atualizar ProspectForm
-   - Adicionar navegacao
-   - Testar fluxo completo
+1. **Fluxo unificado**: Fechar venda + criar projeto em uma acao
+2. **Rastreabilidade**: Toda venda fechada tem plano vinculado
+3. **Dados financeiros**: Metas atualizadas automaticamente
+4. **Produtividade**: Usuario so precisa completar detalhes do projeto
+5. **Integridade**: Impossivel fechar venda sem plano
 
