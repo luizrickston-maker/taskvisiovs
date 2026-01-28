@@ -24,9 +24,10 @@ const statusConfig: Record<ProspectStatus, { label: string; variant: 'default' |
 interface ProspectListProps {
   onAddProspect: () => void;
   onEditProspect: (prospect: Prospect) => void;
+  onViewProspect: (prospect: Prospect) => void;
 }
 
-export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProps) {
+export function ProspectList({ onAddProspect, onEditProspect, onViewProspect }: ProspectListProps) {
   const { prospects, projects, deleteProspect, updateProspect } = useAppStore();
   const [statusFilter, setStatusFilter] = useState<ProspectStatus | 'all'>('all');
 
@@ -117,9 +118,13 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
               {filteredProspects.map((prospect) => {
                 const config = statusConfig[prospect.status];
                 return (
-                  <Card key={prospect.id} className="p-4 animate-fade-in">
+                  <Card 
+                    key={prospect.id} 
+                    className="p-4 animate-fade-in cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => onViewProspect(prospect)}
+                  >
                     <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
                         <p className="font-semibold truncate">{prospect.client_name}</p>
                         <p className="text-sm text-muted-foreground truncate">{prospect.company_name || '-'}</p>
                       </div>
@@ -184,7 +189,7 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
                       </div>
                     </div>
                     
-                    <div className="mt-3 flex gap-2 justify-end">
+                    <div className="mt-3 flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
                       <Button variant="outline" size="sm" onClick={() => onEditProspect(prospect)}>
                         <Pencil className="w-3.5 h-3.5 mr-1" />
                         Editar
@@ -217,8 +222,12 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
                   {filteredProspects.map((prospect) => {
                     const config = statusConfig[prospect.status];
                     return (
-                      <TableRow key={prospect.id} className="animate-fade-in">
-                        <TableCell>
+                      <TableRow 
+                        key={prospect.id} 
+                        className="animate-fade-in cursor-pointer hover:bg-muted/50"
+                        onClick={() => onViewProspect(prospect)}
+                      >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-muted-foreground" />
                             <span className="font-medium">{prospect.client_name}</span>
@@ -230,7 +239,7 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
                         <TableCell className="text-muted-foreground">
                           {format(parseISO(prospect.prospection_date), 'dd/MM/yyyy', { locale: ptBR })}
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
@@ -283,7 +292,7 @@ export function ProspectList({ onAddProspect, onEditProspect }: ProspectListProp
                         <TableCell className="text-right font-medium">
                           {formatCurrency(prospect.estimated_value)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8">

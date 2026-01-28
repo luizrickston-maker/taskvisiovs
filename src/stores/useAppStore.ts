@@ -3,7 +3,7 @@ import type {
   Category, Income, Expense, Debt, Saving, Goal, 
   Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask,
   SalesGoal, Prospect, CorporatePricing, CorporateInvestment, CorporateTeamMember,
-  ServicePlan, ServicePlanItem
+  ServicePlan, ServicePlanItem, DocumentType, ProspectDocument
 } from '@/types/database';
 
 interface AppState {
@@ -31,6 +31,10 @@ interface AppState {
   corporateTeam: CorporateTeamMember[];
   servicePlans: ServicePlan[];
   servicePlanItems: ServicePlanItem[];
+  
+  // Document Types
+  documentTypes: DocumentType[];
+  prospectDocuments: ProspectDocument[];
   
   // Loading states
   isLoading: boolean;
@@ -160,6 +164,17 @@ interface AppState {
   updateServicePlanItem: (id: string, updates: Partial<ServicePlanItem>) => void;
   deleteServicePlanItem: (id: string) => void;
   
+  // Actions - Document Types
+  setDocumentTypes: (types: DocumentType[]) => void;
+  addDocumentType: (type: DocumentType) => void;
+  updateDocumentType: (id: string, updates: Partial<DocumentType>) => void;
+  deleteDocumentType: (id: string) => void;
+  
+  // Actions - Prospect Documents
+  setProspectDocuments: (docs: ProspectDocument[]) => void;
+  addProspectDocument: (doc: ProspectDocument) => void;
+  deleteProspectDocument: (id: string) => void;
+  
   // Actions - Loading
   setIsLoading: (loading: boolean) => void;
   setDataInitialized: (initialized: boolean) => void;
@@ -190,6 +205,8 @@ const initialState = {
   corporateTeam: [],
   servicePlans: [],
   servicePlanItems: [],
+  documentTypes: [],
+  prospectDocuments: [],
   isLoading: false,
   dataInitialized: false,
 };
@@ -415,6 +432,27 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   deleteServicePlanItem: (id) => set((state) => ({
     servicePlanItems: state.servicePlanItems.filter((i) => i.id !== id)
+  })),
+  
+  // Document Types
+  setDocumentTypes: (documentTypes) => set({ documentTypes }),
+  addDocumentType: (type) => set((state) => ({ 
+    documentTypes: [...state.documentTypes, type] 
+  })),
+  updateDocumentType: (id, updates) => set((state) => ({
+    documentTypes: state.documentTypes.map((t) => t.id === id ? { ...t, ...updates } : t)
+  })),
+  deleteDocumentType: (id) => set((state) => ({
+    documentTypes: state.documentTypes.filter((t) => t.id !== id)
+  })),
+  
+  // Prospect Documents
+  setProspectDocuments: (prospectDocuments) => set({ prospectDocuments }),
+  addProspectDocument: (doc) => set((state) => ({ 
+    prospectDocuments: [...state.prospectDocuments, doc] 
+  })),
+  deleteProspectDocument: (id) => set((state) => ({
+    prospectDocuments: state.prospectDocuments.filter((d) => d.id !== id)
   })),
   
   // Loading

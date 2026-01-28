@@ -15,6 +15,29 @@ export type InvestmentCategory = 'equipamento' | 'software' | 'mobilia' | 'marke
 export type ContractType = 'pj' | 'clt' | 'freelancer';
 export type PlanTier = 'bronze' | 'silver' | 'gold';
 export type PlanType = 'recorrente' | 'pontual';
+
+// Document Types
+export interface DocumentType {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+}
+
+export interface ProspectDocument {
+  id: string;
+  user_id: string;
+  prospect_id: string;
+  document_type_id?: string;
+  file_path: string;
+  file_name: string;
+  file_size?: number;
+  mime_type?: string;
+  notes?: string;
+  created_at: string;
+}
+
 export interface Category {
   id: string;
   user_id: string;

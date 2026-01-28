@@ -4,7 +4,8 @@ import { useAppStore } from '@/stores/useAppStore';
 import type { 
   Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, 
   UserPreference, CustomTimeBlockType, ProjectTask, SalesGoal, Prospect,
-  CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem
+  CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
+  DocumentType
 } from '@/types/database';
 
 export function useInitializeData(userId: string | undefined) {
@@ -31,6 +32,7 @@ export function useInitializeData(userId: string | undefined) {
     setCorporateTeam,
     setServicePlans,
     setServicePlanItems,
+    setDocumentTypes,
     setIsLoading,
     setDataInitialized,
     dataInitialized,
@@ -74,6 +76,7 @@ export function useInitializeData(userId: string | undefined) {
           corporateTeamRes,
           servicePlansRes,
           servicePlanItemsRes,
+          documentTypesRes,
         ] = await Promise.all([
           supabase.from('categories').select('*').order('created_at', { ascending: true }),
           supabase.from('incomes').select('*').order('date', { ascending: false }),
@@ -96,6 +99,7 @@ export function useInitializeData(userId: string | undefined) {
           supabase.from('corporate_team').select('*').order('name', { ascending: true }),
           supabase.from('service_plans').select('*').order('created_at', { ascending: false }),
           supabase.from('service_plan_items').select('*').order('created_at', { ascending: true }),
+          supabase.from('document_types').select('*').order('name', { ascending: true }),
         ]);
 
         if (categoriesRes.data) setCategories(categoriesRes.data as Category[]);
@@ -119,6 +123,7 @@ export function useInitializeData(userId: string | undefined) {
         if (corporateTeamRes.data) setCorporateTeam(corporateTeamRes.data as CorporateTeamMember[]);
         if (servicePlansRes.data) setServicePlans(servicePlansRes.data as ServicePlan[]);
         if (servicePlanItemsRes.data) setServicePlanItems(servicePlanItemsRes.data as ServicePlanItem[]);
+        if (documentTypesRes.data) setDocumentTypes(documentTypesRes.data as DocumentType[]);
 
         setDataInitialized(true);
       } catch (error) {
@@ -130,5 +135,5 @@ export function useInitializeData(userId: string | undefined) {
     };
 
     loadAllData();
-  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setSalesGoals, setProspects, setCorporatePricings, setCorporateInvestments, setCorporateTeam, setServicePlans, setServicePlanItems, setIsLoading, setDataInitialized]);
+  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setSalesGoals, setProspects, setCorporatePricings, setCorporateInvestments, setCorporateTeam, setServicePlans, setServicePlanItems, setDocumentTypes, setIsLoading, setDataInitialized]);
 }
