@@ -10,7 +10,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useEffect } from 'react';
 
 const personalMainNavItems = [
   { title: 'Caixa', url: '/caixa', icon: Wallet },
@@ -47,22 +46,6 @@ export function MobileNav() {
   const moreNavItems = mode === 'personal' ? personalMoreNavItems : businessMoreNavItems;
   
   const isMoreActive = moreNavItems.some(item => location.pathname === item.url);
-
-  // Auto-switch context based on current route
-  useEffect(() => {
-    const currentPath = location.pathname;
-    const allBusinessRoutes = [...businessMainNavItems, ...businessMoreNavItems];
-    const allPersonalRoutes = [...personalMainNavItems, ...personalMoreNavItems];
-    
-    const isBusinessRoute = allBusinessRoutes.some(item => currentPath.startsWith(item.url));
-    const isPersonalRoute = allPersonalRoutes.some(item => currentPath.startsWith(item.url));
-    
-    if (isBusinessRoute && mode === 'personal') {
-      setMode('business');
-    } else if (isPersonalRoute && mode === 'business') {
-      setMode('personal');
-    }
-  }, [location.pathname, mode, setMode]);
 
   const handleSignOut = async () => {
     await signOut();

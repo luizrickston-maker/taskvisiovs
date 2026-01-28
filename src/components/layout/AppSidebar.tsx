@@ -1,5 +1,5 @@
 import { Wallet, TrendingUp, Target, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Calculator, Package, Users } from 'lucide-react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext } from '@/hooks/useAppContext';
 import { ContextSwitcher } from './ContextSwitcher';
@@ -18,7 +18,6 @@ import {
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
-import { useEffect } from 'react';
 
 const personalNavItems = [
   { title: 'Caixa', url: '/caixa', icon: Wallet },
@@ -42,35 +41,13 @@ const settingsItem = { title: 'Config', url: '/config', icon: Settings };
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const navigate = useNavigate();
   const { appName } = useUserPreferences();
   const { signOut } = useAuthContext();
-  const { mode, setMode } = useAppContext();
+  const { mode } = useAppContext();
   const collapsed = state === 'collapsed';
 
   // Get nav items based on current mode
   const navItems = mode === 'personal' ? personalNavItems : businessNavItems;
-
-  // Auto-switch context based on current route
-  useEffect(() => {
-    const currentPath = location.pathname;
-    const isBusinessRoute = businessNavItems.some(item => currentPath.startsWith(item.url));
-    const isPersonalRoute = personalNavItems.some(item => currentPath.startsWith(item.url));
-    
-    if (isBusinessRoute && mode === 'personal') {
-      setMode('business');
-    } else if (isPersonalRoute && mode === 'business') {
-      setMode('personal');
-    }
-  }, [location.pathname, mode, setMode]);
-
-  // Navigate to default route when switching contexts
-  const handleModeChange = (newMode: 'personal' | 'business') => {
-    if (newMode !== mode) {
-      const defaultRoute = newMode === 'personal' ? '/caixa' : '/comercial';
-      navigate(defaultRoute);
-    }
-  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
