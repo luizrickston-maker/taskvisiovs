@@ -13,6 +13,14 @@ import { z } from 'zod';
 const emailSchema = z.string().email('Email inválido');
 const passwordSchema = z.string().min(6, 'Senha deve ter no mínimo 6 caracteres');
 
+// Stronger password schema for signup
+const signupPasswordSchema = z
+  .string()
+  .min(10, 'Senha deve ter no mínimo 10 caracteres')
+  .regex(/[a-zA-Z]/, 'Senha deve conter pelo menos uma letra')
+  .regex(/[0-9]/, 'Senha deve conter pelo menos um número')
+  .regex(/[^a-zA-Z0-9]/, 'Senha deve conter pelo menos um símbolo (!@#$%...)');
+
 export default function Auth() {
   const { user, loading, signIn, signUp, resetPassword } = useAuthContext();
   const navigate = useNavigate();
@@ -72,20 +80,61 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateInputs()) return;
+    
+    // Validate email
+    try {
+      emailSchema.parse(email);
+    } catch {
+      toast.error('Email inválido');
+      return;
+    }
+    
+    // Validate password with stronger schema for signup
+    try {
+      signupPasswordSchema.parse(password);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+      return;
+    }
 
     setIsSubmitting(true);
-    const { error } = await signUp(email, password);
-    setIsSubmitting(false);
-
-    if (error) {
-      if (error.message.includes('User already registered')) {
-        toast.error('Este email já está cadastrado');
+    
+    try {
+      const { error } = await signUp(email, password);
+      
+      if (error) {
+        // Map specific error codes to friendly messages
+        const errorCode = (error as any)?.code || '';
+        const errorMessage = error.message || '';
+        
+        if (errorCode === 'weak_password' || errorMessage.includes('weak') || errorMessage.includes('pwned')) {
+          toast.error('Senha muito fraca ou já comprometida em vazamentos. Use uma senha mais forte e única.');
+        } else if (errorMessage.includes('User already registered') || errorCode === 'user_already_exists') {
+          toast.error('Este email já está cadastrado');
+        } else if (errorCode === 'email_not_confirmed' || errorMessage.includes('Email not confirmed')) {
+          toast.error('Email ainda não confirmado. Verifique sua caixa de entrada.');
+        } else if (errorMessage.includes('rate limit') || errorCode === 'over_request_rate_limit') {
+          toast.error('Muitas tentativas. Aguarde alguns minutos.');
+        } else {
+          // Generic message for unknown errors
+          toast.error('Não foi possível criar a conta. Tente novamente.');
+          if (import.meta.env.DEV) {
+            console.error('[Auth] Signup error:', error);
+          }
+        }
       } else {
-        toast.error(error.message);
+        setShowEmailSent(true);
       }
-    } else {
-      setShowEmailSent(true);
+    } catch (unexpectedError) {
+      // Catch any unexpected exceptions to prevent ErrorBoundary crash
+      toast.error('Erro inesperado ao criar conta. Tente novamente.');
+      if (import.meta.env.DEV) {
+        console.error('[Auth] Unexpected signup error:', unexpectedError);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -228,6 +277,7 @@ export default function Auth() {
                     placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
                     required
                   />
                 </div>
@@ -239,6 +289,7 @@ export default function Auth() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
                     required
                   />
                 </div>
@@ -267,6 +318,7 @@ export default function Auth() {
                     placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
                     required
                   />
                 </div>
@@ -278,8 +330,12 @@ export default function Auth() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Dica: use 10+ caracteres com letras, números e um símbolo. Evite senhas comuns.
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
