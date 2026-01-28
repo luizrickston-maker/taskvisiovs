@@ -1,155 +1,192 @@
 
 
-## Plano: Correção de Interatividade do Modal de Fechamento de Venda
+## Plano: Permitir Definir Preço Final Diretamente no Plano
 
-### Diagnóstico
+### Problema Identificado
 
-Após testes automatizados extensivos no browser, constatei que **os controles do modal estão funcionando tecnicamente**, mas podem haver problemas de UX em dispositivos móveis reais. Os problemas potenciais identificados são:
+O formulário de criação de plano (`PlanForm.tsx`) atualmente:
+1. **Depende de serviços do Precificador** - Só permite adicionar itens se houver pricings cadastrados
+2. **O campo "Preço Final" existe** (linha 344-350), mas está desenhado para ser usado como ajuste sobre o "Custo Base" calculado dos itens
+3. **Se não houver itens cadastrados no precificador**, o usuário vê a mensagem "Nenhum serviço cadastrado no precificador" e não consegue definir um preço
 
-1. **ScrollArea dentro de DialogContent sem altura fixa definida** - O `ScrollArea` tem `className="flex-1"` mas não tem altura definida, o que pode causar problemas de scroll e clipping de elementos em portais (como dropdowns do Radix)
+### Solução Proposta
 
-2. **Estrutura do DialogContent com `p-0`** - A remoção do padding padrão pode afetar a área de toque dos elementos internos
-
-3. **Dropdowns podem ser clicados através do ScrollArea** - O viewport do ScrollArea pode estar interceptando eventos de clique em alguns navegadores/dispositivos
-
-4. **PaymentMethodSelector não aparece para planos com valor R$ 0,00** - Isso é comportamento esperado (condição `{finalValue > 0 && ...}`), mas pode confundir o usuário se o plano não tem preço configurado
+Modificar o `PlanForm.tsx` para permitir que o usuário defina um **Preço Final diretamente**, independente de ter serviços do precificador selecionados.
 
 ---
 
-### Correções a Implementar
+### Mudancas no PlanForm.tsx
 
-#### 1. Melhorar estrutura do DialogContent e ScrollArea
+#### 1. Tornar a secao "Servicos do Plano" opcional
 
-**Problema**: O `flex-col` com `overflow-hidden` no `DialogContent` combinado com `flex-1` no `ScrollArea` pode não calcular corretamente a altura em todos os dispositivos.
-
-**Solução**: Usar altura fixa máxima no ScrollArea e garantir que os portais dos Select funcionem corretamente:
+Mover a mensagem informativa para dentro de um collapsible ou simplesmente mostrar que e opcional:
 
 ```tsx
-// Antes
-<DialogContent className="w-[95vw] max-w-lg max-h-[90vh] flex flex-col p-0">
-  <DialogHeader className="p-4 pb-0">...</DialogHeader>
-  <ScrollArea className="flex-1 px-4 pb-4">
-    ...
-  </ScrollArea>
-  <div className="flex gap-2 p-4 pt-2 border-t">...</div>
-</DialogContent>
+{/* Service Selection - OPCIONAL */}
+<div className="space-y-4">
+  <div className="flex items-center justify-between">
+    <h3 className="text-sm font-medium">Servicos do Plano (opcional)</h3>
+    <span className="text-xs text-muted-foreground">
+      Adicione itens do precificador ou defina o preco manualmente
+    </span>
+  </div>
+  <PlanItemSelector
+    pricings={corporatePricings}
+    selectedItems={selectedItems}
+    onChange={setSelectedItems}
+  />
+</div>
+```
 
-// Depois
-<DialogContent className="w-[95vw] max-w-lg max-h-[90vh] flex flex-col p-0 overflow-visible">
-  <DialogHeader className="p-4 pb-2 shrink-0">...</DialogHeader>
-  <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
-    <div className="space-y-4">
-      ...
+#### 2. Melhorar a secao de Precos
+
+Deixar claro que o "Preco Final" pode ser digitado livremente:
+
+```tsx
+{/* Price Summary */}
+<div className="space-y-4">
+  <h3 className="text-sm font-medium">Precificacao</h3>
+  
+  <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+    {/* Custo Base - so mostra se tiver itens */}
+    {baseCost > 0 && (
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">Custo Base (soma dos itens)</span>
+        <span className="font-medium">{formatCurrency(baseCost)}</span>
+      </div>
+    )}
+
+    {/* Preco Final - SEMPRE editavel */}
+    <div className="space-y-2">
+      <Label htmlFor="finalPrice" className="text-sm font-medium">
+        Preco Final do Plano *
+      </Label>
+      <Input
+        id="finalPrice"
+        value={finalPriceInput}
+        onChange={(e) => setFinalPriceInput(e.target.value)}
+        placeholder="R$ 0,00"
+        className="text-right font-medium text-lg"
+      />
+      <p className="text-xs text-muted-foreground">
+        Digite o valor que sera cobrado do cliente
+      </p>
     </div>
-  </div>
-  <div className="flex gap-2 p-4 pt-2 border-t shrink-0">...</div>
-</DialogContent>
-```
 
-#### 2. Adicionar z-index explícito aos SelectContent aninhados
-
-**Problema**: Os dropdowns podem estar renderizando atrás do modal ou sendo clipados.
-
-**Solução**: Garantir z-index alto em todos os `SelectContent`:
-
-```tsx
-<SelectContent className="z-[200]">
-  {/* Já está assim, mas verificar todos */}
-</SelectContent>
-```
-
-#### 3. Prevenir propagação de eventos no PaymentMethodSelector
-
-**Problema**: Os cliques dentro dos cards do `PaymentMethodSelector` podem estar sendo interceptados.
-
-**Solução**: Adicionar `stopPropagation` mais abrangente:
-
-```tsx
-<Card 
-  key={method} 
-  className={`cursor-pointer transition-colors ${selected ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground/50'}`}
-  onClick={(e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleToggle(method, !selected);
-  }}
->
-```
-
-#### 4. Adicionar portal container explícito para os Selects
-
-**Problema**: Os portais do Radix podem estar renderizando em lugares inesperados.
-
-**Solução**: Usar `container` prop nos `SelectContent` para garantir renderização correta.
-
----
-
-### Arquivos a Modificar
-
-| Arquivo | Alterações |
-|---------|-----------|
-| `src/components/comercial/CloseProspectModal.tsx` | Reestruturar DialogContent, remover ScrollArea, usar div com overflow-y-auto, adicionar shrink-0 no header/footer |
-| `src/components/comercial/PaymentMethodSelector.tsx` | Melhorar event handling, adicionar z-index alto no SelectContent do cartão de crédito |
-
----
-
-### Mudanças Específicas no CloseProspectModal.tsx
-
-```tsx
-// Linha 215: Alterar DialogContent
-<DialogContent className="w-[95vw] max-w-lg max-h-[90vh] flex flex-col p-0">
-
-// Para:
-<DialogContent className="w-[95vw] max-w-lg max-h-[85vh] flex flex-col p-0">
-
-// Linha 226: Remover ScrollArea e usar div com overflow-y-auto
-// De:
-<ScrollArea className="flex-1 px-4 pb-4">
-  <div className="space-y-4">
-    ...
-  </div>
-</ScrollArea>
-
-// Para:
-<div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
-  <div className="space-y-4 pb-2">
-    ...
+    {/* Lucro e Margem - so mostra se tiver custo base */}
+    {baseCost > 0 && (
+      <>
+        <Separator />
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Lucro</span>
+          <span className={cn('font-medium', profit >= 0 ? 'text-green-600' : 'text-destructive')}>
+            {formatCurrency(profit)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Margem de Lucro</span>
+          <span className={cn('font-bold text-lg', profitMargin >= 0 ? 'text-green-600' : 'text-destructive')}>
+            {profitMargin.toFixed(1)}%
+          </span>
+        </div>
+      </>
+    )}
   </div>
 </div>
 ```
 
----
+#### 3. Remover auto-preenchimento que pode confundir
 
-### Mudanças no PaymentMethodSelector.tsx
+O useEffect que auto-preenche o preco final quando baseCost muda pode confundir. Modificar para so preencher se o campo estiver vazio E houver itens:
 
 ```tsx
-// Linha 171: Adicionar z-index alto no SelectContent do cartão de crédito
-<SelectContent className="z-[300]">
-  {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
-    <SelectItem key={n} value={String(n)}>
-      {n}x {n === 1 ? '(à vista)' : ''}
-    </SelectItem>
-  ))}
-</SelectContent>
+// Auto-set final price to base cost ONLY if empty and items are selected
+useEffect(() => {
+  // Nao fazer nada se estiver editando um plano existente
+  if (editingPlan) return;
+  
+  // Nao fazer nada se o usuario ja digitou algo
+  if (finalPriceInput) return;
+  
+  // Só preencher automaticamente se tiver itens selecionados
+  if (selectedItems.length > 0 && baseCost > 0) {
+    setFinalPriceInput(formatCurrency(baseCost));
+  }
+}, [baseCost, editingPlan, finalPriceInput, selectedItems.length]);
+```
+
+#### 4. Adicionar validacao de preco obrigatorio
+
+No handleSubmit, adicionar validacao:
+
+```tsx
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!user || !name.trim()) return;
+  
+  // Validar preco final
+  if (finalPrice <= 0) {
+    toast({
+      title: 'Preco obrigatorio',
+      description: 'Defina um preco final para o plano.',
+      variant: 'destructive',
+    });
+    return;
+  }
+  
+  // ... resto do codigo
+};
 ```
 
 ---
 
-### Testes a Realizar
+### Arquivo a Modificar
 
-1. **Testar no mobile real**: Abrir o modal em dispositivo móvel físico
-2. **Testar todos os dropdowns**: Plano, Tipo de Contrato, Unidade
-3. **Testar checkbox**: Criar projeto automaticamente
-4. **Testar com plano com valor > 0**: Para ver as formas de pagamento
-5. **Testar confirmação**: Verificar se o som toca e os dados são salvos
+| Arquivo | Alteracoes |
+|---------|-----------|
+| `src/components/areapj/PlanForm.tsx` | Reorganizar UI, tornar servicos opcionais, melhorar campo de preco, adicionar validacao |
 
 ---
 
 ### Resultado Esperado
 
-- Dropdowns funcionam corretamente em todos os dispositivos
-- Checkbox de criar projeto funciona sem problemas
-- Formas de pagamento aparecem quando plano tem valor > 0
-- Modal tem scroll suave e controles responsivos
-- Confirmação de venda com feedback sonoro funcionando
+1. Usuario pode criar um plano digitando apenas **Nome** e **Preco Final**
+2. A selecao de servicos do precificador e **opcional** - para quem quer ter controle de custos
+3. Se servicos forem selecionados, mostra calculo de lucro e margem
+4. Se nao houver servicos, mostra apenas o campo de preco final
+5. Validacao impede criar plano com preco R$ 0,00
+
+---
+
+### Interface Visual Esperada
+
+```text
++------------------------------------------+
+| Novo Plano de Servico                    |
++------------------------------------------+
+| Nome do Plano *                          |
+| [Consultoria Basica]                     |
+|                                          |
+| Descricao                                |
+| [...]                                    |
+|                                          |
+| Nivel: [Bronze v]  Tipo: [Recorrente v]  |
++------------------------------------------+
+| Servicos do Plano (opcional)             |
+| Adicione itens do precificador ou        |
+| defina o preco manualmente abaixo        |
+|                                          |
+| [ ] Servico 1 - R$ 100,00                |
+| [ ] Servico 2 - R$ 200,00                |
++------------------------------------------+
+| PRECIFICACAO                             |
+|                                          |
+| Preco Final do Plano *                   |
+| [R$ 500,00]                              |
+| Digite o valor cobrado do cliente        |
+|                                          |
++------------------------------------------+
+| [Cancelar]              [Criar Plano]    |
++------------------------------------------+
+```
 
