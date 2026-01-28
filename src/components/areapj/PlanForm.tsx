@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
@@ -238,16 +238,16 @@ export function PlanForm({ open, onOpenChange, editingPlan }: PlanFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="p-6 pb-0">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-2 shrink-0">
           <DialogTitle>
             {editingPlan ? 'Editar Plano' : 'Novo Plano de Serviço'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <ScrollArea className="flex-1 px-6">
-            <div className="space-y-6 py-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-y-auto px-6">
+            <div className="space-y-6 py-4 pb-6">
               {/* Basic Info */}
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Informações Básicas</h3>
@@ -403,9 +403,9 @@ export function PlanForm({ open, onOpenChange, editingPlan }: PlanFormProps) {
                 />
               </div>
             </div>
-          </ScrollArea>
+          </div>
 
-          <div className="flex justify-end gap-2 p-6 pt-4 border-t">
+          <div className="flex justify-end gap-2 p-6 pt-4 border-t shrink-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               Cancelar
             </Button>
