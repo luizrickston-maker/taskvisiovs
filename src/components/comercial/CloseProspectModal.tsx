@@ -10,8 +10,19 @@ import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
-import { Building2, User, Package, Calendar, CheckCircle2, FolderKanban } from 'lucide-react';
+import { Building2, User, Package, Calendar, CheckCircle2, FolderKanban, Percent } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
 import type { Prospect, PaymentType, Project } from '@/types/database';
+
+type DurationUnit = 'meses' | 'horas' | 'dias';
+
+const playMoneySound = () => {
+  const audio = new Audio('https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9c3b72.mp3');
+  audio.volume = 0.5;
+  audio.play().catch(() => {
+    // Silently ignore if autoplay is blocked
+  });
+};
 
 interface CloseProspectModalProps {
   open: boolean;
@@ -25,9 +36,10 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
   const { servicePlans, updateProspect, addProject, projects } = useAppStore();
   
   const [planId, setPlanId] = useState<string>('');
-  const [estimatedValue, setEstimatedValue] = useState('');
+  const [discount, setDiscount] = useState('0');
   const [paymentType, setPaymentType] = useState<PaymentType>('recorrente');
   const [contractDuration, setContractDuration] = useState('12');
+  const [durationUnit, setDurationUnit] = useState<DurationUnit>('meses');
   const [paymentInstallments, setPaymentInstallments] = useState('1');
   const [createProject, setCreateProject] = useState(true);
   const [projectName, setProjectName] = useState('');
@@ -36,6 +48,12 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
 
   const activePlans = servicePlans.filter(p => p.is_active);
   
+  // Calculate final value from plan price minus discount
+  const selectedPlan = activePlans.find(p => p.id === planId);
+  const planPrice = selectedPlan?.final_price || 0;
+  const discountValue = parseFloat(discount) || 0;
+  const finalValue = Math.max(0, planPrice - discountValue);
+  
   // Check if prospect already has a linked project
   const hasExistingProject = prospect?.project_id && projects.some(p => p.id === prospect.project_id);
 
@@ -43,9 +61,10 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
     if (open && prospect) {
       // Reset form when opening
       setPlanId(prospect.plan_id || '');
-      setEstimatedValue(prospect.estimated_value?.toString() || '');
+      setDiscount('0');
       setPaymentType(prospect.payment_type as PaymentType || 'recorrente');
       setContractDuration(prospect.contract_duration?.toString() || '12');
+      setDurationUnit('meses');
       setPaymentInstallments(prospect.payment_installments?.toString() || '1');
       setCreateProject(!hasExistingProject);
       
@@ -56,11 +75,10 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
       setProjectName(suggestedName);
       setProjectDeadline(format(addDays(new Date(), 30), 'yyyy-MM-dd'));
       
-      // If prospect already has a plan, auto-fill from it
+      // If prospect already has a plan, auto-fill payment type from it
       if (prospect.plan_id) {
         const existingPlan = activePlans.find(p => p.id === prospect.plan_id);
         if (existingPlan) {
-          setEstimatedValue(existingPlan.final_price.toString());
           setPaymentType(existingPlan.plan_type as PaymentType);
         }
       }
@@ -69,10 +87,10 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
 
   const handlePlanChange = (value: string) => {
     setPlanId(value);
-    const selectedPlan = activePlans.find(p => p.id === value);
-    if (selectedPlan) {
-      setEstimatedValue(selectedPlan.final_price.toString());
-      setPaymentType(selectedPlan.plan_type as PaymentType);
+    setDiscount('0'); // Reset discount when plan changes
+    const plan = activePlans.find(p => p.id === value);
+    if (plan) {
+      setPaymentType(plan.plan_type as PaymentType);
     }
   };
 
@@ -85,9 +103,8 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
       return;
     }
     
-    const value = parseFloat(estimatedValue) || 0;
-    if (value <= 0) {
-      toast.error('Informe o valor da venda');
+    if (finalValue <= 0) {
+      toast.error('O desconto não pode ser maior que o valor do plano');
       return;
     }
 
@@ -127,13 +144,22 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
       }
 
       // 2. Update prospect to "fechado"
+      // Store duration unit in notes if not months
+      const durationNote = durationUnit !== 'meses' 
+        ? `Duração: ${contractDuration} ${durationUnit}`
+        : null;
+      const updatedNotes = durationNote 
+        ? (prospect.notes ? `${prospect.notes}\n${durationNote}` : durationNote)
+        : prospect.notes;
+
       const prospectUpdate: Partial<Prospect> = {
         status: 'fechado',
         plan_id: planId,
-        estimated_value: value,
+        estimated_value: finalValue,
         payment_type: paymentType,
         contract_duration: paymentType === 'recorrente' ? parseInt(contractDuration) || null : null,
         payment_installments: paymentType === 'pontual' ? parseInt(paymentInstallments) || null : null,
+        notes: updatedNotes,
       };
 
       // Link to new project if created
@@ -149,6 +175,9 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
       if (updateError) throw updateError;
 
       updateProspect(prospect.id, prospectUpdate);
+      
+      // Play money sound on success
+      playMoneySound();
       
       toast.success(
         createProject && newProjectId 
@@ -167,10 +196,6 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
   };
 
   if (!prospect) return null;
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -225,38 +250,65 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
             </Select>
           </div>
 
-          {/* Sale Value */}
+          {/* Discount (optional) */}
           <div className="space-y-2">
-            <Label htmlFor="value">Valor da Venda (R$) *</Label>
+            <Label htmlFor="discount" className="flex items-center gap-1">
+              <Percent className="w-4 h-4" />
+              Desconto (opcional)
+            </Label>
             <Input
-              id="value"
+              id="discount"
               type="number"
               step="0.01"
               min="0"
-              value={estimatedValue}
-              onChange={(e) => setEstimatedValue(e.target.value)}
+              max={planPrice}
+              value={discount}
+              onChange={(e) => setDiscount(e.target.value)}
               placeholder="0.00"
             />
           </div>
 
-          {/* Payment Type */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label>Tipo de Pagamento</Label>
-              <Select value={paymentType} onValueChange={(v) => setPaymentType(v as PaymentType)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recorrente">Recorrente</SelectItem>
-                  <SelectItem value="pontual">Pontual</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Final Value Display */}
+          {planId && (
+            <div className="bg-success/10 border border-success/20 rounded-lg p-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Valor Final:</span>
+                <span className="text-lg font-bold text-success">
+                  {formatCurrency(finalValue)}
+                </span>
+              </div>
+              {discountValue > 0 && (
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-xs text-muted-foreground">
+                    Original: {formatCurrency(planPrice)}
+                  </span>
+                  <span className="text-xs text-destructive">
+                    -{formatCurrency(discountValue)}
+                  </span>
+                </div>
+              )}
             </div>
+          )}
 
-            {paymentType === 'recorrente' ? (
+          {/* Payment Type */}
+          <div className="space-y-2">
+            <Label>Tipo de Pagamento</Label>
+            <Select value={paymentType} onValueChange={(v) => setPaymentType(v as PaymentType)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recorrente">Recorrente</SelectItem>
+                <SelectItem value="pontual">Pontual</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Duration with unit selector for recurrent */}
+          {paymentType === 'recorrente' ? (
+            <div className="grid grid-cols-2 gap-2">
               <div className="space-y-2">
-                <Label htmlFor="duration">Duração (meses)</Label>
+                <Label htmlFor="duration">Duração</Label>
                 <Input
                   id="duration"
                   type="number"
@@ -265,19 +317,32 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
                   onChange={(e) => setContractDuration(e.target.value)}
                 />
               </div>
-            ) : (
               <div className="space-y-2">
-                <Label htmlFor="installments">Parcelas</Label>
-                <Input
-                  id="installments"
-                  type="number"
-                  min="1"
-                  value={paymentInstallments}
-                  onChange={(e) => setPaymentInstallments(e.target.value)}
-                />
+                <Label>Unidade</Label>
+                <Select value={durationUnit} onValueChange={(v) => setDurationUnit(v as DurationUnit)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="meses">Meses</SelectItem>
+                    <SelectItem value="horas">Horas</SelectItem>
+                    <SelectItem value="dias">Dias</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="installments">Parcelas</Label>
+              <Input
+                id="installments"
+                type="number"
+                min="1"
+                value={paymentInstallments}
+                onChange={(e) => setPaymentInstallments(e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Create Project Checkbox */}
           {!hasExistingProject && (
