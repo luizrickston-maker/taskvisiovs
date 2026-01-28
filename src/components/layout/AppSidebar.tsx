@@ -1,6 +1,8 @@
-import { Wallet, TrendingUp, Target, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Building2 } from 'lucide-react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { Wallet, TrendingUp, Target, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Calculator, Package, Users } from 'lucide-react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAppContext } from '@/hooks/useAppContext';
+import { ContextSwitcher } from './ContextSwitcher';
 import {
   Sidebar,
   SidebarContent,
@@ -15,18 +17,24 @@ import {
 } from '@/components/ui/sidebar';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useEffect } from 'react';
 
-const mainNavItems = [
-  { title: 'Comercial', url: '/comercial', icon: Briefcase },
+const personalNavItems = [
   { title: 'Caixa', url: '/caixa', icon: Wallet },
   { title: 'Finanças', url: '/financas', icon: TrendingUp },
   { title: 'Foco', url: '/foco', icon: Target },
   { title: 'Projetos', url: '/projetos', icon: FolderKanban },
   { title: 'Conteúdos', url: '/conteudos', icon: FileText },
   { title: 'Roteiros', url: '/roteiros', icon: Pen },
-  { title: 'Área PJ', url: '/area-pj', icon: Building2 },
+];
+
+const businessNavItems = [
+  { title: 'Comercial', url: '/comercial', icon: Briefcase },
+  { title: 'Precificador', url: '/pj/precificador', icon: Calculator },
+  { title: 'Planos', url: '/pj/planos', icon: Package },
+  { title: 'Investimentos', url: '/pj/investimentos', icon: TrendingUp },
+  { title: 'Time', url: '/pj/time', icon: Users },
 ];
 
 const settingsItem = { title: 'Config', url: '/config', icon: Settings };
@@ -34,13 +42,39 @@ const settingsItem = { title: 'Config', url: '/config', icon: Settings };
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const { appName } = useUserPreferences();
   const { signOut } = useAuthContext();
+  const { mode, setMode } = useAppContext();
   const collapsed = state === 'collapsed';
+
+  // Get nav items based on current mode
+  const navItems = mode === 'personal' ? personalNavItems : businessNavItems;
+
+  // Auto-switch context based on current route
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const isBusinessRoute = businessNavItems.some(item => currentPath.startsWith(item.url));
+    const isPersonalRoute = personalNavItems.some(item => currentPath.startsWith(item.url));
+    
+    if (isBusinessRoute && mode === 'personal') {
+      setMode('business');
+    } else if (isPersonalRoute && mode === 'business') {
+      setMode('personal');
+    }
+  }, [location.pathname, mode, setMode]);
+
+  // Navigate to default route when switching contexts
+  const handleModeChange = (newMode: 'personal' | 'business') => {
+    if (newMode !== mode) {
+      const defaultRoute = newMode === 'personal' ? '/caixa' : '/comercial';
+      navigate(defaultRoute);
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 space-y-3">
         <div className={cn(
           "flex items-center gap-3 transition-all duration-200",
           collapsed && "justify-center"
@@ -54,13 +88,15 @@ export function AppSidebar() {
             </span>
           )}
         </div>
+        
+        <ContextSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
       <SidebarContent className="px-2">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => {
+              {navItems.map((item) => {
                 const isActive = location.pathname === item.url;
                 return (
                   <SidebarMenuItem key={item.title}>

@@ -1,7 +1,8 @@
-import { Wallet, TrendingUp, Target, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Building2 } from 'lucide-react';
+import { Wallet, TrendingUp, Target, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Calculator, Package, Users, User, Building2 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { useAppContext } from '@/hooks/useAppContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,19 +10,30 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useEffect } from 'react';
 
-const mainNavItems = [
-  { title: 'Comercial', url: '/comercial', icon: Briefcase },
+const personalMainNavItems = [
   { title: 'Caixa', url: '/caixa', icon: Wallet },
   { title: 'Finanças', url: '/financas', icon: TrendingUp },
   { title: 'Foco', url: '/foco', icon: Target },
+  { title: 'Projetos', url: '/projetos', icon: FolderKanban },
 ];
 
-const moreNavItems = [
-  { title: 'Projetos', url: '/projetos', icon: FolderKanban },
+const personalMoreNavItems = [
   { title: 'Roteiros', url: '/roteiros', icon: Pen },
   { title: 'Conteúdos', url: '/conteudos', icon: Calendar },
-  { title: 'Área PJ', url: '/area-pj', icon: Building2 },
+  { title: 'Config', url: '/config', icon: Settings },
+];
+
+const businessMainNavItems = [
+  { title: 'Comercial', url: '/comercial', icon: Briefcase },
+  { title: 'Precificador', url: '/pj/precificador', icon: Calculator },
+  { title: 'Planos', url: '/pj/planos', icon: Package },
+  { title: 'Time', url: '/pj/time', icon: Users },
+];
+
+const businessMoreNavItems = [
+  { title: 'Investimentos', url: '/pj/investimentos', icon: TrendingUp },
   { title: 'Config', url: '/config', icon: Settings },
 ];
 
@@ -29,11 +41,39 @@ export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuthContext();
+  const { mode, setMode } = useAppContext();
+  
+  const mainNavItems = mode === 'personal' ? personalMainNavItems : businessMainNavItems;
+  const moreNavItems = mode === 'personal' ? personalMoreNavItems : businessMoreNavItems;
+  
   const isMoreActive = moreNavItems.some(item => location.pathname === item.url);
+
+  // Auto-switch context based on current route
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const allBusinessRoutes = [...businessMainNavItems, ...businessMoreNavItems];
+    const allPersonalRoutes = [...personalMainNavItems, ...personalMoreNavItems];
+    
+    const isBusinessRoute = allBusinessRoutes.some(item => currentPath.startsWith(item.url));
+    const isPersonalRoute = allPersonalRoutes.some(item => currentPath.startsWith(item.url));
+    
+    if (isBusinessRoute && mode === 'personal') {
+      setMode('business');
+    } else if (isPersonalRoute && mode === 'business') {
+      setMode('personal');
+    }
+  }, [location.pathname, mode, setMode]);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth', { replace: true });
+  };
+
+  const handleSwitchMode = () => {
+    const newMode = mode === 'personal' ? 'business' : 'personal';
+    const defaultRoute = newMode === 'personal' ? '/caixa' : '/comercial';
+    setMode(newMode);
+    navigate(defaultRoute);
   };
 
   return (
@@ -73,6 +113,25 @@ export function MobileNav() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-background border-border mb-2">
+            {/* Context Switcher */}
+            <DropdownMenuItem 
+              onClick={handleSwitchMode}
+              className="flex items-center gap-3 w-full cursor-pointer bg-muted/50"
+            >
+              {mode === 'personal' ? (
+                <>
+                  <Building2 className="w-4 h-4" />
+                  <span>Modo Empresarial</span>
+                </>
+              ) : (
+                <>
+                  <User className="w-4 h-4" />
+                  <span>Modo Pessoal</span>
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            
             {moreNavItems.map((item) => {
               const isActive = location.pathname === item.url;
               return (
