@@ -6,6 +6,7 @@ import { SalesGoalForm } from '@/components/comercial/SalesGoalForm';
 import { ProspectList } from '@/components/comercial/ProspectList';
 import { ProspectForm } from '@/components/comercial/ProspectForm';
 import { ProspectDetailModal } from '@/components/comercial/ProspectDetailModal';
+import { CloseProspectModal } from '@/components/comercial/CloseProspectModal';
 import type { Prospect } from '@/types/database';
 
 export default function ComercialDashboard() {
@@ -14,6 +15,8 @@ export default function ComercialDashboard() {
   const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
   const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [closeProspect, setCloseProspect] = useState<Prospect | null>(null);
+  const [closeModalOpen, setCloseModalOpen] = useState(false);
 
   const handleEditProspect = (prospect: Prospect) => {
     setEditingProspect(prospect);
@@ -37,6 +40,15 @@ export default function ComercialDashboard() {
       setEditingProspect(detailProspect);
       setProspectFormOpen(true);
     }
+  };
+
+  const handleCloseProspect = (prospect: Prospect) => {
+    setCloseProspect(prospect);
+    setCloseModalOpen(true);
+  };
+
+  const handleCloseSuccess = () => {
+    // Modal will close itself, state is already updated via store
   };
 
   return (
@@ -67,6 +79,7 @@ export default function ComercialDashboard() {
             onAddProspect={() => setProspectFormOpen(true)} 
             onEditProspect={handleEditProspect}
             onViewProspect={handleViewProspect}
+            onCloseProspect={handleCloseProspect}
           />
         </SectionBoundary>
       </section>
@@ -83,6 +96,12 @@ export default function ComercialDashboard() {
         onOpenChange={setDetailModalOpen}
         prospect={detailProspect}
         onEdit={handleEditFromDetail}
+      />
+      <CloseProspectModal
+        open={closeModalOpen}
+        onOpenChange={setCloseModalOpen}
+        prospect={closeProspect}
+        onSuccess={handleCloseSuccess}
       />
     </div>
   );

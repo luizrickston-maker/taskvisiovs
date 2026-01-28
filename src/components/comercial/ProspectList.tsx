@@ -25,9 +25,10 @@ interface ProspectListProps {
   onAddProspect: () => void;
   onEditProspect: (prospect: Prospect) => void;
   onViewProspect: (prospect: Prospect) => void;
+  onCloseProspect: (prospect: Prospect) => void;
 }
 
-export function ProspectList({ onAddProspect, onEditProspect, onViewProspect }: ProspectListProps) {
+export function ProspectList({ onAddProspect, onEditProspect, onViewProspect, onCloseProspect }: ProspectListProps) {
   const { prospects, projects, deleteProspect, updateProspect } = useAppStore();
   const [statusFilter, setStatusFilter] = useState<ProspectStatus | 'all'>('all');
 
@@ -59,6 +60,15 @@ export function ProspectList({ onAddProspect, onEditProspect, onViewProspect }: 
   };
 
   const handleStatusChange = async (id: string, newStatus: ProspectStatus) => {
+    // If changing to "fechado", open the close prospect modal instead
+    if (newStatus === 'fechado') {
+      const prospect = prospects.find(p => p.id === id);
+      if (prospect) {
+        onCloseProspect(prospect);
+      }
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('prospects')
