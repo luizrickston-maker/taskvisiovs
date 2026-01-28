@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, Building2, User, ChevronDown, Repeat, CreditCard } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, Building2, User, ChevronDown, Repeat, CreditCard, FileText } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -190,6 +190,15 @@ export function ProspectList({ onAddProspect, onEditProspect, onViewProspect }: 
                     </div>
                     
                     <div className="mt-3 flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => onViewProspect(prospect)}
+                        className="mr-auto"
+                      >
+                        <FileText className="w-3.5 h-3.5 mr-1" />
+                        Anexos
+                      </Button>
                       <Button variant="outline" size="sm" onClick={() => onEditProspect(prospect)}>
                         <Pencil className="w-3.5 h-3.5 mr-1" />
                         Editar
@@ -300,6 +309,10 @@ export function ProspectList({ onAddProspect, onEditProspect, onViewProspect }: 
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => onViewProspect(prospect)}>
+                                <FileText className="w-4 h-4 mr-2" />
+                                Ver Detalhes
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => onEditProspect(prospect)}>
                                 <Pencil className="w-4 h-4 mr-2" />
                                 Editar
