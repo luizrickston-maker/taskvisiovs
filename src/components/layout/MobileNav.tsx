@@ -1,4 +1,4 @@
-import { Wallet, TrendingUp, Target, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Calculator, Package, Users, User, Building2 } from 'lucide-react';
+import { Wallet, TrendingUp, Target, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Package, Users, User, Building2 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -26,7 +26,7 @@ const personalMoreNavItems = [
 
 const businessMainNavItems = [
   { title: 'Comercial', url: '/comercial', icon: Briefcase },
-  { title: 'Precificador', url: '/pj/precificador', icon: Calculator },
+  { title: 'Financeiro', url: '/pj/financeiro', icon: Wallet },
   { title: 'Planos', url: '/pj/planos', icon: Package },
   { title: 'Time', url: '/pj/time', icon: Users },
 ];

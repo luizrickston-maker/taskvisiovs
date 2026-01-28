@@ -4,7 +4,8 @@ import { useAppStore } from '@/stores/useAppStore';
 import type { 
   Income, Expense, Debt, Saving, Task, 
   TimeBlock, Project, Script, Goal, Category, ProjectTask, SalesGoal, Prospect,
-  CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem
+  CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
+  CorporateCostCategory, CorporateCost
 } from '@/types/database';
 
 type RealtimePayload<T> = {
@@ -33,6 +34,8 @@ export function useRealtimeSync(userId: string | undefined) {
     addCorporateTeamMember, updateCorporateTeamMember, deleteCorporateTeamMember,
     addServicePlan, updateServicePlan, deleteServicePlan,
     addServicePlanItem, updateServicePlanItem, deleteServicePlanItem,
+    addCorporateCostCategory, updateCorporateCostCategory, deleteCorporateCostCategory,
+    addCorporateCost, updateCorporateCost, deleteCorporateCost,
   } = useAppStore();
 
   useEffect(() => {
@@ -322,7 +325,39 @@ export function useRealtimeSync(userId: string | undefined) {
           } else if (eventType === 'UPDATE') {
             updateServicePlanItem(newRecord.id, newRecord);
           } else if (eventType === 'DELETE') {
-            deleteServicePlanItem(oldRecord.id);
+          deleteServicePlanItem(oldRecord.id);
+          }
+        }
+      )
+      // Corporate Cost Categories
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'corporate_cost_categories', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<CorporateCostCategory>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().corporateCostCategories.some(c => c.id === newRecord.id);
+            if (!exists) addCorporateCostCategory(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateCorporateCostCategory(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteCorporateCostCategory(oldRecord.id);
+          }
+        }
+      )
+      // Corporate Costs
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'corporate_costs', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<CorporateCost>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().corporateCosts.some(c => c.id === newRecord.id);
+            if (!exists) addCorporateCost(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateCorporateCost(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteCorporateCost(oldRecord.id);
           }
         }
       )

@@ -21,7 +21,7 @@ import ConfigPage from "@/pages/ConfigPage";
 import NotFound from "@/pages/NotFound";
 
 // PJ Pages
-import PrecificadorPage from "@/pages/PJ/PrecificadorPage";
+import FinanceiroPage from "@/pages/PJ/FinanceiroPage";
 import PlanosPage from "@/pages/PJ/PlanosPage";
 import InvestimentosPage from "@/pages/PJ/InvestimentosPage";
 import TimePage from "@/pages/PJ/TimePage";
@@ -77,7 +77,7 @@ const App = () => {
                 
                 {/* Business/PJ Routes */}
                 <Route path="/comercial" element={<ComercialDashboard />} />
-                <Route path="/pj/precificador" element={<PrecificadorPage />} />
+                <Route path="/pj/financeiro" element={<FinanceiroPage />} />
                 <Route path="/pj/planos" element={<PlanosPage />} />
                 <Route path="/pj/investimentos" element={<InvestimentosPage />} />
                 <Route path="/pj/time" element={<TimePage />} />

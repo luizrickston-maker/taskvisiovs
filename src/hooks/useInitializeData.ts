@@ -5,7 +5,7 @@ import type {
   Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, 
   UserPreference, CustomTimeBlockType, ProjectTask, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
-  DocumentType
+  DocumentType, CorporateCostCategory, CorporateCost
 } from '@/types/database';
 
 export function useInitializeData(userId: string | undefined) {
@@ -33,6 +33,8 @@ export function useInitializeData(userId: string | undefined) {
     setServicePlans,
     setServicePlanItems,
     setDocumentTypes,
+    setCorporateCostCategories,
+    setCorporateCosts,
     setIsLoading,
     setDataInitialized,
     dataInitialized,
@@ -77,6 +79,8 @@ export function useInitializeData(userId: string | undefined) {
           servicePlansRes,
           servicePlanItemsRes,
           documentTypesRes,
+          costCategoriesRes,
+          costsRes,
         ] = await Promise.all([
           supabase.from('categories').select('*').order('created_at', { ascending: true }),
           supabase.from('incomes').select('*').order('date', { ascending: false }),
@@ -100,6 +104,8 @@ export function useInitializeData(userId: string | undefined) {
           supabase.from('service_plans').select('*').order('created_at', { ascending: false }),
           supabase.from('service_plan_items').select('*').order('created_at', { ascending: true }),
           supabase.from('document_types').select('*').order('name', { ascending: true }),
+          supabase.from('corporate_cost_categories').select('*').order('name', { ascending: true }),
+          supabase.from('corporate_costs').select('*').order('created_at', { ascending: false }),
         ]);
 
         if (categoriesRes.data) setCategories(categoriesRes.data as Category[]);
@@ -124,6 +130,8 @@ export function useInitializeData(userId: string | undefined) {
         if (servicePlansRes.data) setServicePlans(servicePlansRes.data as ServicePlan[]);
         if (servicePlanItemsRes.data) setServicePlanItems(servicePlanItemsRes.data as ServicePlanItem[]);
         if (documentTypesRes.data) setDocumentTypes(documentTypesRes.data as DocumentType[]);
+        if (costCategoriesRes.data) setCorporateCostCategories(costCategoriesRes.data as CorporateCostCategory[]);
+        if (costsRes.data) setCorporateCosts(costsRes.data as CorporateCost[]);
 
         setDataInitialized(true);
       } catch (error) {
@@ -135,5 +143,5 @@ export function useInitializeData(userId: string | undefined) {
     };
 
     loadAllData();
-  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setSalesGoals, setProspects, setCorporatePricings, setCorporateInvestments, setCorporateTeam, setServicePlans, setServicePlanItems, setDocumentTypes, setIsLoading, setDataInitialized]);
+  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setSalesGoals, setProspects, setCorporatePricings, setCorporateInvestments, setCorporateTeam, setServicePlans, setServicePlanItems, setDocumentTypes, setCorporateCostCategories, setCorporateCosts, setIsLoading, setDataInitialized]);
 }
