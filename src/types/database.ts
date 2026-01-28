@@ -241,6 +241,9 @@ export interface Prospect {
   payment_type?: PaymentType;
   contract_duration?: number;
   payment_installments?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payment_methods?: any; // JSONB field - can be PaymentMethodEntry[] at runtime
+  total_fees?: number;
   created_at: string;
   updated_at: string;
 }
@@ -339,4 +342,28 @@ export interface ServicePlanItem {
   quantity: number;
   custom_price?: number;
   created_at: string;
+}
+
+// Payment Fee Settings
+export type PaymentMethod = 'credito' | 'debito' | 'pix' | 'dinheiro' | 'boleto';
+
+export interface PaymentFeeSetting {
+  id: string;
+  user_id: string;
+  method: PaymentMethod;
+  fee_percent: number;
+  fee_fixed: number;
+  discount_percent: number;
+  installment_ranges?: Record<string, number>; // {"1": 2.99, "2-6": 3.49}
+  receiving_days: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentMethodEntry {
+  method: PaymentMethod;
+  value: number;
+  installments?: number;
+  fee?: number;
 }

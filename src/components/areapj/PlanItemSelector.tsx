@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +18,8 @@ interface PlanItemSelectorProps {
   onChange: (items: SelectedItem[]) => void;
 }
 
-export function PlanItemSelector({ pricings, selectedItems, onChange }: PlanItemSelectorProps) {
+export const PlanItemSelector = React.forwardRef<HTMLDivElement, PlanItemSelectorProps>(
+  function PlanItemSelector({ pricings, selectedItems, onChange }, ref) {
   const isSelected = (pricingId: string) => selectedItems.some(i => i.pricing_id === pricingId);
   
   const getItem = (pricingId: string) => selectedItems.find(i => i.pricing_id === pricingId);
@@ -49,7 +51,7 @@ export function PlanItemSelector({ pricings, selectedItems, onChange }: PlanItem
 
   if (pricings.length === 0) {
     return (
-      <div className="text-center py-8 border rounded-lg">
+      <div ref={ref} className="text-center py-8 border rounded-lg">
         <Package className="w-10 h-10 mx-auto text-muted-foreground/50 mb-2" />
         <p className="text-sm text-muted-foreground">
           Nenhum serviço cadastrado no precificador.
@@ -131,4 +133,4 @@ export function PlanItemSelector({ pricings, selectedItems, onChange }: PlanItem
       )}
     </div>
   );
-}
+});

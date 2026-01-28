@@ -4,7 +4,7 @@ import type {
   Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask,
   SalesGoal, Prospect, CorporatePricing, CorporateInvestment, CorporateTeamMember,
   ServicePlan, ServicePlanItem, DocumentType, ProspectDocument,
-  CorporateCostCategory, CorporateCost
+  CorporateCostCategory, CorporateCost, PaymentFeeSetting
 } from '@/types/database';
 
 interface AppState {
@@ -40,6 +40,9 @@ interface AppState {
   // Corporate Costs
   corporateCostCategories: CorporateCostCategory[];
   corporateCosts: CorporateCost[];
+  
+  // Payment Fee Settings
+  paymentFeeSettings: PaymentFeeSetting[];
   
   // Loading states
   isLoading: boolean;
@@ -192,6 +195,12 @@ interface AppState {
   updateCorporateCost: (id: string, updates: Partial<CorporateCost>) => void;
   deleteCorporateCost: (id: string) => void;
   
+  // Actions - Payment Fee Settings
+  setPaymentFeeSettings: (settings: PaymentFeeSetting[]) => void;
+  addPaymentFeeSetting: (setting: PaymentFeeSetting) => void;
+  updatePaymentFeeSetting: (id: string, updates: Partial<PaymentFeeSetting>) => void;
+  deletePaymentFeeSetting: (id: string) => void;
+  
   // Actions - Loading
   setIsLoading: (loading: boolean) => void;
   setDataInitialized: (initialized: boolean) => void;
@@ -226,6 +235,7 @@ const initialState = {
   prospectDocuments: [],
   corporateCostCategories: [],
   corporateCosts: [],
+  paymentFeeSettings: [],
   isLoading: false,
   dataInitialized: false,
 };
@@ -496,6 +506,18 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   deleteCorporateCost: (id) => set((state) => ({
     corporateCosts: state.corporateCosts.filter((c) => c.id !== id)
+  })),
+  
+  // Payment Fee Settings
+  setPaymentFeeSettings: (paymentFeeSettings) => set({ paymentFeeSettings }),
+  addPaymentFeeSetting: (setting) => set((state) => ({ 
+    paymentFeeSettings: [...state.paymentFeeSettings, setting] 
+  })),
+  updatePaymentFeeSetting: (id, updates) => set((state) => ({
+    paymentFeeSettings: state.paymentFeeSettings.map((s) => s.id === id ? { ...s, ...updates } : s)
+  })),
+  deletePaymentFeeSetting: (id) => set((state) => ({
+    paymentFeeSettings: state.paymentFeeSettings.filter((s) => s.id !== id)
   })),
   
   // Loading

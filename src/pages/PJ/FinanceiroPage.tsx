@@ -1,8 +1,9 @@
-import { Wallet, Receipt, Calculator, Tags } from 'lucide-react';
+import { Wallet, Receipt, Calculator, Tags, Percent } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CostList } from '@/components/areapj/CostList';
 import { PricingCalculator } from '@/components/areapj/PricingCalculator';
 import { CostCategoryManager } from '@/components/areapj/CostCategoryManager';
+import { PaymentFeeSettings } from '@/components/areapj/PaymentFeeSettings';
 
 export default function FinanceiroPage() {
   return (
@@ -18,7 +19,7 @@ export default function FinanceiroPage() {
       </div>
 
       <Tabs defaultValue="custos" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <TabsList className="grid w-full grid-cols-4 max-w-lg">
           <TabsTrigger value="custos" className="flex items-center gap-2">
             <Receipt className="w-4 h-4" />
             <span className="hidden sm:inline">Custos</span>
@@ -26,6 +27,10 @@ export default function FinanceiroPage() {
           <TabsTrigger value="precificador" className="flex items-center gap-2">
             <Calculator className="w-4 h-4" />
             <span className="hidden sm:inline">Precificador</span>
+          </TabsTrigger>
+          <TabsTrigger value="taxas" className="flex items-center gap-2">
+            <Percent className="w-4 h-4" />
+            <span className="hidden sm:inline">Taxas</span>
           </TabsTrigger>
           <TabsTrigger value="categorias" className="flex items-center gap-2">
             <Tags className="w-4 h-4" />
@@ -39,6 +44,10 @@ export default function FinanceiroPage() {
 
         <TabsContent value="precificador">
           <PricingCalculator />
+        </TabsContent>
+
+        <TabsContent value="taxas">
+          <PaymentFeeSettings />
         </TabsContent>
 
         <TabsContent value="categorias">
