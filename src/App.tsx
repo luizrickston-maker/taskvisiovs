@@ -17,9 +17,14 @@ import ProjetosDashboard from "@/pages/ProjetosDashboard";
 import ComercialDashboard from "@/pages/ComercialDashboard";
 import ConteudosDashboard from "@/pages/ConteudosDashboard";
 import RoteirosDashboard from "@/pages/RoteirosDashboard";
-import AreaPJDashboard from "@/pages/AreaPJDashboard";
 import ConfigPage from "@/pages/ConfigPage";
 import NotFound from "@/pages/NotFound";
+
+// PJ Pages
+import PrecificadorPage from "@/pages/PJ/PrecificadorPage";
+import PlanosPage from "@/pages/PJ/PlanosPage";
+import InvestimentosPage from "@/pages/PJ/InvestimentosPage";
+import TimePage from "@/pages/PJ/TimePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,14 +67,22 @@ const App = () => {
                   </ProtectedRoute>
                 }
               >
+                {/* Personal Routes */}
                 <Route path="/caixa" element={<CaixaDashboard />} />
                 <Route path="/financas" element={<FinancasDashboard />} />
                 <Route path="/foco" element={<FocoDashboard />} />
                 <Route path="/projetos" element={<ProjetosDashboard />} />
-                <Route path="/comercial" element={<ComercialDashboard />} />
                 <Route path="/conteudos" element={<ConteudosDashboard />} />
                 <Route path="/roteiros" element={<RoteirosDashboard />} />
-                <Route path="/area-pj" element={<AreaPJDashboard />} />
+                
+                {/* Business/PJ Routes */}
+                <Route path="/comercial" element={<ComercialDashboard />} />
+                <Route path="/pj/precificador" element={<PrecificadorPage />} />
+                <Route path="/pj/planos" element={<PlanosPage />} />
+                <Route path="/pj/investimentos" element={<InvestimentosPage />} />
+                <Route path="/pj/time" element={<TimePage />} />
+                
+                {/* Config */}
                 <Route path="/config" element={<ConfigPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
