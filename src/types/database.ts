@@ -280,6 +280,7 @@ export interface CorporatePricing {
   final_price: number;
   profit: number;
   real_margin: number;
+  charged_price?: number;
   notes?: string;
   created_at: string;
   updated_at: string;

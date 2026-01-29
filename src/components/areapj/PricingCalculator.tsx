@@ -41,6 +41,7 @@ export function PricingCalculator() {
   const [marginPercent, setMarginPercent] = useState('');
   const [estimatedHours, setEstimatedHours] = useState('');
   const [useOperationalCost, setUseOperationalCost] = useState(false);
+  const [chargedPrice, setChargedPrice] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -178,6 +179,14 @@ export function PricingCalculator() {
     const lucroLiquido = precoFinal - custoComImpostos;
     const margemReal = precoFinal > 0 ? (lucroLiquido / precoFinal) * 100 : 0;
 
+    // Charged price calculations
+    const chargedValue = parseFloat(chargedPrice) || 0;
+    const chargedProfit = chargedValue > 0 ? chargedValue - custoComImpostos : lucroLiquido;
+    const chargedMargin = chargedValue > 0 && chargedValue !== 0 
+      ? (chargedProfit / chargedValue) * 100 
+      : margemReal;
+    const priceDifference = chargedValue > 0 ? chargedValue - precoFinal : 0;
+
     return {
       directCost: costValue,
       operationalCost: operationalCostForService,
@@ -186,8 +195,12 @@ export function PricingCalculator() {
       finalPrice: precoFinal,
       profit: lucroLiquido,
       realMargin: margemReal,
+      chargedValue,
+      chargedProfit,
+      chargedMargin,
+      priceDifference,
     };
-  }, [cost, taxRate, marginPercent, estimatedHours, useOperationalCost, operationalData.costPerHour]);
+  }, [cost, taxRate, marginPercent, estimatedHours, useOperationalCost, operationalData.costPerHour, chargedPrice]);
 
   const handleSave = async () => {
     if (!user || !itemName.trim()) {
@@ -204,8 +217,9 @@ export function PricingCalculator() {
       tax_rate: parseFloat(taxRate) || 0,
       margin_percent: parseFloat(marginPercent) || 0,
       final_price: calculations.finalPrice,
-      profit: calculations.profit,
-      real_margin: calculations.realMargin,
+      profit: calculations.chargedValue > 0 ? calculations.chargedProfit : calculations.profit,
+      real_margin: calculations.chargedValue > 0 ? calculations.chargedMargin : calculations.realMargin,
+      charged_price: calculations.chargedValue > 0 ? calculations.chargedValue : null,
       notes: notes.trim() || null,
     };
 
@@ -228,6 +242,7 @@ export function PricingCalculator() {
       setMarginPercent('');
       setEstimatedHours('');
       setUseOperationalCost(false);
+      setChargedPrice('');
       setNotes('');
     }
     
@@ -392,6 +407,33 @@ export function PricingCalculator() {
                   onChange={(e) => setMarginPercent(e.target.value)}
                 />
               </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="chargedPrice">Valor Cobrado (R$)</Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs text-sm">
+                          Opcional. Informe o valor que você realmente vai cobrar 
+                          para calcular o lucro e margem reais.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Input
+                  id="chargedPrice"
+                  type="number"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={chargedPrice}
+                  onChange={(e) => setChargedPrice(e.target.value)}
+                />
+              </div>
               
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="notes">Observações (opcional)</Label>
@@ -453,6 +495,17 @@ export function PricingCalculator() {
                   </p>
                 </div>
               </div>
+              {calculations.chargedValue > 0 && (
+                <div className="mt-3 pt-3 border-t border-primary/20">
+                  <p className="text-xs text-muted-foreground">Valor Cobrado</p>
+                  <p className="text-lg font-bold text-primary">
+                    {formatCurrency(calculations.chargedValue)}
+                  </p>
+                  <p className={`text-xs font-medium ${calculations.priceDifference >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                    {calculations.priceDifference >= 0 ? '+' : ''}{formatCurrency(calculations.priceDifference)} {calculations.priceDifference >= 0 ? 'acima' : 'abaixo'}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -463,9 +516,11 @@ export function PricingCalculator() {
                   <TrendingUp className="w-5 h-5 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Lucro Líquido</p>
+                  <p className="text-xs text-muted-foreground">
+                    {calculations.chargedValue > 0 ? 'Lucro Real' : 'Lucro Líquido'}
+                  </p>
                   <p className="text-xl font-bold text-green-500">
-                    {formatCurrency(calculations.profit)}
+                    {formatCurrency(calculations.chargedValue > 0 ? calculations.chargedProfit : calculations.profit)}
                   </p>
                 </div>
               </div>
@@ -481,7 +536,7 @@ export function PricingCalculator() {
                 <div>
                   <p className="text-xs text-muted-foreground">Margem Real</p>
                   <p className="text-xl font-bold text-blue-500">
-                    {formatPercent(calculations.realMargin)}
+                    {formatPercent(calculations.chargedValue > 0 ? calculations.chargedMargin : calculations.realMargin)}
                   </p>
                 </div>
               </div>
@@ -511,7 +566,8 @@ export function PricingCalculator() {
                       <TableHead className="text-right">Custo</TableHead>
                       <TableHead className="text-right">Impostos</TableHead>
                       <TableHead className="text-right">Margem</TableHead>
-                      <TableHead className="text-right">Preço Final</TableHead>
+                      <TableHead className="text-right">Preço Sugerido</TableHead>
+                      <TableHead className="text-right">Valor Cobrado</TableHead>
                       <TableHead className="text-right">Lucro</TableHead>
                       <TableHead>Data</TableHead>
                       <TableHead></TableHead>
@@ -524,8 +580,11 @@ export function PricingCalculator() {
                         <TableCell className="text-right">{formatCurrency(pricing.cost)}</TableCell>
                         <TableCell className="text-right">{formatPercent(pricing.tax_rate)}</TableCell>
                         <TableCell className="text-right">{formatPercent(pricing.margin_percent)}</TableCell>
-                        <TableCell className="text-right font-semibold text-primary">
+                        <TableCell className="text-right text-muted-foreground">
                           {formatCurrency(pricing.final_price)}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-primary">
+                          {pricing.charged_price ? formatCurrency(pricing.charged_price) : '-'}
                         </TableCell>
                         <TableCell className="text-right text-green-500">
                           {formatCurrency(pricing.profit)}
@@ -579,10 +638,16 @@ export function PricingCalculator() {
                         <span className="ml-1">{formatPercent(pricing.tax_rate)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Preço:</span>
-                        <span className="ml-1 font-semibold text-primary">{formatCurrency(pricing.final_price)}</span>
+                        <span className="text-muted-foreground">Sugerido:</span>
+                        <span className="ml-1 text-muted-foreground">{formatCurrency(pricing.final_price)}</span>
                       </div>
                       <div>
+                        <span className="text-muted-foreground">Cobrado:</span>
+                        <span className="ml-1 font-semibold text-primary">
+                          {pricing.charged_price ? formatCurrency(pricing.charged_price) : '-'}
+                        </span>
+                      </div>
+                      <div className="col-span-2">
                         <span className="text-muted-foreground">Lucro:</span>
                         <span className="ml-1 text-green-500">{formatCurrency(pricing.profit)}</span>
                       </div>
