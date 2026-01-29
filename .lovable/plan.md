@@ -1,84 +1,133 @@
 
-## Plano: Corrigir Visibilidade do Modal de Criação de Plano
 
-### Problema Identificado
+## Plano: Permitir Entrada de Tempo no Formato H:MM no Precificador
 
-O modal de criação de plano (`PlanForm.tsx`) não exibe todo o conteúdo corretamente devido a problemas de layout com o componente `ScrollArea` da Radix UI.
+### Problema Atual
 
-**Causas técnicas:**
-1. O `ScrollArea` usa `flex-1` mas não tem altura explícita definida
-2. A estrutura flex aninhada (`DialogContent > form > ScrollArea`) dificulta o cálculo automático de altura
-3. O `ScrollAreaPrimitive.Viewport` tem `h-full` mas depende de um container com altura definida
+O campo "Horas Estimadas" usa `type="number"` que só aceita valores decimais (ex: `1.5`). O usuário quer poder digitar no formato mais intuitivo `H:MM` (ex: `1:30` para 1 hora e 30 minutos).
 
 ### Solução
 
-Aplicar a mesma correção usada no `CloseProspectModal`: substituir o `ScrollArea` por uma `div` com `overflow-y-auto` e estrutura flex correta.
+Modificar o campo de entrada para aceitar formato de tempo `H:MM` e converter automaticamente para horas decimais nos cálculos.
 
 ---
 
-### Mudanças no PlanForm.tsx
+### Mudanças no PricingCalculator.tsx
 
-#### Estrutura Atual (com problema):
+#### 1. Alterar o tipo do Input de `number` para `text`
+
 ```tsx
-<DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] flex flex-col p-0">
-  <DialogHeader className="p-6 pb-0">...</DialogHeader>
-  <form className="flex flex-col flex-1 overflow-hidden">
-    <ScrollArea className="flex-1 px-6">
-      <div className="space-y-6 py-4">...</div>
-    </ScrollArea>
-    <div className="flex justify-end gap-2 p-6 pt-4 border-t">...</div>
-  </form>
-</DialogContent>
+// Antes
+<Input
+  id="estimatedHours"
+  type="number"
+  step="0.5"
+  placeholder="0"
+  value={estimatedHours}
+  onChange={(e) => setEstimatedHours(e.target.value)}
+/>
+
+// Depois
+<Input
+  id="estimatedHours"
+  type="text"
+  placeholder="1:30"
+  value={estimatedHours}
+  onChange={(e) => setEstimatedHours(e.target.value)}
+/>
 ```
 
-#### Estrutura Corrigida:
+#### 2. Criar função para converter "H:MM" para horas decimais
+
 ```tsx
-<DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] flex flex-col p-0">
-  <DialogHeader className="p-6 pb-2 shrink-0">...</DialogHeader>
-  <form className="flex flex-col flex-1 min-h-0">
-    <div className="flex-1 min-h-0 overflow-y-auto px-6">
-      <div className="space-y-6 py-4 pb-6">...</div>
-    </div>
-    <div className="flex justify-end gap-2 p-6 pt-4 border-t shrink-0">...</div>
-  </form>
-</DialogContent>
+// Função helper para parsear tempo
+const parseTimeToHours = (timeStr: string): number => {
+  if (!timeStr || timeStr.trim() === '') return 0;
+  
+  // Se contém ":", parse como H:MM
+  if (timeStr.includes(':')) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const h = isNaN(hours) ? 0 : hours;
+    const m = isNaN(minutes) ? 0 : minutes;
+    return h + (m / 60);
+  }
+  
+  // Senão, tenta parsear como número decimal
+  const parsed = parseFloat(timeStr.replace(',', '.'));
+  return isNaN(parsed) ? 0 : parsed;
+};
+```
+
+#### 3. Atualizar o cálculo para usar a função
+
+```tsx
+// No useMemo de calculations
+const hours = parseTimeToHours(estimatedHours);
+```
+
+#### 4. Função para formatar horas decimais de volta para exibição
+
+```tsx
+// Para exibir no breakdown de custos
+const formatHoursDisplay = (timeStr: string): string => {
+  const hours = parseTimeToHours(timeStr);
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  if (m === 0) return `${h}h`;
+  return `${h}h${m.toString().padStart(2, '0')}min`;
+};
+```
+
+#### 5. Atualizar tooltip explicativo
+
+```tsx
+<TooltipContent>
+  <p className="max-w-xs text-sm">
+    Tempo necessário para executar o serviço.
+    Use formato H:MM (ex: 1:30) ou decimal (ex: 1.5).
+  </p>
+</TooltipContent>
+```
+
+#### 6. Atualizar exibição do custo operacional
+
+```tsx
+// Linha 305-308 - mostrar tempo formatado
+{useOperationalCost && parseTimeToHours(estimatedHours) > 0 && (
+  <p className="text-sm text-muted-foreground">
+    + {formatCurrency(calculations.operationalCost)} ({formatHoursDisplay(estimatedHours)} × {formatCurrency(operationalData.costPerHour)}/h)
+  </p>
+)}
 ```
 
 ---
 
-### Alterações Específicas
+### Arquivo a Modificar
 
-| Linha | Alteração |
-|-------|-----------|
-| 241 | Alterar `max-h-[90vh]` para `max-h-[85vh]` |
-| 242 | Adicionar `shrink-0` ao `DialogHeader` e alterar `pb-0` para `pb-2` |
-| 248 | Remover `overflow-hidden` e adicionar `min-h-0` no form |
-| 249 | Substituir `ScrollArea` por `div` com `flex-1 min-h-0 overflow-y-auto` |
-| 250 | Adicionar `pb-6` ao container interno para espaçamento correto |
-| 408 | Adicionar `shrink-0` ao footer de botões |
-
----
-
-### Arquivos a Modificar
-
-| Arquivo | Alteração |
+| Arquivo | Alterações |
 |---------|-----------|
-| `src/components/areapj/PlanForm.tsx` | Reestruturar layout do modal substituindo ScrollArea por div com overflow-y-auto |
+| `src/components/areapj/PricingCalculator.tsx` | Criar funções de parse/format, alterar input para text, atualizar tooltip |
 
 ---
 
-### Motivo Técnico
+### Exemplos de Entrada Aceitos
 
-O `ScrollArea` da Radix UI cria um viewport interno que precisa de altura explícita para funcionar. Em layouts flex aninhados sem altura fixa, o componente pode falhar em calcular sua área de scroll, resultando em conteúdo cortado ou invisível.
-
-A solução usando `div` com `overflow-y-auto` combinada com `flex-1 min-h-0` permite que o CSS nativo calcule corretamente a altura disponível e habilite o scroll quando necessário.
+| Entrada | Horas Decimais |
+|---------|----------------|
+| `1:30` | 1.5 |
+| `2:00` | 2.0 |
+| `0:45` | 0.75 |
+| `3:15` | 3.25 |
+| `1.5` | 1.5 |
+| `2` | 2.0 |
 
 ---
 
 ### Resultado Esperado
 
-- Modal exibe todo o conteúdo corretamente
-- Scroll funciona suavemente em desktop e mobile
-- Dropdowns (Nível, Tipo) funcionam sem serem cortados
-- Campo de preço final sempre visível
-- Botões de ação sempre visíveis na parte inferior
+- Campo aceita formato `H:MM` (ex: `1:30`, `2:45`)
+- Também aceita formato decimal (ex: `1.5`, `2.75`) para retrocompatibilidade
+- Tooltip explica os dois formatos aceitos
+- Exibição mostra tempo formatado (ex: "1h30min × R$ 50,00/h")
+- Cálculos funcionam corretamente com ambos os formatos
+
