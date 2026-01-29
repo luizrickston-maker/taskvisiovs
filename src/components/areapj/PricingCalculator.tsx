@@ -44,6 +44,34 @@ export function PricingCalculator() {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Format input as time H:MM while typing (clock-style mask)
+  const formatTimeInput = (value: string): string => {
+    // Remove everything that's not a digit
+    const digits = value.replace(/\D/g, '');
+    
+    if (digits.length === 0) return '';
+    
+    // If 1-2 digits, they are hours
+    if (digits.length <= 2) {
+      return digits;
+    }
+    
+    // If 3+ digits, separate hours and minutes
+    const hours = digits.slice(0, -2);
+    let minutes = digits.slice(-2);
+    
+    // Limit minutes to 59
+    if (parseInt(minutes) > 59) {
+      minutes = '59';
+    }
+    
+    // Limit hours to 999
+    const hoursNum = parseInt(hours);
+    const limitedHours = hoursNum > 999 ? '999' : hours;
+    
+    return `${limitedHours}:${minutes}`;
+  };
+
   // Helper function to parse time string (H:MM or decimal) to hours
   const parseTimeToHours = (timeStr: string): number => {
     if (!timeStr || timeStr.trim() === '') return 0;
@@ -52,11 +80,16 @@ export function PricingCalculator() {
     if (timeStr.includes(':')) {
       const [hours, minutes] = timeStr.split(':').map(Number);
       const h = isNaN(hours) ? 0 : hours;
-      const m = isNaN(minutes) ? 0 : minutes;
+      const m = isNaN(minutes) ? 0 : Math.min(minutes, 59);
       return h + (m / 60);
     }
     
-    // Otherwise, try to parse as decimal number
+    // If only digits (while typing), treat as hours
+    if (/^\d+$/.test(timeStr)) {
+      return parseFloat(timeStr) || 0;
+    }
+    
+    // Fallback for decimal with comma
     const parsed = parseFloat(timeStr.replace(',', '.'));
     return isNaN(parsed) ? 0 : parsed;
   };
@@ -312,7 +345,8 @@ export function PricingCalculator() {
                   type="text"
                   placeholder="1:30"
                   value={estimatedHours}
-                  onChange={(e) => setEstimatedHours(e.target.value)}
+                  onChange={(e) => setEstimatedHours(formatTimeInput(e.target.value))}
+                  maxLength={6}
                 />
               </div>
 
