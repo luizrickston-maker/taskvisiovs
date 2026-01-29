@@ -1,124 +1,165 @@
 
 
-## Plano: Input de Horas com Formatacao Automatica Estilo Relogio
+## Plano: Adicionar Campo "Valor Cobrado" no Precificador
 
-### Problema Atual
+### Objetivo
 
-O campo de "Horas Estimadas" aceita qualquer texto sem validacao ou formatacao. O usuario pode digitar "1222" que nao faz sentido como formato de tempo. E necessario:
-1. Formatar automaticamente enquanto digita (como um relogio)
-2. Limitar minutos ao maximo de 59
-3. Limitar horas a um valor razoavel (ex: maximo 999 horas)
-4. Inserir automaticamente o ":" apos as horas
-
-### Solucao
-
-Criar uma funcao de formatacao que aplica mascara de tempo conforme o usuario digita.
+Adicionar um campo opcional "Valor Cobrado" que permite ao usuario informar o preco real que sera cobrado do cliente, possibilitando comparar com o preco sugerido e calcular o lucro/margem reais baseados no valor efetivamente praticado.
 
 ---
 
-### Mudancas no PricingCalculator.tsx
+### Alteracoes no Banco de Dados
 
-#### 1. Criar funcao de formatacao de input
+Adicionar nova coluna na tabela `corporate_pricing`:
+
+```sql
+ALTER TABLE corporate_pricing 
+ADD COLUMN charged_price numeric DEFAULT NULL;
+```
+
+---
+
+### Alteracoes no Frontend
+
+**Arquivo: `src/components/areapj/PricingCalculator.tsx`**
+
+#### 1. Adicionar novo estado (linha ~45)
 
 ```tsx
-// Formata input como tempo H:MM enquanto digita
-const formatTimeInput = (value: string): string => {
-  // Remove tudo que nao for digito
-  const digits = value.replace(/\D/g, '');
-  
-  if (digits.length === 0) return '';
-  
-  // Se tiver 1-2 digitos, sao as horas
-  if (digits.length <= 2) {
-    return digits;
-  }
-  
-  // Se tiver 3+ digitos, separa horas e minutos
-  const hours = digits.slice(0, -2);
-  let minutes = digits.slice(-2);
-  
-  // Limita minutos a 59
-  if (parseInt(minutes) > 59) {
-    minutes = '59';
-  }
-  
-  // Limita horas a 999
-  const hoursNum = parseInt(hours);
-  const limitedHours = hoursNum > 999 ? '999' : hours;
-  
-  return `${limitedHours}:${minutes}`;
+const [chargedPrice, setChargedPrice] = useState('');
+```
+
+#### 2. Atualizar calculo do useMemo (linhas 164-190)
+
+Adicionar calculos baseados no valor cobrado:
+
+```tsx
+// Calculos existentes...
+const chargedValue = parseFloat(chargedPrice) || 0;
+const chargedProfit = chargedValue > 0 ? chargedValue - custoComImpostos : lucroLiquido;
+const chargedMargin = chargedValue > 0 && chargedValue !== 0 
+  ? (chargedProfit / chargedValue) * 100 
+  : margemReal;
+const priceDifference = chargedValue - precoFinal;
+
+return {
+  // ...campos existentes
+  chargedPrice: chargedValue,
+  chargedProfit,
+  chargedMargin,
+  priceDifference,
 };
 ```
 
-#### 2. Atualizar o onChange do Input
+#### 3. Adicionar campo de input apos "Margem Desejada" (apos linha 394)
 
 ```tsx
-<Input
-  id="estimatedHours"
-  type="text"
-  placeholder="1:30"
-  value={estimatedHours}
-  onChange={(e) => setEstimatedHours(formatTimeInput(e.target.value))}
-  maxLength={6} // 999:59
-/>
+<div className="space-y-2">
+  <div className="flex items-center gap-1">
+    <Label htmlFor="chargedPrice">Valor Cobrado (R$)</Label>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="max-w-xs text-sm">
+            Opcional. Informe o valor que voce realmente vai cobrar 
+            para calcular o lucro e margem reais.
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  </div>
+  <Input
+    id="chargedPrice"
+    type="number"
+    step="0.01"
+    placeholder="0,00"
+    value={chargedPrice}
+    onChange={(e) => setChargedPrice(e.target.value)}
+  />
+</div>
 ```
 
-#### 3. Atualizar a funcao parseTimeToHours
+#### 4. Atualizar cards de KPI (linhas 443-489)
 
-A funcao existente ja lida com o formato "H:MM", mas podemos melhorar para aceitar entrada parcial:
+Exibir informacoes baseadas no valor cobrado quando preenchido:
+
+- Card "Preco Sugerido": mostrar tambem o valor cobrado e diferenca
+- Card "Lucro Liquido": usar `chargedProfit` quando houver valor cobrado
+- Card "Margem Real": usar `chargedMargin` quando houver valor cobrado
+
+#### 5. Atualizar handleSave (linhas 200-210)
+
+Incluir `charged_price` no objeto salvo:
 
 ```tsx
-const parseTimeToHours = (timeStr: string): number => {
-  if (!timeStr || timeStr.trim() === '') return 0;
-  
-  // Se contem ":", parse como H:MM
-  if (timeStr.includes(':')) {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const h = isNaN(hours) ? 0 : hours;
-    const m = isNaN(minutes) ? 0 : Math.min(minutes, 59);
-    return h + (m / 60);
-  }
-  
-  // Se for somente digitos (durante digitacao), trata como horas
-  if (/^\d+$/.test(timeStr)) {
-    return parseFloat(timeStr) || 0;
-  }
-  
-  // Fallback para decimal com virgula
-  const parsed = parseFloat(timeStr.replace(',', '.'));
-  return isNaN(parsed) ? 0 : parsed;
-};
+charged_price: parseFloat(chargedPrice) || null,
+```
+
+#### 6. Adicionar reset do campo (linha 231)
+
+```tsx
+setChargedPrice('');
+```
+
+#### 7. Atualizar tabela de historico (linhas 507-549)
+
+Adicionar coluna "Valor Cobrado" na tabela desktop e nos cards mobile.
+
+---
+
+### Atualizacao de Tipos
+
+**Arquivo: `src/types/database.ts`**
+
+Adicionar campo na interface `CorporatePricing` (linha ~58):
+
+```tsx
+charged_price?: number;
 ```
 
 ---
 
-### Comportamento Esperado
+### Arquivos a Modificar
 
-| Usuario Digita | Campo Exibe | Horas Decimais |
-|----------------|-------------|----------------|
-| `1` | `1` | 1.0 |
-| `13` | `13` | 13.0 |
-| `130` | `1:30` | 1.5 |
-| `1300` | `13:00` | 13.0 |
-| `245` | `2:45` | 2.75 |
-| `12345` | `123:45` | 123.75 |
-| `99999` | `999:59` | 999.98 |
-
----
-
-### Arquivo a Modificar
-
-| Arquivo | Alteracoes |
+| Arquivo | Alteracao |
 |---------|-----------|
-| `src/components/areapj/PricingCalculator.tsx` | Adicionar `formatTimeInput`, atualizar onChange do input, adicionar maxLength |
+| Migracao SQL | Adicionar coluna `charged_price` |
+| `src/components/areapj/PricingCalculator.tsx` | Estado, input, calculos, KPIs, handleSave, tabela |
+| `src/types/database.ts` | Adicionar `charged_price` na interface |
+
+---
+
+### Layout Atualizado dos Cards
+
+Quando o campo "Valor Cobrado" for preenchido:
+
+```text
++---------------------------+
+| Preco Sugerido            |
+| R$ 1.500,00               |
++---------------------------+
+| Valor Cobrado             |
+| R$ 1.800,00               |
+| (+R$ 300,00 acima)        |  <-- indicador de diferenca
++---------------------------+
+| Lucro Real                |
+| R$ 800,00                 |  <-- baseado no valor cobrado
++---------------------------+
+| Margem Real               |
+| 44,4%                     |  <-- baseado no valor cobrado
++---------------------------+
+```
 
 ---
 
 ### Resultado Esperado
 
-- Input formata automaticamente para H:MM enquanto usuario digita
-- Minutos limitados a 59 (nao aceita 1:75 por exemplo)
-- Horas limitadas a 999 (valor razoavel para servicos)
-- Caracteres nao-numericos sao ignorados
-- Experiencia similar a digitar horario em um relogio digital
+- Campo "Valor Cobrado" opcional apos Margem Desejada
+- Quando preenchido, mostra lucro e margem baseados no valor real
+- Indicador visual da diferenca entre sugerido e cobrado
+- Historico salva e exibe o valor cobrado
+- Permite analise mais precisa da rentabilidade real
 
