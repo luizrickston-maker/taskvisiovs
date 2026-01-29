@@ -174,6 +174,7 @@ export type Database = {
       }
       corporate_pricing: {
         Row: {
+          charged_price: number | null
           cost: number
           created_at: string
           final_price: number
@@ -188,6 +189,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          charged_price?: number | null
           cost?: number
           created_at?: string
           final_price?: number
@@ -202,6 +204,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          charged_price?: number | null
           cost?: number
           created_at?: string
           final_price?: number
