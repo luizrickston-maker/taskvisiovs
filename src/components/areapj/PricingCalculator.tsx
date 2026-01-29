@@ -44,6 +44,33 @@ export function PricingCalculator() {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Helper function to parse time string (H:MM or decimal) to hours
+  const parseTimeToHours = (timeStr: string): number => {
+    if (!timeStr || timeStr.trim() === '') return 0;
+    
+    // If contains ":", parse as H:MM
+    if (timeStr.includes(':')) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const h = isNaN(hours) ? 0 : hours;
+      const m = isNaN(minutes) ? 0 : minutes;
+      return h + (m / 60);
+    }
+    
+    // Otherwise, try to parse as decimal number
+    const parsed = parseFloat(timeStr.replace(',', '.'));
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  // Helper function to format hours for display
+  const formatHoursDisplay = (timeStr: string): string => {
+    const hours = parseTimeToHours(timeStr);
+    if (hours === 0) return '0h';
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    if (m === 0) return `${h}h`;
+    return `${h}h${m.toString().padStart(2, '0')}min`;
+  };
+
   // Calculate operational cost per hour
   const operationalData = useMemo(() => {
     // Team costs (including CLT encargos)
@@ -105,7 +132,7 @@ export function PricingCalculator() {
     const costValue = parseFloat(cost) || 0;
     const taxValue = parseFloat(taxRate) || 0;
     const marginValue = parseFloat(marginPercent) || 0;
-    const hours = parseFloat(estimatedHours) || 0;
+    const hours = parseTimeToHours(estimatedHours);
 
     // Calculate operational cost based on hours
     const operationalCostForService = useOperationalCost && hours > 0 
@@ -273,8 +300,8 @@ export function PricingCalculator() {
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="max-w-xs text-sm">
-                          Quantidade de horas necessárias para executar o serviço. 
-                          Usado para calcular o custo operacional proporcional.
+                          Tempo necessário para executar o serviço.
+                          Use formato H:MM (ex: 1:30) ou decimal (ex: 1.5).
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -282,9 +309,8 @@ export function PricingCalculator() {
                 </div>
                 <Input
                   id="estimatedHours"
-                  type="number"
-                  step="0.5"
-                  placeholder="0"
+                  type="text"
+                  placeholder="1:30"
                   value={estimatedHours}
                   onChange={(e) => setEstimatedHours(e.target.value)}
                 />
@@ -302,9 +328,9 @@ export function PricingCalculator() {
                     onCheckedChange={setUseOperationalCost}
                   />
                 </div>
-                {useOperationalCost && parseFloat(estimatedHours) > 0 && (
+                {useOperationalCost && parseTimeToHours(estimatedHours) > 0 && (
                   <p className="text-sm text-muted-foreground">
-                    + {formatCurrency(calculations.operationalCost)} ({estimatedHours}h × {formatCurrency(operationalData.costPerHour)}/h)
+                    + {formatCurrency(calculations.operationalCost)} ({formatHoursDisplay(estimatedHours)} × {formatCurrency(operationalData.costPerHour)}/h)
                   </p>
                 )}
               </div>
@@ -354,7 +380,7 @@ export function PricingCalculator() {
                 </div>
                 {useOperationalCost && calculations.operationalCost > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Custo Operacional ({estimatedHours}h):</span>
+                    <span className="text-muted-foreground">Custo Operacional ({formatHoursDisplay(estimatedHours)}):</span>
                     <span>{formatCurrency(calculations.operationalCost)}</span>
                   </div>
                 )}
