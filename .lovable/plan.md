@@ -1,133 +1,124 @@
 
 
-## Plano: Permitir Entrada de Tempo no Formato H:MM no Precificador
+## Plano: Input de Horas com Formatacao Automatica Estilo Relogio
 
 ### Problema Atual
 
-O campo "Horas Estimadas" usa `type="number"` que só aceita valores decimais (ex: `1.5`). O usuário quer poder digitar no formato mais intuitivo `H:MM` (ex: `1:30` para 1 hora e 30 minutos).
+O campo de "Horas Estimadas" aceita qualquer texto sem validacao ou formatacao. O usuario pode digitar "1222" que nao faz sentido como formato de tempo. E necessario:
+1. Formatar automaticamente enquanto digita (como um relogio)
+2. Limitar minutos ao maximo de 59
+3. Limitar horas a um valor razoavel (ex: maximo 999 horas)
+4. Inserir automaticamente o ":" apos as horas
 
-### Solução
+### Solucao
 
-Modificar o campo de entrada para aceitar formato de tempo `H:MM` e converter automaticamente para horas decimais nos cálculos.
+Criar uma funcao de formatacao que aplica mascara de tempo conforme o usuario digita.
 
 ---
 
-### Mudanças no PricingCalculator.tsx
+### Mudancas no PricingCalculator.tsx
 
-#### 1. Alterar o tipo do Input de `number` para `text`
+#### 1. Criar funcao de formatacao de input
 
 ```tsx
-// Antes
-<Input
-  id="estimatedHours"
-  type="number"
-  step="0.5"
-  placeholder="0"
-  value={estimatedHours}
-  onChange={(e) => setEstimatedHours(e.target.value)}
-/>
+// Formata input como tempo H:MM enquanto digita
+const formatTimeInput = (value: string): string => {
+  // Remove tudo que nao for digito
+  const digits = value.replace(/\D/g, '');
+  
+  if (digits.length === 0) return '';
+  
+  // Se tiver 1-2 digitos, sao as horas
+  if (digits.length <= 2) {
+    return digits;
+  }
+  
+  // Se tiver 3+ digitos, separa horas e minutos
+  const hours = digits.slice(0, -2);
+  let minutes = digits.slice(-2);
+  
+  // Limita minutos a 59
+  if (parseInt(minutes) > 59) {
+    minutes = '59';
+  }
+  
+  // Limita horas a 999
+  const hoursNum = parseInt(hours);
+  const limitedHours = hoursNum > 999 ? '999' : hours;
+  
+  return `${limitedHours}:${minutes}`;
+};
+```
 
-// Depois
+#### 2. Atualizar o onChange do Input
+
+```tsx
 <Input
   id="estimatedHours"
   type="text"
   placeholder="1:30"
   value={estimatedHours}
-  onChange={(e) => setEstimatedHours(e.target.value)}
+  onChange={(e) => setEstimatedHours(formatTimeInput(e.target.value))}
+  maxLength={6} // 999:59
 />
 ```
 
-#### 2. Criar função para converter "H:MM" para horas decimais
+#### 3. Atualizar a funcao parseTimeToHours
+
+A funcao existente ja lida com o formato "H:MM", mas podemos melhorar para aceitar entrada parcial:
 
 ```tsx
-// Função helper para parsear tempo
 const parseTimeToHours = (timeStr: string): number => {
   if (!timeStr || timeStr.trim() === '') return 0;
   
-  // Se contém ":", parse como H:MM
+  // Se contem ":", parse como H:MM
   if (timeStr.includes(':')) {
     const [hours, minutes] = timeStr.split(':').map(Number);
     const h = isNaN(hours) ? 0 : hours;
-    const m = isNaN(minutes) ? 0 : minutes;
+    const m = isNaN(minutes) ? 0 : Math.min(minutes, 59);
     return h + (m / 60);
   }
   
-  // Senão, tenta parsear como número decimal
+  // Se for somente digitos (durante digitacao), trata como horas
+  if (/^\d+$/.test(timeStr)) {
+    return parseFloat(timeStr) || 0;
+  }
+  
+  // Fallback para decimal com virgula
   const parsed = parseFloat(timeStr.replace(',', '.'));
   return isNaN(parsed) ? 0 : parsed;
 };
 ```
 
-#### 3. Atualizar o cálculo para usar a função
+---
 
-```tsx
-// No useMemo de calculations
-const hours = parseTimeToHours(estimatedHours);
-```
+### Comportamento Esperado
 
-#### 4. Função para formatar horas decimais de volta para exibição
-
-```tsx
-// Para exibir no breakdown de custos
-const formatHoursDisplay = (timeStr: string): string => {
-  const hours = parseTimeToHours(timeStr);
-  const h = Math.floor(hours);
-  const m = Math.round((hours - h) * 60);
-  if (m === 0) return `${h}h`;
-  return `${h}h${m.toString().padStart(2, '0')}min`;
-};
-```
-
-#### 5. Atualizar tooltip explicativo
-
-```tsx
-<TooltipContent>
-  <p className="max-w-xs text-sm">
-    Tempo necessário para executar o serviço.
-    Use formato H:MM (ex: 1:30) ou decimal (ex: 1.5).
-  </p>
-</TooltipContent>
-```
-
-#### 6. Atualizar exibição do custo operacional
-
-```tsx
-// Linha 305-308 - mostrar tempo formatado
-{useOperationalCost && parseTimeToHours(estimatedHours) > 0 && (
-  <p className="text-sm text-muted-foreground">
-    + {formatCurrency(calculations.operationalCost)} ({formatHoursDisplay(estimatedHours)} × {formatCurrency(operationalData.costPerHour)}/h)
-  </p>
-)}
-```
+| Usuario Digita | Campo Exibe | Horas Decimais |
+|----------------|-------------|----------------|
+| `1` | `1` | 1.0 |
+| `13` | `13` | 13.0 |
+| `130` | `1:30` | 1.5 |
+| `1300` | `13:00` | 13.0 |
+| `245` | `2:45` | 2.75 |
+| `12345` | `123:45` | 123.75 |
+| `99999` | `999:59` | 999.98 |
 
 ---
 
 ### Arquivo a Modificar
 
-| Arquivo | Alterações |
+| Arquivo | Alteracoes |
 |---------|-----------|
-| `src/components/areapj/PricingCalculator.tsx` | Criar funções de parse/format, alterar input para text, atualizar tooltip |
-
----
-
-### Exemplos de Entrada Aceitos
-
-| Entrada | Horas Decimais |
-|---------|----------------|
-| `1:30` | 1.5 |
-| `2:00` | 2.0 |
-| `0:45` | 0.75 |
-| `3:15` | 3.25 |
-| `1.5` | 1.5 |
-| `2` | 2.0 |
+| `src/components/areapj/PricingCalculator.tsx` | Adicionar `formatTimeInput`, atualizar onChange do input, adicionar maxLength |
 
 ---
 
 ### Resultado Esperado
 
-- Campo aceita formato `H:MM` (ex: `1:30`, `2:45`)
-- Também aceita formato decimal (ex: `1.5`, `2.75`) para retrocompatibilidade
-- Tooltip explica os dois formatos aceitos
-- Exibição mostra tempo formatado (ex: "1h30min × R$ 50,00/h")
-- Cálculos funcionam corretamente com ambos os formatos
+- Input formata automaticamente para H:MM enquanto usuario digita
+- Minutos limitados a 59 (nao aceita 1:75 por exemplo)
+- Horas limitadas a 999 (valor razoavel para servicos)
+- Caracteres nao-numericos sao ignorados
+- Experiencia similar a digitar horario em um relogio digital
 
