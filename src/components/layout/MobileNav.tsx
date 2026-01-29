@@ -1,7 +1,7 @@
 import { Wallet, TrendingUp, Target, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Package, Users, User, Building2 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { useAppContext } from '@/hooks/useAppContext';
 import {
   DropdownMenu,
@@ -40,7 +40,8 @@ const businessMoreNavItems = [
 export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuthContext();
+  const authContext = useAuthContextSafe();
+  const signOut = authContext?.signOut ?? (async () => {});
   const { mode, setMode } = useAppContext();
   
   const mainNavItems = mode === 'personal' ? personalMainNavItems : businessMainNavItems;

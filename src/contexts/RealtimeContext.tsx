@@ -16,3 +16,9 @@ export function useRealtimeContext() {
   if (!ctx) throw new Error("useRealtimeContext must be used within a RealtimeProvider");
   return ctx;
 }
+
+// Hook seguro que não lança erro (para uso em componentes de layout)
+export function useRealtimeContextSafe(): RealtimeContextValue {
+  const ctx = useContext(RealtimeContext);
+  return ctx ?? { status: 'disconnected' };
+}

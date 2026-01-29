@@ -16,7 +16,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
 
 const personalNavItems = [
@@ -43,7 +43,8 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { appName } = useUserPreferences();
-  const { signOut } = useAuthContext();
+  const authContext = useAuthContextSafe();
+  const signOut = authContext?.signOut ?? (() => {});
   const { mode } = useAppContext();
   const collapsed = state === 'collapsed';
 
