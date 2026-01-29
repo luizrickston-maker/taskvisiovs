@@ -101,3 +101,8 @@ export function useAuthContext() {
   if (!ctx) throw new Error("useAuthContext must be used within an AuthProvider");
   return ctx;
 }
+
+// Hook seguro para uso em layouts (não lança erro)
+export function useAuthContextSafe(): AuthContextValue | null {
+  return useContext(AuthContext);
+}

@@ -4,15 +4,14 @@ import { AppSidebar } from './AppSidebar';
 import { MobileNav } from './MobileNav';
 import { RealtimeIndicator } from './RealtimeIndicator';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { useRealtimeContext } from '@/contexts/RealtimeContext';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useRealtimeContextSafe } from '@/contexts/RealtimeContext';
 
 export function AppLayout() {
   // Hooks chamados de forma canônica
   const preferences = useUserPreferences();
 
-  // Status realtime vem do bootstrap
-  const { status: realtimeStatus } = useRealtimeContext();
+  // Status realtime vem do bootstrap (com fallback seguro)
+  const { status: realtimeStatus } = useRealtimeContextSafe();
 
   // Fallback seguro para appName
   const appName = preferences?.appName ?? 'Meu App';
