@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import type { Project, ProjectCategory } from '@/types/database';
 import ProjectCard from './ProjectCard';
 
@@ -28,16 +29,16 @@ export default function KanbanColumn({
 }: KanbanColumnProps) {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.currentTarget.classList.add('ring-2', 'ring-primary');
+    e.currentTarget.classList.add('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-background');
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    e.currentTarget.classList.remove('ring-2', 'ring-primary');
+    e.currentTarget.classList.remove('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-background');
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('ring-2', 'ring-primary');
+    e.currentTarget.classList.remove('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-background');
     const projectId = e.dataTransfer.getData('projectId');
     if (projectId) {
       onDrop(projectId, status);
@@ -47,26 +48,34 @@ export default function KanbanColumn({
   return (
     <div
       className={cn(
-        "flex flex-col min-h-[400px] rounded-xl border border-border/50 bg-secondary/30 transition-all",
-        "backdrop-blur-sm"
+        "flex flex-col min-h-[400px] rounded-xl glass-card transition-all duration-200"
       )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {/* Header */}
-      <div className={cn("flex items-center gap-2 p-4 border-b border-border/50", color)}>
-        <Icon className="w-5 h-5" />
-        <span className="font-semibold">{title}</span>
-        <span className="ml-auto text-sm opacity-70">{projects.length}</span>
+      <div className="flex items-center gap-2 p-4 border-b border-border/50">
+        <div className={cn("p-1.5 rounded-lg bg-current/10", color)}>
+          <Icon className={cn("w-4 h-4", color)} />
+        </div>
+        <span className="font-semibold text-sm">{title}</span>
+        <Badge variant="secondary" className="ml-auto text-xs">
+          {projects.length}
+        </Badge>
       </div>
 
       {/* Cards */}
       <div className="flex-1 p-3 space-y-3 overflow-y-auto">
         {projects.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-8 opacity-50">
-            Arraste projetos aqui
-          </p>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className={cn("p-3 rounded-full bg-muted/50 mb-3", color)}>
+              <Icon className={cn("w-6 h-6 opacity-50", color)} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Arraste projetos aqui
+            </p>
+          </div>
         ) : (
           projects.map((project) => (
             <ProjectCard

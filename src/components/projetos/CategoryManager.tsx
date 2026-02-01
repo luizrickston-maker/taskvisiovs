@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -82,13 +83,19 @@ export default function CategoryManager({ selectedCategory, onSelectCategory }: 
   };
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+      {/* Label */}
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+        <Tag className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">Categorias:</span>
+      </div>
+
       {/* Add Category Button */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="flex-shrink-0 gap-1">
-            <Plus className="w-4 h-4" />
-            Categoria
+          <Button variant="outline" size="sm" className="h-7 px-2 flex-shrink-0 gap-1">
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Nova</span>
           </Button>
         </DialogTrigger>
         <DialogContent>
@@ -140,30 +147,38 @@ export default function CategoryManager({ selectedCategory, onSelectCategory }: 
 
       {/* Category Pills */}
       {projectCategories.length === 0 ? (
-        <span className="text-sm text-muted-foreground">Nenhuma categoria</span>
+        <span className="text-xs text-muted-foreground italic">Nenhuma categoria</span>
       ) : (
         projectCategories.map((cat) => (
-          <button
+          <Badge
             key={cat.id}
-            onClick={() => handleCategoryClick(cat.id)}
+            variant={selectedCategory === cat.id ? "default" : "secondary"}
             className={cn(
-              'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all flex-shrink-0 group',
-              'bg-secondary/60 hover:bg-secondary',
-              selectedCategory === cat.id && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+              'cursor-pointer gap-1.5 px-2.5 py-1 text-xs font-medium transition-all flex-shrink-0 group hover:opacity-90',
+              selectedCategory === cat.id && 'ring-2 ring-offset-1 ring-offset-background'
             )}
+            style={selectedCategory === cat.id ? {
+              backgroundColor: cat.color,
+              borderColor: cat.color,
+            } : {
+              backgroundColor: `${cat.color}15`,
+              color: cat.color,
+              borderColor: `${cat.color}30`,
+            }}
+            onClick={() => handleCategoryClick(cat.id)}
           >
             <span
-              className="w-3 h-3 rounded-full flex-shrink-0"
-              style={{ backgroundColor: cat.color }}
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: selectedCategory === cat.id ? 'white' : cat.color }}
             />
-            <span className="truncate max-w-[120px]">{cat.name}</span>
+            <span className="truncate max-w-[100px]">{cat.name}</span>
             <button
               onClick={(e) => handleDelete(e, cat.id)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-destructive/20 rounded"
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-white/20 rounded ml-0.5"
             >
-              <Trash2 className="w-3 h-3 text-destructive" />
+              <Trash2 className="w-3 h-3" />
             </button>
-          </button>
+          </Badge>
         ))
       )}
     </div>

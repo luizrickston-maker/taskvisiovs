@@ -1,6 +1,9 @@
-import { useState } from 'react';
-import { Plus, ListTodo, Loader2, Ban, CheckCircle2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, ListTodo, Loader2, Ban, CheckCircle2, FolderKanban, LayoutGrid, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -23,6 +26,16 @@ export default function ProjetosDashboard() {
   const [formOpen, setFormOpen] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // KPIs
+  const kpis = useMemo(() => {
+    const total = projects.length;
+    const todo = projects.filter(p => p.status === 'todo').length;
+    const inProgress = projects.filter(p => p.status === 'progress').length;
+    const blocked = projects.filter(p => p.status === 'blocked').length;
+    const done = projects.filter(p => p.status === 'done').length;
+    return { total, todo, inProgress, blocked, done };
+  }, [projects]);
 
   const handleDrop = async (projectId: string, newStatus: string) => {
     const { error } = await supabase
@@ -63,74 +76,175 @@ export default function ProjetosDashboard() {
     if (!open) setEditProject(null);
   };
 
+  const handleCategoryFilter = (value: string) => {
+    setSelectedCategory(value === 'all' ? null : value);
+  };
+
   // Sort and filter projects
   const sortedProjects = [...projects].sort((a, b) => a.priority - b.priority);
   const filteredProjects = selectedCategory
     ? sortedProjects.filter((p) => p.project_category_id === selectedCategory)
     : sortedProjects;
 
-  const handleCategoryFilter = (value: string) => {
-    setSelectedCategory(value === 'all' ? null : value);
-  };
-
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold">Projetos</h1>
+    <div className="p-4 md:p-6 space-y-6 animate-fade-in">
+      {/* Professional Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Select value={selectedCategory || 'all'} onValueChange={handleCategoryFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas categorias</SelectItem>
-              {projectCategories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: cat.color }}
-                    />
-                    {cat.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button onClick={() => setFormOpen(true)} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Novo Projeto
-          </Button>
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <FolderKanban className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Projetos</h1>
+            <p className="text-sm text-muted-foreground">Gerencie seus projetos e tarefas</p>
+          </div>
         </div>
+        <Button onClick={() => setFormOpen(true)} className="gap-2 w-full md:w-auto">
+          <Plus className="w-4 h-4" />
+          Novo Projeto
+        </Button>
       </div>
 
-      {/* Categories - Horizontal Bar */}
-      <CategoryManager
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-      />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Total</p>
+                <p className="text-2xl font-bold">{kpis.total}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-primary/10">
+                <FolderKanban className="w-5 h-5 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Kanban Board - Full Width */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {columns.map((col) => (
-          <KanbanColumn
-            key={col.status}
-            title={col.title}
-            status={col.status}
-            icon={col.icon}
-            color={col.color}
-            projects={filteredProjects.filter((p) => p.status === col.status)}
-            categories={projectCategories}
-            onDrop={handleDrop}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        ))}
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Em Progresso</p>
+                <p className="text-2xl font-bold text-amber-500">{kpis.inProgress}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <Loader2 className="w-5 h-5 text-amber-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Bloqueados</p>
+                <p className="text-2xl font-bold text-destructive">{kpis.blocked}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-destructive/10">
+                <Ban className="w-5 h-5 text-destructive" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Concluídos</p>
+                <p className="text-2xl font-bold text-emerald-500">{kpis.done}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Project Tasks Section */}
-      <ProjectTasksSection />
+      {/* Filters & Categories */}
+      <Card className="glass-card">
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <Select value={selectedCategory || 'all'} onValueChange={handleCategoryFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas categorias</SelectItem>
+                  {projectCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        {cat.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedCategory && (
+                <Badge variant="secondary" className="gap-1">
+                  Filtrado
+                  <button 
+                    onClick={() => setSelectedCategory(null)}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              )}
+            </div>
+            <CategoryManager
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tabs for Kanban and Tasks */}
+      <Tabs defaultValue="kanban" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="kanban" className="gap-2">
+            <LayoutGrid className="w-4 h-4" />
+            Quadro Kanban
+          </TabsTrigger>
+          <TabsTrigger value="tasks" className="gap-2">
+            <ClipboardList className="w-4 h-4" />
+            Tarefas
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="kanban" className="space-y-4">
+          {/* Kanban Board */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {columns.map((col) => (
+              <KanbanColumn
+                key={col.status}
+                title={col.title}
+                status={col.status}
+                icon={col.icon}
+                color={col.color}
+                projects={filteredProjects.filter((p) => p.status === col.status)}
+                categories={projectCategories}
+                onDrop={handleDrop}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="tasks">
+          <ProjectTasksSection />
+        </TabsContent>
+      </Tabs>
 
       {/* Project Form Dialog */}
       <ProjectForm

@@ -1,5 +1,13 @@
-import { Clock, GripVertical, Pencil, Trash2 } from 'lucide-react';
+import { Clock, GripVertical, Pencil, Trash2, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import type { Project, ProjectCategory } from '@/types/database';
 
@@ -10,31 +18,25 @@ interface ProjectCardProps {
   onDelete: () => void;
 }
 
-const priorityColors: Record<number, string> = {
-  1: 'border-l-red-500',
-  2: 'border-l-orange-500',
-  3: 'border-l-yellow-500',
-  4: 'border-l-blue-500',
-  5: 'border-l-gray-500',
-};
-
-const priorityLabels: Record<number, string> = {
-  1: 'Crítica',
-  2: 'Alta',
-  3: 'Média',
-  4: 'Baixa',
-  5: 'Mínima',
+const priorityConfig: Record<number, { label: string; color: string; border: string }> = {
+  1: { label: 'Crítica', color: 'text-red-500', border: 'border-l-red-500' },
+  2: { label: 'Alta', color: 'text-orange-500', border: 'border-l-orange-500' },
+  3: { label: 'Média', color: 'text-yellow-500', border: 'border-l-yellow-500' },
+  4: { label: 'Baixa', color: 'text-blue-500', border: 'border-l-blue-500' },
+  5: { label: 'Mínima', color: 'text-muted-foreground', border: 'border-l-muted-foreground' },
 };
 
 export default function ProjectCard({ project, category, onEdit, onDelete }: ProjectCardProps) {
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('projectId', project.id);
-    e.currentTarget.classList.add('opacity-50');
+    e.currentTarget.classList.add('opacity-50', 'scale-95');
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
-    e.currentTarget.classList.remove('opacity-50');
+    e.currentTarget.classList.remove('opacity-50', 'scale-95');
   };
+
+  const priority = priorityConfig[project.priority] || priorityConfig[3];
 
   return (
     <div
@@ -42,13 +44,15 @@ export default function ProjectCard({ project, category, onEdit, onDelete }: Pro
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={cn(
-        "group p-3 rounded-lg bg-card border-l-4 cursor-grab active:cursor-grabbing",
-        "hover:shadow-lg transition-all duration-200",
-        priorityColors[project.priority] || 'border-l-gray-500'
+        "group p-3 rounded-lg bg-background/80 border-l-4 cursor-grab active:cursor-grabbing",
+        "hover:shadow-lg hover:bg-background transition-all duration-200",
+        "border border-border/50",
+        priority.border
       )}
     >
       <div className="flex items-start gap-2">
-        <GripVertical className="w-4 h-4 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
+        <GripVertical className="w-4 h-4 text-muted-foreground/30 mt-0.5 flex-shrink-0 group-hover:text-muted-foreground/60 transition-colors" />
+        
         <div className="flex-1 min-w-0 space-y-2">
           {/* Project Name */}
           <p className="text-xs font-medium text-primary truncate">
@@ -56,59 +60,69 @@ export default function ProjectCard({ project, category, onEdit, onDelete }: Pro
           </p>
           
           {/* Task */}
-          <p className="text-sm font-medium leading-tight">
+          <p className="text-sm font-medium leading-tight line-clamp-2">
             {project.task}
           </p>
 
           {/* Meta Info */}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5">
             {/* Category */}
             {category && (
-              <span
-                className="px-2 py-0.5 rounded-full text-xs"
+              <Badge
+                variant="secondary"
+                className="text-[10px] px-1.5 py-0"
                 style={{ 
-                  backgroundColor: `${category.color}20`, 
-                  color: category.color 
+                  backgroundColor: `${category.color}15`, 
+                  color: category.color,
+                  borderColor: `${category.color}30`
                 }}
               >
                 {category.name}
-              </span>
+              </Badge>
             )}
 
             {/* Priority */}
-            <span className="text-muted-foreground">
-              P{project.priority} - {priorityLabels[project.priority]}
-            </span>
+            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", priority.color)}>
+              P{project.priority}
+            </Badge>
 
             {/* Estimated Time */}
             {project.estimated_time && (
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Clock className="w-3 h-3" />
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                <Clock className="w-2.5 h-2.5 mr-0.5" />
                 {project.estimated_time}
-              </span>
+              </Badge>
             )}
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={(e) => { e.stopPropagation(); onEdit(); }}
-          >
-            <Pencil className="w-3 h-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-destructive"
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          >
-            <Trash2 className="w-3 h-3" />
-          </Button>
-        </div>
+        {/* Actions Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreVertical className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={onEdit} className="gap-2">
+              <Pencil className="w-3.5 h-3.5" />
+              Editar
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={onDelete} 
+              className="gap-2 text-destructive focus:text-destructive"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Excluir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
