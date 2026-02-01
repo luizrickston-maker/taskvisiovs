@@ -34,6 +34,12 @@ export interface EditorialComment {
 export type NewEditorialCalendarItem = Omit<EditorialCalendarItem, 'id' | 'created_at' | 'updated_at'>;
 export type NewEditorialComment = Omit<EditorialComment, 'id' | 'created_at'>;
 
+// Input type for form (user_id, moodboard_refs, ai_suggestions handled by hook)
+export type EditorialCalendarItemInput = Omit<NewEditorialCalendarItem, 'user_id' | 'moodboard_refs' | 'ai_suggestions'> & {
+  moodboard_refs?: unknown[] | null;
+  ai_suggestions?: Record<string, unknown> | null;
+};
+
 // Helper type for updating items
 export type EditorialCalendarItemUpdate = Partial<Omit<EditorialCalendarItem, 'id' | 'user_id' | 'created_at'>>;
 export type EditorialCommentUpdate = Partial<Omit<EditorialComment, 'id' | 'item_id' | 'user_id' | 'created_at'>>;

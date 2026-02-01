@@ -26,6 +26,7 @@ import PlanosPage from "@/pages/PJ/PlanosPage";
 import InvestimentosPage from "@/pages/PJ/InvestimentosPage";
 import TimePage from "@/pages/PJ/TimePage";
 import ProjetosClientesPage from "@/pages/PJ/ProjetosClientesPage";
+import CalendarioEditorialPage from "@/pages/PJ/CalendarioEditorialPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,6 +84,7 @@ const App = () => {
                 <Route path="/pj/planos" element={<PlanosPage />} />
                 <Route path="/pj/investimentos" element={<InvestimentosPage />} />
                 <Route path="/pj/time" element={<TimePage />} />
+                <Route path="/pj/calendario-editorial" element={<CalendarioEditorialPage />} />
                 
                 {/* Config */}
                 <Route path="/config" element={<ConfigPage />} />
