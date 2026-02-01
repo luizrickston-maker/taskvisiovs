@@ -1,93 +1,149 @@
 
 
-## Plano: Correcao do Erro ERR-S4DZ00 ao Navegar no Menu
+## Plano: Redesign Profissional da Tela de Projetos
 
-### Diagnostico
+### Problemas Identificados
 
-O erro "Algo deu errado" (ERR-S4DZ00) esta ocorrendo toda vez que voce clica em um item do menu. Baseado na analise do codigo, o problema e causado por uma **falha de contexto** durante a navegacao entre rotas protegidas.
+Analisei a tela de Projetos (`/projetos` e `/pj/projetos`) e comparei com outras telas do app como "Planos de Servico", "Caixa" e "Financas". Identifiquei os seguintes problemas:
 
-### Causa Raiz Identificada
+| Problema | Descricao |
+|----------|-----------|
+| **Header inconsistente** | Falta o padrao de header com icone + titulo + descricao usado em outras paginas |
+| **Sem KPIs visuais** | Outras telas tem cards de resumo (KPIs) no topo; Projetos nao tem |
+| **Espacamento irregular** | Gaps e espacamentos nao seguem o sistema de design (space-y-6 padrao) |
+| **Filtros desorganizados** | Filtros e botao misturados no header sem separacao visual |
+| **Categorias sem destaque** | Barra de categorias parece perdida, sem container/card |
+| **Cards Kanban simples** | Cards do projeto muito basicos comparados ao padrao glass-card do app |
+| **Secao de Tarefas isolada** | Falta transicao visual entre Kanban e secao de Tarefas |
+| **Mobile nao otimizado** | Layout nao responsivo como outras paginas |
 
-O `AppLayout.tsx` (linha 15) usa `useRealtimeContext()` que lanca erro se nao estiver dentro de um `RealtimeProvider`. A hierarquia esperada e:
-
-```text
-AuthProvider
-  └─ ProtectedRoute
-       └─ AppBootstrap
-            └─ RealtimeBootstrap (cria RealtimeProvider)
-                 └─ AppLayout (usa useRealtimeContext) ← ERRO AQUI
-```
-
-O problema ocorre quando:
-1. Ha uma condicao de corrida durante a navegacao
-2. O componente tenta renderizar antes do provider estar pronto
-3. Ou ha um remount inesperado que quebra a cadeia de contexto
+---
 
 ### Solucao Proposta
 
-Tornar o uso de `useRealtimeContext` mais resiliente no `AppLayout`, com fallback seguro em vez de lancar erro:
+Redesenhar a tela de Projetos seguindo exatamente os padroes visuais das telas profissionais do app:
 
 ---
 
-### Alteracao 1: Contexto Realtime Resiliente
+### Alteracoes no ProjetosDashboard.tsx
 
-**Arquivo: `src/contexts/RealtimeContext.tsx`**
+**1. Header Profissional**
 
-Adicionar hook alternativo que retorna valor padrao em vez de lancar erro:
+Adicionar o padrao de header com icone destacado:
 
-```tsx
-// Hook seguro que nao lanca erro (para uso em componentes de layout)
-export function useRealtimeContextSafe(): RealtimeContextValue {
-  const ctx = useContext(RealtimeContext);
-  // Retorna valor padrao se nao estiver no provider
-  return ctx ?? { status: 'disconnected' };
-}
+```text
++--------------------------------------------------+
+|  [Icone]  Projetos                               |
+|           Gerencie seus projetos e tarefas       |
++--------------------------------------------------+
+```
+
+**2. KPIs de Resumo**
+
+Adicionar cards de metricas no topo (como PlansManager):
+
+```text
++-------------+  +-------------+  +-------------+  +-------------+
+| Total       |  | Em Progresso|  | Bloqueados  |  | Concluidos  |
+| 12 projetos |  | 4 projetos  |  | 2 projetos  |  | 6 projetos  |
++-------------+  +-------------+  +-------------+  +-------------+
+```
+
+**3. Barra de Filtros Organizada**
+
+Separar filtros do botao de acao com layout claro:
+
+```text
++--------------------------------------------------+
+| [Filtro] [Categoria]   Categorias: [+] [Dev] [UI]|
+|                                     [Novo Projeto]|
++--------------------------------------------------+
+```
+
+**4. Tabs para Organizar Conteudo**
+
+Usar Tabs para separar Kanban e Tarefas:
+
+```text
+[Quadro Kanban]  [Tarefas]
 ```
 
 ---
 
-### Alteracao 2: AppLayout Resiliente
+### Alteracoes no KanbanColumn.tsx
 
-**Arquivo: `src/components/layout/AppLayout.tsx`**
+**1. Estilo Glass-Card**
 
-Trocar `useRealtimeContext` por `useRealtimeContextSafe`:
+Atualizar para usar `glass-card` consistente com o resto do app.
 
-```tsx
-// Antes:
-import { useRealtimeContext } from '@/contexts/RealtimeContext';
-const { status: realtimeStatus } = useRealtimeContext();
+**2. Header com Badge de Contador**
 
-// Depois:
-import { useRealtimeContextSafe } from '@/contexts/RealtimeContext';
-const { status: realtimeStatus } = useRealtimeContextSafe();
-```
+Melhorar header com badge estilizado para contagem.
+
+**3. Area de Drop Melhorada**
+
+Adicionar feedback visual mais claro ao arrastar.
 
 ---
 
-### Alteracao 3: AuthContext Resiliente (Preventivo)
+### Alteracoes no ProjectCard.tsx
 
-**Arquivo: `src/contexts/AuthContext.tsx`**
+**1. Hover e Shadow Consistentes**
 
-Adicionar hook alternativo seguro:
+Usar mesmas sombras e transicoes das outras cards do app.
 
-```tsx
-// Hook seguro para uso em layouts
-export function useAuthContextSafe(): AuthContextValue | null {
-  return useContext(AuthContext);
-}
-```
+**2. Layout de Informacoes**
+
+Reorganizar informacoes com hierarquia visual clara.
+
+**3. Botoes de Acao em Dropdown**
+
+Mover acoes para um menu dropdown (padrao usado em outras partes do app).
 
 ---
 
-### Alteracao 4: AppSidebar Resiliente
+### Alteracoes no CategoryManager.tsx
 
-**Arquivo: `src/components/layout/AppSidebar.tsx`**
+**1. Container com Card**
 
-Adicionar verificacao de seguranca:
+Envolver categorias em um Card sutil para dar destaque.
 
-```tsx
-const authContext = useAuthContextSafe();
-const signOut = authContext?.signOut ?? (() => {});
+**2. Estilo de Pills Melhorado**
+
+Pills mais visiveis com hover states consistentes.
+
+---
+
+### Nova Estrutura Visual
+
+```text
++------------------------------------------------------------------+
+|  [FolderKanban]  Projetos                                         |
+|                  Gerencie seus projetos e tarefas                 |
++------------------------------------------------------------------+
+
++----------+  +----------+  +----------+  +----------+
+| Total    |  | A Fazer  |  | Progresso|  | Concluido|
+| 15       |  | 5        |  | 6        |  | 4        |
++----------+  +----------+  +----------+  +----------+
+
++------------------------------------------------------------------+
+| Filtros: [Categoria v] [Status v]              [+ Novo Projeto]  |
++------------------------------------------------------------------+
+
++------------------------------------------------------------------+
+| Categorias: [+ Nova] [Desenvolvimento] [Design] [Marketing]      |
++------------------------------------------------------------------+
+
+[Quadro]  [Tarefas]
+
++----------+  +----------+  +----------+  +----------+
+| A Fazer  |  | Progresso|  | Bloqueado|  | Concluido|
+| (5)      |  | (3)      |  | (1)      |  | (6)      |
+|----------|  |----------|  |----------|  |----------|
+| [Card 1] |  | [Card 1] |  | [Card 1] |  | [Card 1] |
+| [Card 2] |  | [Card 2] |  |          |  | [Card 2] |
++----------+  +----------+  +----------+  +----------+
 ```
 
 ---
@@ -96,26 +152,43 @@ const signOut = authContext?.signOut ?? (() => {});
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/contexts/RealtimeContext.tsx` | Adicionar `useRealtimeContextSafe` |
-| `src/contexts/AuthContext.tsx` | Adicionar `useAuthContextSafe` |
-| `src/components/layout/AppLayout.tsx` | Usar hook seguro |
-| `src/components/layout/AppSidebar.tsx` | Usar hook seguro |
-| `src/components/layout/MobileNav.tsx` | Usar hook seguro |
+| `src/pages/ProjetosDashboard.tsx` | Redesign completo com header, KPIs, tabs |
+| `src/components/projetos/KanbanColumn.tsx` | Estilo glass-card, header melhorado |
+| `src/components/projetos/ProjectCard.tsx` | Layout reorganizado, dropdown de acoes |
+| `src/components/projetos/CategoryManager.tsx` | Container card, pills melhoradas |
+| `src/components/projetos/ProjectTasksSection.tsx` | Ajustes menores de estilo |
+
+---
+
+### Detalhes Tecnicos
+
+**CSS Classes Padrao do App:**
+- `glass-card` para cards com backdrop blur
+- `animate-fade-in` para entrada suave
+- `space-y-6` entre secoes principais
+- `gap-4` entre cards de grid
+- Headers com `p-2 rounded-lg bg-primary/10` para icone
+- Titulos com `font-display font-bold`
+
+**Componentes UI:**
+- Usar `Tabs` do shadcn para separar Kanban/Tarefas
+- Usar `Badge` para contadores
+- Usar `DropdownMenu` para acoes de card
+- Usar `Separator` entre secoes
+
+**Responsividade:**
+- Grid 1 coluna no mobile
+- Grid 2 colunas no tablet (md)
+- Grid 4 colunas no desktop (xl)
+- Botoes full-width no mobile
 
 ---
 
 ### Resultado Esperado
 
-- Navegacao entre menus funciona sem erros
-- Se o contexto nao estiver disponivel, usa valor padrao silenciosamente
-- O indicador de realtime mostra "desconectado" como fallback
-- Sem quebra de tela ao clicar nos itens do menu
-
----
-
-### Proximos Passos Apos Implementacao
-
-1. Testar navegacao em todas as paginas do menu
-2. Verificar se o erro nao aparece mais
-3. Confirmar que funcionalidades dependentes de contexto ainda funcionam
+- Visual consistente com o resto do app
+- Hierarquia visual clara (header -> KPIs -> filtros -> conteudo)
+- Melhor experiencia de usuario no mobile
+- Transicoes suaves e feedback visual ao interagir
+- Padroes de design profissionais aplicados
 
