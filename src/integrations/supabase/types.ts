@@ -348,6 +348,72 @@ export type Database = {
         }
         Relationships: []
       }
+      editorial_calendar_items: {
+        Row: {
+          ai_suggestions: Json | null
+          assigned_to: string | null
+          content_type: Database["public"]["Enums"]["content_type_enum"]
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          moodboard_refs: Json | null
+          platform: Database["public"]["Enums"]["content_platform"]
+          project_id: string | null
+          status: Database["public"]["Enums"]["content_status"] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_suggestions?: Json | null
+          assigned_to?: string | null
+          content_type: Database["public"]["Enums"]["content_type_enum"]
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          moodboard_refs?: Json | null
+          platform: Database["public"]["Enums"]["content_platform"]
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["content_status"] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_suggestions?: Json | null
+          assigned_to?: string | null
+          content_type?: Database["public"]["Enums"]["content_type_enum"]
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          moodboard_refs?: Json | null
+          platform?: Database["public"]["Enums"]["content_platform"]
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["content_status"] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "editorial_calendar_items_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "corporate_team"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "editorial_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -1159,6 +1225,9 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      content_platform: "instagram" | "tiktok" | "linkedin" | "blog" | "youtube"
+      content_status: "idea" | "draft" | "review" | "approved" | "published"
+      content_type_enum: "post" | "reel" | "story" | "article" | "video"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1287,6 +1356,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      content_platform: ["instagram", "tiktok", "linkedin", "blog", "youtube"],
+      content_status: ["idea", "draft", "review", "approved", "published"],
+      content_type_enum: ["post", "reel", "story", "article", "video"],
     },
   },
 } as const
