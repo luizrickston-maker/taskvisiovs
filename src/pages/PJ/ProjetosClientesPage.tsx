@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -18,7 +19,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { FolderKanban, Plus, Search } from 'lucide-react';
+import { 
+  FolderKanban, Plus, Search, Briefcase, 
+  Clock, CheckCircle2, AlertTriangle 
+} from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -132,17 +136,21 @@ export default function ProjetosClientesPage() {
   }, [corporateProjects]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
+    <div className="p-4 md:p-6 space-y-6 animate-fade-in">
+      {/* Professional Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
+        <div className="flex items-start gap-4">
+          <div className="p-2.5 rounded-xl bg-primary/10">
             <FolderKanban className="w-6 h-6 text-primary" />
-            Projetos de Clientes
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie projetos e acompanhe o progresso de cada cliente
-          </p>
+          </div>
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">
+              Projetos de Clientes
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Gerencie projetos e acompanhe o progresso de cada cliente
+            </p>
+          </div>
         </div>
         <Button onClick={() => {
           setEditingProject(null);
@@ -153,63 +161,106 @@ export default function ProjetosClientesPage() {
         </Button>
       </div>
       
-      {/* Stats Cards */}
+      {/* KPI Cards with glass-card and icons */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card rounded-lg p-4 border">
-          <p className="text-sm text-muted-foreground">Total</p>
-          <p className="text-2xl font-bold">{stats.total}</p>
-        </div>
-        <div className="bg-card rounded-lg p-4 border">
-          <p className="text-sm text-muted-foreground">Em Progresso</p>
-          <p className="text-2xl font-bold text-blue-500">{stats.inProgress}</p>
-        </div>
-        <div className="bg-card rounded-lg p-4 border">
-          <p className="text-sm text-muted-foreground">Concluídos</p>
-          <p className="text-2xl font-bold text-green-500">{stats.completed}</p>
-        </div>
-        <div className="bg-card rounded-lg p-4 border">
-          <p className="text-sm text-muted-foreground">Atrasados</p>
-          <p className="text-2xl font-bold text-destructive">{stats.overdue}</p>
-        </div>
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Total</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Briefcase className="w-5 h-5 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Em Progresso</p>
+                <p className="text-2xl font-bold text-blue-500">{stats.inProgress}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <Clock className="w-5 h-5 text-blue-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Concluídos</p>
+                <p className="text-2xl font-bold text-green-500">{stats.completed}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Atrasados</p>
+                <p className="text-2xl font-bold text-destructive">{stats.overdue}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-destructive/10">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por projeto, cliente ou empresa..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full md:w-40">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos Status</SelectItem>
-            <SelectItem value="todo">A Fazer</SelectItem>
-            <SelectItem value="progress">Em Progresso</SelectItem>
-            <SelectItem value="blocked">Bloqueado</SelectItem>
-            <SelectItem value="done">Concluído</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-full md:w-40">
-            <SelectValue placeholder="Prioridade" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="1">P1 - Crítica</SelectItem>
-            <SelectItem value="2">P2 - Alta</SelectItem>
-            <SelectItem value="3">P3 - Média</SelectItem>
-            <SelectItem value="4">P4 - Baixa</SelectItem>
-            <SelectItem value="5">P5 - Mínima</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Filters in Card Container */}
+      <Card className="glass-card">
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por projeto, cliente ou empresa..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Status</SelectItem>
+                <SelectItem value="todo">A Fazer</SelectItem>
+                <SelectItem value="progress">Em Progresso</SelectItem>
+                <SelectItem value="blocked">Bloqueado</SelectItem>
+                <SelectItem value="done">Concluído</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Prioridade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="1">P1 - Crítica</SelectItem>
+                <SelectItem value="2">P2 - Alta</SelectItem>
+                <SelectItem value="3">P3 - Média</SelectItem>
+                <SelectItem value="4">P4 - Baixa</SelectItem>
+                <SelectItem value="5">P5 - Mínima</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Projects Grid */}
       {sortedProjects.length === 0 ? (

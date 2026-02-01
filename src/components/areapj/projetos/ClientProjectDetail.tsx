@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -20,9 +20,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   ArrowLeft, Plus, Calendar, Clock, Building2, User, 
-  CheckCircle2, Circle, Hourglass, Trash2, Edit2, AlertTriangle
+  CheckCircle2, Circle, Hourglass, Trash2, Edit2, AlertTriangle, MoreHorizontal
 } from 'lucide-react';
 import { format, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -46,6 +52,14 @@ const priorityConfig = {
   3: { label: 'P3', color: 'bg-yellow-500 text-black' },
   4: { label: 'P4', color: 'bg-blue-500 text-white' },
   5: { label: 'P5', color: 'bg-muted text-muted-foreground' },
+};
+
+const priorityBorderColors = {
+  1: 'border-l-4 border-l-red-500',
+  2: 'border-l-4 border-l-orange-500',
+  3: 'border-l-4 border-l-yellow-500',
+  4: 'border-l-4 border-l-blue-500',
+  5: 'border-l-4 border-l-gray-400',
 };
 
 const statusConfig = {
@@ -133,13 +147,14 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
 
   const renderTaskCard = (task: ProjectTask) => {
     const taskPriority = priorityConfig[task.priority as keyof typeof priorityConfig] || priorityConfig[3];
-    const taskStatus = taskStatusConfig[task.status as keyof typeof taskStatusConfig] || taskStatusConfig.todo;
+    const taskPriorityBorder = priorityBorderColors[task.priority as keyof typeof priorityBorderColors] || priorityBorderColors[3];
     const isOverdue = task.deadline && isPast(new Date(task.deadline)) && task.status !== 'done';
     
     return (
       <Card key={task.id} className={cn(
-        "transition-all duration-200",
-        isOverdue && "border-destructive/50"
+        "glass-card transition-all duration-200",
+        taskPriorityBorder,
+        isOverdue && "border-l-destructive"
       )}>
         <CardContent className="p-3 space-y-2">
           <div className="flex items-start justify-between gap-2">
@@ -149,27 +164,29 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
                 <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
               )}
             </div>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => {
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => {
                   setEditingTask(task);
                   setTaskFormOpen(true);
-                }}
-              >
-                <Edit2 className="w-3 h-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-destructive hover:text-destructive"
-                onClick={() => setDeletingTaskId(task.id)}
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
-            </div>
+                }}>
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setDeletingTaskId(task.id)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Excluir
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           <div className="flex items-center gap-2 flex-wrap">
@@ -192,7 +209,7 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
           </div>
           
           {/* Quick status buttons */}
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-wrap">
             {task.status !== 'todo' && (
               <Button 
                 variant="ghost" 
@@ -262,9 +279,9 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
             </div>
           </DialogHeader>
           
-          {/* Project Stats */}
+          {/* Project Stats with glass-card */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4">
-            <Card>
+            <Card className="glass-card">
               <CardContent className="p-3 text-center">
                 <div className="flex items-center justify-center gap-2">
                   <Badge className={priority.color}>{priority.label}</Badge>
@@ -277,9 +294,9 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
             </Card>
             
             {project.deadline && (
-              <Card>
+              <Card className="glass-card">
                 <CardContent className="p-3 text-center">
-                  <p className="text-xs text-muted-foreground">Prazo</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Prazo</p>
                   <p className="font-semibold">
                     {format(new Date(project.deadline), "dd/MM/yyyy", { locale: ptBR })}
                   </p>
@@ -287,17 +304,17 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
               </Card>
             )}
             
-            <Card>
+            <Card className="glass-card">
               <CardContent className="p-3 text-center">
-                <p className="text-xs text-muted-foreground">Progresso</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Progresso</p>
                 <p className="font-semibold">{progress}%</p>
                 <Progress value={progress} className="h-1 mt-1" />
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="glass-card">
               <CardContent className="p-3 text-center">
-                <p className="text-xs text-muted-foreground">Tempo</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Tempo</p>
                 <p className="font-semibold text-sm">
                   {timeStats.actual}h / {timeStats.estimated}h
                 </p>
