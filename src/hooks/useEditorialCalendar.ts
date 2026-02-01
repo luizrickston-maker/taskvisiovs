@@ -7,9 +7,9 @@ import type { Json } from '@/integrations/supabase/types';
 import type { 
   EditorialCalendarItem, 
   EditorialComment, 
-  NewEditorialCalendarItem,
   NewEditorialComment,
   EditorialCalendarItemUpdate,
+  EditorialCalendarItemInput,
   ContentPlatform,
   ContentStatus
 } from '@/types/editorial';
@@ -92,7 +92,7 @@ export function useAddEditorialCalendarItem() {
   const { addEditorialCalendarItem } = useAppStore();
 
   return useMutation({
-    mutationFn: async (newItem: NewEditorialCalendarItem) => {
+    mutationFn: async (newItem: EditorialCalendarItemInput) => {
       if (!user?.id) throw new Error('Usuário não autenticado');
 
       const { data, error } = await supabase
