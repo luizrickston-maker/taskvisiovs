@@ -2,9 +2,15 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Calendar, Clock, Building2, User, AlertTriangle, 
-  CheckCircle2, Circle, Trash2, Edit2
+  CheckCircle2, Circle, MoreHorizontal, Trash2, Edit2, Hourglass
 } from 'lucide-react';
 import { format, isPast, isWithinInterval, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -27,9 +33,17 @@ const priorityConfig = {
   5: { label: 'P5', color: 'bg-muted text-muted-foreground' },
 };
 
+const priorityBorderColors = {
+  1: 'border-l-4 border-l-red-500',
+  2: 'border-l-4 border-l-orange-500',
+  3: 'border-l-4 border-l-yellow-500',
+  4: 'border-l-4 border-l-blue-500',
+  5: 'border-l-4 border-l-gray-400',
+};
+
 const statusConfig = {
   todo: { label: 'A Fazer', color: 'bg-muted text-muted-foreground', icon: Circle },
-  progress: { label: 'Em Progresso', color: 'bg-blue-500/20 text-blue-400', icon: Clock },
+  progress: { label: 'Em Progresso', color: 'bg-blue-500/20 text-blue-400', icon: Hourglass },
   blocked: { label: 'Bloqueado', color: 'bg-destructive/20 text-destructive', icon: AlertTriangle },
   done: { label: 'Concluído', color: 'bg-green-500/20 text-green-400', icon: CheckCircle2 },
 };
@@ -43,6 +57,7 @@ export function ClientProjectCard({ project, tasks, onEdit, onDelete, onClick }:
   const actualHours = tasks.reduce((sum, t) => sum + (t.actual_hours || 0), 0);
   
   const priority = priorityConfig[project.priority as keyof typeof priorityConfig] || priorityConfig[3];
+  const priorityBorder = priorityBorderColors[project.priority as keyof typeof priorityBorderColors] || priorityBorderColors[3];
   const status = statusConfig[project.status as keyof typeof statusConfig] || statusConfig.todo;
   const StatusIcon = status.icon;
   
@@ -53,19 +68,14 @@ export function ClientProjectCard({ project, tasks, onEdit, onDelete, onClick }:
     start: new Date(),
     end: addDays(deadline, 7)
   });
-  
-  const getProgressColor = () => {
-    if (progress >= 80) return 'bg-green-500';
-    if (progress >= 50) return 'bg-yellow-500';
-    return 'bg-blue-500';
-  };
 
   return (
     <Card 
       className={cn(
-        "transition-all duration-200 hover:shadow-lg cursor-pointer group",
-        isOverdue && "border-destructive/50",
-        isNearDeadline && !isOverdue && "border-yellow-500/50"
+        "glass-card transition-all duration-200 hover:shadow-lg cursor-pointer",
+        priorityBorder,
+        isOverdue && "border-l-destructive",
+        isNearDeadline && !isOverdue && "border-l-yellow-500"
       )}
       onClick={onClick}
     >
@@ -88,24 +98,26 @@ export function ClientProjectCard({ project, tasks, onEdit, onDelete, onClick }:
               )}
             </div>
           </div>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            >
-              <Edit2 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-destructive hover:text-destructive"
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+                <Edit2 className="w-4 h-4 mr-2" />
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       
