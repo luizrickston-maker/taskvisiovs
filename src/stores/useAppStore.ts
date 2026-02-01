@@ -4,9 +4,9 @@ import type {
   Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask,
   SalesGoal, Prospect, CorporatePricing, CorporateInvestment, CorporateTeamMember,
   ServicePlan, ServicePlanItem, DocumentType, ProspectDocument,
-  CorporateCostCategory, CorporateCost, PaymentFeeSetting,
-  EditorialCalendarItem, EditorialComment
+  CorporateCostCategory, CorporateCost, PaymentFeeSetting
 } from '@/types/database';
+import type { EditorialCalendarItem, EditorialComment } from '@/types/editorial';
 
 interface AppState {
   // Data

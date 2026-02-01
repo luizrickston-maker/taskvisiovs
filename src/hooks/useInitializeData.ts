@@ -5,9 +5,9 @@ import type {
   Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, 
   UserPreference, CustomTimeBlockType, ProjectTask, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
-  DocumentType, CorporateCostCategory, CorporateCost, PaymentFeeSetting,
-  EditorialCalendarItem, EditorialComment
+  DocumentType, CorporateCostCategory, CorporateCost, PaymentFeeSetting
 } from '@/types/database';
+import type { EditorialCalendarItem, EditorialComment } from '@/types/editorial';
 
 export function useInitializeData(userId: string | undefined) {
   const loadingRef = useRef(false);

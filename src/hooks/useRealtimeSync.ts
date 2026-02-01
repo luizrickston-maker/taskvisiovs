@@ -5,8 +5,9 @@ import type {
   Income, Expense, Debt, Saving, Task, 
   TimeBlock, Project, Script, Goal, Category, ProjectTask, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
-  CorporateCostCategory, CorporateCost, EditorialCalendarItem, EditorialComment
+  CorporateCostCategory, CorporateCost
 } from '@/types/database';
+import type { EditorialCalendarItem, EditorialComment } from '@/types/editorial';
 
 type RealtimePayload<T> = {
   eventType: 'INSERT' | 'UPDATE' | 'DELETE';
