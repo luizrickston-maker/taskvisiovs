@@ -1,194 +1,174 @@
 
+## Plano: Redesign Profissional da Tela de Projetos de Clientes (Versao Empresarial)
 
-## Plano: Redesign Profissional da Tela de Projetos
+### Analise Comparativa
 
-### Problemas Identificados
+Comparei a tela de Projetos de Clientes (`/pj/projetos`) com o redesign que fizemos na versao pessoal e identifiquei as seguintes diferencas:
 
-Analisei a tela de Projetos (`/projetos` e `/pj/projetos`) e comparei com outras telas do app como "Planos de Servico", "Caixa" e "Financas". Identifiquei os seguintes problemas:
-
-| Problema | Descricao |
-|----------|-----------|
-| **Header inconsistente** | Falta o padrao de header com icone + titulo + descricao usado em outras paginas |
-| **Sem KPIs visuais** | Outras telas tem cards de resumo (KPIs) no topo; Projetos nao tem |
-| **Espacamento irregular** | Gaps e espacamentos nao seguem o sistema de design (space-y-6 padrao) |
-| **Filtros desorganizados** | Filtros e botao misturados no header sem separacao visual |
-| **Categorias sem destaque** | Barra de categorias parece perdida, sem container/card |
-| **Cards Kanban simples** | Cards do projeto muito basicos comparados ao padrao glass-card do app |
-| **Secao de Tarefas isolada** | Falta transicao visual entre Kanban e secao de Tarefas |
-| **Mobile nao otimizado** | Layout nao responsivo como outras paginas |
+| Elemento | Versao Pessoal (Atualizada) | Versao Empresarial (Atual) |
+|----------|----------------------------|---------------------------|
+| **Header** | Icone em container destacado + titulo + descricao | Icone inline simples |
+| **KPIs** | Cards `glass-card` com icones coloridos | Cards simples sem icones |
+| **Filtros** | Card container organizado | Elementos soltos |
+| **Cards de Projeto** | DropdownMenu para acoes | Botoes visíveis no hover |
+| **Layout Geral** | `p-4 md:p-6 space-y-6` | `space-y-6` sem padding externo |
+| **Animacoes** | `animate-fade-in` aplicado | Presente |
 
 ---
 
-### Solucao Proposta
+### Alteracoes Necessarias
 
-Redesenhar a tela de Projetos seguindo exatamente os padroes visuais das telas profissionais do app:
+#### 1. ProjetosClientesPage.tsx - Redesign Completo
 
----
-
-### Alteracoes no ProjetosDashboard.tsx
-
-**1. Header Profissional**
-
-Adicionar o padrao de header com icone destacado:
-
+**Header Profissional**
 ```text
 +--------------------------------------------------+
-|  [Icone]  Projetos                               |
-|           Gerencie seus projetos e tarefas       |
+|  [Container] [Icone]                              |
+|                      Projetos de Clientes        |
+|                      Gerencie projetos e...      |
 +--------------------------------------------------+
 ```
 
-**2. KPIs de Resumo**
+**KPIs com Estilo glass-card**
+- Adicionar icones coloridos em cada KPI
+- Usar classe `glass-card`
+- Adicionar icone no container (como versao pessoal)
 
-Adicionar cards de metricas no topo (como PlansManager):
+**Barra de Filtros em Card Container**
+- Envolver filtros em `Card` com `glass-card`
+- Organizar busca + filtros em layout mais limpo
 
+---
+
+#### 2. ClientProjectCard.tsx - Melhorias
+
+**Migrar Acoes para DropdownMenu**
+- Substituir botoes Edit/Delete por menu dropdown
+- Adicionar borda lateral baseada em prioridade (padrao da versao pessoal)
+- Usar classe `glass-card`
+
+**Estrutura Atualizada**
 ```text
-+-------------+  +-------------+  +-------------+  +-------------+
-| Total       |  | Em Progresso|  | Bloqueados  |  | Concluidos  |
-| 12 projetos |  | 4 projetos  |  | 2 projetos  |  | 6 projetos  |
-+-------------+  +-------------+  +-------------+  +-------------+
-```
-
-**3. Barra de Filtros Organizada**
-
-Separar filtros do botao de acao com layout claro:
-
-```text
-+--------------------------------------------------+
-| [Filtro] [Categoria]   Categorias: [+] [Dev] [UI]|
-|                                     [Novo Projeto]|
-+--------------------------------------------------+
-```
-
-**4. Tabs para Organizar Conteudo**
-
-Usar Tabs para separar Kanban e Tarefas:
-
-```text
-[Quadro Kanban]  [Tarefas]
++----------------------------------------+
+| [Borda P1-P5]                          |
+|                                        |
+|  Nome do Projeto            [Menu ...] |
+|  Cliente | Empresa                     |
+|                                        |
+|  [P1] [Em Progresso]                   |
+|                                        |
+|  Prazo: 15/02/2026                     |
+|                                        |
+|  Progresso: 75%  ████████░░           |
+|  4/6 tarefas    12h / 20h             |
++----------------------------------------+
 ```
 
 ---
 
-### Alteracoes no KanbanColumn.tsx
+#### 3. ClientProjectDetail.tsx - Ajustes de Estilo
 
-**1. Estilo Glass-Card**
+**Cards de Stats**
+- Aplicar `glass-card` aos cards de estatísticas
+- Melhorar layout dos KPIs internos
 
-Atualizar para usar `glass-card` consistente com o resto do app.
-
-**2. Header com Badge de Contador**
-
-Melhorar header com badge estilizado para contagem.
-
-**3. Area de Drop Melhorada**
-
-Adicionar feedback visual mais claro ao arrastar.
-
----
-
-### Alteracoes no ProjectCard.tsx
-
-**1. Hover e Shadow Consistentes**
-
-Usar mesmas sombras e transicoes das outras cards do app.
-
-**2. Layout de Informacoes**
-
-Reorganizar informacoes com hierarquia visual clara.
-
-**3. Botoes de Acao em Dropdown**
-
-Mover acoes para um menu dropdown (padrao usado em outras partes do app).
-
----
-
-### Alteracoes no CategoryManager.tsx
-
-**1. Container com Card**
-
-Envolver categorias em um Card sutil para dar destaque.
-
-**2. Estilo de Pills Melhorado**
-
-Pills mais visiveis com hover states consistentes.
-
----
-
-### Nova Estrutura Visual
-
-```text
-+------------------------------------------------------------------+
-|  [FolderKanban]  Projetos                                         |
-|                  Gerencie seus projetos e tarefas                 |
-+------------------------------------------------------------------+
-
-+----------+  +----------+  +----------+  +----------+
-| Total    |  | A Fazer  |  | Progresso|  | Concluido|
-| 15       |  | 5        |  | 6        |  | 4        |
-+----------+  +----------+  +----------+  +----------+
-
-+------------------------------------------------------------------+
-| Filtros: [Categoria v] [Status v]              [+ Novo Projeto]  |
-+------------------------------------------------------------------+
-
-+------------------------------------------------------------------+
-| Categorias: [+ Nova] [Desenvolvimento] [Design] [Marketing]      |
-+------------------------------------------------------------------+
-
-[Quadro]  [Tarefas]
-
-+----------+  +----------+  +----------+  +----------+
-| A Fazer  |  | Progresso|  | Bloqueado|  | Concluido|
-| (5)      |  | (3)      |  | (1)      |  | (6)      |
-|----------|  |----------|  |----------|  |----------|
-| [Card 1] |  | [Card 1] |  | [Card 1] |  | [Card 1] |
-| [Card 2] |  | [Card 2] |  |          |  | [Card 2] |
-+----------+  +----------+  +----------+  +----------+
-```
+**Task Cards**
+- Adicionar borda de prioridade
+- Migrar botoes para DropdownMenu
 
 ---
 
 ### Arquivos a Modificar
 
-| Arquivo | Alteracao |
+| Arquivo | Alteracoes |
 |---------|-----------|
-| `src/pages/ProjetosDashboard.tsx` | Redesign completo com header, KPIs, tabs |
-| `src/components/projetos/KanbanColumn.tsx` | Estilo glass-card, header melhorado |
-| `src/components/projetos/ProjectCard.tsx` | Layout reorganizado, dropdown de acoes |
-| `src/components/projetos/CategoryManager.tsx` | Container card, pills melhoradas |
-| `src/components/projetos/ProjectTasksSection.tsx` | Ajustes menores de estilo |
+| `src/pages/PJ/ProjetosClientesPage.tsx` | Header profissional, KPIs com glass-card e icones, filtros em card container |
+| `src/components/areapj/projetos/ClientProjectCard.tsx` | glass-card, borda de prioridade, DropdownMenu para acoes |
+| `src/components/areapj/projetos/ClientProjectDetail.tsx` | glass-card nos stats, melhorar task cards |
 
 ---
 
 ### Detalhes Tecnicos
 
-**CSS Classes Padrao do App:**
-- `glass-card` para cards com backdrop blur
-- `animate-fade-in` para entrada suave
-- `space-y-6` entre secoes principais
-- `gap-4` entre cards de grid
-- Headers com `p-2 rounded-lg bg-primary/10` para icone
-- Titulos com `font-display font-bold`
+**Classes CSS Padrao**
+```tsx
+// Header container
+<div className="p-2.5 rounded-xl bg-primary/10">
+  <FolderKanban className="w-6 h-6 text-primary" />
+</div>
 
-**Componentes UI:**
-- Usar `Tabs` do shadcn para separar Kanban/Tarefas
-- Usar `Badge` para contadores
-- Usar `DropdownMenu` para acoes de card
-- Usar `Separator` entre secoes
+// KPI Cards
+<Card className="glass-card">
+  <CardContent className="p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-xs text-muted-foreground uppercase tracking-wide">Label</p>
+        <p className="text-2xl font-bold">Value</p>
+      </div>
+      <div className="p-2 rounded-lg bg-primary/10">
+        <Icon className="w-5 h-5 text-primary" />
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
-**Responsividade:**
-- Grid 1 coluna no mobile
-- Grid 2 colunas no tablet (md)
-- Grid 4 colunas no desktop (xl)
-- Botoes full-width no mobile
+// Borda de Prioridade nos Cards
+const priorityBorderColors = {
+  1: 'border-l-4 border-l-red-500',
+  2: 'border-l-4 border-l-orange-500',
+  3: 'border-l-4 border-l-yellow-500',
+  4: 'border-l-4 border-l-blue-500',
+  5: 'border-l-4 border-l-gray-400',
+};
+```
+
+**Componentes a Importar**
+```tsx
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { MoreHorizontal, Clock, AlertTriangle } from 'lucide-react';
+```
+
+---
+
+### Estrutura Visual Final
+
+```text
++------------------------------------------------------------------+
+|  [Container]                                                      |
+|  [FolderKanban]  Projetos de Clientes                            |
+|                  Gerencie projetos e acompanhe o progresso       |
+|                                                [+ Novo Projeto]   |
++------------------------------------------------------------------+
+
++-------------+  +-------------+  +-------------+  +-------------+
+| [Icon]      |  | [Icon]      |  | [Icon]      |  | [Icon]      |
+| Total       |  | Em Progresso|  | Concluidos  |  | Atrasados   |
+| 8           |  | 3           |  | 4           |  | 1           |
++-------------+  +-------------+  +-------------+  +-------------+
+
++------------------------------------------------------------------+
+| [Search icon] Buscar...     [Status v] [Prioridade v]            |
++------------------------------------------------------------------+
+
++----------------+  +----------------+  +----------------+
+| [Border P1]    |  | [Border P2]    |  | [Border P3]    |
+|                |  |                |  |                |
+| Website XYZ    |  | App Mobile     |  | Dashboard      |
+| Joao | Empresa |  | Maria | Corp   |  | Pedro | Tech   |
+|                |  |                |  |                |
+| [P1] [Progress]|  | [P2] [Todo]    |  | [P3] [Done]    |
+|                |  |                |  |                |
+| 15/02/2026     |  | 20/03/2026     |  | Concluido      |
+| ████████░░ 80% |  | ██░░░░░░ 25%   |  | ██████████100% |
++----------------+  +----------------+  +----------------+
+```
 
 ---
 
 ### Resultado Esperado
 
-- Visual consistente com o resto do app
-- Hierarquia visual clara (header -> KPIs -> filtros -> conteudo)
-- Melhor experiencia de usuario no mobile
-- Transicoes suaves e feedback visual ao interagir
-- Padroes de design profissionais aplicados
-
+- Visual 100% consistente entre versao Pessoal e Empresarial
+- Hierarquia visual profissional (header -> KPIs -> filtros -> conteudo)
+- Acoes organizadas em menus dropdown
+- Bordas de prioridade para identificacao visual rapida
+- Cards com efeito glass-card para visual moderno
