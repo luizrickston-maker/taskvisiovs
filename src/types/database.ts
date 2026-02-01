@@ -368,3 +368,33 @@ export interface PaymentMethodEntry {
   installments?: number;
   fee?: number;
 }
+
+// Editorial Calendar Types
+export type ContentStatus = 'idea' | 'draft' | 'review' | 'approved' | 'published';
+export type ContentPlatform = 'instagram' | 'tiktok' | 'linkedin' | 'blog' | 'youtube';
+export type ContentTypeEnum = 'post' | 'reel' | 'story' | 'article' | 'video';
+
+export interface EditorialCalendarItem {
+  id: string;
+  user_id: string;
+  project_id?: string;
+  title: string;
+  description?: string;
+  due_date: string;
+  status: ContentStatus;
+  platform: ContentPlatform;
+  content_type: ContentTypeEnum;
+  assigned_to?: string;
+  moodboard_refs?: unknown[];
+  ai_suggestions?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EditorialComment {
+  id: string;
+  item_id: string;
+  user_id: string;
+  comment_text: string;
+  created_at: string;
+}

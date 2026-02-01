@@ -5,7 +5,7 @@ import type {
   Income, Expense, Debt, Saving, Task, 
   TimeBlock, Project, Script, Goal, Category, ProjectTask, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
-  CorporateCostCategory, CorporateCost
+  CorporateCostCategory, CorporateCost, EditorialCalendarItem, EditorialComment
 } from '@/types/database';
 
 type RealtimePayload<T> = {
@@ -36,6 +36,8 @@ export function useRealtimeSync(userId: string | undefined) {
     addServicePlanItem, updateServicePlanItem, deleteServicePlanItem,
     addCorporateCostCategory, updateCorporateCostCategory, deleteCorporateCostCategory,
     addCorporateCost, updateCorporateCost, deleteCorporateCost,
+    addEditorialCalendarItem, updateEditorialCalendarItem, deleteEditorialCalendarItem,
+    addEditorialComment, updateEditorialComment, deleteEditorialComment,
   } = useAppStore();
 
   useEffect(() => {
@@ -358,6 +360,38 @@ export function useRealtimeSync(userId: string | undefined) {
             updateCorporateCost(newRecord.id, newRecord);
           } else if (eventType === 'DELETE') {
             deleteCorporateCost(oldRecord.id);
+          }
+        }
+      )
+      // Editorial Calendar Items
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'editorial_calendar_items', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<EditorialCalendarItem>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().editorialCalendarItems.some(i => i.id === newRecord.id);
+            if (!exists) addEditorialCalendarItem(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateEditorialCalendarItem(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteEditorialCalendarItem(oldRecord.id);
+          }
+        }
+      )
+      // Editorial Comments
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'editorial_comments', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<EditorialComment>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().editorialComments.some(c => c.id === newRecord.id);
+            if (!exists) addEditorialComment(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateEditorialComment(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteEditorialComment(oldRecord.id);
           }
         }
       )

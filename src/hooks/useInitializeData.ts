@@ -5,7 +5,8 @@ import type {
   Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, 
   UserPreference, CustomTimeBlockType, ProjectTask, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
-  DocumentType, CorporateCostCategory, CorporateCost, PaymentFeeSetting
+  DocumentType, CorporateCostCategory, CorporateCost, PaymentFeeSetting,
+  EditorialCalendarItem, EditorialComment
 } from '@/types/database';
 
 export function useInitializeData(userId: string | undefined) {
@@ -36,6 +37,8 @@ export function useInitializeData(userId: string | undefined) {
     setCorporateCostCategories,
     setCorporateCosts,
     setPaymentFeeSettings,
+    setEditorialCalendarItems,
+    setEditorialComments,
     setIsLoading,
     setDataInitialized,
     dataInitialized,
@@ -83,6 +86,8 @@ export function useInitializeData(userId: string | undefined) {
           costCategoriesRes,
           costsRes,
           paymentFeeSettingsRes,
+          editorialCalendarItemsRes,
+          editorialCommentsRes,
         ] = await Promise.all([
           supabase.from('categories').select('*').order('created_at', { ascending: true }),
           supabase.from('incomes').select('*').order('date', { ascending: false }),
@@ -109,6 +114,8 @@ export function useInitializeData(userId: string | undefined) {
           supabase.from('corporate_cost_categories').select('*').order('name', { ascending: true }),
           supabase.from('corporate_costs').select('*').order('created_at', { ascending: false }),
           supabase.from('payment_fee_settings').select('*').order('method', { ascending: true }),
+          supabase.from('editorial_calendar_items').select('*').order('due_date', { ascending: true }),
+          supabase.from('editorial_comments').select('*').order('created_at', { ascending: false }),
         ]);
 
         if (categoriesRes.data) setCategories(categoriesRes.data as Category[]);
@@ -136,6 +143,8 @@ export function useInitializeData(userId: string | undefined) {
         if (costCategoriesRes.data) setCorporateCostCategories(costCategoriesRes.data as CorporateCostCategory[]);
         if (costsRes.data) setCorporateCosts(costsRes.data as CorporateCost[]);
         if (paymentFeeSettingsRes.data) setPaymentFeeSettings(paymentFeeSettingsRes.data as PaymentFeeSetting[]);
+        if (editorialCalendarItemsRes.data) setEditorialCalendarItems(editorialCalendarItemsRes.data as EditorialCalendarItem[]);
+        if (editorialCommentsRes.data) setEditorialComments(editorialCommentsRes.data as EditorialComment[]);
 
         setDataInitialized(true);
       } catch (error) {
@@ -147,5 +156,5 @@ export function useInitializeData(userId: string | undefined) {
     };
 
     loadAllData();
-  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setSalesGoals, setProspects, setCorporatePricings, setCorporateInvestments, setCorporateTeam, setServicePlans, setServicePlanItems, setDocumentTypes, setCorporateCostCategories, setCorporateCosts, setPaymentFeeSettings, setIsLoading, setDataInitialized]);
+  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setSalesGoals, setProspects, setCorporatePricings, setCorporateInvestments, setCorporateTeam, setServicePlans, setServicePlanItems, setDocumentTypes, setCorporateCostCategories, setCorporateCosts, setPaymentFeeSettings, setEditorialCalendarItems, setEditorialComments, setIsLoading, setDataInitialized]);
 }

@@ -4,7 +4,8 @@ import type {
   Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask,
   SalesGoal, Prospect, CorporatePricing, CorporateInvestment, CorporateTeamMember,
   ServicePlan, ServicePlanItem, DocumentType, ProspectDocument,
-  CorporateCostCategory, CorporateCost, PaymentFeeSetting
+  CorporateCostCategory, CorporateCost, PaymentFeeSetting,
+  EditorialCalendarItem, EditorialComment
 } from '@/types/database';
 
 interface AppState {
@@ -43,6 +44,10 @@ interface AppState {
   
   // Payment Fee Settings
   paymentFeeSettings: PaymentFeeSetting[];
+  
+  // Editorial Calendar
+  editorialCalendarItems: EditorialCalendarItem[];
+  editorialComments: EditorialComment[];
   
   // Loading states
   isLoading: boolean;
@@ -201,6 +206,18 @@ interface AppState {
   updatePaymentFeeSetting: (id: string, updates: Partial<PaymentFeeSetting>) => void;
   deletePaymentFeeSetting: (id: string) => void;
   
+  // Actions - Editorial Calendar Items
+  setEditorialCalendarItems: (items: EditorialCalendarItem[]) => void;
+  addEditorialCalendarItem: (item: EditorialCalendarItem) => void;
+  updateEditorialCalendarItem: (id: string, updates: Partial<EditorialCalendarItem>) => void;
+  deleteEditorialCalendarItem: (id: string) => void;
+  
+  // Actions - Editorial Comments
+  setEditorialComments: (comments: EditorialComment[]) => void;
+  addEditorialComment: (comment: EditorialComment) => void;
+  updateEditorialComment: (id: string, updates: Partial<EditorialComment>) => void;
+  deleteEditorialComment: (id: string) => void;
+  
   // Actions - Loading
   setIsLoading: (loading: boolean) => void;
   setDataInitialized: (initialized: boolean) => void;
@@ -236,6 +253,8 @@ const initialState = {
   corporateCostCategories: [],
   corporateCosts: [],
   paymentFeeSettings: [],
+  editorialCalendarItems: [],
+  editorialComments: [],
   isLoading: false,
   dataInitialized: false,
 };
@@ -518,6 +537,30 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   deletePaymentFeeSetting: (id) => set((state) => ({
     paymentFeeSettings: state.paymentFeeSettings.filter((s) => s.id !== id)
+  })),
+  
+  // Editorial Calendar Items
+  setEditorialCalendarItems: (editorialCalendarItems) => set({ editorialCalendarItems }),
+  addEditorialCalendarItem: (item) => set((state) => ({ 
+    editorialCalendarItems: [...state.editorialCalendarItems, item] 
+  })),
+  updateEditorialCalendarItem: (id, updates) => set((state) => ({
+    editorialCalendarItems: state.editorialCalendarItems.map((i) => i.id === id ? { ...i, ...updates } : i)
+  })),
+  deleteEditorialCalendarItem: (id) => set((state) => ({
+    editorialCalendarItems: state.editorialCalendarItems.filter((i) => i.id !== id)
+  })),
+  
+  // Editorial Comments
+  setEditorialComments: (editorialComments) => set({ editorialComments }),
+  addEditorialComment: (comment) => set((state) => ({ 
+    editorialComments: [...state.editorialComments, comment] 
+  })),
+  updateEditorialComment: (id, updates) => set((state) => ({
+    editorialComments: state.editorialComments.map((c) => c.id === id ? { ...c, ...updates } : c)
+  })),
+  deleteEditorialComment: (id) => set((state) => ({
+    editorialComments: state.editorialComments.filter((c) => c.id !== id)
   })),
   
   // Loading
