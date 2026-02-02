@@ -22,6 +22,7 @@ import FocoDashboard from "@/pages/FocoDashboard";
 
 // Lazy loaded pages - less frequently accessed or heavy
 const FinancasDashboard = lazy(() => import("@/pages/FinancasDashboard"));
+const PlanejamentoDashboard = lazy(() => import("@/pages/PlanejamentoDashboard"));
 const ProjetosDashboard = lazy(() => import("@/pages/ProjetosDashboard"));
 const ComercialDashboard = lazy(() => import("@/pages/ComercialDashboard"));
 const ConteudosDashboard = lazy(() => import("@/pages/ConteudosDashboard"));
@@ -103,6 +104,11 @@ const App = () => {
                 <Route path="/financas" element={
                   <Suspense fallback={<PageLoader />}>
                     <FinancasDashboard />
+                  </Suspense>
+                } />
+                <Route path="/planejamento" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <PlanejamentoDashboard />
                   </Suspense>
                 } />
                 <Route path="/projetos" element={
