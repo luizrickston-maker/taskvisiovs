@@ -63,6 +63,40 @@
     --status-published: 270 60% 55%;
     --status-review: 217 91% 60%;
     --status-approved: 142 76% 36%;
+    --status-progress: 217 91% 60%;
+    --status-blocked: 0 84% 60%;
+    --status-done: 142 76% 36%;
+    --status-todo: 220 9% 46%;
+
+    /* Contract type colors */
+    --contract-pj: 217 91% 60%;
+    --contract-clt: 142 76% 36%;
+    --contract-freelancer: 270 60% 55%;
+
+    /* Cost type colors */
+    --cost-recurring: 217 91% 60%;
+    --cost-fixed: 270 60% 55%;
+    --cost-occasional: 25 95% 53%;
+
+    /* Investment category colors */
+    --invest-equipment: 217 91% 60%;
+    --invest-software: 270 60% 55%;
+    --invest-furniture: 38 92% 50%;
+    --invest-marketing: 330 80% 60%;
+    --invest-other: 220 9% 46%;
+
+    /* KPI colors */
+    --kpi-projects: 217 91% 60%;
+    --kpi-sales: 142 76% 36%;
+    --kpi-tasks: 38 92% 50%;
+    --kpi-calendar: 270 60% 55%;
+    --kpi-team: 190 80% 50%;
+    --kpi-editorial: 330 80% 60%;
+
+    /* Tier colors */
+    --tier-bronze: 25 60% 40%;
+    --tier-silver: 220 9% 60%;
+    --tier-gold: 48 96% 53%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -130,6 +164,40 @@
     --status-published: 270 60% 65%;
     --status-review: 217 91% 60%;
     --status-approved: 142 76% 36%;
+    --status-progress: 217 91% 60%;
+    --status-blocked: 0 63% 50%;
+    --status-done: 142 76% 45%;
+    --status-todo: 220 13% 69%;
+
+    /* Contract type colors - dark mode */
+    --contract-pj: 217 91% 60%;
+    --contract-clt: 142 76% 45%;
+    --contract-freelancer: 270 60% 65%;
+
+    /* Cost type colors - dark mode */
+    --cost-recurring: 217 91% 60%;
+    --cost-fixed: 270 60% 65%;
+    --cost-occasional: 25 95% 55%;
+
+    /* Investment category colors - dark mode */
+    --invest-equipment: 217 91% 60%;
+    --invest-software: 270 60% 65%;
+    --invest-furniture: 38 92% 55%;
+    --invest-marketing: 330 80% 65%;
+    --invest-other: 220 13% 69%;
+
+    /* KPI colors - dark mode */
+    --kpi-projects: 217 91% 60%;
+    --kpi-sales: 142 76% 45%;
+    --kpi-tasks: 38 92% 55%;
+    --kpi-calendar: 270 60% 65%;
+    --kpi-team: 190 80% 55%;
+    --kpi-editorial: 330 80% 65%;
+
+    /* Tier colors - dark mode */
+    --tier-bronze: 25 60% 50%;
+    --tier-silver: 220 13% 69%;
+    --tier-gold: 48 96% 58%;
 
     --sidebar-background: 224 71% 4%;
     --sidebar-foreground: 213 31% 91%;

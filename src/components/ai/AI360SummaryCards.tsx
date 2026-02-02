@@ -42,8 +42,8 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         <KPICard
           title="Projetos Ativos"
           icon={FolderKanban}
-          iconBg="bg-blue-500/10"
-          iconColor="text-blue-500"
+          iconBg="bg-kpi-projects/10"
+          iconColor="text-kpi-projects"
           value={summary.projects?.total ?? 0}
           trend={summary.projects?.by_status?.progress ?? 0}
           trendLabel="em progresso"
@@ -54,8 +54,8 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         <KPICard
           title="Pipeline de Vendas"
           icon={TrendingUp}
-          iconBg="bg-emerald-500/10"
-          iconColor="text-emerald-500"
+          iconBg="bg-kpi-sales/10"
+          iconColor="text-kpi-sales"
           value={formatCurrency(summary.sales_pipeline?.total_value ?? 0)}
           trend={summary.sales_pipeline?.total_prospects ?? 0}
           trendLabel="prospects ativos"
@@ -65,8 +65,8 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         <KPICard
           title="Tarefas Pendentes"
           icon={CheckSquare}
-          iconBg="bg-amber-500/10"
-          iconColor="text-amber-500"
+          iconBg="bg-kpi-tasks/10"
+          iconColor="text-kpi-tasks"
           value={summary.tasks?.total_pending ?? 0}
           trend={summary.tasks?.due_today ?? 0}
           trendLabel="para hoje"
@@ -77,8 +77,8 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         <KPICard
           title="Agenda Hoje"
           icon={Calendar}
-          iconBg="bg-violet-500/10"
-          iconColor="text-violet-500"
+          iconBg="bg-kpi-calendar/10"
+          iconColor="text-kpi-calendar"
           value={summary.schedule?.today ?? 0}
           trend={summary.schedule?.tomorrow ?? 0}
           trendLabel="amanhã"
@@ -92,7 +92,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         <Card className="glass-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <FolderKanban className="h-4 w-4 text-blue-500" />
+              <FolderKanban className="h-4 w-4 text-kpi-projects" />
               Projetos por Status
             </CardTitle>
           </CardHeader>
@@ -107,7 +107,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
               label="Em Progresso"
               value={summary.projects?.by_status?.progress ?? 0}
               total={summary.projects?.total ?? 1}
-              color="bg-blue-500"
+              color="bg-status-progress"
             />
             <StatusBar
               label="Bloqueado"
@@ -119,7 +119,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
               label="Concluído"
               value={summary.projects?.by_status?.done ?? 0}
               total={summary.projects?.total ?? 1}
-              color="bg-emerald-500"
+              color="bg-success"
             />
             <div className="pt-2 border-t">
               <div className="flex items-center justify-between text-sm">
@@ -134,7 +134,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         <Card className="glass-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
+              <TrendingUp className="h-4 w-4 text-kpi-sales" />
               Funil de Vendas
             </CardTitle>
           </CardHeader>
@@ -143,30 +143,30 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
               label="Novo"
               value={summary.sales_pipeline?.by_status?.novo ?? 0}
               total={summary.sales_pipeline?.total_prospects ?? 1}
-              color="bg-slate-400"
+              color="bg-muted-foreground"
             />
             <StatusBar
               label="Em Negociação"
               value={summary.sales_pipeline?.by_status?.em_negociacao ?? 0}
               total={summary.sales_pipeline?.total_prospects ?? 1}
-              color="bg-amber-500"
+              color="bg-warning"
             />
             <StatusBar
               label="Proposta Enviada"
               value={summary.sales_pipeline?.by_status?.proposta_enviada ?? 0}
               total={summary.sales_pipeline?.total_prospects ?? 1}
-              color="bg-blue-500"
+              color="bg-status-progress"
             />
             <StatusBar
               label="Fechado"
               value={summary.sales_pipeline?.by_status?.fechado ?? 0}
               total={summary.sales_pipeline?.total_prospects ?? 1}
-              color="bg-emerald-500"
+              color="bg-success"
             />
             <div className="pt-2 border-t">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Valor Fechado</span>
-                <span className="font-medium text-emerald-500">
+                <span className="font-medium text-success">
                   {formatCurrency(summary.sales_pipeline?.closed_value ?? 0)}
                 </span>
               </div>
@@ -178,7 +178,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         <Card className="glass-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <CheckSquare className="h-4 w-4 text-amber-500" />
+              <CheckSquare className="h-4 w-4 text-kpi-tasks" />
               Visão de Tarefas
             </CardTitle>
           </CardHeader>
@@ -194,7 +194,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
                 icon={Zap}
                 label="Em Progresso"
                 value={summary.tasks?.by_status?.in_progress ?? 0}
-                color="text-blue-500"
+                color="text-status-progress"
               />
               <MiniStat
                 icon={AlertTriangle}
@@ -206,7 +206,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
                 icon={Target}
                 label="Alta Prioridade"
                 value={summary.tasks?.high_priority ?? 0}
-                color="text-amber-500"
+                color="text-kpi-tasks"
               />
             </div>
             <div className="pt-2 border-t">
@@ -222,25 +222,25 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         <Card className="glass-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <FileText className="h-4 w-4 text-pink-500" />
+              <FileText className="h-4 w-4 text-kpi-editorial" />
               Calendário Editorial
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-wrap gap-1.5">
-              <Badge variant="outline" className="bg-pink-500/10 text-pink-500">
+              <Badge variant="outline" className="bg-platform-instagram/10 text-platform-instagram">
                 IG: {summary.editorial?.by_platform?.instagram ?? 0}
               </Badge>
-              <Badge variant="outline" className="bg-red-500/10 text-red-500">
+              <Badge variant="outline" className="bg-platform-tiktok/10 text-platform-tiktok">
                 TT: {summary.editorial?.by_platform?.tiktok ?? 0}
               </Badge>
-              <Badge variant="outline" className="bg-red-600/10 text-red-600">
+              <Badge variant="outline" className="bg-platform-youtube/10 text-platform-youtube">
                 YT: {summary.editorial?.by_platform?.youtube ?? 0}
               </Badge>
-              <Badge variant="outline" className="bg-blue-600/10 text-blue-600">
+              <Badge variant="outline" className="bg-platform-linkedin/10 text-platform-linkedin">
                 LI: {summary.editorial?.by_platform?.linkedin ?? 0}
               </Badge>
-              <Badge variant="outline" className="bg-orange-500/10 text-orange-500">
+              <Badge variant="outline" className="bg-platform-blog/10 text-platform-blog">
                 Blog: {summary.editorial?.by_platform?.blog ?? 0}
               </Badge>
             </div>
@@ -259,7 +259,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Aprovados</span>
-                <span className="text-emerald-500">{summary.editorial?.by_status?.approved ?? 0}</span>
+                <span className="text-success">{summary.editorial?.by_status?.approved ?? 0}</span>
               </div>
             </div>
             {(summary.editorial?.overdue_count ?? 0) > 0 && (
@@ -277,7 +277,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         <Card className="glass-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Users className="h-4 w-4 text-cyan-500" />
+              <Users className="h-4 w-4 text-kpi-team" />
               Equipe
             </CardTitle>
           </CardHeader>
@@ -316,7 +316,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         <Card className="glass-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Target className="h-4 w-4 text-emerald-500" />
+              <Target className="h-4 w-4 text-kpi-sales" />
               Metas de Vendas
             </CardTitle>
           </CardHeader>

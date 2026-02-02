@@ -126,10 +126,10 @@ export default function ProjetosDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Em Progresso</p>
-                <p className="text-2xl font-bold text-amber-500">{kpis.inProgress}</p>
+                <p className="text-2xl font-bold text-status-progress">{kpis.inProgress}</p>
               </div>
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <Loader2 className="w-5 h-5 text-amber-500" />
+              <div className="p-2 rounded-lg bg-status-progress/10">
+                <Loader2 className="w-5 h-5 text-status-progress" />
               </div>
             </div>
           </CardContent>
@@ -154,10 +154,10 @@ export default function ProjetosDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Concluídos</p>
-                <p className="text-2xl font-bold text-emerald-500">{kpis.done}</p>
+                <p className="text-2xl font-bold text-success">{kpis.done}</p>
               </div>
-              <div className="p-2 rounded-lg bg-emerald-500/10">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              <div className="p-2 rounded-lg bg-success/10">
+                <CheckCircle2 className="w-5 h-5 text-success" />
               </div>
             </div>
           </CardContent>

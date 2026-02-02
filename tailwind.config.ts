@@ -93,6 +93,45 @@ export default {
           published: "hsl(var(--status-published))",
           review: "hsl(var(--status-review))",
           approved: "hsl(var(--status-approved))",
+          progress: "hsl(var(--status-progress))",
+          blocked: "hsl(var(--status-blocked))",
+          done: "hsl(var(--status-done))",
+          todo: "hsl(var(--status-todo))",
+        },
+        // Contract type colors
+        contract: {
+          pj: "hsl(var(--contract-pj))",
+          clt: "hsl(var(--contract-clt))",
+          freelancer: "hsl(var(--contract-freelancer))",
+        },
+        // Cost type colors
+        cost: {
+          recurring: "hsl(var(--cost-recurring))",
+          fixed: "hsl(var(--cost-fixed))",
+          occasional: "hsl(var(--cost-occasional))",
+        },
+        // Investment category colors
+        invest: {
+          equipment: "hsl(var(--invest-equipment))",
+          software: "hsl(var(--invest-software))",
+          furniture: "hsl(var(--invest-furniture))",
+          marketing: "hsl(var(--invest-marketing))",
+          other: "hsl(var(--invest-other))",
+        },
+        // KPI colors
+        kpi: {
+          projects: "hsl(var(--kpi-projects))",
+          sales: "hsl(var(--kpi-sales))",
+          tasks: "hsl(var(--kpi-tasks))",
+          calendar: "hsl(var(--kpi-calendar))",
+          team: "hsl(var(--kpi-team))",
+          editorial: "hsl(var(--kpi-editorial))",
+        },
+        // Tier colors
+        tier: {
+          bronze: "hsl(var(--tier-bronze))",
+          silver: "hsl(var(--tier-silver))",
+          gold: "hsl(var(--tier-gold))",
         },
       },
       borderRadius: {

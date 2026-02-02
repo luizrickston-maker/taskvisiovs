@@ -38,21 +38,21 @@ interface PlanCardProps {
 const tierConfig = {
   bronze: {
     label: 'Bronze',
-    borderColor: 'border-l-amber-700',
-    bgColor: 'bg-amber-700/10',
-    textColor: 'text-amber-700',
+    borderColor: 'border-l-tier-bronze',
+    bgColor: 'bg-tier-bronze/10',
+    textColor: 'text-tier-bronze',
   },
   silver: {
     label: 'Prata',
-    borderColor: 'border-l-slate-400',
-    bgColor: 'bg-slate-400/10',
-    textColor: 'text-slate-500',
+    borderColor: 'border-l-tier-silver',
+    bgColor: 'bg-tier-silver/10',
+    textColor: 'text-tier-silver',
   },
   gold: {
     label: 'Ouro',
-    borderColor: 'border-l-yellow-500',
-    bgColor: 'bg-yellow-500/10',
-    textColor: 'text-yellow-600',
+    borderColor: 'border-l-tier-gold',
+    bgColor: 'bg-tier-gold/10',
+    textColor: 'text-tier-gold',
   },
 };
 
@@ -263,7 +263,7 @@ export function PlanCard({ plan, planItems, pricings, onEdit }: PlanCardProps) {
             </div>
             <div className="flex items-baseline justify-between">
               <span className="text-xs text-muted-foreground">Margem de Lucro</span>
-              <span className={cn('text-sm font-medium', plan.profit_margin >= 0 ? 'text-green-600' : 'text-destructive')}>
+              <span className={cn('text-sm font-medium', plan.profit_margin >= 0 ? 'text-success' : 'text-destructive')}>
                 {plan.profit_margin.toFixed(1)}%
               </span>
             </div>

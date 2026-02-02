@@ -29,8 +29,8 @@ const platforms: { value: ScriptPlatform; label: string }[] = [
 
 const statuses: { value: ScriptStatus; label: string; color: string }[] = [
   { value: 'draft', label: 'Rascunho', color: 'bg-muted text-muted-foreground' },
-  { value: 'scheduled', label: 'Agendado', color: 'bg-yellow-500/20 text-yellow-600' },
-  { value: 'published', label: 'Publicado', color: 'bg-green-500/20 text-green-600' },
+  { value: 'scheduled', label: 'Agendado', color: 'bg-status-scheduled/20 text-status-scheduled' },
+  { value: 'published', label: 'Publicado', color: 'bg-status-published/20 text-status-published' },
 ];
 
 interface ScriptEditorProps {

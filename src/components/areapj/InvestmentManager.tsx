@@ -29,11 +29,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const categoryConfig: Record<InvestmentCategory, { label: string; icon: React.ElementType; color: string }> = {
-  equipamento: { label: 'Equipamento', icon: Package, color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
-  software: { label: 'Software', icon: Monitor, color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' },
-  mobilia: { label: 'Mobília', icon: Sofa, color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
-  marketing: { label: 'Marketing', icon: Megaphone, color: 'bg-pink-500/10 text-pink-500 border-pink-500/20' },
-  outro: { label: 'Outro', icon: MoreHorizontal, color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' },
+  equipamento: { label: 'Equipamento', icon: Package, color: 'bg-invest-equipment/10 text-invest-equipment border-invest-equipment/20' },
+  software: { label: 'Software', icon: Monitor, color: 'bg-invest-software/10 text-invest-software border-invest-software/20' },
+  mobilia: { label: 'Mobília', icon: Sofa, color: 'bg-invest-furniture/10 text-invest-furniture border-invest-furniture/20' },
+  marketing: { label: 'Marketing', icon: Megaphone, color: 'bg-invest-marketing/10 text-invest-marketing border-invest-marketing/20' },
+  outro: { label: 'Outro', icon: MoreHorizontal, color: 'bg-invest-other/10 text-invest-other border-invest-other/20' },
 };
 
 export function InvestmentManager() {

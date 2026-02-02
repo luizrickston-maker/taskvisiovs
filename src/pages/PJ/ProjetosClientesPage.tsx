@@ -182,10 +182,10 @@ export default function ProjetosClientesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Em Progresso</p>
-                <p className="text-2xl font-bold text-blue-500">{stats.inProgress}</p>
+                <p className="text-2xl font-bold text-status-progress">{stats.inProgress}</p>
               </div>
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Clock className="w-5 h-5 text-blue-500" />
+              <div className="p-2 rounded-lg bg-status-progress/10">
+                <Clock className="w-5 h-5 text-status-progress" />
               </div>
             </div>
           </CardContent>
@@ -196,10 +196,10 @@ export default function ProjetosClientesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Concluídos</p>
-                <p className="text-2xl font-bold text-green-500">{stats.completed}</p>
+                <p className="text-2xl font-bold text-success">{stats.completed}</p>
               </div>
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <div className="p-2 rounded-lg bg-success/10">
+                <CheckCircle2 className="w-5 h-5 text-success" />
               </div>
             </div>
           </CardContent>

@@ -48,31 +48,31 @@ interface ClientProjectDetailProps {
 
 const priorityConfig = {
   1: { label: 'P1', color: 'bg-destructive text-destructive-foreground' },
-  2: { label: 'P2', color: 'bg-orange-500 text-white' },
-  3: { label: 'P3', color: 'bg-yellow-500 text-black' },
-  4: { label: 'P4', color: 'bg-blue-500 text-white' },
+  2: { label: 'P2', color: 'bg-priority-high text-white' },
+  3: { label: 'P3', color: 'bg-priority-medium text-black' },
+  4: { label: 'P4', color: 'bg-priority-low text-white' },
   5: { label: 'P5', color: 'bg-muted text-muted-foreground' },
 };
 
 const priorityBorderColors = {
-  1: 'border-l-4 border-l-red-500',
-  2: 'border-l-4 border-l-orange-500',
-  3: 'border-l-4 border-l-yellow-500',
-  4: 'border-l-4 border-l-blue-500',
-  5: 'border-l-4 border-l-gray-400',
+  1: 'border-l-4 border-l-priority-critical',
+  2: 'border-l-4 border-l-priority-high',
+  3: 'border-l-4 border-l-priority-medium',
+  4: 'border-l-4 border-l-priority-low',
+  5: 'border-l-4 border-l-priority-minimal',
 };
 
 const statusConfig = {
   todo: { label: 'A Fazer', color: 'bg-muted text-muted-foreground', icon: Circle },
-  progress: { label: 'Em Progresso', color: 'bg-blue-500/20 text-blue-400', icon: Hourglass },
+  progress: { label: 'Em Progresso', color: 'bg-status-progress/20 text-status-progress', icon: Hourglass },
   blocked: { label: 'Bloqueado', color: 'bg-destructive/20 text-destructive', icon: AlertTriangle },
-  done: { label: 'Concluído', color: 'bg-green-500/20 text-green-400', icon: CheckCircle2 },
+  done: { label: 'Concluído', color: 'bg-status-done/20 text-status-done', icon: CheckCircle2 },
 };
 
 const taskStatusConfig = {
   todo: { label: 'A Fazer', color: 'bg-muted text-muted-foreground', icon: Circle },
-  in_progress: { label: 'Em Andamento', color: 'bg-blue-500/20 text-blue-400', icon: Hourglass },
-  done: { label: 'Concluída', color: 'bg-green-500/20 text-green-400', icon: CheckCircle2 },
+  in_progress: { label: 'Em Andamento', color: 'bg-status-progress/20 text-status-progress', icon: Hourglass },
+  done: { label: 'Concluída', color: 'bg-status-done/20 text-status-done', icon: CheckCircle2 },
 };
 
 export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: ClientProjectDetailProps) {

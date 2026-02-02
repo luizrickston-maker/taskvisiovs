@@ -107,8 +107,8 @@ export default function AuthCallback() {
             </div>
           )}
           {status === 'success' && (
-            <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-6 h-6 text-green-500" />
+            <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-6 h-6 text-success" />
             </div>
           )}
           {status === 'error' && (
