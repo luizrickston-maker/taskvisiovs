@@ -4,7 +4,7 @@ import type {
   Task, TimeBlock, ProjectCategory, Project, Script, UserPreference, CustomTimeBlockType, ProjectTask,
   SalesGoal, Prospect, CorporatePricing, CorporateInvestment, CorporateTeamMember,
   ServicePlan, ServicePlanItem, DocumentType, ProspectDocument,
-  CorporateCostCategory, CorporateCost, PaymentFeeSetting
+  CorporateCostCategory, CorporateCost, PaymentFeeSetting, PurchasePlan
 } from '@/types/database';
 import type { EditorialCalendarItem, EditorialComment } from '@/types/editorial';
 
@@ -48,6 +48,9 @@ interface AppState {
   // Editorial Calendar
   editorialCalendarItems: EditorialCalendarItem[];
   editorialComments: EditorialComment[];
+  
+  // Purchase Plans
+  purchasePlans: PurchasePlan[];
   
   // Loading states
   isLoading: boolean;
@@ -218,6 +221,12 @@ interface AppState {
   updateEditorialComment: (id: string, updates: Partial<EditorialComment>) => void;
   deleteEditorialComment: (id: string) => void;
   
+  // Actions - Purchase Plans
+  setPurchasePlans: (plans: PurchasePlan[]) => void;
+  addPurchasePlan: (plan: PurchasePlan) => void;
+  updatePurchasePlan: (id: string, updates: Partial<PurchasePlan>) => void;
+  deletePurchasePlan: (id: string) => void;
+  
   // Actions - Loading
   setIsLoading: (loading: boolean) => void;
   setDataInitialized: (initialized: boolean) => void;
@@ -255,6 +264,7 @@ const initialState = {
   paymentFeeSettings: [],
   editorialCalendarItems: [],
   editorialComments: [],
+  purchasePlans: [],
   isLoading: false,
   dataInitialized: false,
 };
@@ -561,6 +571,18 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   deleteEditorialComment: (id) => set((state) => ({
     editorialComments: state.editorialComments.filter((c) => c.id !== id)
+  })),
+  
+  // Purchase Plans
+  setPurchasePlans: (purchasePlans) => set({ purchasePlans }),
+  addPurchasePlan: (plan) => set((state) => ({ 
+    purchasePlans: [...state.purchasePlans, plan] 
+  })),
+  updatePurchasePlan: (id, updates) => set((state) => ({
+    purchasePlans: state.purchasePlans.map((p) => p.id === id ? { ...p, ...updates } : p)
+  })),
+  deletePurchasePlan: (id) => set((state) => ({
+    purchasePlans: state.purchasePlans.filter((p) => p.id !== id)
   })),
   
   // Loading

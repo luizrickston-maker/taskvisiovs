@@ -5,7 +5,7 @@ import type {
   Income, Expense, Debt, Saving, Task, 
   TimeBlock, Project, Script, Goal, Category, ProjectTask, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
-  CorporateCostCategory, CorporateCost
+  CorporateCostCategory, CorporateCost, PurchasePlan
 } from '@/types/database';
 import type { EditorialCalendarItem, EditorialComment } from '@/types/editorial';
 
@@ -39,6 +39,7 @@ export function useRealtimeSync(userId: string | undefined) {
     addCorporateCost, updateCorporateCost, deleteCorporateCost,
     addEditorialCalendarItem, updateEditorialCalendarItem, deleteEditorialCalendarItem,
     addEditorialComment, updateEditorialComment, deleteEditorialComment,
+    addPurchasePlan, updatePurchasePlan, deletePurchasePlan,
   } = useAppStore();
 
   useEffect(() => {
@@ -393,6 +394,22 @@ export function useRealtimeSync(userId: string | undefined) {
             updateEditorialComment(newRecord.id, newRecord);
           } else if (eventType === 'DELETE') {
             deleteEditorialComment(oldRecord.id);
+          }
+        }
+      )
+      // Purchase Plans
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'purchase_plans', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<PurchasePlan>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().purchasePlans.some(p => p.id === newRecord.id);
+            if (!exists) addPurchasePlan(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updatePurchasePlan(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deletePurchasePlan(oldRecord.id);
           }
         }
       )

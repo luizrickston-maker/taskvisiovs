@@ -399,3 +399,22 @@ export interface EditorialComment {
   comment_text: string;
   created_at: string;
 }
+
+// Purchase Planning Types
+export type PurchasePlanPriority = 'low' | 'medium' | 'high';
+export type PurchasePlanStatus = 'planning' | 'in_progress' | 'completed';
+
+export interface PurchasePlan {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  target_amount: number;
+  saved_amount: number;
+  deadline?: string;
+  priority: PurchasePlanPriority;
+  category?: string;
+  status: PurchasePlanStatus;
+  image_url?: string;
+  created_at: string;
+}
