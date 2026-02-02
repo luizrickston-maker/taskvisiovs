@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { CurrencyInput, parseBRLToNumber } from '@/components/ui/currency-input';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,8 +38,8 @@ export function SavingsManager() {
     e.preventDefault();
     if (!amount || !description.trim() || !user) return;
 
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
+    const numAmount = parseBRLToNumber(amount);
+    if (numAmount <= 0) {
       toast.error('Valor inválido');
       return;
     }
@@ -127,14 +128,10 @@ export function SavingsManager() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="amount">Valor</Label>
-                  <Input
+                  <CurrencyInput
                     id="amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={setAmount}
                     required
                   />
                 </div>
