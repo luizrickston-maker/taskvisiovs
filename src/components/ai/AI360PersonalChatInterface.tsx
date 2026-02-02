@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Bot, User, Loader2, AlertCircle, Lightbulb, RefreshCw, ExternalLink, Heart } from 'lucide-react';
+import { Send, Bot, User, Loader2, AlertCircle, Lightbulb, RefreshCw, ExternalLink, Brain } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -151,7 +151,7 @@ export function AI360PersonalChatInterface({ agentId: initialAgentId }: AI360Per
       <CardHeader className="border-b pb-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-primary" />
+            <Brain className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">Assistente Pessoal 360°</CardTitle>
           </div>
           <div className="flex items-center gap-2">

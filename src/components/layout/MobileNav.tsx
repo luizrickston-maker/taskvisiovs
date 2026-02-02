@@ -1,4 +1,4 @@
-import { Wallet, TrendingUp, Target, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Package, Users, User, Building2, Heart } from 'lucide-react';
+import { Wallet, TrendingUp, Target, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Package, Users, User, Building2, Brain } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
@@ -21,7 +21,7 @@ const personalMainNavItems = [
 const personalMoreNavItems = [
   { title: 'Roteiros', url: '/roteiros', icon: Pen },
   { title: 'Conteúdos', url: '/conteudos', icon: Calendar },
-  { title: 'Assistente IA', url: '/assistente-pessoal', icon: Heart },
+  { title: 'Assistente IA', url: '/assistente-pessoal', icon: Brain },
   { title: 'Config', url: '/config', icon: Settings },
 ];
 
