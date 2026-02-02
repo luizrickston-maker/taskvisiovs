@@ -62,6 +62,8 @@ export function DebtList() {
     switch (type) {
       case 'fixed':
         return 'Fixa';
+      case 'weekly':
+        return 'Semanal';
       case 'installment':
         return 'Parcelada';
       default:
@@ -72,6 +74,7 @@ export function DebtList() {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'fixed':
+      case 'weekly':
         return <RefreshCw className="w-3 h-3" />;
       default:
         return null;

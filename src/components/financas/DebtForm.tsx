@@ -199,6 +199,7 @@ export function DebtForm() {
                 <SelectContent>
                   <SelectItem value="variable">Variável</SelectItem>
                   <SelectItem value="fixed">Fixa (mensal)</SelectItem>
+                  <SelectItem value="weekly">Semanal</SelectItem>
                   <SelectItem value="installment">Parcelada</SelectItem>
                 </SelectContent>
               </Select>
