@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { 
   Plus, Key, Trash2, Edit2, Eye, EyeOff, Loader2, 
-  AlertCircle, CheckCircle2 
+  CheckCircle2, XCircle 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -79,7 +79,7 @@ export function ApiKeyManager() {
   const openEditForm = (key: AiApiKey) => {
     setEditingKey(key);
     setProvider(key.provider);
-    setApiKey(''); // Don't pre-fill the key for security
+    setApiKey('');
     setLabel(key.label ?? '');
     setFormOpen(true);
   };
@@ -92,7 +92,7 @@ export function ApiKeyManager() {
         await updateMutation.mutateAsync({
           id: editingKey.id,
           provider,
-          ...(apiKey && { api_key: apiKey }), // Only update if provided
+          ...(apiKey && { api_key: apiKey }),
           label: label || null,
         });
         toast({
@@ -165,7 +165,7 @@ export function ApiKeyManager() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
+      <div className="flex items-center justify-center py-12">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -173,107 +173,124 @@ export function ApiKeyManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold">Chaves de API</h3>
-          <p className="text-sm text-muted-foreground">
-            Gerencie suas chaves de API para provedores de IA externos.
+          <h3 className="text-base font-semibold">Chaves de API</h3>
+          <p className="text-xs text-muted-foreground">
+            Gerencie suas chaves para provedores de IA externos.
           </p>
         </div>
-        <Button onClick={openCreateForm} size="sm">
+        <Button onClick={openCreateForm} size="sm" className="sm:w-auto w-full">
           <Plus className="w-4 h-4 mr-2" />
           Nova Chave
         </Button>
       </div>
 
+      {/* Keys List */}
       {apiKeys && apiKeys.length > 0 ? (
-        <div className="grid gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {apiKeys.map((key) => (
-            <Card key={key.id} className={`p-4 ${!key.is_active ? 'opacity-60' : ''}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-muted">
-                    <Key className="w-4 h-4 text-muted-foreground" />
+            <Card 
+              key={key.id} 
+              className={`transition-opacity ${!key.is_active ? 'opacity-60' : ''}`}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 rounded-lg bg-muted shrink-0">
+                      <Key className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm truncate">
+                          {key.label ?? getProviderLabel(key.provider)}
+                        </span>
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {getProviderLabel(key.provider)}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <code className="text-xs text-muted-foreground font-mono">
+                          {showKeyId === key.id ? key.api_key : maskApiKey(key.api_key)}
+                        </code>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => setShowKeyId(showKeyId === key.id ? null : key.id)}
+                        >
+                          {showKeyId === key.id ? (
+                            <EyeOff className="w-3 h-3" />
+                          ) : (
+                            <Eye className="w-3 h-3" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">
-                        {key.label ?? getProviderLabel(key.provider)}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {getProviderLabel(key.provider)}
-                      </Badge>
-                      {key.is_active ? (
-                        <CheckCircle2 className="w-4 h-4 text-success" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <code className="text-xs text-muted-foreground font-mono">
-                        {showKeyId === key.id ? key.api_key : maskApiKey(key.api_key)}
-                      </code>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5"
-                        onClick={() => setShowKeyId(showKeyId === key.id ? null : key.id)}
-                      >
-                        {showKeyId === key.id ? (
-                          <EyeOff className="w-3 h-3" />
-                        ) : (
-                          <Eye className="w-3 h-3" />
-                        )}
-                      </Button>
-                    </div>
+
+                  {/* Status Icon */}
+                  <div className="shrink-0">
+                    {key.is_active ? (
+                      <CheckCircle2 className="w-4 h-4 text-success" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-muted-foreground" />
+                    )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Actions */}
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
                   <Switch
                     checked={key.is_active ?? false}
                     onCheckedChange={() => handleToggleStatus(key)}
                     disabled={toggleMutation.isPending}
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEditForm(key)}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setDeleteId(key.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openEditForm(key)}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => setDeleteId(key.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </CardContent>
             </Card>
           ))}
         </div>
       ) : (
-        <Card className="p-8 text-center">
-          <Key className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-          <h4 className="font-medium text-muted-foreground mb-2">
+        <div className="text-center py-12 px-4">
+          <div className="p-4 rounded-full bg-muted/50 w-fit mx-auto mb-4">
+            <Key className="w-10 h-10 text-muted-foreground/50" />
+          </div>
+          <h4 className="font-semibold text-muted-foreground mb-2">
             Nenhuma chave cadastrada
           </h4>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
             Adicione chaves de API para usar provedores de IA externos.
           </p>
-          <Button onClick={openCreateForm} variant="outline">
+          <Button onClick={openCreateForm} variant="outline" size="sm">
             <Plus className="w-4 h-4 mr-2" />
             Adicionar Primeira Chave
           </Button>
-        </Card>
+        </div>
       )}
 
       {/* Create/Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingKey ? 'Editar Chave de API' : 'Nova Chave de API'}
@@ -326,7 +343,7 @@ export function ApiKeyManager() {
               />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 type="button"
                 variant="outline"

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Bot, Key, Loader2 } from 'lucide-react';
+import { Plus, Bot, Key, Loader2, Sparkles, Cpu, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AiAgentCard } from '@/components/ai/AiAgentCard';
 import { AiAgentForm } from '@/components/ai/AiAgentForm';
@@ -25,11 +26,13 @@ import {
   useSetDefaultAgent,
   useToggleAgentActive,
 } from '@/hooks/useAiAgents';
+import { useAiApiKeys } from '@/hooks/useAiApiKeys';
 import type { AIAgent, AIAgentCreate } from '@/types/ai';
 
 export default function AiAgentsManagerPage() {
   const { toast } = useToast();
   const { data: agents, isLoading } = useAiAgents();
+  const { data: apiKeys } = useAiApiKeys();
   const createMutation = useCreateAiAgent();
   const updateMutation = useUpdateAiAgent();
   const deleteMutation = useDeleteAiAgent();
@@ -39,6 +42,12 @@ export default function AiAgentsManagerPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<AIAgent | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // KPI calculations
+  const totalAgents = agents?.length ?? 0;
+  const activeAgents = agents?.filter(a => a.is_active).length ?? 0;
+  const totalApiKeys = apiKeys?.length ?? 0;
+  const activeApiKeys = apiKeys?.filter(k => k.is_active).length ?? 0;
 
   const handleCreate = () => {
     setEditingAgent(null);
@@ -132,82 +141,152 @@ export default function AiAgentsManagerPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Agentes de IA</h1>
-          <p className="text-muted-foreground">
-            Configure e gerencie seus agentes de inteligência artificial.
-          </p>
+      {/* Professional Header */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <Sparkles className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Agentes de IA</h1>
+            <p className="text-muted-foreground text-sm">
+              Configure e gerencie seus agentes de inteligência artificial
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="agents" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="agents" className="gap-2">
-            <Bot className="w-4 h-4" />
-            Agentes
-          </TabsTrigger>
-          <TabsTrigger value="keys" className="gap-2">
-            <Key className="w-4 h-4" />
-            Chaves de API
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Agents Tab */}
-        <TabsContent value="agents" className="space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={handleCreate}>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Agente
-            </Button>
-          </div>
-
-          {isLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-64" />
-              ))}
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Bot className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{totalAgents}</p>
+                <p className="text-xs text-muted-foreground">Total de Agentes</p>
+              </div>
             </div>
-          ) : agents && agents.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {agents.map((agent) => (
-                <AiAgentCard
-                  key={agent.id}
-                  agent={agent}
-                  onEdit={handleEdit}
-                  onDelete={setDeleteId}
-                  onToggleActive={handleToggleActive}
-                  onSetDefault={handleSetDefault}
-                />
-              ))}
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-success/10">
+                <Cpu className="w-5 h-5 text-success" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{activeAgents}</p>
+                <p className="text-xs text-muted-foreground">Agentes Ativos</p>
+              </div>
             </div>
-          ) : (
-            <div className="glass-card p-12 text-center">
-              <Bot className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
-                Nenhum agente configurado
-              </h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Crie seu primeiro agente de IA para automatizar tarefas e obter 
-                insights personalizados sobre suas operações.
-              </p>
-              <Button onClick={handleCreate}>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-warning/10">
+                <Key className="w-5 h-5 text-warning" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{totalApiKeys}</p>
+                <p className="text-xs text-muted-foreground">Chaves de API</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent">
+                <Zap className="w-5 h-5 text-accent-foreground" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{activeApiKeys}</p>
+                <p className="text-xs text-muted-foreground">Chaves Ativas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content with Tabs */}
+      <Card className="glass-card">
+        <Tabs defaultValue="agents" className="w-full">
+          <CardHeader className="pb-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <TabsList className="grid w-full max-w-xs grid-cols-2">
+                <TabsTrigger value="agents" className="gap-2 text-sm">
+                  <Bot className="w-4 h-4" />
+                  <span className="hidden sm:inline">Agentes</span>
+                </TabsTrigger>
+                <TabsTrigger value="keys" className="gap-2 text-sm">
+                  <Key className="w-4 h-4" />
+                  <span className="hidden sm:inline">Chaves API</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              <Button onClick={handleCreate} size="sm" className="sm:w-auto w-full">
                 <Plus className="w-4 h-4 mr-2" />
-                Criar Primeiro Agente
+                Novo Agente
               </Button>
             </div>
-          )}
-        </TabsContent>
+          </CardHeader>
 
-        {/* API Keys Tab */}
-        <TabsContent value="keys">
-          <div className="glass-card p-6">
-            <ApiKeyManager />
-          </div>
-        </TabsContent>
-      </Tabs>
+          <CardContent className="pt-6">
+            {/* Agents Tab */}
+            <TabsContent value="agents" className="mt-0 space-y-4">
+              {isLoading ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-56 rounded-xl" />
+                  ))}
+                </div>
+              ) : agents && agents.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {agents.map((agent) => (
+                    <AiAgentCard
+                      key={agent.id}
+                      agent={agent}
+                      onEdit={handleEdit}
+                      onDelete={setDeleteId}
+                      onToggleActive={handleToggleActive}
+                      onSetDefault={handleSetDefault}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 px-4">
+                  <div className="p-4 rounded-full bg-muted/50 w-fit mx-auto mb-4">
+                    <Bot className="w-10 h-10 text-muted-foreground/50" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Nenhum agente configurado
+                  </h3>
+                  <p className="text-muted-foreground mb-6 max-w-sm mx-auto text-sm">
+                    Crie seu primeiro agente de IA para automatizar tarefas e obter 
+                    insights personalizados sobre suas operações.
+                  </p>
+                  <Button onClick={handleCreate}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Criar Primeiro Agente
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* API Keys Tab */}
+            <TabsContent value="keys" className="mt-0">
+              <ApiKeyManager />
+            </TabsContent>
+          </CardContent>
+        </Tabs>
+      </Card>
 
       {/* Agent Form Dialog */}
       <AiAgentForm
