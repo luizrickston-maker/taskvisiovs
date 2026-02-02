@@ -31,6 +31,14 @@ interface AIAgent {
   temperature: number;
   max_tokens: number;
   context_priority: string[];
+  api_key_id: string | null;
+}
+
+interface AiApiKey {
+  id: string;
+  provider: string;
+  api_key: string;
+  is_active: boolean;
 }
 
 interface AI360Context {
@@ -54,14 +62,19 @@ interface RequestBody {
 // Agent Configuration
 // =====================================================
 
+interface AgentWithKey {
+  agent: AIAgent | null;
+  customApiKey: string | null;
+}
+
 async function fetchAgentConfig(
   supabase: any,
   userId: string,
   agentId?: string
-): Promise<AIAgent | null> {
+): Promise<AgentWithKey> {
   let query = supabase
     .from("ai_agents")
-    .select("id, name, system_prompt, model_name, temperature, max_tokens, context_priority")
+    .select("id, name, system_prompt, model_name, temperature, max_tokens, context_priority, api_key_id")
     .eq("user_id", userId)
     .eq("is_active", true);
 
@@ -71,14 +84,35 @@ async function fetchAgentConfig(
     query = query.eq("is_default", true);
   }
 
-  const { data, error } = await query.single();
+  const { data: agentData, error: agentError } = await query.single();
 
-  if (error) {
+  if (agentError || !agentData) {
     console.log("[ai-360-agent] No custom agent found, using defaults");
-    return null;
+    return { agent: null, customApiKey: null };
   }
 
-  return data as AIAgent;
+  const agent = agentData as AIAgent;
+
+  // If agent has a custom API key, fetch it
+  let customApiKey: string | null = null;
+  if (agent.api_key_id) {
+    const { data: keyData, error: keyError } = await supabase
+      .from("ai_api_keys")
+      .select("id, provider, api_key, is_active")
+      .eq("id", agent.api_key_id)
+      .eq("is_active", true)
+      .single();
+
+    if (!keyError && keyData) {
+      const apiKeyRecord = keyData as AiApiKey;
+      customApiKey = apiKeyRecord.api_key;
+      console.log(`[ai-360-agent] Using custom API key for provider: ${apiKeyRecord.provider}`);
+    } else {
+      console.log("[ai-360-agent] Custom API key not found or inactive, using system key");
+    }
+  }
+
+  return { agent, customApiKey };
 }
 
 // =====================================================
@@ -375,7 +409,7 @@ serve(async (req) => {
 
     // 3. Fetch agent configuration
     console.log("[ai-360-agent] Fetching agent config for user:", userId);
-    const agent = await fetchAgentConfig(supabase, userId, agent_id);
+    const { agent, customApiKey } = await fetchAgentConfig(supabase, userId, agent_id);
 
     const systemPrompt = agent?.system_prompt || DEFAULT_SYSTEM_PROMPT;
     const modelName = agent?.model_name || "google/gemini-3-flash-preview";
@@ -390,7 +424,7 @@ serve(async (req) => {
       "team",
     ];
 
-    console.log(`[ai-360-agent] Using agent: ${agent?.name || "default"}, model: ${modelName}`);
+    console.log(`[ai-360-agent] Using agent: ${agent?.name || "default"}, model: ${modelName}, custom key: ${!!customApiKey}`);
 
     // 4. Fetch operational context
     const context = await fetchOperationalContext(supabase, userId);
@@ -402,19 +436,26 @@ serve(async (req) => {
     // 6. Build final prompt
     const systemWithContext = `${systemPrompt}\n\n${finalContext}`;
 
-    // 7. Get API key (Lovable AI is auto-provisioned)
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY não está configurada");
+    // 7. Get API key - use custom key if available, otherwise Lovable AI
+    const apiKey = customApiKey || Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) {
+      throw new Error("Nenhuma chave de API configurada");
     }
 
+    // Determine API endpoint - use OpenRouter for custom keys, Lovable AI otherwise
+    const apiEndpoint = customApiKey 
+      ? "https://openrouter.ai/api/v1/chat/completions"
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+
     // 8. Call AI Gateway
-    console.log("[ai-360-agent] Calling AI Gateway with streaming");
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    console.log(`[ai-360-agent] Calling ${customApiKey ? 'OpenRouter' : 'Lovable AI'} with streaming`);
+    const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        ...(customApiKey && { "HTTP-Referer": "https://taskvisionpro.lovable.app" }),
+        ...(customApiKey && { "X-Title": "TaskVision PRO" }),
       },
       body: JSON.stringify({
         model: modelName,

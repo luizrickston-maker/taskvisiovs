@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Bot, User, Loader2, AlertCircle, Lightbulb, RefreshCw, ExternalLink } from 'lucide-react';
+import { Send, Bot, User, Loader2, AlertCircle, Lightbulb, RefreshCw, ExternalLink, Settings2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useAskAI360Agent } from '@/hooks/useAI360Agent';
+import { useAiAgents, useDefaultAiAgent } from '@/hooks/useAiAgents';
 import type { ChatMessage } from '@/types/ai';
 import ReactMarkdown from 'react-markdown';
 
@@ -45,17 +53,40 @@ const QUICK_PROMPTS = [
   { label: '📅 Próximas 48h', prompt: 'O que tenho planejado para as próximas 48 horas? Inclua compromissos, tarefas e prazos.' },
 ];
 
-export function AI360ChatInterface({ agentId }: AI360ChatInterfaceProps) {
+export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceProps) {
+  const navigate = useNavigate();
+  const { data: agents, isLoading: agentsLoading } = useAiAgents();
+  const { data: defaultAgent } = useDefaultAiAgent();
+  
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>(propAgentId);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const { mutate: askAgent, isPending } = useAskAI360Agent();
+
+  // Set default agent when loaded
+  useEffect(() => {
+    if (!selectedAgentId && defaultAgent) {
+      setSelectedAgentId(defaultAgent.id);
+    }
+  }, [defaultAgent, selectedAgentId]);
+
+  // Get selected agent info for display
+  const selectedAgent = useMemo(() => {
+    if (!selectedAgentId || !agents) return null;
+    return agents.find(a => a.id === selectedAgentId) ?? null;
+  }, [selectedAgentId, agents]);
+
+  // Filter only active agents for selection
+  const activeAgents = useMemo(() => {
+    return agents?.filter(a => a.is_active) ?? [];
+  }, [agents]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -83,7 +114,7 @@ export function AI360ChatInterface({ agentId }: AI360ChatInterfaceProps) {
     askAgent(
       {
         messages: newMessages,
-        agentId,
+        agentId: selectedAgentId,
         signal: abortControllerRef.current.signal,
         onChunk: (chunk) => {
           setStreamingContent((prev) => prev + chunk);
@@ -103,7 +134,7 @@ export function AI360ChatInterface({ agentId }: AI360ChatInterfaceProps) {
         },
       }
     );
-  }, [input, messages, agentId, isPending, askAgent]);
+  }, [input, messages, selectedAgentId, isPending, askAgent]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -120,22 +151,68 @@ export function AI360ChatInterface({ agentId }: AI360ChatInterfaceProps) {
 
   return (
     <Card className="glass-card flex flex-col" style={{ minHeight: '500px' }}>
-      <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
-        <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">Chat com o Agente</CardTitle>
+      <CardHeader className="border-b pb-4 space-y-3">
+        <div className="flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bot className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Chat com o Agente</CardTitle>
+          </div>
+          <div className="flex items-center gap-2">
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClear}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <RefreshCw className="mr-1 h-4 w-4" />
+                Limpar
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/pj/agentes-ia')}
+              className="h-8 w-8"
+              title="Gerenciar Agentes"
+            >
+              <Settings2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        {messages.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClear}
-            className="text-muted-foreground hover:text-foreground"
+        
+        {/* Agent Selector */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground shrink-0">Agente:</span>
+          <Select
+            value={selectedAgentId ?? ''}
+            onValueChange={setSelectedAgentId}
+            disabled={agentsLoading || isPending}
           >
-            <RefreshCw className="mr-1 h-4 w-4" />
-            Limpar
-          </Button>
-        )}
+            <SelectTrigger className="w-full max-w-xs h-8 text-sm">
+              <SelectValue placeholder="Selecione um agente..." />
+            </SelectTrigger>
+            <SelectContent>
+              {activeAgents.map((agent) => (
+                <SelectItem key={agent.id} value={agent.id}>
+                  <div className="flex items-center gap-2">
+                    <span>{agent.name}</span>
+                    {agent.is_default && (
+                      <Badge variant="outline" className="text-xs py-0 px-1">
+                        Padrão
+                      </Badge>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedAgent && (
+            <Badge variant="secondary" className="text-xs shrink-0">
+              {selectedAgent.model_name.split('/').pop()}
+            </Badge>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col gap-4 p-4">
