@@ -12,17 +12,17 @@ import ProjectTaskForm from './ProjectTaskForm';
 import type { ProjectTask, ProjectTaskStatus } from '@/types/database';
 
 const priorityConfig: Record<number, { label: string; color: string; bg: string }> = {
-  1: { label: 'P1', color: 'text-red-600', bg: 'bg-red-500/20' },
-  2: { label: 'P2', color: 'text-orange-600', bg: 'bg-orange-500/20' },
-  3: { label: 'P3', color: 'text-yellow-600', bg: 'bg-yellow-500/20' },
-  4: { label: 'P4', color: 'text-blue-600', bg: 'bg-blue-500/20' },
-  5: { label: 'P5', color: 'text-gray-600', bg: 'bg-gray-500/20' },
+  1: { label: 'P1', color: 'text-priority-critical', bg: 'bg-priority-critical/20' },
+  2: { label: 'P2', color: 'text-priority-high', bg: 'bg-priority-high/20' },
+  3: { label: 'P3', color: 'text-priority-medium', bg: 'bg-priority-medium/20' },
+  4: { label: 'P4', color: 'text-priority-low', bg: 'bg-priority-low/20' },
+  5: { label: 'P5', color: 'text-priority-minimal', bg: 'bg-priority-minimal/20' },
 };
 
 const statusConfig: Record<ProjectTaskStatus, { label: string; icon: typeof ListTodo; color: string }> = {
   todo: { label: 'A Fazer', icon: ListTodo, color: 'text-muted-foreground' },
-  in_progress: { label: 'Em Andamento', icon: Clock, color: 'text-yellow-600' },
-  done: { label: 'Concluído', icon: CheckCircle2, color: 'text-green-600' },
+  in_progress: { label: 'Em Andamento', icon: Clock, color: 'text-status-scheduled' },
+  done: { label: 'Concluído', icon: CheckCircle2, color: 'text-success' },
 };
 
 export default function ProjectTasksSection() {

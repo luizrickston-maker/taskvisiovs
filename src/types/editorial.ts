@@ -53,13 +53,13 @@ export const contentStatusLabels: Record<ContentStatus, string> = {
   published: 'Publicado',
 };
 
-// Platform labels and colors for UI
+// Platform labels and colors for UI - using semantic tokens
 export const contentPlatformConfig: Record<ContentPlatform, { label: string; color: string }> = {
-  instagram: { label: 'Instagram', color: 'bg-pink-500' },
-  tiktok: { label: 'TikTok', color: 'bg-slate-800' },
-  linkedin: { label: 'LinkedIn', color: 'bg-blue-600' },
-  blog: { label: 'Blog', color: 'bg-green-600' },
-  youtube: { label: 'YouTube', color: 'bg-red-500' },
+  instagram: { label: 'Instagram', color: 'bg-platform-instagram' },
+  tiktok: { label: 'TikTok', color: 'bg-platform-tiktok' },
+  linkedin: { label: 'LinkedIn', color: 'bg-platform-linkedin' },
+  blog: { label: 'Blog', color: 'bg-platform-blog' },
+  youtube: { label: 'YouTube', color: 'bg-platform-youtube' },
 };
 
 // Content type labels for UI
@@ -71,11 +71,11 @@ export const contentTypeLabels: Record<ContentTypeEnum, string> = {
   video: 'Vídeo',
 };
 
-// Status colors for UI
+// Status colors for UI - using semantic tokens
 export const contentStatusColors: Record<ContentStatus, string> = {
-  idea: 'bg-gray-500',
-  draft: 'bg-yellow-500',
-  review: 'bg-blue-500',
-  approved: 'bg-green-500',
-  published: 'bg-purple-500',
+  idea: 'bg-status-draft',
+  draft: 'bg-status-scheduled',
+  review: 'bg-status-review',
+  approved: 'bg-status-approved',
+  published: 'bg-status-published',
 };

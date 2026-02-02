@@ -23,11 +23,11 @@ const statusOptions: { value: ProjectTaskStatus; label: string }[] = [
 ];
 
 const priorityOptions = [
-  { value: '1', label: 'P1 - Crítica', color: 'text-red-500' },
-  { value: '2', label: 'P2 - Alta', color: 'text-orange-500' },
-  { value: '3', label: 'P3 - Média', color: 'text-yellow-500' },
-  { value: '4', label: 'P4 - Baixa', color: 'text-blue-500' },
-  { value: '5', label: 'P5 - Mínima', color: 'text-gray-500' },
+  { value: '1', label: 'P1 - Crítica', color: 'text-priority-critical' },
+  { value: '2', label: 'P2 - Alta', color: 'text-priority-high' },
+  { value: '3', label: 'P3 - Média', color: 'text-priority-medium' },
+  { value: '4', label: 'P4 - Baixa', color: 'text-priority-low' },
+  { value: '5', label: 'P5 - Mínima', color: 'text-priority-minimal' },
 ];
 
 export default function ProjectTaskForm({ open, onOpenChange, editTask }: ProjectTaskFormProps) {

@@ -43,9 +43,9 @@ const priorityBorderColors = {
 
 const statusConfig = {
   todo: { label: 'A Fazer', color: 'bg-muted text-muted-foreground', icon: Circle },
-  progress: { label: 'Em Progresso', color: 'bg-blue-500/20 text-blue-400', icon: Hourglass },
+  progress: { label: 'Em Progresso', color: 'bg-primary/20 text-primary', icon: Hourglass },
   blocked: { label: 'Bloqueado', color: 'bg-destructive/20 text-destructive', icon: AlertTriangle },
-  done: { label: 'Concluído', color: 'bg-green-500/20 text-green-400', icon: CheckCircle2 },
+  done: { label: 'Concluído', color: 'bg-success/20 text-success', icon: CheckCircle2 },
 };
 
 export function ClientProjectCard({ project, tasks, onEdit, onDelete, onClick }: ClientProjectCardProps) {

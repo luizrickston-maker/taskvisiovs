@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,27 +8,34 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppBootstrap } from "@/components/bootstrap/AppBootstrap";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Auth pages - loaded eagerly (needed immediately)
 import Auth from "@/pages/Auth";
 import AuthCallback from "@/pages/AuthCallback";
 import ResetPassword from "@/pages/ResetPassword";
-import CaixaDashboard from "@/pages/CaixaDashboard";
-import FinancasDashboard from "@/pages/FinancasDashboard";
-import FocoDashboard from "@/pages/FocoDashboard";
-import ProjetosDashboard from "@/pages/ProjetosDashboard";
-import ComercialDashboard from "@/pages/ComercialDashboard";
-import ConteudosDashboard from "@/pages/ConteudosDashboard";
-import RoteirosDashboard from "@/pages/RoteirosDashboard";
-import ConfigPage from "@/pages/ConfigPage";
 import NotFound from "@/pages/NotFound";
 
-// PJ Pages
-import FinanceiroPage from "@/pages/PJ/FinanceiroPage";
-import PlanosPage from "@/pages/PJ/PlanosPage";
-import InvestimentosPage from "@/pages/PJ/InvestimentosPage";
-import TimePage from "@/pages/PJ/TimePage";
-import ProjetosClientesPage from "@/pages/PJ/ProjetosClientesPage";
-import CalendarioEditorialPage from "@/pages/PJ/CalendarioEditorialPage";
-import AI360DashboardPage from "@/pages/PJ/AI360DashboardPage";
+// Core pages - loaded eagerly (most accessed)
+import CaixaDashboard from "@/pages/CaixaDashboard";
+import FocoDashboard from "@/pages/FocoDashboard";
+
+// Lazy loaded pages - less frequently accessed or heavy
+const FinancasDashboard = lazy(() => import("@/pages/FinancasDashboard"));
+const ProjetosDashboard = lazy(() => import("@/pages/ProjetosDashboard"));
+const ComercialDashboard = lazy(() => import("@/pages/ComercialDashboard"));
+const ConteudosDashboard = lazy(() => import("@/pages/ConteudosDashboard"));
+const RoteirosDashboard = lazy(() => import("@/pages/RoteirosDashboard"));
+const ConfigPage = lazy(() => import("@/pages/ConfigPage"));
+
+// PJ Pages - lazy loaded (business context)
+const FinanceiroPage = lazy(() => import("@/pages/PJ/FinanceiroPage"));
+const PlanosPage = lazy(() => import("@/pages/PJ/PlanosPage"));
+const InvestimentosPage = lazy(() => import("@/pages/PJ/InvestimentosPage"));
+const TimePage = lazy(() => import("@/pages/PJ/TimePage"));
+const ProjetosClientesPage = lazy(() => import("@/pages/PJ/ProjetosClientesPage"));
+const CalendarioEditorialPage = lazy(() => import("@/pages/PJ/CalendarioEditorialPage"));
+const AI360DashboardPage = lazy(() => import("@/pages/PJ/AI360DashboardPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +45,22 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="flex flex-col gap-4 p-6">
+      <Skeleton className="h-8 w-64" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Skeleton className="h-32" />
+        <Skeleton className="h-32" />
+        <Skeleton className="h-32" />
+        <Skeleton className="h-32" />
+      </div>
+      <Skeleton className="h-64" />
+    </div>
+  );
+}
 
 // Boot marker para debug
 if (import.meta.env.DEV) {
@@ -70,26 +94,80 @@ const App = () => {
                   </ProtectedRoute>
                 }
               >
-                {/* Personal Routes */}
+                {/* Personal Routes - Core (eager) */}
                 <Route path="/caixa" element={<CaixaDashboard />} />
-                <Route path="/financas" element={<FinancasDashboard />} />
                 <Route path="/foco" element={<FocoDashboard />} />
-                <Route path="/projetos" element={<ProjetosDashboard />} />
-                <Route path="/conteudos" element={<ConteudosDashboard />} />
-                <Route path="/roteiros" element={<RoteirosDashboard />} />
                 
-                {/* Business/PJ Routes */}
-                <Route path="/comercial" element={<ComercialDashboard />} />
-                <Route path="/pj/projetos" element={<ProjetosClientesPage />} />
-                <Route path="/pj/financeiro" element={<FinanceiroPage />} />
-                <Route path="/pj/planos" element={<PlanosPage />} />
-                <Route path="/pj/investimentos" element={<InvestimentosPage />} />
-                <Route path="/pj/time" element={<TimePage />} />
-                <Route path="/pj/calendario-editorial" element={<CalendarioEditorialPage />} />
-                <Route path="/pj/cerebro-operacional" element={<AI360DashboardPage />} />
+                {/* Personal Routes - Lazy loaded */}
+                <Route path="/financas" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <FinancasDashboard />
+                  </Suspense>
+                } />
+                <Route path="/projetos" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <ProjetosDashboard />
+                  </Suspense>
+                } />
+                <Route path="/conteudos" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <ConteudosDashboard />
+                  </Suspense>
+                } />
+                <Route path="/roteiros" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <RoteirosDashboard />
+                  </Suspense>
+                } />
                 
-                {/* Config */}
-                <Route path="/config" element={<ConfigPage />} />
+                {/* Business/PJ Routes - Lazy loaded */}
+                <Route path="/comercial" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <ComercialDashboard />
+                  </Suspense>
+                } />
+                <Route path="/pj/projetos" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <ProjetosClientesPage />
+                  </Suspense>
+                } />
+                <Route path="/pj/financeiro" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <FinanceiroPage />
+                  </Suspense>
+                } />
+                <Route path="/pj/planos" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <PlanosPage />
+                  </Suspense>
+                } />
+                <Route path="/pj/investimentos" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <InvestimentosPage />
+                  </Suspense>
+                } />
+                <Route path="/pj/time" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <TimePage />
+                  </Suspense>
+                } />
+                <Route path="/pj/calendario-editorial" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <CalendarioEditorialPage />
+                  </Suspense>
+                } />
+                <Route path="/pj/cerebro-operacional" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <AI360DashboardPage />
+                  </Suspense>
+                } />
+                
+                {/* Config - Lazy loaded */}
+                <Route path="/config" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <ConfigPage />
+                  </Suspense>
+                } />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
