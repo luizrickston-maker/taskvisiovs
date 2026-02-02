@@ -52,9 +52,21 @@ export function CalendarGrid({ items, currentDate, view, onItemClick }: Calendar
 
   if (view === 'week') {
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
+        {/* Week days header - visible on desktop */}
+        <div className="hidden md:grid grid-cols-7 gap-2">
+          {weekDays.map((day) => (
+            <div 
+              key={day} 
+              className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider py-2"
+            >
+              {day}
+            </div>
+          ))}
+        </div>
+
         {/* Week grid - responsive layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-2 md:gap-3">
           {days.map((day) => {
             const dayItems = getItemsForDay(day);
             const isCurrentDay = isToday(day);
@@ -63,25 +75,36 @@ export function CalendarGrid({ items, currentDate, view, onItemClick }: Calendar
               <div 
                 key={day.toISOString()} 
                 className={cn(
-                  "min-h-[120px] md:min-h-[200px] p-2 rounded-lg border border-border/50 transition-colors bg-card/50",
-                  isCurrentDay && "ring-2 ring-primary ring-offset-1 ring-offset-background"
+                  // Base glass-card styling
+                  "min-h-[140px] md:min-h-[220px] p-3 rounded-xl transition-all duration-200",
+                  "bg-card/60 backdrop-blur-sm border border-border/40",
+                  "shadow-sm hover:shadow-md hover:border-border/60",
+                  // Today highlight
+                  isCurrentDay && "ring-2 ring-primary/50 ring-offset-2 ring-offset-background bg-primary/5"
                 )}
               >
                 {/* Day header */}
-                <div className="text-center mb-2 pb-2 border-b border-border/50">
-                  <div className="text-xs text-muted-foreground uppercase">
-                    {format(day, 'EEE', { locale: ptBR })}
+                <div className={cn(
+                  "text-center mb-3 pb-2 border-b border-border/30",
+                  isCurrentDay && "border-primary/30"
+                )}>
+                  {/* Show day name on mobile */}
+                  <div className="md:hidden text-xs text-muted-foreground uppercase tracking-wide mb-0.5">
+                    {format(day, 'EEEE', { locale: ptBR })}
                   </div>
                   <div className={cn(
-                    "text-lg font-semibold",
-                    isCurrentDay && "text-primary"
+                    "text-xl font-bold transition-colors",
+                    isCurrentDay ? "text-primary" : "text-foreground"
                   )}>
                     {format(day, 'd')}
                   </div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                    {format(day, 'MMM', { locale: ptBR })}
+                  </div>
                 </div>
 
-                {/* Day items */}
-                <div className="space-y-2">
+                {/* Day items with scroll */}
+                <div className="space-y-2 max-h-[160px] overflow-y-auto scrollbar-thin">
                   {dayItems.map(item => (
                     <ContentItemCard
                       key={item.id}
@@ -91,8 +114,8 @@ export function CalendarGrid({ items, currentDate, view, onItemClick }: Calendar
                     />
                   ))}
                   {dayItems.length === 0 && (
-                    <div className="text-xs text-muted-foreground text-center py-4">
-                      Nenhum conteúdo
+                    <div className="flex flex-col items-center justify-center py-6 text-muted-foreground/60">
+                      <div className="text-xs">Nenhum conteúdo</div>
                     </div>
                   )}
                 </div>
