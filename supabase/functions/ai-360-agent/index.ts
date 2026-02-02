@@ -41,6 +41,11 @@ interface AiApiKey {
   is_active: boolean;
 }
 
+interface AgentKeyInfo {
+  key: string;
+  provider: string;
+}
+
 interface AI360Context {
   generated_at: string;
   user_id: string;
@@ -64,7 +69,7 @@ interface RequestBody {
 
 interface AgentWithKey {
   agent: AIAgent | null;
-  customApiKey: string | null;
+  customKeyInfo: AgentKeyInfo | null;
 }
 
 async function fetchAgentConfig(
@@ -88,13 +93,13 @@ async function fetchAgentConfig(
 
   if (agentError || !agentData) {
     console.log("[ai-360-agent] No custom agent found, using defaults");
-    return { agent: null, customApiKey: null };
+    return { agent: null, customKeyInfo: null };
   }
 
   const agent = agentData as AIAgent;
 
   // If agent has a custom API key, fetch it
-  let customApiKey: string | null = null;
+  let customKeyInfo: AgentKeyInfo | null = null;
   if (agent.api_key_id) {
     const { data: keyData, error: keyError } = await supabase
       .from("ai_api_keys")
@@ -105,14 +110,20 @@ async function fetchAgentConfig(
 
     if (!keyError && keyData) {
       const apiKeyRecord = keyData as AiApiKey;
-      customApiKey = apiKeyRecord.api_key;
-      console.log(`[ai-360-agent] Using custom API key for provider: ${apiKeyRecord.provider}`);
+      // Validate the API key is not empty or a placeholder
+      const keyValue = apiKeyRecord.api_key?.trim();
+      if (keyValue && keyValue.length > 10 && !keyValue.startsWith("sk-xxx") && !keyValue.includes("your-api-key")) {
+        customKeyInfo = { key: keyValue, provider: apiKeyRecord.provider };
+        console.log(`[ai-360-agent] Using custom API key for provider: ${apiKeyRecord.provider}`);
+      } else {
+        console.log("[ai-360-agent] Custom API key appears invalid or is a placeholder, using system key");
+      }
     } else {
       console.log("[ai-360-agent] Custom API key not found or inactive, using system key");
     }
   }
 
-  return { agent, customApiKey };
+  return { agent, customKeyInfo };
 }
 
 // =====================================================
@@ -409,10 +420,10 @@ serve(async (req) => {
 
     // 3. Fetch agent configuration
     console.log("[ai-360-agent] Fetching agent config for user:", userId);
-    const { agent, customApiKey } = await fetchAgentConfig(supabase, userId, agent_id);
+    const { agent, customKeyInfo } = await fetchAgentConfig(supabase, userId, agent_id);
 
     const systemPrompt = agent?.system_prompt || DEFAULT_SYSTEM_PROMPT;
-    const modelName = agent?.model_name || "google/gemini-3-flash-preview";
+    let modelName = agent?.model_name || "google/gemini-3-flash-preview";
     const temperature = agent?.temperature ?? 0.7;
     const maxTokens = agent?.max_tokens || 4096;
     const contextPriority = agent?.context_priority || [
@@ -424,7 +435,7 @@ serve(async (req) => {
       "team",
     ];
 
-    console.log(`[ai-360-agent] Using agent: ${agent?.name || "default"}, model: ${modelName}, custom key: ${!!customApiKey}`);
+    console.log(`[ai-360-agent] Using agent: ${agent?.name || "default"}, model: ${modelName}, custom key: ${!!customKeyInfo}`);
 
     // 4. Fetch operational context
     const context = await fetchOperationalContext(supabase, userId);
@@ -436,26 +447,71 @@ serve(async (req) => {
     // 6. Build final prompt
     const systemWithContext = `${systemPrompt}\n\n${finalContext}`;
 
-    // 7. Get API key - use custom key if available, otherwise Lovable AI
-    const apiKey = customApiKey || Deno.env.get("LOVABLE_API_KEY");
+    // 7. Determine API endpoint and key based on provider
+    let apiKey: string;
+    let apiEndpoint: string;
+    let extraHeaders: Record<string, string> = {};
+
+    if (customKeyInfo) {
+      apiKey = customKeyInfo.key;
+      
+      // Route to the correct API based on provider
+      switch (customKeyInfo.provider.toLowerCase()) {
+        case "openai":
+          apiEndpoint = "https://api.openai.com/v1/chat/completions";
+          // Convert model name from OpenRouter format to OpenAI format
+          if (modelName.startsWith("openai/")) {
+            modelName = modelName.replace("openai/", "");
+          }
+          // Map model names to OpenAI equivalents
+          if (modelName === "gpt-5-mini") modelName = "gpt-4o-mini";
+          if (modelName === "gpt-5") modelName = "gpt-4o";
+          if (modelName === "gpt-5-nano") modelName = "gpt-4o-mini";
+          break;
+        case "gemini":
+        case "google":
+          apiEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+          // Convert model name for Google API
+          if (modelName.startsWith("google/")) {
+            modelName = modelName.replace("google/", "");
+          }
+          break;
+        case "anthropic":
+          apiEndpoint = "https://api.anthropic.com/v1/messages";
+          extraHeaders = {
+            "anthropic-version": "2023-06-01",
+            "x-api-key": apiKey,
+          };
+          break;
+        case "openrouter":
+        default:
+          apiEndpoint = "https://openrouter.ai/api/v1/chat/completions";
+          extraHeaders = {
+            "HTTP-Referer": "https://taskvisionpro.lovable.app",
+            "X-Title": "TaskVision PRO",
+          };
+          break;
+      }
+      
+      console.log(`[ai-360-agent] Using ${customKeyInfo.provider} API at ${apiEndpoint}, model: ${modelName}`);
+    } else {
+      // Use Lovable AI Gateway (default)
+      apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
+      apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
+    }
+
     if (!apiKey) {
       throw new Error("Nenhuma chave de API configurada");
     }
 
-    // Determine API endpoint - use OpenRouter for custom keys, Lovable AI otherwise
-    const apiEndpoint = customApiKey 
-      ? "https://openrouter.ai/api/v1/chat/completions"
-      : "https://ai.gateway.lovable.dev/v1/chat/completions";
-
     // 8. Call AI Gateway
-    console.log(`[ai-360-agent] Calling ${customApiKey ? 'OpenRouter' : 'Lovable AI'} with streaming`);
+    console.log(`[ai-360-agent] Calling AI with streaming`);
     const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        ...(customApiKey && { "HTTP-Referer": "https://taskvisionpro.lovable.app" }),
-        ...(customApiKey && { "X-Title": "TaskVision PRO" }),
+        ...extraHeaders,
       },
       body: JSON.stringify({
         model: modelName,
