@@ -36,6 +36,7 @@ const TimePage = lazy(() => import("@/pages/PJ/TimePage"));
 const ProjetosClientesPage = lazy(() => import("@/pages/PJ/ProjetosClientesPage"));
 const CalendarioEditorialPage = lazy(() => import("@/pages/PJ/CalendarioEditorialPage"));
 const AI360DashboardPage = lazy(() => import("@/pages/PJ/AI360DashboardPage"));
+const AiAgentsManagerPage = lazy(() => import("@/pages/PJ/AiAgentsManagerPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -159,6 +160,11 @@ const App = () => {
                 <Route path="/pj/cerebro-operacional" element={
                   <Suspense fallback={<PageLoader />}>
                     <AI360DashboardPage />
+                  </Suspense>
+                } />
+                <Route path="/pj/agentes-ia" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <AiAgentsManagerPage />
                   </Suspense>
                 } />
                 

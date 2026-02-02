@@ -283,9 +283,10 @@ export interface AIAgent {
   model_name: string;
   temperature: number;
   max_tokens: number;
-  context_priority: string[];
+  context_priority: string[] | null;
   is_default: boolean;
   is_active: boolean;
+  api_key_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -300,6 +301,7 @@ export interface AIAgentCreate {
   context_priority?: string[];
   is_default?: boolean;
   is_active?: boolean;
+  api_key_id?: string | null;
 }
 
 export interface AIAgentUpdate extends Partial<AIAgentCreate> {
