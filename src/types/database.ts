@@ -1,5 +1,5 @@
 export type CategoryType = 'income' | 'expense' | 'debt';
-export type DebtType = 'fixed' | 'installment' | 'variable';
+export type DebtType = 'fixed' | 'installment' | 'variable' | 'weekly';
 export type TaskType = 'inbox' | 'today';
 export type TimeBlockType = 'cash' | 'client' | 'project';
 export type ProjectStatus = 'todo' | 'progress' | 'blocked' | 'done';

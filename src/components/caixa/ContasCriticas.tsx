@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, AlertTriangle, Check, CreditCard } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, addMonths, subMonths, isSameMonth, isBefore, parseISO } from 'date-fns';
+import { ChevronLeft, ChevronRight, AlertTriangle, Check, CreditCard, RefreshCw } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, addMonths, subMonths, isSameMonth, isBefore, parseISO, getDay, eachWeekOfInterval, isSameWeek, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,12 @@ export function ContasCriticas() {
         return true;
       }
 
+      // Weekly debts: appear every week on the same day of week
+      if (debt.type === 'weekly') {
+        // Weekly debts always appear if they started before or during this month
+        return isBefore(dueDate, endOfMonth(currentMonth)) || isSameMonth(dueDate, currentMonth);
+      }
+
       // Installment debts: calculate which months they appear
       if (debt.type === 'installment' && debt.installment_current && debt.installment_total) {
         const originalMonth = startOfMonth(dueDate);
@@ -51,6 +57,10 @@ export function ContasCriticas() {
     }).sort((a, b) => {
       const dateA = parseISO(a.due_date);
       const dateB = parseISO(b.due_date);
+      // Weekly debts sort by day of week
+      if (a.type === 'weekly' && b.type === 'weekly') {
+        return getDay(dateA) - getDay(dateB);
+      }
       return dateA.getDate() - dateB.getDate();
     });
   }, [debts, currentMonth]);
@@ -81,8 +91,22 @@ export function ContasCriticas() {
       const dueDayThisMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), dueDate.getDate());
       return isBefore(dueDayThisMonth, today) && isSameMonth(currentMonth, today);
     }
+
+    // For weekly debts, check if we're past this week's occurrence
+    if (debt.type === 'weekly') {
+      const dayOfWeek = getDay(dueDate); // 0 = Sunday, 5 = Friday, etc.
+      const weekStart = startOfWeek(today, { weekStartsOn: 0 });
+      const thisWeekOccurrence = new Date(weekStart);
+      thisWeekOccurrence.setDate(weekStart.getDate() + dayOfWeek);
+      return isBefore(thisWeekOccurrence, today) && isSameWeek(today, thisWeekOccurrence, { weekStartsOn: 0 });
+    }
     
     return isBefore(dueDate, today);
+  };
+
+  const getDayOfWeekLabel = (dayOfWeek: number): string => {
+    const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    return days[dayOfWeek];
   };
 
   const handleTogglePaid = async (debt: Debt) => {
@@ -187,11 +211,20 @@ export function ContasCriticas() {
                         {debt.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Vence dia {dueDate.getDate()}
+                        {debt.type === 'weekly' 
+                          ? `Toda ${getDayOfWeekLabel(getDay(dueDate))}`
+                          : `Vence dia ${dueDate.getDate()}`
+                        }
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {debt.type === 'weekly' && (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <RefreshCw className="w-3 h-3" />
+                          Semanal
+                        </Badge>
+                      )}
                       {installmentInfo && (
                         <Badge variant="secondary" className="text-xs">
                           {installmentInfo}
