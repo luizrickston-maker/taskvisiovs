@@ -191,8 +191,13 @@ export function DebtList() {
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="w-4 h-4" />
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8"
+                              aria-label={`Opções para dívida ${debt.name}`}
+                            >
+                              <MoreVertical className="w-4 h-4" aria-hidden="true" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -200,7 +205,7 @@ export function DebtList() {
                               className="text-destructive"
                               onClick={() => handleDelete(debt.id)}
                             >
-                              <Trash2 className="w-4 h-4 mr-2" />
+                              <Trash2 className="w-4 h-4 mr-2" aria-hidden="true" />
                               Excluir
                             </DropdownMenuItem>
                           </DropdownMenuContent>
