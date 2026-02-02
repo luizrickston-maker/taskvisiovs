@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.ai-360-agent]
 verify_jwt = false
+
+[functions.ai-360-personal]
+verify_jwt = false
