@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { format, addDays, getDay, startOfWeek } from 'date-fns';
 import { CalendarIcon, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -16,11 +16,32 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Debt, DebtType } from '@/types/database';
 
+const WEEKDAYS = [
+  { value: '0', label: 'Domingo' },
+  { value: '1', label: 'Segunda-feira' },
+  { value: '2', label: 'Terça-feira' },
+  { value: '3', label: 'Quarta-feira' },
+  { value: '4', label: 'Quinta-feira' },
+  { value: '5', label: 'Sexta-feira' },
+  { value: '6', label: 'Sábado' },
+];
+
+/**
+ * Gets the next occurrence of a specific day of the week.
+ */
+function getNextWeekday(dayOfWeek: number): Date {
+  const today = new Date();
+  const todayDay = getDay(today);
+  const daysUntil = (dayOfWeek - todayDay + 7) % 7;
+  return addDays(today, daysUntil === 0 ? 7 : daysUntil);
+}
+
 export function DebtForm() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [dueDate, setDueDate] = useState<Date>();
+  const [weekday, setWeekday] = useState<string>('5'); // Default to Friday
   const [type, setType] = useState<DebtType>('variable');
   const [categoryId, setCategoryId] = useState('');
   const [installmentCurrent, setInstallmentCurrent] = useState('');
@@ -37,6 +58,7 @@ export function DebtForm() {
     setName('');
     setAmount('');
     setDueDate(undefined);
+    setWeekday('5');
     setType('variable');
     setCategoryId('');
     setInstallmentCurrent('');
@@ -46,7 +68,20 @@ export function DebtForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!dueDate || !user) return;
+    
+    // For weekly, we generate the due_date from weekday selection
+    // For other types, dueDate is required
+    const isWeekly = type === 'weekly';
+    if (!isWeekly && !dueDate) {
+      toast.error('Data de vencimento é obrigatória');
+      return;
+    }
+    if (!user) return;
+    
+    // Calculate the actual due_date to save
+    const effectiveDueDate = isWeekly 
+      ? getNextWeekday(parseInt(weekday))
+      : dueDate!;
 
     // Validate name
     const trimmedName = name.trim();
@@ -95,7 +130,7 @@ export function DebtForm() {
       user_id: user.id,
       name: trimmedName,
       amount: numAmount,
-      due_date: format(dueDate, 'yyyy-MM-dd'),
+      due_date: format(effectiveDueDate, 'yyyy-MM-dd'),
       paid: false,
       type,
       category_id: categoryId || undefined,
@@ -161,32 +196,50 @@ export function DebtForm() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Vencimento</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !dueDate && 'text-muted-foreground'
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dueDate ? format(dueDate, 'dd/MM/yyyy') : 'Selecionar'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={setDueDate}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+            {type === 'weekly' ? (
+              <div className="space-y-2">
+                <Label>Dia da Semana</Label>
+                <Select value={weekday} onValueChange={setWeekday}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar dia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {WEEKDAYS.map((day) => (
+                      <SelectItem key={day.value} value={day.value}>
+                        {day.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Vencimento</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !dueDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dueDate ? format(dueDate, 'dd/MM/yyyy') : 'Selecionar'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dueDate}
+                      onSelect={setDueDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
