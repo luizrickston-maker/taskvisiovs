@@ -225,10 +225,11 @@ export function PlanForm({ open, onOpenChange, editingPlan }: PlanFormProps) {
 
       onOpenChange(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao salvar plano';
       toast({
         title: 'Erro ao salvar plano',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {

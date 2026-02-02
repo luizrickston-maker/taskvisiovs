@@ -49,7 +49,7 @@ export function PaymentFeeSettings() {
     setLocalSettings(settings);
   }, [paymentFeeSettings]);
 
-  const handleChange = (method: PaymentMethod, field: keyof PaymentFeeSetting, value: any) => {
+  const handleChange = (method: PaymentMethod, field: keyof PaymentFeeSetting, value: PaymentFeeSetting[keyof PaymentFeeSetting]) => {
     setLocalSettings(prev => ({
       ...prev,
       [method]: { ...prev[method], [field]: value }

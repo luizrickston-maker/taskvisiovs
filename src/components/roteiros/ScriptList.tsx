@@ -148,16 +148,18 @@ export function ScriptList({ onEdit, platformFilter = 'all', statusFilter = 'all
                     size="icon"
                     onClick={() => onEdit(script)}
                     className="h-8 w-8"
+                    aria-label={`Editar roteiro ${script.title}`}
                   >
-                    <Pen className="w-4 h-4" />
+                    <Pen className="w-4 h-4" aria-hidden="true" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDelete(script.id)}
                     className="h-8 w-8 text-destructive hover:text-destructive"
+                    aria-label={`Excluir roteiro ${script.title}`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
                   </Button>
                 </div>
               </div>

@@ -1,16 +1,21 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { Session, User } from "@supabase/supabase-js";
+import type { Session, User, AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppStore } from "@/stores/useAppStore";
+
+// Tipos específicos para as respostas de autenticação
+type AuthResult<T> = { data: T; error: AuthError | null };
+type SignUpData = { user: User | null; session: Session | null };
+type SignInData = { user: User | null; session: Session | null };
 
 export type AuthContextValue = {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<{ data: any; error: any }>;
-  signIn: (email: string, password: string) => Promise<{ data: any; error: any }>;
+  signUp: (email: string, password: string) => Promise<AuthResult<SignUpData>>;
+  signIn: (email: string, password: string) => Promise<AuthResult<SignInData>>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: any }>;
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
