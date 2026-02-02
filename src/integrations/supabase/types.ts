@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       ai_agents: {
         Row: {
+          api_key_id: string | null
           context_priority: string[] | null
           created_at: string
           description: string | null
@@ -31,6 +32,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          api_key_id?: string | null
           context_priority?: string[] | null
           created_at?: string
           description?: string | null
@@ -46,6 +48,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          api_key_id?: string | null
           context_priority?: string[] | null
           created_at?: string
           description?: string | null
@@ -58,6 +61,47 @@ export type Database = {
           system_prompt?: string
           temperature?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agents_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "ai_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_api_keys: {
+        Row: {
+          api_key: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          label: string | null
+          provider: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          api_key: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string | null
+          provider: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string | null
+          provider?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
