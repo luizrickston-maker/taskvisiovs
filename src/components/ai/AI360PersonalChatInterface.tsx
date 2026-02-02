@@ -7,7 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAskPersonalAI360Agent } from '@/hooks/usePersonalAI360Agent';
+import { useAiAgents, useDefaultAiAgent } from '@/hooks/useAiAgents';
 import type { ChatMessage } from '@/types/ai';
 import ReactMarkdown from 'react-markdown';
 
@@ -41,8 +43,24 @@ const QUICK_PROMPTS = [
   { label: '🛒 Planos de compra', prompt: 'Como estão meus planos de compra? Qual o progresso de cada um?' },
 ];
 
-export function PersonalAI360ChatInterface() {
+interface AI360PersonalChatInterfaceProps {
+  agentId?: string;
+}
+
+export function AI360PersonalChatInterface({ agentId: initialAgentId }: AI360PersonalChatInterfaceProps) {
   const navigate = useNavigate();
+  
+  // Agent selection
+  const { data: agents, isLoading: isLoadingAgents } = useAiAgents();
+  const { data: defaultAgent } = useDefaultAiAgent();
+  const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>(initialAgentId);
+  
+  // Set default agent when loaded
+  useEffect(() => {
+    if (!selectedAgentId && defaultAgent) {
+      setSelectedAgentId(defaultAgent.id);
+    }
+  }, [defaultAgent, selectedAgentId]);
   
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -54,6 +72,18 @@ export function PersonalAI360ChatInterface() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const { mutate: askAgent, isPending } = useAskPersonalAI360Agent();
+
+  // Get active agents only
+  const activeAgents = useMemo(() => 
+    agents?.filter(a => a.is_active) ?? [], 
+    [agents]
+  );
+
+  // Get selected agent name for display
+  const selectedAgentName = useMemo(() => 
+    activeAgents.find(a => a.id === selectedAgentId)?.name ?? 'Agente Padrão',
+    [activeAgents, selectedAgentId]
+  );
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -81,6 +111,7 @@ export function PersonalAI360ChatInterface() {
     askAgent(
       {
         messages: newMessages,
+        agentId: selectedAgentId,
         signal: abortControllerRef.current.signal,
         onChunk: (chunk) => {
           setStreamingContent((prev) => prev + chunk);
@@ -100,7 +131,7 @@ export function PersonalAI360ChatInterface() {
         },
       }
     );
-  }, [input, messages, isPending, askAgent]);
+  }, [input, messages, isPending, askAgent, selectedAgentId]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -118,12 +149,42 @@ export function PersonalAI360ChatInterface() {
   return (
     <Card className="glass-card flex flex-col" style={{ minHeight: '500px' }}>
       <CardHeader className="border-b pb-4">
-        <div className="flex flex-row items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-rose-500" />
+            <Heart className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">Assistente Pessoal 360°</CardTitle>
           </div>
           <div className="flex items-center gap-2">
+            {/* Agent Selector */}
+            <Select
+              value={selectedAgentId}
+              onValueChange={setSelectedAgentId}
+              disabled={isLoadingAgents || isPending}
+            >
+              <SelectTrigger className="w-[180px] h-8 text-sm">
+                <SelectValue placeholder="Selecionar agente">
+                  {selectedAgentName}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {activeAgents.map((agent) => (
+                  <SelectItem key={agent.id} value={agent.id}>
+                    <div className="flex items-center gap-2">
+                      <span>{agent.name}</span>
+                      {agent.is_default && (
+                        <Badge variant="secondary" className="text-xs">Padrão</Badge>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+                {activeAgents.length === 0 && (
+                  <SelectItem value="none" disabled>
+                    Nenhum agente disponível
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+            
             {messages.length > 0 && (
               <Button
                 variant="ghost"
@@ -272,10 +333,10 @@ function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-gradient-to-br from-rose-500/20 to-pink-500/20'
+          isUser ? 'bg-primary text-primary-foreground' : 'bg-primary/10'
         }`}
       >
-        {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4 text-rose-500" />}
+        {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4 text-primary" />}
       </div>
       <div className="max-w-[85%] space-y-2">
         <div
@@ -324,7 +385,7 @@ function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
                 {message.content}
               </ReactMarkdown>
               {isStreaming && (
-                <span className="inline-block h-4 w-1 animate-pulse bg-rose-500 ml-1" />
+                <span className="inline-block h-4 w-1 animate-pulse bg-primary ml-1" />
               )}
             </div>
           )}

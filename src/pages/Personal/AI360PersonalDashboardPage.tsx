@@ -1,7 +1,7 @@
 import { Heart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePersonalContext } from '@/hooks/usePersonalAI360Agent';
-import { PersonalAI360ChatInterface } from '@/components/ai/PersonalAI360ChatInterface';
+import { AI360PersonalChatInterface } from '@/components/ai/AI360PersonalChatInterface';
 import { PersonalAI360SummaryCards } from '@/components/ai/PersonalAI360SummaryCards';
 
 export default function AI360PersonalDashboardPage() {
@@ -32,7 +32,7 @@ export default function AI360PersonalDashboardPage() {
         </TabsList>
 
         <TabsContent value="chat" className="space-y-4">
-          <PersonalAI360ChatInterface />
+          <AI360PersonalChatInterface />
         </TabsContent>
 
         <TabsContent value="dashboard" className="space-y-4">
