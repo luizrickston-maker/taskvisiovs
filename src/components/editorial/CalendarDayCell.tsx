@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ContentItemCard } from './ContentItemCard';
+import { CalendarItemCard } from './CalendarItemCard';
 import type { EditorialCalendarItem } from '@/types/editorial';
 
 interface CalendarDayCellProps {
@@ -47,7 +47,7 @@ export function CalendarDayCell({
       {/* Items */}
       <div className="space-y-1">
         {visibleItems.map((item) => (
-          <ContentItemCard
+          <CalendarItemCard
             key={item.id}
             item={item}
             compact

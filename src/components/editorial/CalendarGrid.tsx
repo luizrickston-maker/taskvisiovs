@@ -13,7 +13,7 @@ import {
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { CalendarDayCell } from './CalendarDayCell';
-import { ContentItemCard } from './ContentItemCard';
+import { CalendarItemCard } from './CalendarItemCard';
 import type { EditorialCalendarItem } from '@/types/editorial';
 
 type CalendarViewType = 'month' | 'week';
@@ -106,7 +106,7 @@ export function CalendarGrid({ items, currentDate, view, onItemClick }: Calendar
                 {/* Day items with scroll */}
                 <div className="space-y-2 max-h-[160px] overflow-y-auto scrollbar-thin">
                   {dayItems.map(item => (
-                    <ContentItemCard
+                    <CalendarItemCard
                       key={item.id}
                       item={item}
                       onClick={() => onItemClick?.(item)}
