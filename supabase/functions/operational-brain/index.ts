@@ -32,170 +32,147 @@ const SYSTEM_PROMPT = `Você é o "Cérebro Operacional" do TaskVision PRO, um a
 Você é proativo, estratégico e ajuda o usuário a tomar decisões baseadas em dados.`;
 
 interface OperationalContext {
-  projects: any[];
-  projectTasks: any[];
-  prospects: any[];
-  salesGoals: any[];
-  timeBlocks: any[];
-  editorialItems: any[];
-  teamMembers: any[];
+  generated_at: string;
+  user_id: string;
+  projects: {
+    total: number;
+    by_status: { todo: number; progress: number; blocked: number; done: number };
+    corporate_count: number;
+    overdue_count: number;
+    items: any[];
+  };
+  tasks: {
+    total_pending: number;
+    by_status: { todo: number; in_progress: number };
+    overdue_count: number;
+    due_today: number;
+    due_this_week: number;
+    high_priority: number;
+    items: any[];
+  };
+  sales_pipeline: {
+    total_prospects: number;
+    total_value: number;
+    weighted_value: number;
+    by_status: { novo: number; em_negociacao: number; proposta_enviada: number; fechado: number; perdido: number };
+    closed_value: number;
+    items: any[];
+  };
+  sales_goals: any[];
+  schedule: {
+    total_upcoming: number;
+    today: number;
+    tomorrow: number;
+    this_week: number;
+    items: any[];
+  };
+  editorial: {
+    total_pending: number;
+    overdue_count: number;
+    due_today: number;
+    by_status: { idea: number; draft: number; review: number; approved: number };
+    by_platform: { instagram: number; tiktok: number; youtube: number; linkedin: number; blog: number };
+    items: any[];
+  };
+  team: {
+    active_members: number;
+    total_hours_available: number;
+    members: any[];
+  };
 }
 
 async function fetchOperationalContext(
   supabase: any,
   userId: string
-): Promise<OperationalContext> {
-  const today = new Date().toISOString().split("T")[0];
-  const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+): Promise<OperationalContext | null> {
+  console.log("[operational-brain] Fetching 360 summary via SQL function");
+  
+  // Use the optimized SQL function for consolidated data
+  const { data, error } = await supabase.rpc('get_user_360_summary', {
+    p_user_id: userId
+  });
 
-  // Fetch all data in parallel
-  const [
-    { data: projects },
-    { data: projectTasks },
-    { data: prospects },
-    { data: salesGoals },
-    { data: timeBlocks },
-    { data: editorialItems },
-    { data: teamMembers },
-  ] = await Promise.all([
-    supabase
-      .from("projects")
-      .select("id, project, task, status, priority, deadline, is_corporate, client_name, company_name")
-      .eq("user_id", userId)
-      .order("priority", { ascending: true })
-      .limit(50),
-    supabase
-      .from("project_tasks")
-      .select("id, title, status, priority, deadline, estimated_hours, actual_hours, project_id")
-      .eq("user_id", userId)
-      .order("priority", { ascending: true })
-      .limit(100),
-    supabase
-      .from("prospects")
-      .select("id, client_name, company_name, status, estimated_value, prospection_date, project_type, payment_type")
-      .eq("user_id", userId)
-      .order("prospection_date", { ascending: false })
-      .limit(50),
-    supabase
-      .from("sales_goals")
-      .select("id, goal_type, target_amount, current_amount, start_date, end_date")
-      .eq("user_id", userId)
-      .gte("end_date", today)
-      .limit(20),
-    supabase
-      .from("time_blocks")
-      .select("id, title, date, start_time, end_time, type, completed")
-      .eq("user_id", userId)
-      .gte("date", today)
-      .lte("date", nextWeek)
-      .order("date", { ascending: true })
-      .limit(50),
-    supabase
-      .from("editorial_calendar_items")
-      .select("id, title, due_date, status, platform, content_type, assigned_to")
-      .eq("user_id", userId)
-      .gte("due_date", today)
-      .order("due_date", { ascending: true })
-      .limit(30),
-    supabase
-      .from("corporate_team")
-      .select("id, name, role, is_active, hours_available")
-      .eq("user_id", userId)
-      .eq("is_active", true)
-      .limit(20),
-  ]);
+  if (error) {
+    console.error("[operational-brain] Error fetching 360 summary:", error);
+    return null;
+  }
 
-  return {
-    projects: projects || [],
-    projectTasks: projectTasks || [],
-    prospects: prospects || [],
-    salesGoals: salesGoals || [],
-    timeBlocks: timeBlocks || [],
-    editorialItems: editorialItems || [],
-    teamMembers: teamMembers || [],
-  };
+  return data as OperationalContext;
 }
 
-function buildContextSummary(ctx: OperationalContext): string {
-  const today = new Date().toISOString().split("T")[0];
+function buildContextSummary(ctx: OperationalContext | null): string {
+  if (!ctx) {
+    return `
+## 📊 CONTEXTO OPERACIONAL
+Não foi possível carregar os dados operacionais. Responda com base no conhecimento geral.
+`;
+  }
+
+  const { projects, tasks, sales_pipeline, sales_goals, schedule, editorial, team } = ctx;
   
-  // Project stats
-  const projectsByStatus = ctx.projects.reduce((acc: any, p: any) => {
-    acc[p.status] = (acc[p.status] || 0) + 1;
-    return acc;
-  }, {});
-  
-  const urgentProjects = ctx.projects.filter(
-    (p: any) => p.deadline && p.deadline <= today && p.status !== "done"
-  );
+  // Format sales goals
+  const goalsFormatted = (sales_goals || []).map((g: any) => 
+    `- ${g.goal_type}: ${g.progress_percent}% (R$ ${(g.current_amount || 0).toLocaleString("pt-BR")} / R$ ${(g.target_amount || 0).toLocaleString("pt-BR")}) - ${g.days_remaining} dias restantes [${g.status}]`
+  ).join("\n") || "- Nenhuma meta configurada";
 
-  // Task stats
-  const tasksByStatus = ctx.projectTasks.reduce((acc: any, t: any) => {
-    acc[t.status] = (acc[t.status] || 0) + 1;
-    return acc;
-  }, {});
-  
-  const overdueTasks = ctx.projectTasks.filter(
-    (t: any) => t.deadline && t.deadline < today && t.status !== "done"
-  );
+  // Format today's schedule
+  const todayItems = (schedule?.items || []).filter((s: any) => s.day_status === 'today');
+  const scheduleFormatted = todayItems.map((b: any) => 
+    `- ${b.start_time}-${b.end_time}: ${b.title} ${b.completed ? "✅" : ""}`
+  ).join("\n") || "- Nenhum compromisso agendado";
 
-  // Pipeline stats
-  const prospectsByStatus = ctx.prospects.reduce((acc: any, p: any) => {
-    acc[p.status] = (acc[p.status] || 0) + 1;
-    return acc;
-  }, {});
-  
-  const totalPipelineValue = ctx.prospects
-    .filter((p: any) => p.status !== "fechado" && p.status !== "perdido")
-    .reduce((sum: number, p: any) => sum + (p.estimated_value || 0), 0);
+  // Format team
+  const teamFormatted = (team?.members || []).map((m: any) => 
+    `- ${m.name} (${m.role}) - ${m.hours_available}h disponíveis`
+  ).join("\n") || "- Nenhum membro cadastrado";
 
-  // Sales goals progress
-  const goalsProgress = ctx.salesGoals.map((g: any) => ({
-    type: g.goal_type,
-    progress: g.target_amount > 0 ? (g.current_amount / g.target_amount * 100).toFixed(1) : 0,
-    current: g.current_amount,
-    target: g.target_amount,
-  }));
-
-  // Editorial stats
-  const editorialByStatus = ctx.editorialItems.reduce((acc: any, e: any) => {
-    acc[e.status] = (acc[e.status] || 0) + 1;
-    return acc;
-  }, {});
-
-  // Today's schedule
-  const todayBlocks = ctx.timeBlocks.filter((b: any) => b.date === today);
+  // Overdue items
+  const overdueProjects = (projects?.items || []).filter((p: any) => p.is_overdue);
+  const overdueTasks = (tasks?.items || []).filter((t: any) => t.is_overdue);
+  const overdueEditorial = (editorial?.items || []).filter((e: any) => e.is_overdue);
 
   return `
 ## 📊 CONTEXTO OPERACIONAL ATUAL (${new Date().toLocaleDateString("pt-BR")})
 
-### 🗂️ PROJETOS (${ctx.projects.length} total)
-- Por status: ${JSON.stringify(projectsByStatus)}
-- Projetos com prazo vencido: ${urgentProjects.length}
-${urgentProjects.length > 0 ? `- URGENTES: ${urgentProjects.map((p: any) => `"${p.project}" (prazo: ${p.deadline})`).join(", ")}` : ""}
+### 🗂️ PROJETOS (${projects?.total || 0} total)
+- Por status: A Fazer=${projects?.by_status?.todo || 0}, Em Progresso=${projects?.by_status?.progress || 0}, Bloqueado=${projects?.by_status?.blocked || 0}, Concluído=${projects?.by_status?.done || 0}
+- Projetos corporativos: ${projects?.corporate_count || 0}
+- Projetos com prazo vencido: ${projects?.overdue_count || 0}
+${overdueProjects.length > 0 ? `- ⚠️ URGENTES: ${overdueProjects.slice(0, 3).map((p: any) => `"${p.name}" (prazo: ${p.deadline})`).join(", ")}` : ""}
 
-### ✅ TAREFAS (${ctx.projectTasks.length} total)
-- Por status: ${JSON.stringify(tasksByStatus)}
-- Tarefas atrasadas: ${overdueTasks.length}
-${overdueTasks.length > 0 ? `- ATRASADAS: ${overdueTasks.slice(0, 5).map((t: any) => `"${t.title}" (prazo: ${t.deadline})`).join(", ")}` : ""}
+### ✅ TAREFAS PENDENTES (${tasks?.total_pending || 0} total)
+- Por status: A Fazer=${tasks?.by_status?.todo || 0}, Em Progresso=${tasks?.by_status?.in_progress || 0}
+- Tarefas atrasadas: ${tasks?.overdue_count || 0}
+- Vencendo hoje: ${tasks?.due_today || 0}
+- Vencendo esta semana: ${tasks?.due_this_week || 0}
+- Alta prioridade (P1-P2): ${tasks?.high_priority || 0}
+${overdueTasks.length > 0 ? `- ⚠️ ATRASADAS: ${overdueTasks.slice(0, 5).map((t: any) => `"${t.title}" (prazo: ${t.deadline})`).join(", ")}` : ""}
 
 ### 💼 PIPELINE DE VENDAS
-- Prospects por status: ${JSON.stringify(prospectsByStatus)}
-- Valor total em negociação: R$ ${totalPipelineValue.toLocaleString("pt-BR")}
-- Prospects ativos: ${ctx.prospects.filter((p: any) => !["fechado", "perdido"].includes(p.status)).length}
+- Total de prospects ativos: ${(sales_pipeline?.by_status?.novo || 0) + (sales_pipeline?.by_status?.em_negociacao || 0) + (sales_pipeline?.by_status?.proposta_enviada || 0)}
+- Por estágio: Novo=${sales_pipeline?.by_status?.novo || 0}, Em Negociação=${sales_pipeline?.by_status?.em_negociacao || 0}, Proposta Enviada=${sales_pipeline?.by_status?.proposta_enviada || 0}
+- Valor total em negociação: R$ ${(sales_pipeline?.total_value || 0).toLocaleString("pt-BR")}
+- Valor ponderado (por probabilidade): R$ ${(sales_pipeline?.weighted_value || 0).toLocaleString("pt-BR")}
+- Valor já fechado: R$ ${(sales_pipeline?.closed_value || 0).toLocaleString("pt-BR")}
 
 ### 🎯 METAS DE VENDAS
-${goalsProgress.map((g: any) => `- ${g.type}: ${g.progress}% (R$ ${g.current.toLocaleString("pt-BR")} / R$ ${g.target.toLocaleString("pt-BR")})`).join("\n")}
+${goalsFormatted}
 
-### 📅 AGENDA DE HOJE (${todayBlocks.length} compromissos)
-${todayBlocks.map((b: any) => `- ${b.start_time}-${b.end_time}: ${b.title} ${b.completed ? "✅" : ""}`).join("\n") || "- Nenhum compromisso agendado"}
+### 📅 AGENDA DE HOJE (${schedule?.today || 0} compromissos)
+${scheduleFormatted}
+- Amanhã: ${schedule?.tomorrow || 0} compromissos
+- Esta semana: ${schedule?.this_week || 0} compromissos
 
-### 📱 CALENDÁRIO EDITORIAL
-- Por status: ${JSON.stringify(editorialByStatus)}
-- Total próximos itens: ${ctx.editorialItems.length}
+### 📱 CALENDÁRIO EDITORIAL (${editorial?.total_pending || 0} pendentes)
+- Atrasados: ${editorial?.overdue_count || 0}
+- Vencendo hoje: ${editorial?.due_today || 0}
+- Por status: Ideia=${editorial?.by_status?.idea || 0}, Rascunho=${editorial?.by_status?.draft || 0}, Revisão=${editorial?.by_status?.review || 0}, Aprovado=${editorial?.by_status?.approved || 0}
+- Por plataforma: Instagram=${editorial?.by_platform?.instagram || 0}, TikTok=${editorial?.by_platform?.tiktok || 0}, YouTube=${editorial?.by_platform?.youtube || 0}, LinkedIn=${editorial?.by_platform?.linkedin || 0}, Blog=${editorial?.by_platform?.blog || 0}
+${overdueEditorial.length > 0 ? `- ⚠️ ATRASADOS: ${overdueEditorial.slice(0, 3).map((e: any) => `"${e.title}" (${e.platform})`).join(", ")}` : ""}
 
-### 👥 EQUIPE ATIVA
-${ctx.teamMembers.map((m: any) => `- ${m.name} (${m.role}) - ${m.hours_available}h disponíveis`).join("\n") || "- Nenhum membro cadastrado"}
+### 👥 EQUIPE ATIVA (${team?.active_members || 0} membros)
+${teamFormatted}
+- Total horas disponíveis: ${team?.total_hours_available || 0}h
 
 ---
 Dados atualizados em: ${new Date().toLocaleString("pt-BR")}
@@ -242,7 +219,7 @@ serve(async (req) => {
       );
     }
 
-    // Fetch operational context
+    // Fetch operational context using optimized SQL function
     console.log("[operational-brain] Fetching context for user:", userId);
     const context = await fetchOperationalContext(supabase, userId);
     const contextSummary = buildContextSummary(context);

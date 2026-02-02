@@ -412,6 +412,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "editorial_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_overview"
+            referencedColumns: ["id"]
+          },
         ]
       }
       editorial_comments: {
@@ -442,6 +449,13 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "editorial_calendar_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "editorial_comments_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "pending_editorial_content"
             referencedColumns: ["id"]
           },
         ]
@@ -678,6 +692,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_overview"
+            referencedColumns: ["id"]
+          },
         ]
       }
       projects: {
@@ -747,6 +768,13 @@ export type Database = {
             referencedRelation: "prospects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "projects_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "sales_pipeline_summary"
+            referencedColumns: ["id"]
+          },
         ]
       }
       prospect_documents: {
@@ -799,6 +827,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_documents_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "sales_pipeline_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -879,6 +914,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "prospects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_overview"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sales_goals: {
@@ -924,6 +966,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_goals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_overview"
             referencedColumns: ["id"]
           },
         ]
@@ -1244,9 +1293,208 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      corporate_pending_tasks: {
+        Row: {
+          actual_hours: number | null
+          client_name: string | null
+          company_name: string | null
+          created_at: string | null
+          deadline: string | null
+          deadline_status: string | null
+          description: string | null
+          estimated_hours: number | null
+          id: string | null
+          is_overdue: boolean | null
+          priority: number | null
+          project_id: string | null
+          project_name: string | null
+          status: string | null
+          title: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_overview"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pending_editorial_content: {
+        Row: {
+          assigned_name: string | null
+          assigned_to: string | null
+          content_type: Database["public"]["Enums"]["content_type_enum"] | null
+          created_at: string | null
+          deadline_status: string | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          is_overdue: boolean | null
+          platform: Database["public"]["Enums"]["content_platform"] | null
+          project_id: string | null
+          project_name: string | null
+          status: Database["public"]["Enums"]["content_status"] | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "editorial_calendar_items_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "corporate_team"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "editorial_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "editorial_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_overview"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects_overview: {
+        Row: {
+          category_color: string | null
+          category_name: string | null
+          client_name: string | null
+          company_name: string | null
+          completed_tasks: number | null
+          created_at: string | null
+          deadline: string | null
+          description: string | null
+          id: string | null
+          is_corporate: boolean | null
+          is_overdue: boolean | null
+          name: string | null
+          priority: number | null
+          prospect_id: string | null
+          status: string | null
+          total_actual_hours: number | null
+          total_estimated_hours: number | null
+          total_tasks: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "sales_pipeline_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_goals_progress: {
+        Row: {
+          current_amount: number | null
+          days_remaining: number | null
+          end_date: string | null
+          goal_type: string | null
+          id: string | null
+          progress_percent: number | null
+          project_id: string | null
+          project_name: string | null
+          remaining_amount: number | null
+          start_date: string | null
+          status: string | null
+          target_amount: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_goals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_goals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_overview"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_pipeline_summary: {
+        Row: {
+          client_name: string | null
+          company_name: string | null
+          contract_duration: number | null
+          conversion_probability: number | null
+          created_at: string | null
+          estimated_value: number | null
+          id: string | null
+          payment_type: string | null
+          plan_id: string | null
+          plan_name: string | null
+          project_type: string | null
+          prospection_date: string | null
+          stage_order: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          weighted_value: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospects_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "service_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      upcoming_appointments: {
+        Row: {
+          color: string | null
+          completed: boolean | null
+          date: string | null
+          day_status: string | null
+          end_time: string | null
+          id: string | null
+          start_datetime: string | null
+          start_time: string | null
+          title: string | null
+          type: string | null
+          type_name: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_user_360_summary: { Args: { p_user_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
