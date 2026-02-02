@@ -179,7 +179,7 @@ export function OperationalBrainChat() {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg gradient-primary glow-primary hover:scale-105 transition-transform"
+        className="fixed bottom-20 right-4 z-50 h-14 w-14 rounded-full shadow-lg gradient-primary glow-primary hover:scale-105 transition-transform md:bottom-6 md:right-6"
         size="icon"
       >
         <Brain className="h-6 w-6" />
@@ -192,8 +192,8 @@ export function OperationalBrainChat() {
       className={cn(
         "fixed z-50 bg-card/95 backdrop-blur-md border border-border/50 rounded-xl shadow-2xl transition-all duration-300 flex flex-col",
         isMinimized
-          ? "bottom-6 right-6 w-72 h-14"
-          : "bottom-6 right-6 w-[400px] h-[600px] max-h-[80vh]"
+          ? "bottom-20 right-4 w-64 h-14 md:bottom-6 md:right-6 md:w-72"
+          : "bottom-20 right-4 left-4 h-[70vh] md:bottom-6 md:right-6 md:left-auto md:w-[400px] md:h-[600px] md:max-h-[80vh]"
       )}
     >
       {/* Header */}
