@@ -1015,6 +1015,51 @@ export type Database = {
           },
         ]
       }
+      purchase_plans: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          deadline: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          priority: string | null
+          saved_amount: number | null
+          status: string | null
+          target_amount: number
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          priority?: string | null
+          saved_amount?: number | null
+          status?: string | null
+          target_amount: number
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          priority?: string | null
+          saved_amount?: number | null
+          status?: string | null
+          target_amount?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       sales_goals: {
         Row: {
           created_at: string
