@@ -21,12 +21,12 @@ import {
 import type { PersonalContextSummary } from '@/hooks/usePersonalAI360Agent';
 import { formatCurrency, calculateFinancialHealth, getPersonalAlerts } from '@/hooks/usePersonalAI360Agent';
 
-interface PersonalAI360SummaryCardsProps {
+interface AI360PersonalSummaryCardsProps {
   summary: PersonalContextSummary | null | undefined;
   isLoading: boolean;
 }
 
-export function PersonalAI360SummaryCards({ summary, isLoading }: PersonalAI360SummaryCardsProps) {
+export function AI360PersonalSummaryCards({ summary, isLoading }: AI360PersonalSummaryCardsProps) {
   const navigate = useNavigate();
 
   const financialHealth = useMemo(() => calculateFinancialHealth(summary ?? null), [summary]);

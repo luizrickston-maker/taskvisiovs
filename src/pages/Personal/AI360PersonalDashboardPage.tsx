@@ -2,7 +2,7 @@ import { Heart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePersonalContext } from '@/hooks/usePersonalAI360Agent';
 import { AI360PersonalChatInterface } from '@/components/ai/AI360PersonalChatInterface';
-import { PersonalAI360SummaryCards } from '@/components/ai/PersonalAI360SummaryCards';
+import { AI360PersonalSummaryCards } from '@/components/ai/AI360PersonalSummaryCards';
 
 export default function AI360PersonalDashboardPage() {
   const { data: context, isLoading: isLoadingContext } = usePersonalContext();
@@ -36,7 +36,7 @@ export default function AI360PersonalDashboardPage() {
         </TabsContent>
 
         <TabsContent value="dashboard" className="space-y-4">
-          <PersonalAI360SummaryCards summary={context} isLoading={isLoadingContext} />
+          <AI360PersonalSummaryCards summary={context} isLoading={isLoadingContext} />
         </TabsContent>
       </Tabs>
     </div>
