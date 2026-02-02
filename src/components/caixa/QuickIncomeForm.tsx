@@ -115,12 +115,13 @@ export function QuickIncomeForm() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={handleSubmit} className="flex gap-2" aria-label="Adicionar entrada rápida">
           <Input
             placeholder="Fonte"
             value={source}
             onChange={(e) => setSource(e.target.value)}
             className="flex-1"
+            aria-label="Fonte da entrada"
           />
           <Input
             type="number"
@@ -130,9 +131,10 @@ export function QuickIncomeForm() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className="w-24"
+            aria-label="Valor da entrada"
           />
           <Select value={categoryId} onValueChange={setCategoryId}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-32" aria-label="Selecionar categoria">
               <SelectValue placeholder="Categoria" />
             </SelectTrigger>
             <SelectContent>
@@ -142,6 +144,7 @@ export function QuickIncomeForm() {
                     <div
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: cat.color }}
+                      aria-hidden="true"
                     />
                     {cat.name}
                   </div>
@@ -149,8 +152,8 @@ export function QuickIncomeForm() {
               ))}
             </SelectContent>
           </Select>
-          <Button type="submit" size="icon" disabled={isSubmitting}>
-            <Plus className="w-4 h-4" />
+          <Button type="submit" size="icon" disabled={isSubmitting} aria-label="Adicionar entrada">
+            <Plus className="w-4 h-4" aria-hidden="true" />
           </Button>
         </form>
 
@@ -179,8 +182,9 @@ export function QuickIncomeForm() {
                     size="icon"
                     className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => handleDelete(income.id)}
+                    aria-label={`Excluir entrada ${income.source}`}
                   >
-                    <Trash2 className="w-4 h-4 text-destructive" />
+                    <Trash2 className="w-4 h-4 text-destructive" aria-hidden="true" />
                   </Button>
                 </div>
               ))}
