@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
+import { useAppContext } from '@/hooks/useAppContext';
 
 const THEME_KEY = 'flow-control-theme';
 
 export function useUserPreferences() {
-  const { userPreferences, updateUserPreferences, setUserPreferences } = useAppStore();
+  const { userPreferences, updateUserPreferences } = useAppStore();
+  const { mode } = useAppContext();
 
   // Theme is stored in localStorage (per device)
   const getTheme = (): 'dark' | 'system' => {
@@ -49,7 +51,15 @@ export function useUserPreferences() {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  // App name is stored in the database (synced between devices)
+  // Get current app name based on mode
+  const getAppName = () => {
+    if (mode === 'business') {
+      return userPreferences?.business_app_name || 'Minha Empresa';
+    }
+    return userPreferences?.app_name || 'Flow Control';
+  };
+
+  // Update personal app name
   const updateAppName = async (appName: string) => {
     if (!userPreferences) return;
 
@@ -65,10 +75,29 @@ export function useUserPreferences() {
     }
   };
 
+  // Update business app name
+  const updateBusinessAppName = async (businessAppName: string) => {
+    if (!userPreferences) return;
+
+    updateUserPreferences({ business_app_name: businessAppName });
+
+    const { error } = await supabase
+      .from('user_preferences')
+      .update({ business_app_name: businessAppName })
+      .eq('id', userPreferences.id);
+
+    if (error && import.meta.env.DEV) {
+      console.error('Error updating business app name:', error);
+    }
+  };
+
   return {
-    appName: userPreferences?.app_name || 'Flow Control',
+    appName: getAppName(),
+    personalAppName: userPreferences?.app_name || 'Flow Control',
+    businessAppName: userPreferences?.business_app_name || 'Minha Empresa',
     theme: getTheme(),
     setTheme,
     updateAppName,
+    updateBusinessAppName,
   };
 }
