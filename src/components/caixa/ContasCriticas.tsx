@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, AlertTriangle, Check, CreditCard, RefreshCw } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, addMonths, subMonths, isSameMonth, isBefore, parseISO, getDay, eachWeekOfInterval, isSameWeek, startOfWeek } from 'date-fns';
+import { format, startOfMonth, endOfMonth, addMonths, subMonths, isSameMonth, isBefore, parseISO, getDay, isSameWeek, startOfWeek, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,20 @@ import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Debt } from '@/types/database';
+
+/**
+ * Counts how many times a specific day of the week occurs in a given month.
+ * @param dayOfWeek 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
+ * @param month The reference month
+ * @returns Number of occurrences (typically 4 or 5)
+ */
+function getWeekdayOccurrencesInMonth(dayOfWeek: number, month: Date): number {
+  const monthStart = startOfMonth(month);
+  const monthEnd = endOfMonth(month);
+  
+  const allDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  return allDays.filter(day => getDay(day) === dayOfWeek).length;
+}
 
 export function ContasCriticas() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -109,6 +123,31 @@ export function ContasCriticas() {
     return days[dayOfWeek];
   };
 
+  /**
+   * Gets the monthly amount for a debt, accounting for weekly debts.
+   * Weekly debts are multiplied by their occurrences in the current month.
+   */
+  const getMonthlyAmount = (debt: Debt): number => {
+    if (debt.type === 'weekly') {
+      const dueDate = parseISO(debt.due_date);
+      const dayOfWeek = getDay(dueDate);
+      const occurrences = getWeekdayOccurrencesInMonth(dayOfWeek, currentMonth);
+      return Number(debt.amount) * occurrences;
+    }
+    return Number(debt.amount);
+  };
+
+  /**
+   * Gets display info for weekly debts showing occurrences.
+   */
+  const getWeeklyInfo = (debt: Debt): { occurrences: number; total: number } | null => {
+    if (debt.type !== 'weekly') return null;
+    const dueDate = parseISO(debt.due_date);
+    const dayOfWeek = getDay(dueDate);
+    const occurrences = getWeekdayOccurrencesInMonth(dayOfWeek, currentMonth);
+    return { occurrences, total: Number(debt.amount) * occurrences };
+  };
+
   const handleTogglePaid = async (debt: Debt) => {
     const newPaidStatus = !debt.paid;
     updateDebt(debt.id, { paid: newPaidStatus });
@@ -129,8 +168,8 @@ export function ContasCriticas() {
     return category?.color || '#6b7280';
   };
 
-  const totalMonth = monthDebts.reduce((acc, d) => acc + Number(d.amount), 0);
-  const paidTotal = monthDebts.filter((d) => d.paid).reduce((acc, d) => acc + Number(d.amount), 0);
+  const totalMonth = monthDebts.reduce((acc, d) => acc + getMonthlyAmount(d), 0);
+  const paidTotal = monthDebts.filter((d) => d.paid).reduce((acc, d) => acc + getMonthlyAmount(d), 0);
 
   return (
     <Card className="glass-card animate-fade-in">
@@ -181,9 +220,10 @@ export function ContasCriticas() {
             <div className="space-y-2">
               {monthDebts.map((debt) => {
                 const installmentInfo = getInstallmentInfo(debt);
+                const weeklyInfo = getWeeklyInfo(debt);
                 const overdue = isOverdue(debt);
                 const dueDate = parseISO(debt.due_date);
-
+                const displayAmount = weeklyInfo ? weeklyInfo.total : Number(debt.amount);
                 return (
                   <div
                     key={debt.id}
@@ -211,8 +251,8 @@ export function ContasCriticas() {
                         {debt.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {debt.type === 'weekly' 
-                          ? `Toda ${getDayOfWeekLabel(getDay(dueDate))}`
+                        {debt.type === 'weekly' && weeklyInfo
+                          ? `Toda ${getDayOfWeekLabel(getDay(dueDate))} (${weeklyInfo.occurrences}× R$ ${Number(debt.amount).toFixed(0)})`
                           : `Vence dia ${dueDate.getDate()}`
                         }
                       </p>
@@ -234,7 +274,7 @@ export function ContasCriticas() {
                         <AlertTriangle className="w-4 h-4 text-destructive" />
                       )}
                       <span className={`font-semibold ${overdue && !debt.paid ? 'text-destructive' : ''}`}>
-                        {formatCurrency(Number(debt.amount))}
+                        {formatCurrency(displayAmount)}
                       </span>
                     </div>
                   </div>
