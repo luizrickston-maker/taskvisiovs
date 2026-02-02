@@ -115,12 +115,13 @@ export function QuickExpenseForm() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={handleSubmit} className="flex gap-2" aria-label="Adicionar custo rápido">
           <Input
             placeholder="Descrição"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="flex-1"
+            aria-label="Descrição do custo"
           />
           <Input
             type="number"
@@ -130,9 +131,10 @@ export function QuickExpenseForm() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className="w-24"
+            aria-label="Valor do custo"
           />
           <Select value={categoryId} onValueChange={setCategoryId}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-32" aria-label="Selecionar categoria">
               <SelectValue placeholder="Categoria" />
             </SelectTrigger>
             <SelectContent>
@@ -142,6 +144,7 @@ export function QuickExpenseForm() {
                     <div
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: cat.color }}
+                      aria-hidden="true"
                     />
                     {cat.name}
                   </div>
@@ -149,8 +152,8 @@ export function QuickExpenseForm() {
               ))}
             </SelectContent>
           </Select>
-          <Button type="submit" size="icon" disabled={isSubmitting}>
-            <Plus className="w-4 h-4" />
+          <Button type="submit" size="icon" disabled={isSubmitting} aria-label="Adicionar custo">
+            <Plus className="w-4 h-4" aria-hidden="true" />
           </Button>
         </form>
 
@@ -179,8 +182,9 @@ export function QuickExpenseForm() {
                     size="icon"
                     className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => handleDelete(expense.id)}
+                    aria-label={`Excluir custo ${expense.description}`}
                   >
-                    <Trash2 className="w-4 h-4 text-destructive" />
+                    <Trash2 className="w-4 h-4 text-destructive" aria-hidden="true" />
                   </Button>
                 </div>
               ))}

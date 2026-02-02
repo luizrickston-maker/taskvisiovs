@@ -1,22 +1,20 @@
+import { useMemo } from 'react';
 import { Target, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useAppStore } from '@/stores/useAppStore';
+import { formatCurrency } from '@/lib/currency';
 
 export function ProgressMeter() {
   const { savings, goals } = useAppStore();
 
-  const totalSavings = savings.reduce((acc, s) => acc + Number(s.amount), 0);
-  const activeGoal = goals.find((g) => g.type === 'savings') || goals[0];
-  const goalAmount = activeGoal?.amount || 10000;
-  const progress = Math.min((totalSavings / goalAmount) * 100, 100);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
+  const { totalSavings, activeGoal, goalAmount, progress } = useMemo(() => {
+    const total = savings.reduce((acc, s) => acc + Number(s.amount), 0);
+    const goal = goals.find((g) => g.type === 'savings') || goals[0];
+    const amount = goal?.amount || 10000;
+    const prog = Math.min((total / amount) * 100, 100);
+    return { totalSavings: total, activeGoal: goal, goalAmount: amount, progress: prog };
+  }, [savings, goals]);
 
   return (
     <Card className="glass-card animate-fade-in">

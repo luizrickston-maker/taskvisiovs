@@ -1,3 +1,4 @@
+import { useMemo, useCallback } from 'react';
 import { CheckCircle2, Circle, Target, Sparkles, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -10,30 +11,36 @@ import { cn } from '@/lib/utils';
 export default function AcoesHoje() {
   const { tasks, updateTask, deleteTask } = useAppStore();
   
-  const today = new Date().toISOString().split('T')[0];
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
   
-  // Mostrar tarefas do tipo 'today' que:
-  // - Não estão completadas, OU
-  // - Foram completadas hoje (mantém visível até o dia seguinte)
-  const todayTasks = tasks.filter(t => {
-    if (t.type !== 'today') return false;
+  // Memoized task filtering and calculations
+  const { todayTasks, completedCount, progress, allCompleted } = useMemo(() => {
+    // Mostrar tarefas do tipo 'today' que:
+    // - Não estão completadas, OU
+    // - Foram completadas hoje (mantém visível até o dia seguinte)
+    const filtered = tasks.filter(t => {
+      if (t.type !== 'today') return false;
+      
+      // Se não está completada, mostrar sempre
+      if (!t.completed) return true;
+      
+      // Se está completada, mostrar apenas se foi completada hoje
+      if (t.completed_at) {
+        const completedDate = t.completed_at.split('T')[0];
+        return completedDate === today;
+      }
+      
+      return false;
+    });
     
-    // Se não está completada, mostrar sempre
-    if (!t.completed) return true;
+    const completed = filtered.filter(t => t.completed).length;
+    const prog = filtered.length > 0 ? (completed / filtered.length) * 100 : 0;
+    const all = filtered.length > 0 && completed === filtered.length;
     
-    // Se está completada, mostrar apenas se foi completada hoje
-    if (t.completed_at) {
-      const completedDate = t.completed_at.split('T')[0];
-      return completedDate === today;
-    }
-    
-    return false;
-  });
-  const completedCount = todayTasks.filter(t => t.completed).length;
-  const progress = todayTasks.length > 0 ? (completedCount / todayTasks.length) * 100 : 0;
-  const allCompleted = todayTasks.length > 0 && completedCount === todayTasks.length;
+    return { todayTasks: filtered, completedCount: completed, progress: prog, allCompleted: all };
+  }, [tasks, today]);
 
-  const handleToggleComplete = async (taskId: string, currentCompleted: boolean) => {
+  const handleToggleComplete = useCallback(async (taskId: string, currentCompleted: boolean) => {
     const now = new Date().toISOString();
     const { error } = await supabase
       .from('tasks')
@@ -56,9 +63,9 @@ export default function AcoesHoje() {
     if (!currentCompleted) {
       toast.success('Tarefa concluída!');
     }
-  };
+  }, [updateTask]);
 
-  const handleDelete = async (taskId: string) => {
+  const handleDelete = useCallback(async (taskId: string) => {
     const { error } = await supabase
       .from('tasks')
       .delete()
@@ -71,7 +78,7 @@ export default function AcoesHoje() {
 
     deleteTask(taskId);
     toast.success('Tarefa excluída');
-  };
+  }, [deleteTask]);
 
   return (
     <Card className="glass-card h-full">

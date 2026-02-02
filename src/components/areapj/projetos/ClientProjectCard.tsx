@@ -26,19 +26,19 @@ interface ClientProjectCardProps {
 }
 
 const priorityConfig = {
-  1: { label: 'P1', color: 'bg-destructive text-destructive-foreground' },
-  2: { label: 'P2', color: 'bg-orange-500 text-white' },
-  3: { label: 'P3', color: 'bg-yellow-500 text-black' },
-  4: { label: 'P4', color: 'bg-blue-500 text-white' },
+  1: { label: 'P1', color: 'bg-priority-critical text-white' },
+  2: { label: 'P2', color: 'bg-priority-high text-white' },
+  3: { label: 'P3', color: 'bg-priority-medium text-black' },
+  4: { label: 'P4', color: 'bg-priority-low text-white' },
   5: { label: 'P5', color: 'bg-muted text-muted-foreground' },
 };
 
 const priorityBorderColors = {
-  1: 'border-l-4 border-l-red-500',
-  2: 'border-l-4 border-l-orange-500',
-  3: 'border-l-4 border-l-yellow-500',
-  4: 'border-l-4 border-l-blue-500',
-  5: 'border-l-4 border-l-gray-400',
+  1: 'border-l-4 border-l-priority-critical',
+  2: 'border-l-4 border-l-priority-high',
+  3: 'border-l-4 border-l-priority-medium',
+  4: 'border-l-4 border-l-priority-low',
+  5: 'border-l-4 border-l-priority-minimal',
 };
 
 const statusConfig = {
@@ -75,7 +75,7 @@ export function ClientProjectCard({ project, tasks, onEdit, onDelete, onClick }:
         "glass-card transition-all duration-200 hover:shadow-lg cursor-pointer",
         priorityBorder,
         isOverdue && "border-l-destructive",
-        isNearDeadline && !isOverdue && "border-l-yellow-500"
+        isNearDeadline && !isOverdue && "border-l-warning"
       )}
       onClick={onClick}
     >
@@ -133,7 +133,7 @@ export function ClientProjectCard({ project, tasks, onEdit, onDelete, onClick }:
         {deadline && (
           <div className={cn(
             "flex items-center gap-2 text-sm",
-            isOverdue ? "text-destructive" : isNearDeadline ? "text-yellow-500" : "text-muted-foreground"
+            isOverdue ? "text-destructive" : isNearDeadline ? "text-warning" : "text-muted-foreground"
           )}>
             <Calendar className="w-4 h-4" />
             <span>
