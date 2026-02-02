@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/s
 import { AppSidebar } from './AppSidebar';
 import { MobileNav } from './MobileNav';
 import { RealtimeIndicator } from './RealtimeIndicator';
+import { OperationalBrainChat } from '@/components/ai/OperationalBrainChat';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useRealtimeContextSafe } from '@/contexts/RealtimeContext';
 
@@ -42,6 +43,9 @@ export function AppLayout() {
 
         {/* Mobile Bottom Nav */}
         <MobileNav />
+
+        {/* AI Assistant */}
+        <OperationalBrainChat />
       </div>
     </SidebarProvider>
   );
