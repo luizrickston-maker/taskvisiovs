@@ -15,10 +15,10 @@ import ProjectTasksSection from '@/components/projetos/ProjectTasksSection';
 import type { Project, ProjectStatus } from '@/types/database';
 
 const columns: { status: ProjectStatus; title: string; icon: typeof ListTodo; color: string }[] = [
-  { status: 'todo', title: 'A Fazer', icon: ListTodo, color: 'text-blue-400' },
-  { status: 'progress', title: 'Em Progresso', icon: Loader2, color: 'text-amber-400' },
-  { status: 'blocked', title: 'Bloqueado', icon: Ban, color: 'text-red-400' },
-  { status: 'done', title: 'Concluído', icon: CheckCircle2, color: 'text-emerald-400' },
+  { status: 'todo', title: 'A Fazer', icon: ListTodo, color: 'text-primary' },
+  { status: 'progress', title: 'Em Progresso', icon: Loader2, color: 'text-warning' },
+  { status: 'blocked', title: 'Bloqueado', icon: Ban, color: 'text-destructive' },
+  { status: 'done', title: 'Concluído', icon: CheckCircle2, color: 'text-success' },
 ];
 
 export default function ProjetosDashboard() {

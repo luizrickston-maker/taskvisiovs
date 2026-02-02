@@ -69,6 +69,31 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Platform colors
+        platform: {
+          youtube: "hsl(var(--platform-youtube))",
+          instagram: "hsl(var(--platform-instagram))",
+          tiktok: "hsl(var(--platform-tiktok))",
+          linkedin: "hsl(var(--platform-linkedin))",
+          facebook: "hsl(var(--platform-facebook))",
+          blog: "hsl(var(--platform-blog))",
+        },
+        // Priority colors
+        priority: {
+          critical: "hsl(var(--priority-critical))",
+          high: "hsl(var(--priority-high))",
+          medium: "hsl(var(--priority-medium))",
+          low: "hsl(var(--priority-low))",
+          minimal: "hsl(var(--priority-minimal))",
+        },
+        // Status colors
+        status: {
+          draft: "hsl(var(--status-draft))",
+          scheduled: "hsl(var(--status-scheduled))",
+          published: "hsl(var(--status-published))",
+          review: "hsl(var(--status-review))",
+          approved: "hsl(var(--status-approved))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

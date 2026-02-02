@@ -42,6 +42,28 @@
 
     --radius: 0.75rem;
 
+    /* Platform colors */
+    --platform-youtube: 0 72% 51%;
+    --platform-instagram: 330 80% 60%;
+    --platform-tiktok: 0 0% 15%;
+    --platform-linkedin: 210 100% 40%;
+    --platform-facebook: 221 44% 41%;
+    --platform-blog: 142 71% 45%;
+
+    /* Priority colors */
+    --priority-critical: 0 72% 51%;
+    --priority-high: 25 95% 53%;
+    --priority-medium: 48 96% 53%;
+    --priority-low: 217 91% 60%;
+    --priority-minimal: 220 9% 46%;
+
+    /* Status colors */
+    --status-draft: 220 9% 46%;
+    --status-scheduled: 48 96% 53%;
+    --status-published: 142 71% 45%;
+    --status-review: 217 91% 60%;
+    --status-approved: 142 76% 36%;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 221 83% 53%;
@@ -86,6 +108,28 @@
     --border: 216 34% 17%;
     --input: 216 34% 17%;
     --ring: 221 83% 53%;
+
+    /* Platform colors - dark mode */
+    --platform-youtube: 0 72% 51%;
+    --platform-instagram: 330 80% 60%;
+    --platform-tiktok: 0 0% 85%;
+    --platform-linkedin: 210 100% 50%;
+    --platform-facebook: 221 44% 51%;
+    --platform-blog: 142 71% 45%;
+
+    /* Priority colors - dark mode */
+    --priority-critical: 0 72% 51%;
+    --priority-high: 25 95% 53%;
+    --priority-medium: 48 96% 53%;
+    --priority-low: 217 91% 60%;
+    --priority-minimal: 220 13% 69%;
+
+    /* Status colors - dark mode */
+    --status-draft: 220 13% 69%;
+    --status-scheduled: 48 96% 53%;
+    --status-published: 142 71% 45%;
+    --status-review: 217 91% 60%;
+    --status-approved: 142 76% 36%;
 
     --sidebar-background: 224 71% 4%;
     --sidebar-foreground: 213 31% 91%;

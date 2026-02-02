@@ -19,11 +19,11 @@ interface ProjectCardProps {
 }
 
 const priorityConfig: Record<number, { label: string; color: string; border: string }> = {
-  1: { label: 'Crítica', color: 'text-red-500', border: 'border-l-red-500' },
-  2: { label: 'Alta', color: 'text-orange-500', border: 'border-l-orange-500' },
-  3: { label: 'Média', color: 'text-yellow-500', border: 'border-l-yellow-500' },
-  4: { label: 'Baixa', color: 'text-blue-500', border: 'border-l-blue-500' },
-  5: { label: 'Mínima', color: 'text-muted-foreground', border: 'border-l-muted-foreground' },
+  1: { label: 'Crítica', color: 'text-priority-critical', border: 'border-l-priority-critical' },
+  2: { label: 'Alta', color: 'text-priority-high', border: 'border-l-priority-high' },
+  3: { label: 'Média', color: 'text-priority-medium', border: 'border-l-priority-medium' },
+  4: { label: 'Baixa', color: 'text-priority-low', border: 'border-l-priority-low' },
+  5: { label: 'Mínima', color: 'text-priority-minimal', border: 'border-l-priority-minimal' },
 };
 
 export default function ProjectCard({ project, category, onEdit, onDelete }: ProjectCardProps) {

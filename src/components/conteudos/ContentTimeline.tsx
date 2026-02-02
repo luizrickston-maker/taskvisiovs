@@ -21,20 +21,20 @@ const platformLabels: Record<ScriptPlatform, string> = {
 };
 
 const platformColors: Record<ScriptPlatform, string> = {
-  youtube: 'bg-red-500/20 text-red-600',
-  youtube_shorts: 'bg-red-500/20 text-red-600',
-  tiktok: 'bg-slate-800/20 text-slate-700 dark:text-slate-300',
-  tiktok_ads: 'bg-slate-800/20 text-slate-700 dark:text-slate-300',
-  instagram_reels: 'bg-pink-500/20 text-pink-600',
-  instagram_post: 'bg-purple-500/20 text-purple-600',
-  instagram_boost: 'bg-orange-500/20 text-orange-600',
-  facebook_ads: 'bg-blue-500/20 text-blue-600',
+  youtube: 'bg-platform-youtube/20 text-platform-youtube',
+  youtube_shorts: 'bg-platform-youtube/20 text-platform-youtube',
+  tiktok: 'bg-platform-tiktok/20 text-platform-tiktok',
+  tiktok_ads: 'bg-platform-tiktok/20 text-platform-tiktok',
+  instagram_reels: 'bg-platform-instagram/20 text-platform-instagram',
+  instagram_post: 'bg-platform-instagram/20 text-platform-instagram',
+  instagram_boost: 'bg-warning/20 text-warning',
+  facebook_ads: 'bg-platform-facebook/20 text-platform-facebook',
 };
 
 const statusColors: Record<ScriptStatus, string> = {
   draft: 'bg-muted text-muted-foreground',
-  scheduled: 'bg-yellow-500/20 text-yellow-600',
-  published: 'bg-green-500/20 text-green-600',
+  scheduled: 'bg-status-scheduled/20 text-status-scheduled',
+  published: 'bg-status-published/20 text-status-published',
 };
 
 const statusLabels: Record<ScriptStatus, string> = {
