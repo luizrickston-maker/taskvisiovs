@@ -1,4 +1,4 @@
-import { Wallet, TrendingUp, Target, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag } from 'lucide-react';
+import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -21,10 +21,10 @@ import { Separator } from '@/components/ui/separator';
 
 const personalNavItems = [
   { title: 'Assistente IA', url: '/assistente-pessoal', icon: Brain },
+  { title: 'Meu Dia', url: '/meu-dia', icon: CalendarDays },
   { title: 'Caixa', url: '/caixa', icon: Wallet },
   { title: 'Finanças', url: '/financas', icon: TrendingUp },
   { title: 'Planejamento', url: '/planejamento', icon: ShoppingBag },
-  { title: 'Foco', url: '/foco', icon: Target },
   { title: 'Projetos', url: '/projetos', icon: FolderKanban },
   { title: 'Conteúdos', url: '/conteudos', icon: FileText },
   { title: 'Roteiros', url: '/roteiros', icon: Pen },

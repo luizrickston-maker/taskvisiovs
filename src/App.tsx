@@ -99,7 +99,8 @@ const App = () => {
               >
                 {/* Personal Routes - Core (eager) */}
                 <Route path="/caixa" element={<CaixaDashboard />} />
-                <Route path="/foco" element={<FocoDashboard />} />
+                <Route path="/meu-dia" element={<FocoDashboard />} />
+                <Route path="/foco" element={<Navigate to="/meu-dia" replace />} />
                 
                 {/* Personal Routes - Lazy loaded */}
                 <Route path="/financas" element={
