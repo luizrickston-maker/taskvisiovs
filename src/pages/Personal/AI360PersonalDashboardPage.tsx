@@ -1,4 +1,4 @@
-import { Heart } from 'lucide-react';
+import { Brain } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePersonalContext } from '@/hooks/usePersonalAI360Agent';
 import { AI360PersonalChatInterface } from '@/components/ai/AI360PersonalChatInterface';
@@ -13,7 +13,7 @@ export default function AI360PersonalDashboardPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <Heart className="h-6 w-6 text-primary" />
+            <Brain className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Meu Cérebro Operacional</h1>
