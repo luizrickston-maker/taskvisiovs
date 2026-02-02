@@ -501,6 +501,13 @@ export type Database = {
             foreignKeyName: "editorial_calendar_items_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "personal_projects_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "editorial_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -781,6 +788,13 @@ export type Database = {
             foreignKeyName: "project_tasks_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "personal_projects_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -1003,6 +1017,13 @@ export type Database = {
             foreignKeyName: "prospects_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "personal_projects_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -1098,6 +1119,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_goals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "personal_projects_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_goals_project_id_fkey"
             columns: ["project_id"]
@@ -1433,6 +1461,63 @@ export type Database = {
       }
     }
     Views: {
+      active_purchase_plans: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          days_to_deadline: number | null
+          deadline: string | null
+          deadline_status: string | null
+          description: string | null
+          id: string | null
+          image_url: string | null
+          name: string | null
+          priority: string | null
+          progress_percent: number | null
+          remaining_amount: number | null
+          saved_amount: number | null
+          status: string | null
+          target_amount: number | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          days_to_deadline?: never
+          deadline?: string | null
+          deadline_status?: never
+          description?: string | null
+          id?: string | null
+          image_url?: string | null
+          name?: string | null
+          priority?: string | null
+          progress_percent?: never
+          remaining_amount?: never
+          saved_amount?: number | null
+          status?: string | null
+          target_amount?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          days_to_deadline?: never
+          deadline?: string | null
+          deadline_status?: never
+          description?: string | null
+          id?: string | null
+          image_url?: string | null
+          name?: string | null
+          priority?: string | null
+          progress_percent?: never
+          remaining_amount?: never
+          saved_amount?: number | null
+          status?: string | null
+          target_amount?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       corporate_pending_tasks: {
         Row: {
           actual_hours: number | null
@@ -1453,6 +1538,13 @@ export type Database = {
           user_id: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "personal_projects_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_tasks_project_id_fkey"
             columns: ["project_id"]
@@ -1500,6 +1592,13 @@ export type Database = {
             foreignKeyName: "editorial_calendar_items_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "personal_projects_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "editorial_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -1511,6 +1610,145 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pending_scripts: {
+        Row: {
+          created_at: string | null
+          deadline_status: string | null
+          id: string | null
+          is_overdue: boolean | null
+          platform: string | null
+          project_name: string | null
+          scheduled_date: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      personal_active_goals: {
+        Row: {
+          current_amount: number | null
+          days_remaining: number | null
+          deadline: string | null
+          id: string | null
+          is_overdue: boolean | null
+          name: string | null
+          progress_percent: number | null
+          status: string | null
+          target_amount: number | null
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          current_amount?: never
+          days_remaining?: never
+          deadline?: string | null
+          id?: string | null
+          is_overdue?: never
+          name?: string | null
+          progress_percent?: never
+          status?: never
+          target_amount?: number | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          current_amount?: never
+          days_remaining?: never
+          deadline?: string | null
+          id?: string | null
+          is_overdue?: never
+          name?: string | null
+          progress_percent?: never
+          status?: never
+          target_amount?: number | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      personal_financial_summary: {
+        Row: {
+          overdue_debts_count: number | null
+          total_expenses_this_month: number | null
+          total_income_this_month: number | null
+          total_pending_debts: number | null
+          total_savings: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      personal_pending_tasks: {
+        Row: {
+          created_at: string | null
+          deadline_status: string | null
+          id: string | null
+          is_overdue: boolean | null
+          scheduled_date: string | null
+          title: string | null
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deadline_status?: never
+          id?: string | null
+          is_overdue?: never
+          scheduled_date?: string | null
+          title?: string | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deadline_status?: never
+          id?: string | null
+          is_overdue?: never
+          scheduled_date?: string | null
+          title?: string | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      personal_projects_overview: {
+        Row: {
+          category_color: string | null
+          category_name: string | null
+          completed_tasks: number | null
+          created_at: string | null
+          description: string | null
+          estimated_time: string | null
+          id: string | null
+          name: string | null
+          priority: number | null
+          status: string | null
+          total_actual_hours: number | null
+          total_estimated_hours: number | null
+          total_tasks: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      personal_upcoming_time_blocks: {
+        Row: {
+          color: string | null
+          completed: boolean | null
+          date: string | null
+          day_status: string | null
+          end_time: string | null
+          id: string | null
+          start_datetime: string | null
+          start_time: string | null
+          title: string | null
+          type: string | null
+          type_name: string | null
+          user_id: string | null
+        }
+        Relationships: []
       }
       projects_overview: {
         Row: {
@@ -1569,6 +1807,13 @@ export type Database = {
           user_id: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_goals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "personal_projects_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_goals_project_id_fkey"
             columns: ["project_id"]
@@ -1632,8 +1877,28 @@ export type Database = {
         }
         Relationships: []
       }
+      upcoming_debts: {
+        Row: {
+          amount: number | null
+          category_color: string | null
+          category_name: string | null
+          days_until_due: number | null
+          due_date: string | null
+          id: string | null
+          installment_current: number | null
+          installment_total: number | null
+          name: string | null
+          notes: string | null
+          paid: boolean | null
+          type: string | null
+          urgency_status: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_personal_360_summary: { Args: { p_user_id: string }; Returns: Json }
       get_user_360_summary: { Args: { p_user_id: string }; Returns: Json }
       has_role: {
         Args: {
