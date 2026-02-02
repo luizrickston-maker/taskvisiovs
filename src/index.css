@@ -60,7 +60,7 @@
     /* Status colors */
     --status-draft: 220 9% 46%;
     --status-scheduled: 48 96% 53%;
-    --status-published: 142 71% 45%;
+    --status-published: 270 60% 55%;
     --status-review: 217 91% 60%;
     --status-approved: 142 76% 36%;
 
@@ -127,7 +127,7 @@
     /* Status colors - dark mode */
     --status-draft: 220 13% 69%;
     --status-scheduled: 48 96% 53%;
-    --status-published: 142 71% 45%;
+    --status-published: 270 60% 65%;
     --status-review: 217 91% 60%;
     --status-approved: 142 76% 36%;
 
