@@ -1341,6 +1341,7 @@ export type Database = {
       user_preferences: {
         Row: {
           app_name: string
+          business_app_name: string | null
           created_at: string
           id: string
           updated_at: string
@@ -1348,6 +1349,7 @@ export type Database = {
         }
         Insert: {
           app_name?: string
+          business_app_name?: string | null
           created_at?: string
           id?: string
           updated_at?: string
@@ -1355,6 +1357,7 @@ export type Database = {
         }
         Update: {
           app_name?: string
+          business_app_name?: string | null
           created_at?: string
           id?: string
           updated_at?: string

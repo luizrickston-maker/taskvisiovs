@@ -265,6 +265,7 @@ export interface UserPreference {
   id: string;
   user_id: string;
   app_name: string;
+  business_app_name?: string;
   created_at: string;
   updated_at: string;
 }

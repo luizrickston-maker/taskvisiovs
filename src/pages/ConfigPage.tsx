@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings, Moon, Sun, Check } from 'lucide-react';
+import { Settings, Moon, Sun, Check, User, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,16 +8,34 @@ import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { toast } from 'sonner';
 
 export default function ConfigPage() {
-  const { appName, theme, setTheme, updateAppName } = useUserPreferences();
-  const [newAppName, setNewAppName] = useState(appName);
-  const [isSaving, setIsSaving] = useState(false);
+  const { 
+    personalAppName, 
+    businessAppName, 
+    theme, 
+    setTheme, 
+    updateAppName, 
+    updateBusinessAppName 
+  } = useUserPreferences();
+  
+  const [newPersonalName, setNewPersonalName] = useState(personalAppName);
+  const [newBusinessName, setNewBusinessName] = useState(businessAppName);
+  const [isSavingPersonal, setIsSavingPersonal] = useState(false);
+  const [isSavingBusiness, setIsSavingBusiness] = useState(false);
 
-  const handleSaveAppName = async () => {
-    if (!newAppName.trim()) return;
-    setIsSaving(true);
-    await updateAppName(newAppName.trim());
-    setIsSaving(false);
-    toast.success('Nome atualizado!');
+  const handleSavePersonalName = async () => {
+    if (!newPersonalName.trim()) return;
+    setIsSavingPersonal(true);
+    await updateAppName(newPersonalName.trim());
+    setIsSavingPersonal(false);
+    toast.success('Nome pessoal atualizado!');
+  };
+
+  const handleSaveBusinessName = async () => {
+    if (!newBusinessName.trim()) return;
+    setIsSavingBusiness(true);
+    await updateBusinessAppName(newBusinessName.trim());
+    setIsSavingBusiness(false);
+    toast.success('Nome empresarial atualizado!');
   };
 
   return (
@@ -31,22 +49,47 @@ export default function ConfigPage() {
           <CardDescription>Personalize seu aplicativo</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* App Name */}
+          {/* Personal App Name */}
           <div className="space-y-2">
-            <Label htmlFor="appName">Nome do Aplicativo</Label>
+            <Label htmlFor="personalAppName" className="flex items-center gap-2">
+              <User className="w-4 h-4 text-muted-foreground" />
+              Nome do Contexto Pessoal
+            </Label>
             <div className="flex gap-2">
               <Input
-                id="appName"
-                value={newAppName}
-                onChange={(e) => setNewAppName(e.target.value)}
-                placeholder="Flow Control"
+                id="personalAppName"
+                value={newPersonalName}
+                onChange={(e) => setNewPersonalName(e.target.value)}
+                placeholder="Ex: Luiz Rickston"
               />
-              <Button onClick={handleSaveAppName} disabled={isSaving}>
+              <Button onClick={handleSavePersonalName} disabled={isSavingPersonal}>
                 <Check className="w-4 h-4" />
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Este nome será sincronizado em todos os seus dispositivos.
+              Este nome aparece quando você está no modo pessoal.
+            </p>
+          </div>
+
+          {/* Business App Name */}
+          <div className="space-y-2">
+            <Label htmlFor="businessAppName" className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-muted-foreground" />
+              Nome do Contexto Empresarial
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="businessAppName"
+                value={newBusinessName}
+                onChange={(e) => setNewBusinessName(e.target.value)}
+                placeholder="Ex: Chapada Digital"
+              />
+              <Button onClick={handleSaveBusinessName} disabled={isSavingBusiness}>
+                <Check className="w-4 h-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Este nome aparece quando você está no modo empresarial.
             </p>
           </div>
 
