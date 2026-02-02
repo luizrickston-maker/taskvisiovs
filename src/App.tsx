@@ -27,6 +27,7 @@ import InvestimentosPage from "@/pages/PJ/InvestimentosPage";
 import TimePage from "@/pages/PJ/TimePage";
 import ProjetosClientesPage from "@/pages/PJ/ProjetosClientesPage";
 import CalendarioEditorialPage from "@/pages/PJ/CalendarioEditorialPage";
+import AI360DashboardPage from "@/pages/PJ/AI360DashboardPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,6 +86,7 @@ const App = () => {
                 <Route path="/pj/investimentos" element={<InvestimentosPage />} />
                 <Route path="/pj/time" element={<TimePage />} />
                 <Route path="/pj/calendario-editorial" element={<CalendarioEditorialPage />} />
+                <Route path="/pj/cerebro-operacional" element={<AI360DashboardPage />} />
                 
                 {/* Config */}
                 <Route path="/config" element={<ConfigPage />} />
