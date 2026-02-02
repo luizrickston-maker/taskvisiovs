@@ -38,6 +38,7 @@ const ProjetosClientesPage = lazy(() => import("@/pages/PJ/ProjetosClientesPage"
 const CalendarioEditorialPage = lazy(() => import("@/pages/PJ/CalendarioEditorialPage"));
 const AI360DashboardPage = lazy(() => import("@/pages/PJ/AI360DashboardPage"));
 const AiAgentsManagerPage = lazy(() => import("@/pages/PJ/AiAgentsManagerPage"));
+const PersonalAIDashboardPage = lazy(() => import("@/pages/PersonalAIDashboardPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -124,6 +125,11 @@ const App = () => {
                 <Route path="/roteiros" element={
                   <Suspense fallback={<PageLoader />}>
                     <RoteirosDashboard />
+                  </Suspense>
+                } />
+                <Route path="/assistente-pessoal" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <PersonalAIDashboardPage />
                   </Suspense>
                 } />
                 

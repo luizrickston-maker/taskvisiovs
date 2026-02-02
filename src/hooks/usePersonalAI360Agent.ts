@@ -12,20 +12,24 @@ export const personalAI360Keys = {
 };
 
 // =====================================================
-// Personal Context Types
+// Personal Context Types (matches get_personal_360_summary RPC)
 // =====================================================
 
 export interface PersonalFinancialSummary {
-  total_income_this_month: number;
-  total_expenses_this_month: number;
-  balance: number;
+  income_this_month: number;
+  expenses_this_month: number;
+  balance_this_month: number;
+  pending_debts: number;
+  overdue_debts_count: number;
   total_savings: number;
 }
 
 export interface PersonalDebtSummary {
   total_pending: number;
+  total_amount: number;
   overdue_count: number;
-  upcoming_items: Array<{
+  critical_count: number;
+  items: Array<{
     id: string;
     name: string;
     amount: number;
@@ -35,20 +39,27 @@ export interface PersonalDebtSummary {
 }
 
 export interface PersonalTaskSummary {
-  pending_today: number;
+  total_pending: number;
+  inbox_count: number;
+  today_count: number;
   overdue_count: number;
+  by_status: Record<string, number>;
   items: Array<{
     id: string;
     title: string;
     type: string;
     scheduled_date: string | null;
     deadline_status: string;
+    is_overdue?: boolean;
   }>;
 }
 
 export interface PersonalScheduleSummary {
-  today_blocks: number;
-  upcoming_blocks: Array<{
+  total_upcoming: number;
+  today: number;
+  tomorrow: number;
+  this_week: number;
+  items: Array<{
     id: string;
     title: string;
     date: string;
@@ -56,11 +67,14 @@ export interface PersonalScheduleSummary {
     end_time: string;
     type: string;
     completed: boolean;
+    day_status?: string;
   }>;
 }
 
 export interface PersonalGoalSummary {
-  active_count: number;
+  total_active: number;
+  overdue_count: number;
+  urgent_count: number;
   items: Array<{
     id: string;
     name: string;
@@ -70,13 +84,16 @@ export interface PersonalGoalSummary {
     progress_percent: number;
     days_remaining: number;
     is_overdue: boolean;
+    status?: string;
   }>;
 }
 
 export interface PersonalPurchasePlanSummary {
-  active_count: number;
+  total_active: number;
   total_target: number;
   total_saved: number;
+  total_remaining: number;
+  by_priority: Record<string, number>;
   items: Array<{
     id: string;
     name: string;
@@ -102,7 +119,10 @@ export interface PersonalProjectSummary {
 }
 
 export interface PersonalScriptSummary {
-  pending_count: number;
+  total_pending: number;
+  overdue_count: number;
+  today_count: number;
+  by_status: Record<string, number>;
   by_platform: Record<string, number>;
   items: Array<{
     id: string;
@@ -325,27 +345,32 @@ export function calculateFinancialHealth(context: PersonalContextSummary | null)
   
   const { finances, debts, goals } = context;
   
+  if (!finances) return 50;
+  
   let score = 50; // Base score
   
+  const balance = finances.balance_this_month ?? 0;
+  const income = finances.income_this_month ?? 1;
+  
   // Positive: income > expenses
-  if (finances.balance > 0) {
-    score += Math.min(20, (finances.balance / finances.total_income_this_month) * 20);
+  if (balance > 0) {
+    score += Math.min(20, (balance / income) * 20);
   } else {
-    score -= Math.min(20, Math.abs(finances.balance / finances.total_income_this_month) * 20);
+    score -= Math.min(20, Math.abs(balance / income) * 20);
   }
   
   // Positive: has savings
-  if (finances.total_savings > 0) {
+  if ((finances.total_savings ?? 0) > 0) {
     score += 10;
   }
   
   // Negative: overdue debts
-  if (debts.overdue_count > 0) {
-    score -= Math.min(20, debts.overdue_count * 5);
+  if ((debts?.overdue_count ?? 0) > 0) {
+    score -= Math.min(20, (debts?.overdue_count ?? 0) * 5);
   }
   
   // Positive: goals on track
-  const onTrackGoals = goals.items.filter(g => !g.is_overdue).length;
+  const onTrackGoals = (goals?.items ?? []).filter(g => !g.is_overdue).length;
   if (onTrackGoals > 0) {
     score += Math.min(10, onTrackGoals * 2);
   }
@@ -365,42 +390,42 @@ export function getPersonalAlerts(context: PersonalContextSummary | null): Array
   const alerts: Array<{ type: 'danger' | 'warning' | 'info'; message: string }> = [];
   
   // Overdue debts
-  if (context.debts.overdue_count > 0) {
+  if ((context.debts?.overdue_count ?? 0) > 0) {
     alerts.push({
       type: 'danger',
-      message: `${context.debts.overdue_count} dívida(s) vencida(s) pendente(s)`,
+      message: `${context.debts?.overdue_count ?? 0} dívida(s) vencida(s) pendente(s)`,
     });
   }
   
   // Urgent debts (due soon)
-  const urgentDebts = context.debts.upcoming_items.filter(
-    d => d.urgency_status === 'vence_hoje' || d.urgency_status === 'vence_amanha'
+  const urgentDebts = (context.debts?.items ?? []).filter(
+    d => d.urgency_status === 'today' || d.urgency_status === 'critical'
   );
   if (urgentDebts.length > 0) {
     alerts.push({
       type: 'warning',
-      message: `${urgentDebts.length} conta(s) vencem hoje ou amanhã`,
+      message: `${urgentDebts.length} conta(s) vencem hoje ou em breve`,
     });
   }
   
   // Overdue tasks
-  if (context.tasks.overdue_count > 0) {
+  if ((context.tasks?.overdue_count ?? 0) > 0) {
     alerts.push({
       type: 'warning',
-      message: `${context.tasks.overdue_count} tarefa(s) atrasada(s)`,
+      message: `${context.tasks?.overdue_count ?? 0} tarefa(s) atrasada(s)`,
     });
   }
   
   // Negative balance
-  if (context.finances.balance < 0) {
+  if ((context.finances?.balance_this_month ?? 0) < 0) {
     alerts.push({
       type: 'danger',
-      message: `Saldo negativo: ${formatCurrency(context.finances.balance)}`,
+      message: `Saldo negativo: ${formatCurrency(context.finances?.balance_this_month ?? 0)}`,
     });
   }
   
   // Goals at risk
-  const atRiskGoals = context.goals.items.filter(g => g.is_overdue);
+  const atRiskGoals = (context.goals?.items ?? []).filter(g => g.is_overdue);
   if (atRiskGoals.length > 0) {
     alerts.push({
       type: 'warning',

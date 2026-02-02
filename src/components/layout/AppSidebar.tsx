@@ -1,4 +1,4 @@
-import { Wallet, TrendingUp, Target, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag } from 'lucide-react';
+import { Wallet, TrendingUp, Target, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, Heart } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -27,6 +27,7 @@ const personalNavItems = [
   { title: 'Projetos', url: '/projetos', icon: FolderKanban },
   { title: 'Conteúdos', url: '/conteudos', icon: FileText },
   { title: 'Roteiros', url: '/roteiros', icon: Pen },
+  { title: 'Assistente IA', url: '/assistente-pessoal', icon: Heart },
 ];
 
 const businessNavItems = [
