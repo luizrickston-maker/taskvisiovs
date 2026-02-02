@@ -384,17 +384,17 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: authError } = await supabase.auth.getClaims(token);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !claims?.claims) {
+    if (authError || !user) {
+      console.error("[ai-360-agent] Auth error:", authError);
       return new Response(
         JSON.stringify({ error: "Token inválido ou expirado" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = claims.claims.sub as string;
+    const userId = user.id;
 
     // 2. Parse request body
     const body: RequestBody = await req.json();
