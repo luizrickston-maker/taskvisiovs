@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarDays, CheckSquare, History, Inbox } from 'lucide-react';
+import { CalendarDays, CheckSquare, Inbox } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SectionBoundary } from '@/components/SectionBoundary';
 import InboxMental from '@/components/foco/InboxMental';
@@ -20,7 +20,7 @@ export default function FocoDashboard() {
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
           <TabsTrigger value="acoes" className="flex items-center gap-2">
             <CheckSquare className="h-4 w-4" />
             <span className="hidden sm:inline">Ações</span>
@@ -32,10 +32,6 @@ export default function FocoDashboard() {
           <TabsTrigger value="agenda" className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4" />
             <span className="hidden sm:inline">Agenda</span>
-          </TabsTrigger>
-          <TabsTrigger value="historico" className="flex items-center gap-2">
-            <History className="h-4 w-4" />
-            <span className="hidden sm:inline">Histórico</span>
           </TabsTrigger>
         </TabsList>
 
@@ -51,13 +47,11 @@ export default function FocoDashboard() {
           </SectionBoundary>
         </TabsContent>
 
-        <TabsContent value="agenda" className="mt-6">
+        <TabsContent value="agenda" className="mt-6 space-y-6">
           <SectionBoundary name="Agenda 48h">
             <Agenda48h />
           </SectionBoundary>
-        </TabsContent>
-
-        <TabsContent value="historico" className="mt-6">
+          
           <SectionBoundary name="Histórico">
             <ActivityHistory />
           </SectionBoundary>
