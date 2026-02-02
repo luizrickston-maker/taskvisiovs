@@ -1,5 +1,25 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type {
+  AIAgent,
+  AiApiKey,
+  AgentKeyInfo,
+  AgentWithKey,
+  AI360Context,
+  ChatMessage,
+  TasksSummary,
+  TaskItem,
+  ProjectsSummary,
+  ProjectItem,
+  SalesPipelineSummary,
+  SalesGoalProgress,
+  ScheduleSummary,
+  AppointmentItem,
+  EditorialSummary,
+  EditorialItem,
+  TeamSummary,
+  TeamMember,
+} from "../_shared/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,47 +39,8 @@ const DEFAULT_SYSTEM_PROMPT = `Você é o "Cérebro Operacional" do TaskVision P
 
 Você é proativo, estratégico e ajuda o usuário a tomar decisões baseadas em dados.`;
 
-// =====================================================
-// Interfaces
-// =====================================================
-
-interface AIAgent {
-  id: string;
-  name: string;
-  system_prompt: string;
-  model_name: string;
-  temperature: number;
-  max_tokens: number;
-  context_priority: string[];
-  api_key_id: string | null;
-}
-
-interface AiApiKey {
-  id: string;
-  provider: string;
-  api_key: string;
-  is_active: boolean;
-}
-
-interface AgentKeyInfo {
-  key: string;
-  provider: string;
-}
-
-interface AI360Context {
-  generated_at: string;
-  user_id: string;
-  projects: any;
-  tasks: any;
-  sales_pipeline: any;
-  sales_goals: any[];
-  schedule: any;
-  editorial: any;
-  team: any;
-}
-
 interface RequestBody {
-  messages: Array<{ role: string; content: string }>;
+  messages: ChatMessage[];
   agent_id?: string;
 }
 
@@ -67,13 +48,11 @@ interface RequestBody {
 // Agent Configuration
 // =====================================================
 
-interface AgentWithKey {
-  agent: AIAgent | null;
-  customKeyInfo: AgentKeyInfo | null;
-}
+// deno-lint-ignore no-explicit-any
+type SupabaseClientType = ReturnType<typeof createClient<any>>;
 
 async function fetchAgentConfig(
-  supabase: any,
+  supabase: SupabaseClientType,
   userId: string,
   agentId?: string
 ): Promise<AgentWithKey> {
@@ -131,7 +110,7 @@ async function fetchAgentConfig(
 // =====================================================
 
 async function fetchOperationalContext(
-  supabase: any,
+  supabase: SupabaseClientType,
   userId: string
 ): Promise<AI360Context | null> {
   console.log("[ai-360-agent] Fetching 360 summary via SQL function");
@@ -173,11 +152,11 @@ function formatAIContext(
   return `## 📊 CONTEXTO OPERACIONAL (${new Date().toLocaleDateString("pt-BR")})\n\n${formattedSections}\n\n---\n_Dados em tempo real_`;
 }
 
-function formatTasksSection(tasks: any): string {
+function formatTasksSection(tasks: TasksSummary | null): string {
   if (!tasks) return "";
 
-  const overdue = (tasks.items || []).filter((t: any) => t.is_overdue);
-  const highPriority = (tasks.items || []).filter((t: any) => t.priority <= 2 && !t.is_overdue);
+  const overdue = (tasks.items || []).filter((t: TaskItem) => t.is_overdue);
+  const highPriority = (tasks.items || []).filter((t: TaskItem) => t.priority <= 2 && !t.is_overdue);
 
   let section = `### ✅ TAREFAS PENDENTES (${tasks.total_pending || 0})
 | Métrica | Valor |
@@ -192,24 +171,24 @@ function formatTasksSection(tasks: any): string {
   if (overdue.length > 0) {
     section += `\n\n⚠️ **ATRASADAS:**\n${overdue
       .slice(0, 5)
-      .map((t: any) => `- "${t.title}" (prazo: ${t.deadline}, projeto: ${t.project_name || "N/A"})`)
+      .map((t: TaskItem) => `- "${t.title}" (prazo: ${t.deadline}, projeto: ${t.project_name || "N/A"})`)
       .join("\n")}`;
   }
 
   if (highPriority.length > 0) {
     section += `\n\n🔴 **PRIORIDADE ALTA:**\n${highPriority
       .slice(0, 3)
-      .map((t: any) => `- "${t.title}" (P${t.priority})`)
+      .map((t: TaskItem) => `- "${t.title}" (P${t.priority})`)
       .join("\n")}`;
   }
 
   return section;
 }
 
-function formatProjectsSection(projects: any): string {
+function formatProjectsSection(projects: ProjectsSummary | null): string {
   if (!projects) return "";
 
-  const overdue = (projects.items || []).filter((p: any) => p.is_overdue);
+  const overdue = (projects.items || []).filter((p: ProjectItem) => p.is_overdue);
 
   let section = `### 🗂️ PROJETOS (${projects.total || 0})
 | Status | Quantidade |
@@ -224,14 +203,14 @@ function formatProjectsSection(projects: any): string {
   if (overdue.length > 0) {
     section += `\n\n⚠️ **PROJETOS ATRASADOS:**\n${overdue
       .slice(0, 3)
-      .map((p: any) => `- "${p.name}" (prazo: ${p.deadline}, cliente: ${p.client_name || "Pessoal"})`)
+      .map((p: ProjectItem) => `- "${p.name}" (prazo: ${p.deadline}, cliente: ${p.client_name || "Pessoal"})`)
       .join("\n")}`;
   }
 
   return section;
 }
 
-function formatSalesPipelineSection(pipeline: any, goals: any[]): string {
+function formatSalesPipelineSection(pipeline: SalesPipelineSummary | null, goals: SalesGoalProgress[]): string {
   if (!pipeline) return "";
 
   const activeProspects =
@@ -255,7 +234,7 @@ function formatSalesPipelineSection(pipeline: any, goals: any[]): string {
   if (goals && goals.length > 0) {
     section += `\n\n**Metas:**\n${goals
       .map(
-        (g: any) =>
+        (g: SalesGoalProgress) =>
           `- ${g.goal_type}: ${g.progress_percent}% (R$ ${(g.current_amount || 0).toLocaleString(
             "pt-BR"
           )} / R$ ${(g.target_amount || 0).toLocaleString("pt-BR")}) - ${g.days_remaining}d restantes [${g.status}]`
@@ -266,10 +245,10 @@ function formatSalesPipelineSection(pipeline: any, goals: any[]): string {
   return section;
 }
 
-function formatScheduleSection(schedule: any): string {
+function formatScheduleSection(schedule: ScheduleSummary | null): string {
   if (!schedule) return "";
 
-  const todayItems = (schedule.items || []).filter((s: any) => s.day_status === "today");
+  const todayItems = (schedule.items || []).filter((s: AppointmentItem) => s.day_status === "today");
 
   let section = `### 📅 AGENDA
 | Período | Compromissos |
@@ -280,17 +259,17 @@ function formatScheduleSection(schedule: any): string {
 
   if (todayItems.length > 0) {
     section += `\n\n**Hoje:**\n${todayItems
-      .map((b: any) => `- ${b.start_time}-${b.end_time}: ${b.title} ${b.completed ? "✅" : ""}`)
+      .map((b: AppointmentItem) => `- ${b.start_time}-${b.end_time}: ${b.title} ${b.completed ? "✅" : ""}`)
       .join("\n")}`;
   }
 
   return section;
 }
 
-function formatEditorialSection(editorial: any): string {
+function formatEditorialSection(editorial: EditorialSummary | null): string {
   if (!editorial) return "";
 
-  const overdue = (editorial.items || []).filter((e: any) => e.is_overdue);
+  const overdue = (editorial.items || []).filter((e: EditorialItem) => e.is_overdue);
 
   let section = `### 📱 CALENDÁRIO EDITORIAL (${editorial.total_pending || 0} pendentes)
 | Status | Qtd |
@@ -306,19 +285,19 @@ function formatEditorialSection(editorial: any): string {
   if (overdue.length > 0) {
     section += `\n\n⚠️ **ATRASADOS:**\n${overdue
       .slice(0, 3)
-      .map((e: any) => `- "${e.title}" (${e.platform})`)
+      .map((e: EditorialItem) => `- "${e.title}" (${e.platform})`)
       .join("\n")}`;
   }
 
   return section;
 }
 
-function formatTeamSection(team: any): string {
+function formatTeamSection(team: TeamSummary | null): string {
   if (!team || !team.active_members) return "";
 
   return `### 👥 EQUIPE (${team.active_members} ativos)
 - Horas disponíveis: **${team.total_hours_available || 0}h**
-${(team.members || []).map((m: any) => `- ${m.name} (${m.role}): ${m.hours_available}h`).join("\n")}`;
+${(team.members || []).map((m: TeamMember) => `- ${m.name} (${m.role}): ${m.hours_available}h`).join("\n")}`;
 }
 
 // =====================================================
@@ -333,7 +312,7 @@ function estimateTokens(text: string): number {
 function truncateContextToFit(
   systemPrompt: string,
   context: string,
-  userMessages: any[],
+  userMessages: ChatMessage[],
   maxTokens: number
 ): string {
   const reserveForResponse = Math.min(2000, maxTokens / 2);
@@ -498,14 +477,19 @@ serve(async (req) => {
       // Use Lovable AI Gateway (default)
       apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
       apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
+      
+      if (!apiKey) {
+        console.error("[ai-360-agent] No LOVABLE_API_KEY configured");
+        return new Response(
+          JSON.stringify({ error: "Configuração de IA não encontrada" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    if (!apiKey) {
-      throw new Error("Nenhuma chave de API configurada");
-    }
-
-    // 8. Call AI Gateway
-    console.log(`[ai-360-agent] Calling AI with streaming`);
+    // 8. Call AI API with streaming
+    console.log(`[ai-360-agent] Calling AI API with model: ${modelName}`);
+    
     const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: {
@@ -515,50 +499,53 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: modelName,
-        messages: [{ role: "system", content: systemWithContext }, ...messages],
+        messages: [
+          { role: "system", content: systemWithContext },
+          ...messages,
+        ],
         temperature,
         stream: true,
       }),
     });
 
-    // 9. Handle errors
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({
-            error: "Limite de requisições excedido. Aguarde alguns minutos.",
-            code: "RATE_LIMIT",
-          }),
+          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos.", code: "RATE_LIMIT" }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({
-            error: "Créditos de IA esgotados. Adicione mais créditos em Configurações > Workspace.",
-            code: "INSUFFICIENT_CREDITS",
-          }),
+          JSON.stringify({ error: "Créditos de IA esgotados. Adicione mais créditos para continuar.", code: "INSUFFICIENT_CREDITS" }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      if (response.status === 401) {
+        return new Response(
+          JSON.stringify({ error: "Chave de API inválida ou expirada.", code: "AI_ERROR" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
       const errorText = await response.text();
-      console.error("[ai-360-agent] AI Gateway error:", response.status, errorText);
+      console.error(`[ai-360-agent] AI API error (${response.status}):`, errorText);
       return new Response(
         JSON.stringify({ error: "Erro ao processar solicitação de IA", code: "AI_ERROR" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 10. Stream response
+    // Return streaming response
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
     console.error("[ai-360-agent] Error:", error);
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-        code: "INTERNAL_ERROR",
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Erro interno do servidor",
+        code: "INTERNAL_ERROR"
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

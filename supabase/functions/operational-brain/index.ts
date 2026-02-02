@@ -1,5 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type {
+  AI360Context,
+  TasksSummary,
+  TaskItem,
+  ProjectsSummary,
+  ProjectItem,
+  SalesPipelineSummary,
+  SalesGoalProgress,
+  ScheduleSummary,
+  AppointmentItem,
+  EditorialSummary,
+  EditorialItem,
+  TeamSummary,
+  TeamMember,
+} from "../_shared/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,60 +46,13 @@ const SYSTEM_PROMPT = `Você é o "Cérebro Operacional" do TaskVision PRO, um a
 
 Você é proativo, estratégico e ajuda o usuário a tomar decisões baseadas em dados.`;
 
-interface OperationalContext {
-  generated_at: string;
-  user_id: string;
-  projects: {
-    total: number;
-    by_status: { todo: number; progress: number; blocked: number; done: number };
-    corporate_count: number;
-    overdue_count: number;
-    items: any[];
-  };
-  tasks: {
-    total_pending: number;
-    by_status: { todo: number; in_progress: number };
-    overdue_count: number;
-    due_today: number;
-    due_this_week: number;
-    high_priority: number;
-    items: any[];
-  };
-  sales_pipeline: {
-    total_prospects: number;
-    total_value: number;
-    weighted_value: number;
-    by_status: { novo: number; em_negociacao: number; proposta_enviada: number; fechado: number; perdido: number };
-    closed_value: number;
-    items: any[];
-  };
-  sales_goals: any[];
-  schedule: {
-    total_upcoming: number;
-    today: number;
-    tomorrow: number;
-    this_week: number;
-    items: any[];
-  };
-  editorial: {
-    total_pending: number;
-    overdue_count: number;
-    due_today: number;
-    by_status: { idea: number; draft: number; review: number; approved: number };
-    by_platform: { instagram: number; tiktok: number; youtube: number; linkedin: number; blog: number };
-    items: any[];
-  };
-  team: {
-    active_members: number;
-    total_hours_available: number;
-    members: any[];
-  };
-}
+// deno-lint-ignore no-explicit-any
+type SupabaseClientType = ReturnType<typeof createClient<any>>;
 
 async function fetchOperationalContext(
-  supabase: any,
+  supabase: SupabaseClientType,
   userId: string
-): Promise<OperationalContext | null> {
+): Promise<AI360Context | null> {
   console.log("[operational-brain] Fetching 360 summary via SQL function");
   
   // Use the optimized SQL function for consolidated data
@@ -97,10 +65,10 @@ async function fetchOperationalContext(
     return null;
   }
 
-  return data as OperationalContext;
+  return data as AI360Context;
 }
 
-function buildContextSummary(ctx: OperationalContext | null): string {
+function buildContextSummary(ctx: AI360Context | null): string {
   if (!ctx) {
     return `
 ## 📊 CONTEXTO OPERACIONAL
@@ -111,25 +79,25 @@ Não foi possível carregar os dados operacionais. Responda com base no conhecim
   const { projects, tasks, sales_pipeline, sales_goals, schedule, editorial, team } = ctx;
   
   // Format sales goals
-  const goalsFormatted = (sales_goals || []).map((g: any) => 
+  const goalsFormatted = (sales_goals || []).map((g: SalesGoalProgress) => 
     `- ${g.goal_type}: ${g.progress_percent}% (R$ ${(g.current_amount || 0).toLocaleString("pt-BR")} / R$ ${(g.target_amount || 0).toLocaleString("pt-BR")}) - ${g.days_remaining} dias restantes [${g.status}]`
   ).join("\n") || "- Nenhuma meta configurada";
 
   // Format today's schedule
-  const todayItems = (schedule?.items || []).filter((s: any) => s.day_status === 'today');
-  const scheduleFormatted = todayItems.map((b: any) => 
+  const todayItems = (schedule?.items || []).filter((s: AppointmentItem) => s.day_status === 'today');
+  const scheduleFormatted = todayItems.map((b: AppointmentItem) => 
     `- ${b.start_time}-${b.end_time}: ${b.title} ${b.completed ? "✅" : ""}`
   ).join("\n") || "- Nenhum compromisso agendado";
 
   // Format team
-  const teamFormatted = (team?.members || []).map((m: any) => 
+  const teamFormatted = (team?.members || []).map((m: TeamMember) => 
     `- ${m.name} (${m.role}) - ${m.hours_available}h disponíveis`
   ).join("\n") || "- Nenhum membro cadastrado";
 
   // Overdue items
-  const overdueProjects = (projects?.items || []).filter((p: any) => p.is_overdue);
-  const overdueTasks = (tasks?.items || []).filter((t: any) => t.is_overdue);
-  const overdueEditorial = (editorial?.items || []).filter((e: any) => e.is_overdue);
+  const overdueProjects = (projects?.items || []).filter((p: ProjectItem) => p.is_overdue);
+  const overdueTasks = (tasks?.items || []).filter((t: TaskItem) => t.is_overdue);
+  const overdueEditorial = (editorial?.items || []).filter((e: EditorialItem) => e.is_overdue);
 
   return `
 ## 📊 CONTEXTO OPERACIONAL ATUAL (${new Date().toLocaleDateString("pt-BR")})
@@ -138,7 +106,7 @@ Não foi possível carregar os dados operacionais. Responda com base no conhecim
 - Por status: A Fazer=${projects?.by_status?.todo || 0}, Em Progresso=${projects?.by_status?.progress || 0}, Bloqueado=${projects?.by_status?.blocked || 0}, Concluído=${projects?.by_status?.done || 0}
 - Projetos corporativos: ${projects?.corporate_count || 0}
 - Projetos com prazo vencido: ${projects?.overdue_count || 0}
-${overdueProjects.length > 0 ? `- ⚠️ URGENTES: ${overdueProjects.slice(0, 3).map((p: any) => `"${p.name}" (prazo: ${p.deadline})`).join(", ")}` : ""}
+${overdueProjects.length > 0 ? `- ⚠️ URGENTES: ${overdueProjects.slice(0, 3).map((p: ProjectItem) => `"${p.name}" (prazo: ${p.deadline})`).join(", ")}` : ""}
 
 ### ✅ TAREFAS PENDENTES (${tasks?.total_pending || 0} total)
 - Por status: A Fazer=${tasks?.by_status?.todo || 0}, Em Progresso=${tasks?.by_status?.in_progress || 0}
@@ -146,7 +114,7 @@ ${overdueProjects.length > 0 ? `- ⚠️ URGENTES: ${overdueProjects.slice(0, 3)
 - Vencendo hoje: ${tasks?.due_today || 0}
 - Vencendo esta semana: ${tasks?.due_this_week || 0}
 - Alta prioridade (P1-P2): ${tasks?.high_priority || 0}
-${overdueTasks.length > 0 ? `- ⚠️ ATRASADAS: ${overdueTasks.slice(0, 5).map((t: any) => `"${t.title}" (prazo: ${t.deadline})`).join(", ")}` : ""}
+${overdueTasks.length > 0 ? `- ⚠️ ATRASADAS: ${overdueTasks.slice(0, 5).map((t: TaskItem) => `"${t.title}" (prazo: ${t.deadline})`).join(", ")}` : ""}
 
 ### 💼 PIPELINE DE VENDAS
 - Total de prospects ativos: ${(sales_pipeline?.by_status?.novo || 0) + (sales_pipeline?.by_status?.em_negociacao || 0) + (sales_pipeline?.by_status?.proposta_enviada || 0)}
@@ -168,7 +136,7 @@ ${scheduleFormatted}
 - Vencendo hoje: ${editorial?.due_today || 0}
 - Por status: Ideia=${editorial?.by_status?.idea || 0}, Rascunho=${editorial?.by_status?.draft || 0}, Revisão=${editorial?.by_status?.review || 0}, Aprovado=${editorial?.by_status?.approved || 0}
 - Por plataforma: Instagram=${editorial?.by_platform?.instagram || 0}, TikTok=${editorial?.by_platform?.tiktok || 0}, YouTube=${editorial?.by_platform?.youtube || 0}, LinkedIn=${editorial?.by_platform?.linkedin || 0}, Blog=${editorial?.by_platform?.blog || 0}
-${overdueEditorial.length > 0 ? `- ⚠️ ATRASADOS: ${overdueEditorial.slice(0, 3).map((e: any) => `"${e.title}" (${e.platform})`).join(", ")}` : ""}
+${overdueEditorial.length > 0 ? `- ⚠️ ATRASADOS: ${overdueEditorial.slice(0, 3).map((e: EditorialItem) => `"${e.title}" (${e.platform})`).join(", ")}` : ""}
 
 ### 👥 EQUIPE ATIVA (${team?.active_members || 0} membros)
 ${teamFormatted}
@@ -199,17 +167,16 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: authError } = await supabase.auth.getClaims(token);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    if (authError || !claims?.claims) {
+    if (authError || !user) {
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = claims.claims.sub as string;
+    const userId = user.id;
     const { messages } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
