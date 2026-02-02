@@ -2,3 +2,6 @@ project_id = "kxuwzhnkragzsqafszpo"
 
 [functions.operational-brain]
 verify_jwt = false
+
+[functions.ai-360-agent]
+verify_jwt = false

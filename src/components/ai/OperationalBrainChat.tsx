@@ -13,7 +13,7 @@ interface Message {
   timestamp: Date;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/operational-brain`;
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-360-agent`;
 
 const QUICK_PROMPTS = [
   { label: '📊 Resumo do dia', prompt: 'Me dê um resumo completo do meu dia hoje, incluindo compromissos, tarefas pendentes e prioridades.' },

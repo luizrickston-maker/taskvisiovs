@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_agents: {
+        Row: {
+          context_priority: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          max_tokens: number
+          model_name: string
+          name: string
+          system_prompt: string
+          temperature: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context_priority?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          max_tokens?: number
+          model_name?: string
+          name: string
+          system_prompt: string
+          temperature?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context_priority?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          max_tokens?: number
+          model_name?: string
+          name?: string
+          system_prompt?: string
+          temperature?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           color: string
