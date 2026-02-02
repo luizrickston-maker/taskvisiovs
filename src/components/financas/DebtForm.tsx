@@ -27,13 +27,15 @@ const WEEKDAYS = [
 ];
 
 /**
- * Gets the next occurrence of a specific day of the week.
+ * Gets a reference date for a specific day of the week.
+ * Returns today if it matches, otherwise the next occurrence.
  */
-function getNextWeekday(dayOfWeek: number): Date {
+function getReferenceDateForWeekday(dayOfWeek: number): Date {
   const today = new Date();
   const todayDay = getDay(today);
   const daysUntil = (dayOfWeek - todayDay + 7) % 7;
-  return addDays(today, daysUntil === 0 ? 7 : daysUntil);
+  // If today is the selected day, use today; otherwise, next occurrence
+  return addDays(today, daysUntil);
 }
 
 export function DebtForm() {
@@ -80,7 +82,7 @@ export function DebtForm() {
     
     // Calculate the actual due_date to save
     const effectiveDueDate = isWeekly 
-      ? getNextWeekday(parseInt(weekday))
+      ? getReferenceDateForWeekday(parseInt(weekday))
       : dueDate!;
 
     // Validate name
