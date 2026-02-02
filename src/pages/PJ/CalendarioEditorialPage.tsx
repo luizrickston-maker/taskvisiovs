@@ -1,12 +1,11 @@
-import { Calendar, Plus, Filter } from 'lucide-react';
-import { useState } from 'react';
+import { Calendar, Plus, Filter, CalendarDays, CalendarRange } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { EditorialCalendar } from '@/components/editorial/EditorialCalendar';
+import { EditorialWeekView } from '@/components/editorial/EditorialWeekView';
 import { EditorialItemForm } from '@/components/editorial/EditorialItemForm';
 import { useEditorialCalendarItems } from '@/hooks/useEditorialCalendar';
-import { useAppStore } from '@/stores/useAppStore';
 import { 
   contentStatusLabels, 
   contentPlatformConfig,
@@ -27,16 +26,27 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '@/components/ui/toggle-group';
+
+type CalendarViewType = 'month' | 'week';
 
 export default function CalendarioEditorialPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [filterPlatform, setFilterPlatform] = useState<ContentPlatform | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<ContentStatus | 'all'>('all');
+  const [calendarView, setCalendarView] = useState<CalendarViewType>('month');
   
-  const { editorialCalendarItems } = useAppStore();
+  // Fetch items using React Query hook
+  const { data: editorialCalendarItems = [], isLoading } = useEditorialCalendarItems({
+    platform: filterPlatform !== 'all' ? filterPlatform : undefined,
+    status: filterStatus !== 'all' ? filterStatus : undefined,
+  });
   
-  // Calculate stats
-  const stats = {
+  // Calculate stats using useMemo for performance
+  const stats = useMemo(() => ({
     total: editorialCalendarItems.length,
     byStatus: {
       idea: editorialCalendarItems.filter(i => i.status === 'idea').length,
@@ -45,14 +55,14 @@ export default function CalendarioEditorialPage() {
       approved: editorialCalendarItems.filter(i => i.status === 'approved').length,
       published: editorialCalendarItems.filter(i => i.status === 'published').length,
     },
-  };
+  }), [editorialCalendarItems]);
 
-  // Filter items
-  const filteredItems = editorialCalendarItems.filter(item => {
+  // Filter items (already filtered by hook, but keep for UI consistency)
+  const filteredItems = useMemo(() => editorialCalendarItems.filter(item => {
     if (filterPlatform !== 'all' && item.platform !== filterPlatform) return false;
     if (filterStatus !== 'all' && item.status !== filterStatus) return false;
     return true;
-  });
+  }), [editorialCalendarItems, filterPlatform, filterStatus]);
 
   return (
     <div className="p-4 md:p-6 pb-20 md:pb-6 space-y-6 animate-fade-in">
@@ -68,22 +78,41 @@ export default function CalendarioEditorialPage() {
           </div>
         </div>
 
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Novo Conteúdo
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-visible">
-            <DialogHeader className="shrink-0">
-              <DialogTitle>Novo Item de Conteúdo</DialogTitle>
-            </DialogHeader>
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              <EditorialItemForm onSuccess={() => setIsFormOpen(false)} />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <ToggleGroup 
+            type="single" 
+            value={calendarView} 
+            onValueChange={(value) => value && setCalendarView(value as CalendarViewType)}
+            className="bg-muted rounded-lg p-1"
+          >
+            <ToggleGroupItem value="month" aria-label="Visualização mensal" className="gap-1.5 px-3">
+              <CalendarDays className="w-4 h-4" />
+              <span className="hidden sm:inline">Mês</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="week" aria-label="Visualização semanal" className="gap-1.5 px-3">
+              <CalendarRange className="w-4 h-4" />
+              <span className="hidden sm:inline">Semana</span>
+            </ToggleGroupItem>
+          </ToggleGroup>
+
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                Novo Conteúdo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-visible">
+              <DialogHeader className="shrink-0">
+                <DialogTitle>Novo Item de Conteúdo</DialogTitle>
+              </DialogHeader>
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <EditorialItemForm onSuccess={() => setIsFormOpen(false)} />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -213,10 +242,23 @@ export default function CalendarioEditorialPage() {
       </Card>
 
       {/* Calendar View */}
-      <EditorialCalendar 
-        items={filteredItems} 
-        onItemClick={(item) => console.log('Item clicked:', item)}
-      />
+      {isLoading ? (
+        <Card className="glass-card">
+          <CardContent className="p-8 flex items-center justify-center">
+            <div className="text-muted-foreground">Carregando conteúdos...</div>
+          </CardContent>
+        </Card>
+      ) : calendarView === 'month' ? (
+        <EditorialCalendar 
+          items={filteredItems} 
+          onItemClick={(item) => console.log('Item clicked:', item)}
+        />
+      ) : (
+        <EditorialWeekView 
+          items={filteredItems} 
+          onItemClick={(item) => console.log('Item clicked:', item)}
+        />
+      )}
     </div>
   );
 }
