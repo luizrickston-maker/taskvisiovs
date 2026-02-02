@@ -1,4 +1,5 @@
-import { CreditCard, Trash2, Edit2, Check, X, AlertTriangle, RefreshCw, MoreVertical } from 'lucide-react';
+import { useState } from 'react';
+import { CreditCard, Trash2, Edit2, Check, AlertTriangle, RefreshCw, MoreVertical } from 'lucide-react';
 import { format, parseISO, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +16,7 @@ import type { Debt } from '@/types/database';
 
 export function DebtList() {
   const { debts, categories, updateDebt, deleteDebt } = useAppStore();
+  const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -204,6 +206,10 @@ export function DebtList() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setEditingDebt(debt)}>
+                              <Edit2 className="w-4 h-4 mr-2" aria-hidden="true" />
+                              Editar
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive"
                               onClick={() => handleDelete(debt.id)}
@@ -221,6 +227,14 @@ export function DebtList() {
             </div>
           )}
         </ScrollArea>
+
+        {/* Edit Dialog */}
+        <DebtForm
+          debt={editingDebt || undefined}
+          open={!!editingDebt}
+          onOpenChange={(open) => !open && setEditingDebt(null)}
+          onClose={() => setEditingDebt(null)}
+        />
       </CardContent>
     </Card>
   );

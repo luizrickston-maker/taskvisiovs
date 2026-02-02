@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { format, addDays, getDay, startOfWeek } from 'date-fns';
-import { CalendarIcon, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { format, addDays, getDay, parseISO } from 'date-fns';
+import { CalendarIcon, Plus, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,16 +34,52 @@ function getReferenceDateForWeekday(dayOfWeek: number): Date {
   const today = new Date();
   const todayDay = getDay(today);
   const daysUntil = (dayOfWeek - todayDay + 7) % 7;
-  // If today is the selected day, use today; otherwise, next occurrence
   return addDays(today, daysUntil);
 }
 
-export function DebtForm() {
-  const [isOpen, setIsOpen] = useState(false);
+/**
+ * Extracts the weekday from a date string (0 = Sunday, 6 = Saturday)
+ */
+function getWeekdayFromDate(dateString: string): string {
+  const date = parseISO(dateString);
+  return String(getDay(date));
+}
+
+interface DebtFormProps {
+  /** Debt to edit (if provided, form is in edit mode) */
+  debt?: Debt;
+  /** Callback when dialog closes */
+  onClose?: () => void;
+  /** Whether dialog is controlled externally */
+  open?: boolean;
+  /** Callback when open state changes */
+  onOpenChange?: (open: boolean) => void;
+  /** Trigger element (only used when not controlled) */
+  trigger?: React.ReactNode;
+}
+
+export function DebtForm({ debt, onClose, open: controlledOpen, onOpenChange, trigger }: DebtFormProps) {
+  const isEditMode = !!debt;
+  const isControlled = controlledOpen !== undefined;
+
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = isControlled ? controlledOpen : internalOpen;
+
+  const setIsOpen = (value: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(value);
+    } else {
+      setInternalOpen(value);
+    }
+    if (!value) {
+      onClose?.();
+    }
+  };
+
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [dueDate, setDueDate] = useState<Date>();
-  const [weekday, setWeekday] = useState<string>('5'); // Default to Friday
+  const [weekday, setWeekday] = useState<string>('5');
   const [type, setType] = useState<DebtType>('variable');
   const [categoryId, setCategoryId] = useState('');
   const [installmentCurrent, setInstallmentCurrent] = useState('');
@@ -52,9 +88,31 @@ export function DebtForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { user } = useAuthContext();
-  const { categories, addDebt } = useAppStore();
+  const { categories, addDebt, updateDebt } = useAppStore();
 
   const debtCategories = categories.filter((c) => c.type === 'debt');
+
+  // Populate form when editing
+  useEffect(() => {
+    if (debt && isOpen) {
+      setName(debt.name);
+      setAmount(String(debt.amount));
+      setType(debt.type as DebtType);
+      setCategoryId(debt.category_id || '');
+      setNotes(debt.notes || '');
+      
+      if (debt.type === 'weekly') {
+        setWeekday(getWeekdayFromDate(debt.due_date));
+      } else {
+        setDueDate(parseISO(debt.due_date));
+      }
+      
+      if (debt.type === 'installment') {
+        setInstallmentCurrent(String(debt.installment_current || ''));
+        setInstallmentTotal(String(debt.installment_total || ''));
+      }
+    }
+  }, [debt, isOpen]);
 
   const resetForm = () => {
     setName('');
@@ -71,8 +129,6 @@ export function DebtForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For weekly, we generate the due_date from weekday selection
-    // For other types, dueDate is required
     const isWeekly = type === 'weekly';
     if (!isWeekly && !dueDate) {
       toast.error('Data de vencimento é obrigatória');
@@ -80,12 +136,10 @@ export function DebtForm() {
     }
     if (!user) return;
     
-    // Calculate the actual due_date to save
     const effectiveDueDate = isWeekly 
       ? getReferenceDateForWeekday(parseInt(weekday))
       : dueDate!;
 
-    // Validate name
     const trimmedName = name.trim();
     if (!trimmedName) {
       toast.error('Nome é obrigatório');
@@ -96,7 +150,6 @@ export function DebtForm() {
       return;
     }
 
-    // Validate amount
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       toast.error('Valor inválido');
@@ -107,7 +160,6 @@ export function DebtForm() {
       return;
     }
 
-    // Validate notes length
     if (notes.length > 500) {
       toast.error('Observações muito longas (máx. 500 caracteres)');
       return;
@@ -128,48 +180,78 @@ export function DebtForm() {
 
     setIsSubmitting(true);
 
-    const newDebt: Omit<Debt, 'id' | 'created_at' | 'updated_at'> = {
-      user_id: user.id,
+    const debtData = {
       name: trimmedName,
       amount: numAmount,
       due_date: format(effectiveDueDate, 'yyyy-MM-dd'),
-      paid: false,
       type,
-      category_id: categoryId || undefined,
-      installment_current: type === 'installment' ? parseInt(installmentCurrent) : undefined,
-      installment_total: type === 'installment' ? parseInt(installmentTotal) : undefined,
-      notes: notes.trim() || undefined,
+      category_id: categoryId || null,
+      installment_current: type === 'installment' ? parseInt(installmentCurrent) : null,
+      installment_total: type === 'installment' ? parseInt(installmentTotal) : null,
+      notes: notes.trim() || null,
     };
 
-    const { data, error } = await supabase
-      .from('debts')
-      .insert(newDebt)
-      .select()
-      .single();
+    if (isEditMode && debt) {
+      // Update existing debt
+      const { error } = await supabase
+        .from('debts')
+        .update(debtData)
+        .eq('id', debt.id);
 
-    setIsSubmitting(false);
+      setIsSubmitting(false);
 
-    if (error) {
-      toast.error('Erro ao adicionar dívida');
+      if (error) {
+        toast.error('Erro ao atualizar dívida');
+      } else {
+        updateDebt(debt.id, debtData);
+        resetForm();
+        setIsOpen(false);
+        toast.success('Dívida atualizada!');
+      }
     } else {
-      addDebt(data as Debt);
-      resetForm();
-      setIsOpen(false);
-      toast.success('Dívida adicionada!');
+      // Create new debt
+      const newDebt = {
+        ...debtData,
+        user_id: user.id,
+        paid: false,
+      };
+
+      const { data, error } = await supabase
+        .from('debts')
+        .insert(newDebt)
+        .select()
+        .single();
+
+      setIsSubmitting(false);
+
+      if (error) {
+        toast.error('Erro ao adicionar dívida');
+      } else {
+        addDebt(data as Debt);
+        resetForm();
+        setIsOpen(false);
+        toast.success('Dívida adicionada!');
+      }
     }
   };
 
+  const defaultTrigger = (
+    <Button>
+      <Plus className="w-4 h-4 mr-2" />
+      Nova Dívida
+    </Button>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Dívida
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger || defaultTrigger}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Adicionar Dívida</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Editar Dívida' : 'Adicionar Dívida'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -324,7 +406,7 @@ export function DebtForm() {
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            Adicionar Dívida
+            {isEditMode ? 'Salvar Alterações' : 'Adicionar Dívida'}
           </Button>
         </form>
       </DialogContent>
