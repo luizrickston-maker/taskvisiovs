@@ -1,5 +1,27 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type {
+  AIAgent,
+  AiApiKey,
+  AgentKeyInfo,
+  AgentWithKey,
+  ChatMessage,
+  PersonalContext,
+  FinancesSummary,
+  DebtsSummary,
+  DebtItem,
+  PersonalTasksSummary,
+  PersonalTaskItem,
+  PersonalScheduleSummary,
+  PersonalTimeBlockItem,
+  PersonalGoalsSummary,
+  PersonalGoalItem,
+  PersonalProjectsSummary,
+  PersonalProjectItem,
+  ScriptsSummary,
+  PurchasePlansSummary,
+  PurchasePlanItem,
+} from "../_shared/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,48 +56,8 @@ const DEFAULT_SYSTEM_PROMPT = `Você é o "Assistente Pessoal 360°" do TaskVisi
 
 Você é um assistente pessoal atencioso e prático.`;
 
-// =====================================================
-// Interfaces
-// =====================================================
-
-interface AIAgent {
-  id: string;
-  name: string;
-  system_prompt: string;
-  model_name: string;
-  temperature: number;
-  max_tokens: number;
-  context_priority: string[];
-  api_key_id: string | null;
-}
-
-interface AiApiKey {
-  id: string;
-  provider: string;
-  api_key: string;
-  is_active: boolean;
-}
-
-interface AgentKeyInfo {
-  key: string;
-  provider: string;
-}
-
-interface PersonalContext {
-  generated_at: string;
-  user_id: string;
-  finances: any;
-  debts: any;
-  tasks: any;
-  schedule: any;
-  goals: any;
-  projects: any;
-  scripts: any;
-  purchase_plans: any;
-}
-
 interface RequestBody {
-  messages: Array<{ role: string; content: string }>;
+  messages: ChatMessage[];
   agent_id?: string;
 }
 
@@ -83,13 +65,11 @@ interface RequestBody {
 // Agent Configuration
 // =====================================================
 
-interface AgentWithKey {
-  agent: AIAgent | null;
-  customKeyInfo: AgentKeyInfo | null;
-}
+// deno-lint-ignore no-explicit-any
+type SupabaseClientType = ReturnType<typeof createClient<any>>;
 
 async function fetchAgentConfig(
-  supabase: any,
+  supabase: SupabaseClientType,
   userId: string,
   agentId?: string
 ): Promise<AgentWithKey> {
@@ -142,7 +122,7 @@ async function fetchAgentConfig(
 // =====================================================
 
 async function fetchPersonalContext(
-  supabase: any,
+  supabase: SupabaseClientType,
   userId: string
 ): Promise<PersonalContext | null> {
   console.log("[ai-360-personal] Fetching personal 360 summary via RPC");
@@ -194,7 +174,7 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value || 0);
 }
 
-function formatFinancesSection(finances: any, debts: any): string {
+function formatFinancesSection(finances: FinancesSummary | null, debts: DebtsSummary | null): string {
   if (!finances) return "";
 
   const balance = (finances.income_this_month || 0) - (finances.expenses_this_month || 0);
@@ -217,12 +197,12 @@ function formatFinancesSection(finances: any, debts: any): string {
     section += `\n🔴 **${debts.critical_count} contas críticas** (vencem hoje ou em 3 dias)`;
   }
 
-  if (debts?.items?.length > 0) {
-    const urgentDebts = debts.items.filter((d: any) => d.urgency_status === "overdue" || d.urgency_status === "today" || d.urgency_status === "critical");
+  if (debts && debts.items && debts.items.length > 0) {
+    const urgentDebts = debts.items.filter((d: DebtItem) => d.urgency_status === "overdue" || d.urgency_status === "today" || d.urgency_status === "critical");
     if (urgentDebts.length > 0) {
       section += `\n\n**Contas Urgentes:**\n${urgentDebts
         .slice(0, 5)
-        .map((d: any) => `- ${d.name}: ${formatCurrency(d.amount)} (venc: ${d.due_date})`)
+        .map((d: DebtItem) => `- ${d.name}: ${formatCurrency(d.amount)} (venc: ${d.due_date})`)
         .join("\n")}`;
     }
   }
@@ -230,7 +210,7 @@ function formatFinancesSection(finances: any, debts: any): string {
   return section;
 }
 
-function formatTasksSection(tasks: any): string {
+function formatTasksSection(tasks: PersonalTasksSummary | null): string {
   if (!tasks) return "";
 
   let section = `### ✅ TAREFAS PESSOAIS (${tasks.total_pending || 0} pendentes)
@@ -241,21 +221,21 @@ function formatTasksSection(tasks: any): string {
 | **Atrasadas** | **${tasks.overdue_count || 0}** |`;
 
   if (tasks.overdue_count > 0 && tasks.items?.length > 0) {
-    const overdue = tasks.items.filter((t: any) => t.is_overdue);
+    const overdue = tasks.items.filter((t: PersonalTaskItem) => t.is_overdue);
     if (overdue.length > 0) {
       section += `\n\n⚠️ **Atrasadas:**\n${overdue
         .slice(0, 5)
-        .map((t: any) => `- "${t.title}" (agendada: ${t.scheduled_date || "sem data"})`)
+        .map((t: PersonalTaskItem) => `- "${t.title}" (agendada: ${t.scheduled_date || "sem data"})`)
         .join("\n")}`;
     }
   }
 
   if (tasks.items?.length > 0) {
-    const today = tasks.items.filter((t: any) => t.deadline_status === "today");
+    const today = tasks.items.filter((t: PersonalTaskItem) => t.deadline_status === "today");
     if (today.length > 0) {
       section += `\n\n📅 **Para Hoje:**\n${today
         .slice(0, 5)
-        .map((t: any) => `- ${t.title}`)
+        .map((t: PersonalTaskItem) => `- ${t.title}`)
         .join("\n")}`;
     }
   }
@@ -263,7 +243,7 @@ function formatTasksSection(tasks: any): string {
   return section;
 }
 
-function formatScheduleSection(schedule: any): string {
+function formatScheduleSection(schedule: PersonalScheduleSummary | null): string {
   if (!schedule) return "";
 
   let section = `### 📅 AGENDA (Próximos 14 dias)
@@ -274,10 +254,10 @@ function formatScheduleSection(schedule: any): string {
 | Esta Semana | ${schedule.this_week || 0} |`;
 
   if (schedule.items?.length > 0) {
-    const todayItems = schedule.items.filter((s: any) => s.day_status === "today");
+    const todayItems = schedule.items.filter((s: PersonalTimeBlockItem) => s.day_status === "today");
     if (todayItems.length > 0) {
       section += `\n\n**Hoje:**\n${todayItems
-        .map((b: any) => `- ${b.start_time}-${b.end_time}: ${b.title} ${b.completed ? "✅" : ""}`)
+        .map((b: PersonalTimeBlockItem) => `- ${b.start_time}-${b.end_time}: ${b.title} ${b.completed ? "✅" : ""}`)
         .join("\n")}`;
     }
   }
@@ -285,7 +265,7 @@ function formatScheduleSection(schedule: any): string {
   return section;
 }
 
-function formatGoalsSection(goals: any): string {
+function formatGoalsSection(goals: PersonalGoalsSummary | null): string {
   if (!goals || goals.total_active === 0) return "";
 
   let section = `### 🎯 METAS PESSOAIS (${goals.total_active || 0} ativas)`;
@@ -300,14 +280,14 @@ function formatGoalsSection(goals: any): string {
 
   if (goals.items?.length > 0) {
     section += `\n\n**Progresso:**\n${goals.items
-      .map((g: any) => `- ${g.name}: ${Number(g.progress_percent || 0).toFixed(1)}% (${formatCurrency(g.current_amount)} / ${formatCurrency(g.target_amount)}) - ${g.days_remaining}d restantes [${g.status}]`)
+      .map((g: PersonalGoalItem) => `- ${g.name}: ${Number(g.progress_percent || 0).toFixed(1)}% (${formatCurrency(g.current_amount)} / ${formatCurrency(g.target_amount)}) - ${g.days_remaining}d restantes [${g.status}]`)
       .join("\n")}`;
   }
 
   return section;
 }
 
-function formatProjectsSection(projects: any): string {
+function formatProjectsSection(projects: PersonalProjectsSummary | null): string {
   if (!projects || projects.total === 0) return "";
 
   let section = `### 🗂️ PROJETOS PESSOAIS (${projects.total || 0})
@@ -318,11 +298,11 @@ function formatProjectsSection(projects: any): string {
 | Bloqueado | ${projects.by_status?.blocked || 0} |`;
 
   if (projects.items?.length > 0) {
-    const inProgress = projects.items.filter((p: any) => p.status === "progress");
+    const inProgress = projects.items.filter((p: PersonalProjectItem) => p.status === "progress");
     if (inProgress.length > 0) {
       section += `\n\n**Em Andamento:**\n${inProgress
         .slice(0, 5)
-        .map((p: any) => `- ${p.name} (${p.completed_tasks || 0}/${p.total_tasks || 0} tarefas)`)
+        .map((p: PersonalProjectItem) => `- ${p.name} (${p.completed_tasks || 0}/${p.total_tasks || 0} tarefas)`)
         .join("\n")}`;
     }
   }
@@ -330,7 +310,7 @@ function formatProjectsSection(projects: any): string {
   return section;
 }
 
-function formatScriptsSection(scripts: any): string {
+function formatScriptsSection(scripts: ScriptsSummary | null): string {
   if (!scripts || scripts.total_pending === 0) return "";
 
   let section = `### 📝 ROTEIROS DE CONTEÚDO (${scripts.total_pending || 0} pendentes)
@@ -356,7 +336,7 @@ function formatScriptsSection(scripts: any): string {
   return section;
 }
 
-function formatPurchasePlansSection(purchasePlans: any): string {
+function formatPurchasePlansSection(purchasePlans: PurchasePlansSummary | null): string {
   if (!purchasePlans || purchasePlans.total_active === 0) return "";
 
   const progress = purchasePlans.total_target > 0 
@@ -376,7 +356,7 @@ function formatPurchasePlansSection(purchasePlans: any): string {
   if (purchasePlans.items?.length > 0) {
     section += `\n\n**Planos Ativos:**\n${purchasePlans.items
       .slice(0, 5)
-      .map((p: any) => `- ${p.name}: ${Number(p.progress_percent || 0).toFixed(1)}% (${formatCurrency(p.saved_amount)} / ${formatCurrency(p.target_amount)})${p.deadline_status === "urgent" || p.deadline_status === "overdue" ? " ⚠️" : ""}`)
+      .map((p: PurchasePlanItem) => `- ${p.name}: ${Number(p.progress_percent || 0).toFixed(1)}% (${formatCurrency(p.saved_amount)} / ${formatCurrency(p.target_amount)})${p.deadline_status === "urgent" || p.deadline_status === "overdue" ? " ⚠️" : ""}`)
       .join("\n")}`;
   }
 
@@ -394,7 +374,7 @@ function estimateTokens(text: string): number {
 function truncateContextToFit(
   systemPrompt: string,
   context: string,
-  userMessages: any[],
+  userMessages: ChatMessage[],
   maxTokens: number
 ): string {
   const reserveForResponse = Math.min(2000, maxTokens / 2);
@@ -498,7 +478,7 @@ serve(async (req) => {
     // 6. Build final prompt
     const systemWithContext = `${systemPrompt}\n\n${finalContext}`;
 
-    // 7. Determine API endpoint and key
+    // 7. Determine API endpoint and key based on provider
     let apiKey: string;
     let apiEndpoint: string;
     let extraHeaders: Record<string, string> = {};
@@ -522,13 +502,7 @@ serve(async (req) => {
             modelName = modelName.replace("google/", "");
           }
           break;
-        case "anthropic":
-          apiEndpoint = "https://api.anthropic.com/v1/messages";
-          extraHeaders = {
-            "anthropic-version": "2023-06-01",
-            "x-api-key": apiKey,
-          };
-          break;
+        case "openrouter":
         default:
           apiEndpoint = "https://openrouter.ai/api/v1/chat/completions";
           extraHeaders = {
@@ -538,78 +512,73 @@ serve(async (req) => {
           break;
       }
       
-      console.log(`[ai-360-personal] Using ${customKeyInfo.provider} API, model: ${modelName}`);
+      console.log(`[ai-360-personal] Using ${customKeyInfo.provider} API at ${apiEndpoint}, model: ${modelName}`);
     } else {
       apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
       apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
-      console.log("[ai-360-personal] Using Lovable AI Gateway");
+      
+      if (!apiKey) {
+        console.error("[ai-360-personal] No LOVABLE_API_KEY configured");
+        return new Response(
+          JSON.stringify({ error: "Configuração de IA não encontrada" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: "Chave de API não configurada" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 8. Make streaming request to AI API
-    const aiMessages = [
-      { role: "system", content: systemWithContext },
-      ...messages.map((m) => ({ role: m.role, content: m.content })),
-    ];
-
-    const requestBody: any = {
-      model: modelName,
-      messages: aiMessages,
-      temperature,
-      max_tokens: maxTokens,
-      stream: true,
-    };
-
-    console.log(`[ai-360-personal] Sending request to ${apiEndpoint}`);
-
-    const aiResponse = await fetch(apiEndpoint, {
+    // 8. Call AI API with streaming
+    console.log(`[ai-360-personal] Calling AI API with model: ${modelName}`);
+    
+    const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
         ...extraHeaders,
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        model: modelName,
+        messages: [
+          { role: "system", content: systemWithContext },
+          ...messages,
+        ],
+        temperature,
+        stream: true,
+      }),
     });
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error("[ai-360-personal] AI API error:", aiResponse.status, errorText);
-      
-      if (aiResponse.status === 429) {
+    if (!response.ok) {
+      if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Limite de requisições excedido. Aguarde alguns minutos." }),
+          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos.", code: "RATE_LIMIT" }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Créditos de IA esgotados.", code: "INSUFFICIENT_CREDITS" }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       
+      const errorText = await response.text();
+      console.error(`[ai-360-personal] AI API error (${response.status}):`, errorText);
       return new Response(
-        JSON.stringify({ error: "Erro ao processar solicitação de IA" }),
+        JSON.stringify({ error: "Erro ao processar solicitação de IA", code: "AI_ERROR" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 9. Return streaming response
-    console.log("[ai-360-personal] Streaming response started");
-    
-    return new Response(aiResponse.body, {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-      },
+    return new Response(response.body, {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
-    console.error("[ai-360-personal] Unexpected error:", error);
+    console.error("[ai-360-personal] Error:", error);
     return new Response(
-      JSON.stringify({ error: "Erro interno do servidor" }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Erro interno do servidor",
+        code: "INTERNAL_ERROR"
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
