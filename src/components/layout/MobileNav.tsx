@@ -12,16 +12,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const personalMainNavItems = [
+  { title: 'IA', url: '/assistente-pessoal', icon: Brain },
   { title: 'Caixa', url: '/caixa', icon: Wallet },
   { title: 'Finanças', url: '/financas', icon: TrendingUp },
   { title: 'Foco', url: '/foco', icon: Target },
-  { title: 'Projetos', url: '/projetos', icon: FolderKanban },
 ];
 
 const personalMoreNavItems = [
+  { title: 'Projetos', url: '/projetos', icon: FolderKanban },
   { title: 'Roteiros', url: '/roteiros', icon: Pen },
   { title: 'Conteúdos', url: '/conteudos', icon: Calendar },
-  { title: 'Assistente IA', url: '/assistente-pessoal', icon: Brain },
   { title: 'Config', url: '/config', icon: Settings },
 ];
 

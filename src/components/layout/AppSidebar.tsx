@@ -20,6 +20,7 @@ import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
 
 const personalNavItems = [
+  { title: 'Assistente IA', url: '/assistente-pessoal', icon: Brain },
   { title: 'Caixa', url: '/caixa', icon: Wallet },
   { title: 'Finanças', url: '/financas', icon: TrendingUp },
   { title: 'Planejamento', url: '/planejamento', icon: ShoppingBag },
@@ -27,7 +28,6 @@ const personalNavItems = [
   { title: 'Projetos', url: '/projetos', icon: FolderKanban },
   { title: 'Conteúdos', url: '/conteudos', icon: FileText },
   { title: 'Roteiros', url: '/roteiros', icon: Pen },
-  { title: 'Assistente IA', url: '/assistente-pessoal', icon: Brain },
 ];
 
 const businessNavItems = [
