@@ -1,10 +1,9 @@
-import { Calendar, Plus, Filter, CalendarDays, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Plus, Filter } from 'lucide-react';
 import { useState, useMemo } from 'react';
-import { format, addMonths, subMonths, addWeeks, subWeeks } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { CalendarGrid } from '@/components/editorial/CalendarGrid';
+import { CalendarNavigation } from '@/components/editorial/CalendarNavigation';
 import { EditorialItemForm } from '@/components/editorial/EditorialItemForm';
 import { useEditorialCalendarItems } from '@/hooks/useEditorialCalendar';
 import { 
@@ -27,10 +26,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from '@/components/ui/toggle-group';
 
 type CalendarViewType = 'month' | 'week';
 
@@ -66,38 +61,6 @@ export default function CalendarioEditorialPage() {
     return true;
   }), [editorialCalendarItems, filterPlatform, filterStatus]);
 
-  // Navigation handlers
-  const goToPrevious = () => {
-    if (calendarView === 'month') {
-      setCurrentDate(subMonths(currentDate, 1));
-    } else {
-      setCurrentDate(subWeeks(currentDate, 1));
-    }
-  };
-
-  const goToNext = () => {
-    if (calendarView === 'month') {
-      setCurrentDate(addMonths(currentDate, 1));
-    } else {
-      setCurrentDate(addWeeks(currentDate, 1));
-    }
-  };
-
-  const goToToday = () => setCurrentDate(new Date());
-
-  // Format current period label
-  const periodLabel = useMemo(() => {
-    if (calendarView === 'month') {
-      return format(currentDate, 'MMMM yyyy', { locale: ptBR });
-    } else {
-      const startOfWeekDate = new Date(currentDate);
-      startOfWeekDate.setDate(currentDate.getDate() - currentDate.getDay());
-      const endOfWeekDate = new Date(startOfWeekDate);
-      endOfWeekDate.setDate(startOfWeekDate.getDate() + 6);
-      return `${format(startOfWeekDate, "d 'de' MMM", { locale: ptBR })} - ${format(endOfWeekDate, "d 'de' MMM yyyy", { locale: ptBR })}`;
-    }
-  }, [currentDate, calendarView]);
-
   return (
     <div className="p-4 md:p-6 pb-20 md:pb-6 space-y-6 animate-fade-in">
       {/* Header */}
@@ -113,28 +76,12 @@ export default function CalendarioEditorialPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* View Toggle */}
-          <ToggleGroup 
-            type="single" 
-            value={calendarView} 
-            onValueChange={(value) => value && setCalendarView(value as CalendarViewType)}
-            className="bg-muted rounded-lg p-1"
-          >
-            <ToggleGroupItem value="month" aria-label="Visualização mensal" className="gap-1.5 px-3">
-              <CalendarDays className="w-4 h-4" />
-              <span className="hidden sm:inline">Mês</span>
-            </ToggleGroupItem>
-            <ToggleGroupItem value="week" aria-label="Visualização semanal" className="gap-1.5 px-3">
-              <CalendarRange className="w-4 h-4" />
-              <span className="hidden sm:inline">Semana</span>
-            </ToggleGroupItem>
-          </ToggleGroup>
-
           <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="w-4 h-4" />
-                Novo Conteúdo
+                <span className="hidden sm:inline">Novo Conteúdo</span>
+                <span className="sm:hidden">Novo</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-visible">
@@ -278,22 +225,13 @@ export default function CalendarioEditorialPage() {
       {/* Calendar View */}
       <Card className="glass-card">
         <CardHeader className="pb-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <CardTitle className="text-lg font-semibold capitalize">
-              {periodLabel}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={goToToday}>
-                Hoje
-              </Button>
-              <Button variant="ghost" size="icon" onClick={goToPrevious}>
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={goToNext}>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+          <CalendarNavigation
+            currentDate={currentDate}
+            view={calendarView}
+            onDateChange={setCurrentDate}
+            onViewChange={setCalendarView}
+            showViewToggle
+          />
         </CardHeader>
         <CardContent className="p-2 md:p-4">
           {isLoading ? (
