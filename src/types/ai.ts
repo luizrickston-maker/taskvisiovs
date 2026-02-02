@@ -2,6 +2,36 @@
 // AI 360° Context Types
 // =====================================================
 
+// =====================================================
+// AI API Keys
+// =====================================================
+
+export interface AiApiKey {
+  id: string;
+  user_id: string;
+  provider: string;
+  api_key: string;
+  label: string | null;
+  is_active: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface AiApiKeyCreate {
+  provider: string;
+  api_key: string;
+  label?: string | null;
+  is_active?: boolean;
+}
+
+export interface AiApiKeyUpdate extends Partial<AiApiKeyCreate> {
+  id: string;
+}
+
+// =====================================================
+// AI 360° Context Summary
+// =====================================================
+
 export interface AI360ContextSummary {
   generated_at: string;
   user_id: string;
