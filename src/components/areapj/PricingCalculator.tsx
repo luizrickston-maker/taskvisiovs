@@ -501,7 +501,7 @@ export function PricingCalculator() {
                   <p className="text-lg font-bold text-primary">
                     {formatCurrency(calculations.chargedValue)}
                   </p>
-                  <p className={`text-xs font-medium ${calculations.priceDifference >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                  <p className={`text-xs font-medium ${calculations.priceDifference >= 0 ? 'text-success' : 'text-destructive'}`}>
                     {calculations.priceDifference >= 0 ? '+' : ''}{formatCurrency(calculations.priceDifference)} {calculations.priceDifference >= 0 ? 'acima' : 'abaixo'}
                   </p>
                 </div>
@@ -509,17 +509,17 @@ export function PricingCalculator() {
             </CardContent>
           </Card>
 
-          <Card className="bg-green-500/5 border-green-500/20">
+          <Card className="bg-success/5 border-success/20">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500/10">
-                  <TrendingUp className="w-5 h-5 text-green-500" />
+                <div className="p-2 rounded-lg bg-success/10">
+                  <TrendingUp className="w-5 h-5 text-success" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">
                     {calculations.chargedValue > 0 ? 'Lucro Real' : 'Lucro Líquido'}
                   </p>
-                  <p className="text-xl font-bold text-green-500">
+                  <p className="text-xl font-bold text-success">
                     {formatCurrency(calculations.chargedValue > 0 ? calculations.chargedProfit : calculations.profit)}
                   </p>
                 </div>
@@ -527,15 +527,15 @@ export function PricingCalculator() {
             </CardContent>
           </Card>
 
-          <Card className="bg-blue-500/5 border-blue-500/20">
+          <Card className="bg-kpi-projects/5 border-kpi-projects/20">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Percent className="w-5 h-5 text-blue-500" />
+                <div className="p-2 rounded-lg bg-kpi-projects/10">
+                  <Percent className="w-5 h-5 text-kpi-projects" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Margem Real</p>
-                  <p className="text-xl font-bold text-blue-500">
+                  <p className="text-xl font-bold text-kpi-projects">
                     {formatPercent(calculations.chargedValue > 0 ? calculations.chargedMargin : calculations.realMargin)}
                   </p>
                 </div>
@@ -586,7 +586,7 @@ export function PricingCalculator() {
                         <TableCell className="text-right font-semibold text-primary">
                           {pricing.charged_price ? formatCurrency(pricing.charged_price) : '-'}
                         </TableCell>
-                        <TableCell className="text-right text-green-500">
+                        <TableCell className="text-right text-success">
                           {formatCurrency(pricing.profit)}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
@@ -649,7 +649,7 @@ export function PricingCalculator() {
                       </div>
                       <div className="col-span-2">
                         <span className="text-muted-foreground">Lucro:</span>
-                        <span className="ml-1 text-green-500">{formatCurrency(pricing.profit)}</span>
+                        <span className="ml-1 text-success">{formatCurrency(pricing.profit)}</span>
                       </div>
                     </div>
                   </Card>

@@ -23,9 +23,9 @@ const COST_TYPE_LABELS: Record<CorporateCostType, string> = {
 };
 
 const COST_TYPE_COLORS: Record<CorporateCostType, string> = {
-  recorrente: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  fixo: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-  pontual: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+  recorrente: 'bg-cost-recurring/10 text-cost-recurring border-cost-recurring/20',
+  fixo: 'bg-cost-fixed/10 text-cost-fixed border-cost-fixed/20',
+  pontual: 'bg-cost-occasional/10 text-cost-occasional border-cost-occasional/20',
 };
 
 export function CostList() {
@@ -153,12 +153,12 @@ export function CostList() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <RefreshCcw className="w-5 h-5 text-blue-500" />
+              <div className="p-2 rounded-lg bg-cost-recurring/10">
+                <RefreshCcw className="w-5 h-5 text-cost-recurring" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Recorrentes</p>
-                <p className="text-lg font-bold text-blue-500">{formatCurrency(summary.monthlyRecurring)}</p>
+                <p className="text-lg font-bold text-cost-recurring">{formatCurrency(summary.monthlyRecurring)}</p>
               </div>
             </div>
           </CardContent>
@@ -167,12 +167,12 @@ export function CostList() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <Calendar className="w-5 h-5 text-purple-500" />
+              <div className="p-2 rounded-lg bg-cost-fixed/10">
+                <Calendar className="w-5 h-5 text-cost-fixed" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Fixos</p>
-                <p className="text-lg font-bold text-purple-500">{formatCurrency(summary.monthlyFixed)}</p>
+                <p className="text-lg font-bold text-cost-fixed">{formatCurrency(summary.monthlyFixed)}</p>
               </div>
             </div>
           </CardContent>
@@ -181,12 +181,12 @@ export function CostList() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <Users className="w-5 h-5 text-green-500" />
+              <div className="p-2 rounded-lg bg-success/10">
+                <Users className="w-5 h-5 text-success" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Equipe</p>
-                <p className="text-lg font-bold text-green-500">{formatCurrency(summary.teamCost)}</p>
+                <p className="text-lg font-bold text-success">{formatCurrency(summary.teamCost)}</p>
               </div>
             </div>
           </CardContent>

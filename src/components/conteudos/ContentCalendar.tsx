@@ -10,20 +10,20 @@ import { useAppStore } from '@/stores/useAppStore';
 import type { Script, ScriptPlatform, ScriptStatus } from '@/types/database';
 
 const platformColors: Record<ScriptPlatform, string> = {
-  youtube: 'bg-red-500',
-  youtube_shorts: 'bg-red-400',
-  tiktok: 'bg-slate-700',
-  tiktok_ads: 'bg-slate-600',
-  instagram_reels: 'bg-pink-500',
-  instagram_post: 'bg-purple-500',
-  instagram_boost: 'bg-orange-500',
-  facebook_ads: 'bg-blue-500',
+  youtube: 'bg-platform-youtube',
+  youtube_shorts: 'bg-platform-youtube/80',
+  tiktok: 'bg-platform-tiktok',
+  tiktok_ads: 'bg-platform-tiktok/80',
+  instagram_reels: 'bg-platform-instagram',
+  instagram_post: 'bg-platform-instagram/80',
+  instagram_boost: 'bg-priority-high',
+  facebook_ads: 'bg-platform-facebook',
 };
 
 const statusBorders: Record<ScriptStatus, string> = {
-  draft: 'border-l-muted-foreground',
-  scheduled: 'border-l-yellow-500',
-  published: 'border-l-green-500',
+  draft: 'border-l-status-draft',
+  scheduled: 'border-l-status-scheduled',
+  published: 'border-l-status-published',
 };
 
 interface ContentCalendarProps {
@@ -158,13 +158,13 @@ export function ContentCalendar({ onSelectScript, platformFilter, statusFilter }
         <div className="flex items-center gap-2">
           <span className="font-medium">Status:</span>
           <span className="flex items-center gap-1">
-            <div className="w-2 h-2 border-l-2 border-muted-foreground" /> Rascunho
+            <div className="w-2 h-2 border-l-2 border-status-draft" /> Rascunho
           </span>
           <span className="flex items-center gap-1">
-            <div className="w-2 h-2 border-l-2 border-yellow-500" /> Agendado
+            <div className="w-2 h-2 border-l-2 border-status-scheduled" /> Agendado
           </span>
           <span className="flex items-center gap-1">
-            <div className="w-2 h-2 border-l-2 border-green-500" /> Publicado
+            <div className="w-2 h-2 border-l-2 border-status-published" /> Publicado
           </span>
         </div>
       </div>

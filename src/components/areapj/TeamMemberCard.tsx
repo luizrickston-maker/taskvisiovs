@@ -21,9 +21,9 @@ interface TeamMemberCardProps {
 }
 
 const contractTypeConfig: Record<ContractType, { label: string; color: string }> = {
-  pj: { label: 'PJ', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
-  clt: { label: 'CLT', color: 'bg-green-500/10 text-green-500 border-green-500/20' },
-  freelancer: { label: 'Freelancer', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' },
+  pj: { label: 'PJ', color: 'bg-contract-pj/10 text-contract-pj border-contract-pj/20' },
+  clt: { label: 'CLT', color: 'bg-contract-clt/10 text-contract-clt border-contract-clt/20' },
+  freelancer: { label: 'Freelancer', color: 'bg-contract-freelancer/10 text-contract-freelancer border-contract-freelancer/20' },
 };
 
 function getInitials(name: string): string {

@@ -218,8 +218,8 @@ export default function Auth() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md glass-card animate-scale-in">
           <CardHeader className="text-center">
-            <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-6 h-6 text-green-500" />
+            <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-6 h-6 text-success" />
             </div>
             <CardTitle className="text-2xl font-display">Verifique seu Email</CardTitle>
             <CardDescription className="text-base">
