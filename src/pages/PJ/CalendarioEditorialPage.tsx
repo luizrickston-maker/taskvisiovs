@@ -1,9 +1,10 @@
-import { Calendar, Plus, Filter, CalendarDays, CalendarRange } from 'lucide-react';
+import { Calendar, Plus, Filter, CalendarDays, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { format, addMonths, subMonths, addWeeks, subWeeks } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { EditorialCalendar } from '@/components/editorial/EditorialCalendar';
-import { EditorialWeekView } from '@/components/editorial/EditorialWeekView';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CalendarGrid } from '@/components/editorial/CalendarGrid';
 import { EditorialItemForm } from '@/components/editorial/EditorialItemForm';
 import { useEditorialCalendarItems } from '@/hooks/useEditorialCalendar';
 import { 
@@ -38,6 +39,7 @@ export default function CalendarioEditorialPage() {
   const [filterPlatform, setFilterPlatform] = useState<ContentPlatform | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<ContentStatus | 'all'>('all');
   const [calendarView, setCalendarView] = useState<CalendarViewType>('month');
+  const [currentDate, setCurrentDate] = useState(new Date());
   
   // Fetch items using React Query hook
   const { data: editorialCalendarItems = [], isLoading } = useEditorialCalendarItems({
@@ -63,6 +65,38 @@ export default function CalendarioEditorialPage() {
     if (filterStatus !== 'all' && item.status !== filterStatus) return false;
     return true;
   }), [editorialCalendarItems, filterPlatform, filterStatus]);
+
+  // Navigation handlers
+  const goToPrevious = () => {
+    if (calendarView === 'month') {
+      setCurrentDate(subMonths(currentDate, 1));
+    } else {
+      setCurrentDate(subWeeks(currentDate, 1));
+    }
+  };
+
+  const goToNext = () => {
+    if (calendarView === 'month') {
+      setCurrentDate(addMonths(currentDate, 1));
+    } else {
+      setCurrentDate(addWeeks(currentDate, 1));
+    }
+  };
+
+  const goToToday = () => setCurrentDate(new Date());
+
+  // Format current period label
+  const periodLabel = useMemo(() => {
+    if (calendarView === 'month') {
+      return format(currentDate, 'MMMM yyyy', { locale: ptBR });
+    } else {
+      const startOfWeekDate = new Date(currentDate);
+      startOfWeekDate.setDate(currentDate.getDate() - currentDate.getDay());
+      const endOfWeekDate = new Date(startOfWeekDate);
+      endOfWeekDate.setDate(startOfWeekDate.getDate() + 6);
+      return `${format(startOfWeekDate, "d 'de' MMM", { locale: ptBR })} - ${format(endOfWeekDate, "d 'de' MMM yyyy", { locale: ptBR })}`;
+    }
+  }, [currentDate, calendarView]);
 
   return (
     <div className="p-4 md:p-6 pb-20 md:pb-6 space-y-6 animate-fade-in">
@@ -242,23 +276,40 @@ export default function CalendarioEditorialPage() {
       </Card>
 
       {/* Calendar View */}
-      {isLoading ? (
-        <Card className="glass-card">
-          <CardContent className="p-8 flex items-center justify-center">
-            <div className="text-muted-foreground">Carregando conteúdos...</div>
-          </CardContent>
-        </Card>
-      ) : calendarView === 'month' ? (
-        <EditorialCalendar 
-          items={filteredItems} 
-          onItemClick={(item) => console.log('Item clicked:', item)}
-        />
-      ) : (
-        <EditorialWeekView 
-          items={filteredItems} 
-          onItemClick={(item) => console.log('Item clicked:', item)}
-        />
-      )}
+      <Card className="glass-card">
+        <CardHeader className="pb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <CardTitle className="text-lg font-semibold capitalize">
+              {periodLabel}
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={goToToday}>
+                Hoje
+              </Button>
+              <Button variant="ghost" size="icon" onClick={goToPrevious}>
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={goToNext}>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-2 md:p-4">
+          {isLoading ? (
+            <div className="p-8 flex items-center justify-center">
+              <div className="text-muted-foreground">Carregando conteúdos...</div>
+            </div>
+          ) : (
+            <CalendarGrid
+              items={filteredItems}
+              currentDate={currentDate}
+              view={calendarView}
+              onItemClick={(item) => console.log('Item clicked:', item)}
+            />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
