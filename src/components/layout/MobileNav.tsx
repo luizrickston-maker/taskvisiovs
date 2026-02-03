@@ -42,7 +42,7 @@ export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const authContext = useAuthContextSafe();
-  const signOut = authContext?.signOut ?? (async () => {});
+  const signOut = authContext?.signOut;
   const { mode, setMode } = useAppContext();
   
   const mainNavItems = mode === 'personal' ? personalMainNavItems : businessMainNavItems;
@@ -51,7 +51,9 @@ export function MobileNav() {
   const isMoreActive = moreNavItems.some(item => location.pathname === item.url);
 
   const handleSignOut = async () => {
-    await signOut();
+    if (signOut) {
+      await signOut();
+    }
     navigate('/auth', { replace: true });
   };
 
