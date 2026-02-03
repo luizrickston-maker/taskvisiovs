@@ -62,13 +62,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut: AuthContextValue["signOut"] = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error && error.status !== 403) throw error;
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
+    // Limpar estado local PRIMEIRO (antes da API)
+    setUser(null);
+    setSession(null);
     resetStore();
+    
+    // Tentar fazer logout na API (ignorar erros de sessão não encontrada)
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      // Ignorar erros - o estado local já foi limpo
+      if (import.meta.env.DEV) {
+        console.log('[Auth] SignOut API error (ignored):', error);
+      }
+    }
   };
 
   const resetPassword: AuthContextValue["resetPassword"] = async (email) => {
