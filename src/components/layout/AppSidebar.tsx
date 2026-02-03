@@ -1,5 +1,5 @@
 import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays } from 'lucide-react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext } from '@/hooks/useAppContext';
 import { ContextSwitcher } from './ContextSwitcher';
@@ -46,14 +46,22 @@ const settingsItem = { title: 'Config', url: '/config', icon: Settings };
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const { appName } = useUserPreferences();
   const authContext = useAuthContextSafe();
-  const signOut = authContext?.signOut ?? (() => {});
+  const signOut = authContext?.signOut;
   const { mode } = useAppContext();
   const collapsed = state === 'collapsed';
 
   // Get nav items based on current mode
   const navItems = mode === 'personal' ? personalNavItems : businessNavItems;
+
+  const handleSignOut = async () => {
+    if (signOut) {
+      await signOut();
+    }
+    navigate('/auth', { replace: true });
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -135,7 +143,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Sair"
-              onClick={signOut}
+              onClick={handleSignOut}
               className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-destructive/10 text-destructive cursor-pointer"
             >
               <LogOut className="w-5 h-5 shrink-0" />
