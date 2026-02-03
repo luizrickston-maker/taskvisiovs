@@ -50,6 +50,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
   const { user } = useAuthContext();
   const { addProjectTask, updateProjectTask } = useAppStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [daysInput, setDaysInput] = useState('');
   
   const [formData, setFormData] = useState({
     title: '',
@@ -149,18 +150,12 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
     return parseISO(formData.deadline);
   }, [formData.deadline]);
 
-  // Quick period options
-  const QUICK_PERIODS = [
-    { label: 'Hoje', days: 0 },
-    { label: '3 dias', days: 3 },
-    { label: '7 dias', days: 7 },
-    { label: '15 dias', days: 15 },
-    { label: '30 dias', days: 30 },
-  ];
-
-  const handleQuickPeriod = (days: number) => {
+  const handleApplyDays = () => {
+    const days = parseInt(daysInput);
+    if (isNaN(days) || days < 0) return;
     const targetDate = addDays(new Date(), days);
     setFormData(prev => ({ ...prev, deadline: format(targetDate, 'yyyy-MM-dd') }));
+    setDaysInput('');
   };
 
   const clearDeadline = () => {
@@ -199,22 +194,35 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
               />
             </div>
             
-            {/* Prazo - full width with quick options */}
+            {/* Prazo */}
             <div className="space-y-2">
               <Label>Prazo</Label>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {QUICK_PERIODS.map((period) => (
-                  <Button
-                    key={period.days}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => handleQuickPeriod(period.days)}
-                  >
-                    {period.label}
-                  </Button>
-                ))}
+              {/* Período em dias */}
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="Nº de dias"
+                  value={daysInput}
+                  onChange={(e) => setDaysInput(e.target.value)}
+                  className="w-28"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleApplyDays();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleApplyDays}
+                  disabled={!daysInput || parseInt(daysInput) < 0}
+                >
+                  Aplicar
+                </Button>
+                <span className="text-xs text-muted-foreground">ou</span>
               </div>
               <div className="flex gap-2">
                 <Popover>
