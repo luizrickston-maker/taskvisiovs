@@ -19,9 +19,10 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Loader2, X } from 'lucide-react';
-import { format, parseISO, addDays } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
 import type { ProjectTask, ProjectTaskStatus } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,7 +51,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
   const { user } = useAuthContext();
   const { addProjectTask, updateProjectTask } = useAppStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [daysInput, setDaysInput] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -150,16 +151,22 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
     return parseISO(formData.deadline);
   }, [formData.deadline]);
 
-  const handleApplyDays = () => {
-    const days = parseInt(daysInput);
-    if (isNaN(days) || days < 0) return;
-    const targetDate = addDays(new Date(), days);
-    setFormData(prev => ({ ...prev, deadline: format(targetDate, 'yyyy-MM-dd') }));
-    setDaysInput('');
+  // Calculate days count from date range
+  const daysCount = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return null;
+    return differenceInDays(dateRange.to, dateRange.from);
+  }, [dateRange]);
+
+  // Apply the date range - use the end date as the deadline
+  const handleApplyRange = () => {
+    if (!dateRange?.to) return;
+    setFormData(prev => ({ ...prev, deadline: format(dateRange.to!, 'yyyy-MM-dd') }));
+    setDateRange(undefined);
   };
 
   const clearDeadline = () => {
     setFormData(prev => ({ ...prev, deadline: '' }));
+    setDateRange(undefined);
   };
 
   return (
@@ -197,76 +204,80 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
             {/* Prazo */}
             <div className="space-y-2">
               <Label>Prazo</Label>
-              {/* Período em dias */}
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={0}
-                  placeholder="Nº de dias"
-                  value={daysInput}
-                  onChange={(e) => setDaysInput(e.target.value)}
-                  className="w-28"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleApplyDays();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleApplyDays}
-                  disabled={!daysInput || parseInt(daysInput) < 0}
-                >
-                  Aplicar
-                </Button>
-                <span className="text-xs text-muted-foreground">ou</span>
-              </div>
-              <div className="flex gap-2">
+              {/* Período por range de datas */}
+              <div className="space-y-2">
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
-                        "flex-1 justify-start text-left font-normal",
-                        !formData.deadline && "text-muted-foreground"
+                        "w-full justify-start text-left font-normal",
+                        !dateRange?.from && !formData.deadline && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
                       <span className="truncate">
-                        {formData.deadline 
-                          ? format(selectedDate!, "dd/MM/yyyy", { locale: ptBR })
-                          : "Escolher data específica"
-                        }
+                        {dateRange?.from ? (
+                          dateRange.to ? (
+                            <>
+                              {format(dateRange.from, "dd/MM", { locale: ptBR })} - {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                              {daysCount !== null && (
+                                <span className="ml-2 text-primary font-medium">
+                                  ({daysCount} {daysCount === 1 ? 'dia' : 'dias'})
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })}
+                              <span className="ml-2 text-muted-foreground text-xs">
+                                (selecione a data final)
+                              </span>
+                            </>
+                          )
+                        ) : formData.deadline ? (
+                          <>Prazo: {format(selectedDate!, "dd/MM/yyyy", { locale: ptBR })}</>
+                        ) : (
+                          "Selecione o período"
+                        )}
                       </span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 z-[200]" align="start">
                     <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={(date) => setFormData(prev => ({ 
-                        ...prev, 
-                        deadline: date ? format(date, 'yyyy-MM-dd') : '' 
-                      }))}
+                      mode="range"
+                      selected={dateRange}
+                      onSelect={setDateRange}
                       locale={ptBR}
+                      numberOfMonths={1}
                       className="pointer-events-auto"
                     />
+                    {dateRange?.from && dateRange?.to && (
+                      <div className="p-3 pt-0 flex justify-end">
+                        <Button size="sm" onClick={handleApplyRange}>
+                          Aplicar
+                        </Button>
+                      </div>
+                    )}
                   </PopoverContent>
                 </Popover>
+                
                 {formData.deadline && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 shrink-0"
-                    onClick={clearDeadline}
-                    title="Limpar prazo"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      Prazo definido: {format(selectedDate!, "dd/MM/yyyy", { locale: ptBR })}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0"
+                      onClick={clearDeadline}
+                      title="Limpar prazo"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
