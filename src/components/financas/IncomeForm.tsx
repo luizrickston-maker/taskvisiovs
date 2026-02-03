@@ -1,16 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
-import { CalendarIcon, Plus, Info } from 'lucide-react';
+import { CalendarIcon, Plus, Info, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Input } from '@/components/ui/input';
 import { CurrencyInput, parseBRLToNumber, numberToBRL } from '@/components/ui/currency-input';
+import { CategoryForm } from '@/components/finances/CategoryForm';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useUserIncomeCategories } from '@/hooks/useFinanceCategories';
@@ -85,6 +86,7 @@ export function IncomeForm({ income, onClose, open: controlledOpen, onOpenChange
   const [variableMin, setVariableMin] = useState('');
   const [variableMax, setVariableMax] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false);
 
   const { user } = useAuthContext();
   const { categories, addIncome, updateIncome } = useAppStore();
@@ -403,49 +405,69 @@ export function IncomeForm({ income, onClose, open: controlledOpen, onOpenChange
 
             {/* Categoria */}
             <div className="space-y-2">
-              <Label>Categoria</Label>
+              <div className="flex items-center justify-between">
+                <Label>Categoria</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto p-0 text-xs text-primary hover:text-primary/80"
+                  onClick={() => setShowNewCategoryDialog(true)}
+                >
+                  <PlusCircle className="h-3 w-3 mr-1" />
+                  Nova Categoria
+                </Button>
+              </div>
               <Select value={selectedCategoryId} onValueChange={handleCategoryChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecionar categoria" />
                 </SelectTrigger>
-                <SelectContent>
-                  {allCategories.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground text-center">
-                      Nenhuma categoria disponível
+                <SelectContent className="z-50 bg-popover">
+                  {/* Botão para criar nova categoria dentro do Select */}
+                  <div
+                    className="flex items-center gap-2 px-2 py-2 cursor-pointer hover:bg-accent rounded-sm text-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowNewCategoryDialog(true);
+                    }}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Criar nova categoria</span>
+                  </div>
+                  
+                  {allCategories.length > 0 && (
+                    <div className="border-t my-1" />
+                  )}
+                  
+                  {systemIncomeCategories.length > 0 && (
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                      Categorias do Sistema
                     </div>
-                  ) : (
+                  )}
+                  {systemIncomeCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        {cat.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                  {userIncomeCategories.length > 0 && (
                     <>
-                      {systemIncomeCategories.length > 0 && (
-                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                          Categorias do Sistema
-                        </div>
-                      )}
-                      {systemIncomeCategories.map((cat) => (
+                      <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-t mt-1 pt-2">
+                        Minhas Categorias
+                      </div>
+                      {userIncomeCategories.map((cat) => (
                         <SelectItem key={cat.id} value={cat.id}>
                           <div className="flex items-center gap-2">
-                            <div
-                              className="w-2 h-2 rounded-full shrink-0"
-                              style={{ backgroundColor: cat.color }}
-                            />
+                            <div className="w-2 h-2 rounded-full shrink-0 bg-primary/70" />
                             {cat.name}
                           </div>
                         </SelectItem>
                       ))}
-                      {userIncomeCategories.length > 0 && (
-                        <>
-                          <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-t mt-1 pt-2">
-                            Minhas Categorias
-                          </div>
-                          {userIncomeCategories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full shrink-0 bg-emerald-500" />
-                                {cat.name}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </>
-                      )}
                     </>
                   )}
                 </SelectContent>
@@ -458,6 +480,13 @@ export function IncomeForm({ income, onClose, open: controlledOpen, onOpenChange
           </form>
         </div>
       </DialogContent>
+
+      {/* Dialog para criar nova categoria */}
+      <CategoryForm
+        open={showNewCategoryDialog}
+        categoryType="income"
+        onClose={() => setShowNewCategoryDialog(false)}
+      />
     </Dialog>
   );
 }
