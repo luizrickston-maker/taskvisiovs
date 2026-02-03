@@ -1,0 +1,377 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+// System prompt com documentação completa do app
+const APP_DOCUMENTATION_PROMPT = `Você é o Assistente de Ajuda do TaskVision PRO. Sua função é ajudar os usuários a entender e usar todas as funcionalidades do aplicativo.
+
+## SOBRE O TASKVISION PRO
+
+O TaskVision PRO é uma plataforma completa de gestão financeira pessoal e produtividade que combina:
+- Gestão financeira (Caixa, Finanças, Planejamento)
+- Gestão de tarefas e projetos (Meu Dia, Projetos)
+- Criação de conteúdo (Roteiros, Conteúdos, Calendário Editorial)
+- Assistência de IA (Cérebro Operacional)
+
+O app possui dois modos de operação:
+1. **Modo Pessoal**: Focado em finanças pessoais, tarefas do dia, projetos pessoais
+2. **Modo Empresarial (PJ)**: Focado em operações de negócio, vendas, time, projetos de clientes
+
+---
+
+## MÓDULOS DO MODO PESSOAL
+
+### 📱 Assistente IA (/assistente-pessoal)
+- Chat inteligente com visão 360° dos seus dados pessoais
+- Resumos de saúde financeira, alertas e progresso
+- Usa seus dados reais para dar recomendações personalizadas
+
+### 📅 Meu Dia (/meu-dia)
+- **Ações de Hoje**: Tarefas que precisam ser feitas hoje
+- **Agenda 48h**: Visualização dos próximos compromissos
+- **Inbox Mental**: Capture ideias rapidamente para processar depois
+- **Histórico de Atividades**: Veja o que você já completou
+
+### 💰 Caixa (/caixa)
+- Registro rápido de **entradas** (receitas) e **saídas** (despesas)
+- Visualização do **saldo atual**
+- **Contas Críticas**: Dívidas com vencimento próximo
+- Categorização de transações
+
+### 📊 Finanças (/financas)
+- **Gestão de Receitas**: Cadastre fontes de renda recorrentes ou pontuais
+- **Gestão de Despesas**: Categorize gastos
+- **Dívidas**: Controle parcelas, vencimentos e pagamentos
+- **Reservas**: Acompanhe sua poupança
+- **Gráficos**: Visualize evolução financeira
+
+### 🎯 Planejamento (/planejamento)
+- **Planos de Compra**: Cadastre objetivos de compra
+- **Acompanhamento**: Veja progresso de economia para cada objetivo
+- **Metas com prazo**: Defina quando quer atingir cada objetivo
+
+### 📁 Projetos (/projetos)
+- **Kanban**: Visualize projetos por status (A fazer, Em progresso, Concluído)
+- **Categorias**: Organize projetos por tipo
+- **Tarefas**: Subdivida projetos em tarefas menores
+- **Prioridades**: Defina o que é mais importante
+
+### ✍️ Roteiros (/roteiros)
+- Crie scripts para vídeos e conteúdos
+- Organize por plataforma (YouTube, Instagram, TikTok, etc.)
+- Acompanhe status de produção
+
+### 📆 Conteúdos (/conteudos)
+- Calendário de publicações
+- Timeline de conteúdos planejados
+- Visualização por projeto
+
+---
+
+## MÓDULOS DO MODO EMPRESARIAL (PJ)
+
+### 🧠 Cérebro IA (/pj/cerebro-operacional)
+- **Dashboard 360°**: Visão geral de tarefas, projetos, vendas, agenda e equipe
+- **Chat com IA**: Pergunte sobre suas operações e receba insights
+- **Ajuda**: Este módulo onde você está agora!
+
+### 💼 Comercial (/comercial)
+- **Pipeline de Vendas**: Gerencie prospects do primeiro contato ao fechamento
+- **Status**: Novo → Em Negociação → Proposta Enviada → Fechado/Perdido
+- **Metas de Vendas**: Defina e acompanhe objetivos
+- **Documentos**: Anexe propostas e contratos a cada prospect
+
+### 📁 Projetos PJ (/pj/projetos)
+- Projetos vinculados a clientes/prospects
+- Tarefas com estimativa de horas
+- Acompanhamento de prazos
+
+### 📅 Calendário Editorial (/pj/calendario-editorial)
+- Planejamento de conteúdo por cliente/projeto
+- Atribuição a membros da equipe
+- Visualização mensal e semanal
+- Status: Ideia → Rascunho → Revisão → Aprovado → Publicado
+
+### 💵 Financeiro PJ (/pj/financeiro)
+- **Custos Fixos**: Despesas mensais recorrentes
+- **Custos Variáveis**: Despesas pontuais
+- **Categorias de Custo**: Organize por tipo
+- **Calculadora de Precificação**: Calcule preços com margem e impostos
+
+### 📦 Planos (/pj/planos)
+- Crie planos de serviço para oferecer a clientes
+- Vincule itens de precificação
+- Calcule custos e margens automaticamente
+
+### 📈 Investimentos (/pj/investimentos)
+- Registre investimentos em equipamentos e ferramentas
+- Calcule depreciação mensal
+- Acompanhe vida útil de ativos
+
+### 👥 Time (/pj/time)
+- Cadastre membros da equipe
+- Defina tipo de contrato (CLT, PJ, Freelancer)
+- Registre custos e horas disponíveis
+
+---
+
+## CONFIGURAÇÕES (/config)
+
+- **Nome do App**: Personalize o nome exibido
+- **Gestão de Agentes de IA**: Crie e configure agentes personalizados
+- **Chaves de API**: Configure suas próprias chaves de provedores de IA
+
+---
+
+## DICAS DE USO
+
+### Como começar?
+1. No modo pessoal, comece registrando suas transações em **Caixa**
+2. Cadastre suas dívidas em **Finanças** para acompanhar vencimentos
+3. Use **Meu Dia** para organizar suas tarefas diárias
+4. O **Assistente IA** vai te dar insights baseados nos seus dados
+
+### Como alternar entre modos?
+- No menu lateral (desktop) ou no menu "Mais" (mobile), clique no botão de alternar contexto
+- Pessoal = ícone de pessoa
+- Empresarial = ícone de prédio
+
+### Como usar a IA?
+- A IA tem acesso aos seus dados reais (tarefas, projetos, vendas, etc.)
+- Faça perguntas naturais como "O que tenho para hoje?" ou "Como estão minhas vendas?"
+- Você pode configurar diferentes agentes com personalidades e modelos diferentes
+
+---
+
+## INSTRUÇÕES PARA VOCÊ (ASSISTENTE)
+
+1. Responda SEMPRE em português brasileiro
+2. Seja amigável e didático
+3. Use emojis para tornar a leitura mais agradável
+4. Quando o usuário perguntar sobre uma funcionalidade, explique como acessar e usar
+5. Se o usuário tiver dúvidas técnicas sobre configuração, guie passo a passo
+6. Sugira funcionalidades relacionadas que o usuário pode não conhecer
+7. Se não souber algo específico do app, seja honesto e sugira onde encontrar mais informações`;
+
+interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+interface AIAgent {
+  id: string;
+  name: string;
+  model_name: string;
+  temperature: number;
+  max_tokens: number;
+  api_key_id: string | null;
+}
+
+interface AiApiKey {
+  id: string;
+  provider: string;
+  api_key: string;
+  is_active: boolean;
+}
+
+interface RequestBody {
+  messages: ChatMessage[];
+  agent_id?: string;
+}
+
+// deno-lint-ignore no-explicit-any
+type SupabaseClientType = ReturnType<typeof createClient<any>>;
+
+async function fetchAgentConfig(
+  supabase: SupabaseClientType,
+  userId: string,
+  agentId?: string
+): Promise<{ modelName: string; temperature: number; maxTokens: number; apiKey: string; apiEndpoint: string; extraHeaders: Record<string, string> }> {
+  let query = supabase
+    .from("ai_agents")
+    .select("id, name, model_name, temperature, max_tokens, api_key_id")
+    .eq("user_id", userId)
+    .eq("is_active", true);
+
+  if (agentId) {
+    query = query.eq("id", agentId);
+  } else {
+    query = query.eq("is_default", true);
+  }
+
+  const { data: agentData, error: agentError } = await query.single();
+
+  // Default values
+  let modelName = "google/gemini-3-flash-preview";
+  let temperature = 0.7;
+  let maxTokens = 4096;
+  let apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
+  let apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
+  let extraHeaders: Record<string, string> = {};
+
+  if (!agentError && agentData) {
+    const agent = agentData as AIAgent;
+    modelName = agent.model_name || modelName;
+    temperature = agent.temperature ?? temperature;
+    maxTokens = agent.max_tokens || maxTokens;
+
+    // Check for custom API key
+    if (agent.api_key_id) {
+      const { data: keyData, error: keyError } = await supabase
+        .from("ai_api_keys")
+        .select("id, provider, api_key, is_active")
+        .eq("id", agent.api_key_id)
+        .eq("is_active", true)
+        .single();
+
+      if (!keyError && keyData) {
+        const apiKeyRecord = keyData as AiApiKey;
+        const keyValue = apiKeyRecord.api_key?.trim();
+        
+        if (keyValue && keyValue.length > 10 && !keyValue.startsWith("sk-xxx")) {
+          apiKey = keyValue;
+          
+          switch (apiKeyRecord.provider.toLowerCase()) {
+            case "openai":
+              apiEndpoint = "https://api.openai.com/v1/chat/completions";
+              if (modelName.startsWith("openai/")) modelName = modelName.replace("openai/", "");
+              if (modelName === "gpt-5-mini") modelName = "gpt-4o-mini";
+              if (modelName === "gpt-5") modelName = "gpt-4o";
+              break;
+            case "gemini":
+            case "google":
+              apiEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+              if (modelName.startsWith("google/")) modelName = modelName.replace("google/", "");
+              break;
+            case "anthropic":
+              apiEndpoint = "https://api.anthropic.com/v1/messages";
+              extraHeaders = { "anthropic-version": "2023-06-01", "x-api-key": apiKey };
+              break;
+            case "openrouter":
+            default:
+              apiEndpoint = "https://openrouter.ai/api/v1/chat/completions";
+              extraHeaders = { "HTTP-Referer": "https://taskvisionpro.lovable.app", "X-Title": "TaskVision PRO" };
+              break;
+          }
+        }
+      }
+    }
+  }
+
+  if (!apiKey) {
+    throw new Error("Configuração de IA não encontrada");
+  }
+
+  return { modelName, temperature, maxTokens, apiKey, apiEndpoint, extraHeaders };
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    // 1. Authenticate
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Token de autenticação não fornecido" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Token inválido ou expirado" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 2. Parse request
+    const body: RequestBody = await req.json();
+    const { messages, agent_id } = body;
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Array de mensagens é obrigatório" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 3. Get agent config
+    const { modelName, temperature, maxTokens, apiKey, apiEndpoint, extraHeaders } = 
+      await fetchAgentConfig(supabase, user.id, agent_id);
+
+    console.log(`[ai-help-assistant] Using model: ${modelName}, endpoint: ${apiEndpoint}`);
+
+    // 4. Build messages with documentation context
+    const fullMessages: ChatMessage[] = [
+      { role: "system", content: APP_DOCUMENTATION_PROMPT },
+      ...messages,
+    ];
+
+    // 5. Call AI API with streaming
+    const response = await fetch(apiEndpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        ...extraHeaders,
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: fullMessages,
+        temperature,
+        max_tokens: maxTokens,
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[ai-help-assistant] API error:", response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Créditos de IA esgotados. Adicione créditos para continuar." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ error: "Erro ao processar sua solicitação" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 6. Stream response
+    return new Response(response.body, {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    });
+
+  } catch (error) {
+    console.error("[ai-help-assistant] Error:", error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : "Erro interno" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
