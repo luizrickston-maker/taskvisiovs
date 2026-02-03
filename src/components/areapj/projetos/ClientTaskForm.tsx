@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
@@ -143,7 +143,11 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
     }
   };
 
-  const selectedDate = formData.deadline ? new Date(formData.deadline) : undefined;
+  // Use parseISO to correctly interpret 'yyyy-MM-dd' as a local date, not UTC midnight
+  const selectedDate = useMemo(() => {
+    if (!formData.deadline) return undefined;
+    return parseISO(formData.deadline);
+  }, [formData.deadline]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
