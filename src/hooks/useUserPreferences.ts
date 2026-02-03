@@ -10,20 +10,22 @@ export function useUserPreferences() {
   const { mode } = useAppContext();
 
   // Theme is stored in localStorage (per device)
-  const getTheme = (): 'dark' | 'system' => {
+  const getTheme = (): 'light' | 'dark' | 'system' => {
     if (typeof window === 'undefined') return 'dark';
-    return (localStorage.getItem(THEME_KEY) as 'dark' | 'system') || 'dark';
+    return (localStorage.getItem(THEME_KEY) as 'light' | 'dark' | 'system') || 'dark';
   };
 
-  const setTheme = (theme: 'dark' | 'system') => {
+  const setTheme = (theme: 'light' | 'dark' | 'system') => {
     localStorage.setItem(THEME_KEY, theme);
     applyTheme(theme);
   };
 
-  const applyTheme = (theme: 'dark' | 'system') => {
+  const applyTheme = (theme: 'light' | 'dark' | 'system') => {
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
+    } else if (theme === 'light') {
+      root.classList.remove('dark');
     } else {
       // System preference
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
