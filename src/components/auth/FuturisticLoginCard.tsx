@@ -98,7 +98,7 @@ export function FuturisticLoginCard({ onShowReset, onShowEmailSent }: Props) {
   };
 
   return (
-    <div className="relative w-full max-w-[320px] animate-scale-in">
+    <div className="relative w-full max-w-[360px] animate-scale-in">
       {/* Card glow effect */}
       <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/30 via-purple-500/30 to-cyan-500/30 rounded-xl blur-lg opacity-20" />
       
