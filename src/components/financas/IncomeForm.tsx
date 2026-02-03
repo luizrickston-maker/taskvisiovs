@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
-import { CalendarIcon, Plus, Info, PlusCircle } from 'lucide-react';
+import { CalendarIcon, Plus, Info, PlusCircle, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -9,12 +9,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { CurrencyInput, parseBRLToNumber, numberToBRL } from '@/components/ui/currency-input';
 import { CategoryForm } from '@/components/finances/CategoryForm';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { useUserIncomeCategories } from '@/hooks/useFinanceCategories';
+import { useUserIncomeCategories, useDeleteUserIncomeCategory } from '@/hooks/useFinanceCategories';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Income, IncomeType } from '@/types/database';
@@ -87,10 +97,12 @@ export function IncomeForm({ income, onClose, open: controlledOpen, onOpenChange
   const [variableMax, setVariableMax] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<{ id: string; name: string; type: 'system' | 'user' } | null>(null);
 
   const { user } = useAuthContext();
-  const { categories, addIncome, updateIncome } = useAppStore();
+  const { categories, addIncome, updateIncome, deleteCategory } = useAppStore();
   const { data: userIncomeCategories = [] } = useUserIncomeCategories();
+  const deleteUserCategory = useDeleteUserIncomeCategory();
 
   // Categorias padrão do sistema
   const systemIncomeCategories = categories.filter((c) => c.type === 'income');
@@ -150,6 +162,38 @@ export function IncomeForm({ income, onClose, open: controlledOpen, onOpenChange
   };
 
   const selectedCategoryId = categoryId || userCategoryId;
+
+  // Handler para deletar categoria
+  const handleDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+
+    if (categoryToDelete.type === 'user') {
+      // Deleta categoria customizada
+      deleteUserCategory.mutate(categoryToDelete.id);
+    } else {
+      // Deleta categoria do sistema
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', categoryToDelete.id);
+
+      if (error) {
+        console.error('Error deleting system category:', error);
+        toast.error('Erro ao excluir categoria');
+      } else {
+        deleteCategory(categoryToDelete.id);
+        toast.success('Categoria excluída!');
+      }
+    }
+
+    // Limpa seleção se a categoria deletada estava selecionada
+    if (selectedCategoryId === categoryToDelete.id) {
+      setCategoryId('');
+      setUserCategoryId('');
+    }
+    
+    setCategoryToDelete(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -409,9 +453,9 @@ export function IncomeForm({ income, onClose, open: controlledOpen, onOpenChange
                 <Label>Categoria</Label>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="link"
                   size="sm"
-                  className="h-auto p-0 text-xs text-primary hover:text-primary/80"
+                  className="h-auto p-0 text-xs"
                   onClick={() => setShowNewCategoryDialog(true)}
                 >
                   <PlusCircle className="h-3 w-3 mr-1" />
@@ -445,15 +489,29 @@ export function IncomeForm({ income, onClose, open: controlledOpen, onOpenChange
                     </div>
                   )}
                   {systemIncomeCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                        {cat.name}
-                      </div>
-                    </SelectItem>
+                    <div key={cat.id} className="flex items-center justify-between group">
+                      <SelectItem value={cat.id} className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          {cat.name}
+                        </div>
+                      </SelectItem>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity mr-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCategoryToDelete({ id: cat.id, name: cat.name, type: 'system' });
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   ))}
                   {userIncomeCategories.length > 0 && (
                     <>
@@ -461,12 +519,26 @@ export function IncomeForm({ income, onClose, open: controlledOpen, onOpenChange
                         Minhas Categorias
                       </div>
                       {userIncomeCategories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full shrink-0 bg-primary/70" />
-                            {cat.name}
-                          </div>
-                        </SelectItem>
+                        <div key={cat.id} className="flex items-center justify-between group">
+                          <SelectItem value={cat.id} className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full shrink-0 bg-primary" />
+                              {cat.name}
+                            </div>
+                          </SelectItem>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity mr-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCategoryToDelete({ id: cat.id, name: cat.name, type: 'user' });
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       ))}
                     </>
                   )}
@@ -487,6 +559,32 @@ export function IncomeForm({ income, onClose, open: controlledOpen, onOpenChange
         categoryType="income"
         onClose={() => setShowNewCategoryDialog(false)}
       />
+
+      {/* Dialog de confirmação para excluir categoria */}
+      <AlertDialog open={!!categoryToDelete} onOpenChange={(open) => !open && setCategoryToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir categoria?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a categoria "{categoryToDelete?.name}"?
+              {categoryToDelete?.type === 'system' && (
+                <span className="block mt-2 text-warning">
+                  ⚠️ Esta é uma categoria do sistema. Ganhos existentes com esta categoria ficarão sem categoria.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCategory}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
