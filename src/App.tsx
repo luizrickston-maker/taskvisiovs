@@ -39,6 +39,7 @@ const CalendarioEditorialPage = lazy(() => import("@/pages/PJ/CalendarioEditoria
 const AI360DashboardPage = lazy(() => import("@/pages/PJ/AI360DashboardPage"));
 const AiAgentsManagerPage = lazy(() => import("@/pages/PJ/AiAgentsManagerPage"));
 const AI360PersonalDashboardPage = lazy(() => import("@/pages/Personal/AI360PersonalDashboardPage"));
+const FinanceCategoryManagementPage = lazy(() => import("@/pages/Personal/FinanceCategoryManagementPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -131,6 +132,11 @@ const App = () => {
                 <Route path="/assistente-pessoal" element={
                   <Suspense fallback={<PageLoader />}>
                     <AI360PersonalDashboardPage />
+                  </Suspense>
+                } />
+                <Route path="/financas/categorias" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <FinanceCategoryManagementPage />
                   </Suspense>
                 } />
                 
