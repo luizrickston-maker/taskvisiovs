@@ -20,14 +20,10 @@ export default function FocoDashboard() {
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+        <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:inline-flex">
           <TabsTrigger value="acoes" className="flex items-center gap-2">
             <CheckSquare className="h-4 w-4" />
             <span className="hidden sm:inline">Ações</span>
-          </TabsTrigger>
-          <TabsTrigger value="inbox" className="flex items-center gap-2">
-            <Inbox className="h-4 w-4" />
-            <span className="hidden sm:inline">Inbox</span>
           </TabsTrigger>
           <TabsTrigger value="agenda" className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4" />
@@ -36,15 +32,14 @@ export default function FocoDashboard() {
         </TabsList>
 
         <TabsContent value="acoes" className="mt-6">
-          <SectionBoundary name="Ações de Hoje">
-            <AcoesHoje />
-          </SectionBoundary>
-        </TabsContent>
-
-        <TabsContent value="inbox" className="mt-6">
-          <SectionBoundary name="Inbox Mental">
-            <InboxMental />
-          </SectionBoundary>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <SectionBoundary name="Inbox Mental">
+              <InboxMental />
+            </SectionBoundary>
+            <SectionBoundary name="Ações de Hoje">
+              <AcoesHoje />
+            </SectionBoundary>
+          </div>
         </TabsContent>
 
         <TabsContent value="agenda" className="mt-6 space-y-6">
