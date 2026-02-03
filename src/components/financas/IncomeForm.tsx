@@ -365,7 +365,7 @@ export function IncomeForm({ income, onClose, open: controlledOpen, onOpenChange
                 </SelectTrigger>
                 <SelectContent>
                   {INCOME_TYPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
+                    <SelectItem key={opt.value} value={opt.value} textValue={opt.label}>
                       <div className="flex flex-col py-0.5">
                         <span className="font-medium">{opt.label}</span>
                         <span className="text-xs text-muted-foreground leading-tight">{opt.description}</span>
