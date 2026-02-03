@@ -70,6 +70,8 @@ export const useAppStore = create<AppState>()((...args) => ({
     debts: [],
     savings: [],
     goals: [],
+    userIncomeCategories: [],
+    userDebtCategories: [],
     
     // Productivity
     tasks: [],

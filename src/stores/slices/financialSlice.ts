@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { Category, Income, Expense, Debt, Saving, Goal } from '@/types/database';
+import type { Category, Income, Expense, Debt, Saving, Goal, UserIncomeCategory, UserDebtCategory } from '@/types/database';
 
 export interface FinancialSlice {
   // Data
@@ -9,12 +9,26 @@ export interface FinancialSlice {
   debts: Debt[];
   savings: Saving[];
   goals: Goal[];
+  userIncomeCategories: UserIncomeCategory[];
+  userDebtCategories: UserDebtCategory[];
   
   // Actions - Categories
   setCategories: (categories: Category[]) => void;
   addCategory: (category: Category) => void;
   updateCategory: (id: string, updates: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
+  
+  // Actions - User Income Categories
+  setUserIncomeCategories: (categories: UserIncomeCategory[]) => void;
+  addUserIncomeCategory: (category: UserIncomeCategory) => void;
+  updateUserIncomeCategory: (id: string, updates: Partial<UserIncomeCategory>) => void;
+  deleteUserIncomeCategory: (id: string) => void;
+  
+  // Actions - User Debt Categories
+  setUserDebtCategories: (categories: UserDebtCategory[]) => void;
+  addUserDebtCategory: (category: UserDebtCategory) => void;
+  updateUserDebtCategory: (id: string, updates: Partial<UserDebtCategory>) => void;
+  deleteUserDebtCategory: (id: string) => void;
   
   // Actions - Incomes
   setIncomes: (incomes: Income[]) => void;
@@ -55,6 +69,8 @@ export const createFinancialSlice: StateCreator<FinancialSlice, [], [], Financia
   debts: [],
   savings: [],
   goals: [],
+  userIncomeCategories: [],
+  userDebtCategories: [],
   
   // Categories
   setCategories: (categories) => set({ categories }),
@@ -64,6 +80,30 @@ export const createFinancialSlice: StateCreator<FinancialSlice, [], [], Financia
   })),
   deleteCategory: (id) => set((state) => ({
     categories: state.categories.filter((c) => c.id !== id)
+  })),
+  
+  // User Income Categories
+  setUserIncomeCategories: (userIncomeCategories) => set({ userIncomeCategories }),
+  addUserIncomeCategory: (category) => set((state) => ({ 
+    userIncomeCategories: [...state.userIncomeCategories, category] 
+  })),
+  updateUserIncomeCategory: (id, updates) => set((state) => ({
+    userIncomeCategories: state.userIncomeCategories.map((c) => c.id === id ? { ...c, ...updates } : c)
+  })),
+  deleteUserIncomeCategory: (id) => set((state) => ({
+    userIncomeCategories: state.userIncomeCategories.filter((c) => c.id !== id)
+  })),
+  
+  // User Debt Categories
+  setUserDebtCategories: (userDebtCategories) => set({ userDebtCategories }),
+  addUserDebtCategory: (category) => set((state) => ({ 
+    userDebtCategories: [...state.userDebtCategories, category] 
+  })),
+  updateUserDebtCategory: (id, updates) => set((state) => ({
+    userDebtCategories: state.userDebtCategories.map((c) => c.id === id ? { ...c, ...updates } : c)
+  })),
+  deleteUserDebtCategory: (id) => set((state) => ({
+    userDebtCategories: state.userDebtCategories.filter((c) => c.id !== id)
   })),
   
   // Incomes

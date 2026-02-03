@@ -5,7 +5,8 @@ import type {
   Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, 
   UserPreference, CustomTimeBlockType, ProjectTask, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
-  DocumentType, CorporateCostCategory, CorporateCost, PaymentFeeSetting, PurchasePlan
+  DocumentType, CorporateCostCategory, CorporateCost, PaymentFeeSetting, PurchasePlan,
+  UserIncomeCategory, UserDebtCategory
 } from '@/types/database';
 import type { EditorialCalendarItem, EditorialComment } from '@/types/editorial';
 
@@ -18,6 +19,8 @@ export function useInitializeData(userId: string | undefined) {
     setDebts,
     setSavings,
     setGoals,
+    setUserIncomeCategories,
+    setUserDebtCategories,
     setTasks,
     setTimeBlocks,
     setCustomTimeBlockTypes,
@@ -68,6 +71,8 @@ export function useInitializeData(userId: string | undefined) {
           debtsRes,
           savingsRes,
           goalsRes,
+          userIncomeCategoriesRes,
+          userDebtCategoriesRes,
           tasksRes,
           timeBlocksRes,
           customTimeBlockTypesRes,
@@ -97,6 +102,8 @@ export function useInitializeData(userId: string | undefined) {
           supabase.from('debts').select('*').order('due_date', { ascending: true }),
           supabase.from('savings').select('*').order('date', { ascending: false }),
           supabase.from('goals').select('*').order('deadline', { ascending: true }),
+          supabase.from('user_income_categories').select('*').order('name', { ascending: true }),
+          supabase.from('user_debt_categories').select('*').order('name', { ascending: true }),
           supabase.from('tasks').select('*').order('created_at', { ascending: false }),
           supabase.from('time_blocks').select('*').order('date', { ascending: true }),
           supabase.from('time_block_types').select('*').order('created_at', { ascending: true }),
@@ -127,6 +134,8 @@ export function useInitializeData(userId: string | undefined) {
         if (debtsRes.data) setDebts(debtsRes.data as Debt[]);
         if (savingsRes.data) setSavings(savingsRes.data as Saving[]);
         if (goalsRes.data) setGoals(goalsRes.data as Goal[]);
+        if (userIncomeCategoriesRes.data) setUserIncomeCategories(userIncomeCategoriesRes.data as UserIncomeCategory[]);
+        if (userDebtCategoriesRes.data) setUserDebtCategories(userDebtCategoriesRes.data as UserDebtCategory[]);
         if (tasksRes.data) setTasks(tasksRes.data as Task[]);
         if (timeBlocksRes.data) setTimeBlocks(timeBlocksRes.data as TimeBlock[]);
         if (customTimeBlockTypesRes.data) setCustomTimeBlockTypes(customTimeBlockTypesRes.data as CustomTimeBlockType[]);
@@ -160,5 +169,5 @@ export function useInitializeData(userId: string | undefined) {
     };
 
     loadAllData();
-  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setSalesGoals, setProspects, setCorporatePricings, setCorporateInvestments, setCorporateTeam, setServicePlans, setServicePlanItems, setDocumentTypes, setCorporateCostCategories, setCorporateCosts, setPaymentFeeSettings, setEditorialCalendarItems, setEditorialComments, setPurchasePlans, setIsLoading, setDataInitialized]);
+  }, [userId, dataInitialized, setCategories, setIncomes, setExpenses, setDebts, setSavings, setGoals, setUserIncomeCategories, setUserDebtCategories, setTasks, setTimeBlocks, setCustomTimeBlockTypes, setProjectCategories, setProjects, setProjectTasks, setScripts, setUserPreferences, setSalesGoals, setProspects, setCorporatePricings, setCorporateInvestments, setCorporateTeam, setServicePlans, setServicePlanItems, setDocumentTypes, setCorporateCostCategories, setCorporateCosts, setPaymentFeeSettings, setEditorialCalendarItems, setEditorialComments, setPurchasePlans, setIsLoading, setDataInitialized]);
 }

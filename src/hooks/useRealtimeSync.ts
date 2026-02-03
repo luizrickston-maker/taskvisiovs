@@ -5,7 +5,7 @@ import type {
   Income, Expense, Debt, Saving, Task, 
   TimeBlock, Project, Script, Goal, Category, ProjectTask, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
-  CorporateCostCategory, CorporateCost, PurchasePlan
+  CorporateCostCategory, CorporateCost, PurchasePlan, UserIncomeCategory, UserDebtCategory
 } from '@/types/database';
 import type { EditorialCalendarItem, EditorialComment } from '@/types/editorial';
 
@@ -40,6 +40,8 @@ export function useRealtimeSync(userId: string | undefined) {
     addEditorialCalendarItem, updateEditorialCalendarItem, deleteEditorialCalendarItem,
     addEditorialComment, updateEditorialComment, deleteEditorialComment,
     addPurchasePlan, updatePurchasePlan, deletePurchasePlan,
+    addUserIncomeCategory, updateUserIncomeCategory, deleteUserIncomeCategory,
+    addUserDebtCategory, updateUserDebtCategory, deleteUserDebtCategory,
   } = useAppStore();
 
   useEffect(() => {
@@ -410,6 +412,38 @@ export function useRealtimeSync(userId: string | undefined) {
             updatePurchasePlan(newRecord.id, newRecord);
           } else if (eventType === 'DELETE') {
             deletePurchasePlan(oldRecord.id);
+          }
+        }
+      )
+      // User Income Categories
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_income_categories', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<UserIncomeCategory>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().userIncomeCategories.some(c => c.id === newRecord.id);
+            if (!exists) addUserIncomeCategory(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateUserIncomeCategory(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteUserIncomeCategory(oldRecord.id);
+          }
+        }
+      )
+      // User Debt Categories
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_debt_categories', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<UserDebtCategory>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().userDebtCategories.some(c => c.id === newRecord.id);
+            if (!exists) addUserDebtCategory(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateUserDebtCategory(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteUserDebtCategory(oldRecord.id);
           }
         }
       )
