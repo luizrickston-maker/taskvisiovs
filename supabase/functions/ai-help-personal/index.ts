@@ -6,8 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// System prompt APENAS para funcionalidades EMPRESARIAIS - respostas concisas
-const BUSINESS_HELP_PROMPT = `Você é o Assistente de Ajuda do TaskVision PRO (Modo Empresarial/PJ).
+// System prompt APENAS para funcionalidades PESSOAIS - respostas concisas
+const PERSONAL_HELP_PROMPT = `Você é o Assistente de Ajuda do TaskVision PRO (Modo Pessoal).
 
 ## REGRAS DE RESPOSTA
 - Respostas CURTAS e DIRETAS (máximo 3-4 frases por vez)
@@ -16,43 +16,41 @@ const BUSINESS_HELP_PROMPT = `Você é o Assistente de Ajuda do TaskVision PRO (
 - Um tópico por resposta
 - Só aprofunde se o usuário pedir
 
-## MÓDULOS EMPRESARIAIS (PJ)
+## MÓDULOS PESSOAIS
 
-### 🧠 Cérebro IA (/pj/cerebro-operacional)
-- **Dashboard 360°**: Visão geral de operações
-- **Chat IA**: Insights sobre seu negócio
-- **Ajuda**: Tire dúvidas (você está aqui!)
+### 📱 Assistente IA (/assistente-pessoal)
+Chat com visão 360° dos seus dados pessoais.
 
-### 💼 Comercial (/comercial)
-- **Pipeline**: Novo → Negociação → Proposta → Fechado
-- **Metas de Vendas**: Objetivos e acompanhamento
-- **Documentos**: Propostas e contratos
+### 📅 Meu Dia (/meu-dia)
+- **Ações de Hoje**: Tarefas do dia
+- **Agenda 48h**: Próximos compromissos
+- **Inbox Mental**: Captura rápida de ideias
+- **Histórico**: Atividades concluídas
 
-### 📁 Projetos PJ (/pj/projetos)
-Projetos de clientes com tarefas e prazos.
+### 💰 Caixa (/caixa)
+Registro rápido de entradas/saídas e saldo atual.
 
-### 📅 Calendário Editorial (/pj/calendario-editorial)
-- Planejamento por cliente/projeto
-- Atribuição à equipe
-- Status: Ideia → Rascunho → Revisão → Aprovado → Publicado
+### 📊 Finanças (/financas)
+- Receitas e despesas
+- Dívidas e parcelas
+- Reservas/poupança
 
-### 💵 Financeiro PJ (/pj/financeiro)
-- Custos fixos e variáveis
-- Categorias de custo
-- Calculadora de precificação
+### 🎯 Planejamento (/planejamento)
+Planos de compra com metas e prazos.
 
-### 📦 Planos (/pj/planos)
-Planos de serviço para clientes.
+### 📁 Projetos (/projetos)
+Kanban pessoal com tarefas e categorias.
 
-### 📈 Investimentos (/pj/investimentos)
-Equipamentos com depreciação.
+### ✍️ Roteiros (/roteiros)
+Scripts para vídeos e conteúdos.
 
-### 👥 Time (/pj/time)
-Equipe com contratos e custos.
+### 📆 Conteúdos (/conteudos)
+Calendário de publicações.
 
 ## DICAS RÁPIDAS
 - Alterne modos no menu lateral
-- Configure agentes em /pj/agentes-ia
+- IA usa seus dados reais
+- Configure agentes em /config
 
 Responda SEMPRE em português brasileiro, de forma amigável e objetiva.`;
 
@@ -104,10 +102,9 @@ async function fetchAgentConfig(
 
   const { data: agentData, error: agentError } = await query.single();
 
-  // Default values
   let modelName = "google/gemini-3-flash-preview";
   let temperature = 0.7;
-  let maxTokens = 4096;
+  let maxTokens = 2048; // Menor para respostas concisas
   let apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
   let apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
   let extraHeaders: Record<string, string> = {};
@@ -116,9 +113,8 @@ async function fetchAgentConfig(
     const agent = agentData as AIAgent;
     modelName = agent.model_name || modelName;
     temperature = agent.temperature ?? temperature;
-    maxTokens = agent.max_tokens || maxTokens;
+    maxTokens = Math.min(agent.max_tokens || maxTokens, 2048);
 
-    // Check for custom API key
     if (agent.api_key_id) {
       const { data: keyData, error: keyError } = await supabase
         .from("ai_api_keys")
@@ -174,7 +170,6 @@ serve(async (req) => {
   }
 
   try {
-    // 1. Authenticate
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -198,7 +193,6 @@ serve(async (req) => {
       );
     }
 
-    // 2. Parse request
     const body: RequestBody = await req.json();
     const { messages, agent_id } = body;
 
@@ -209,19 +203,16 @@ serve(async (req) => {
       );
     }
 
-    // 3. Get agent config
     const { modelName, temperature, maxTokens, apiKey, apiEndpoint, extraHeaders } = 
       await fetchAgentConfig(supabase, user.id, agent_id);
 
-    console.log(`[ai-help-assistant] Using model: ${modelName}, endpoint: ${apiEndpoint}`);
+    console.log(`[ai-help-personal] Using model: ${modelName}`);
 
-    // 4. Build messages with documentation context
     const fullMessages: ChatMessage[] = [
-      { role: "system", content: BUSINESS_HELP_PROMPT },
+      { role: "system", content: PERSONAL_HELP_PROMPT },
       ...messages,
     ];
 
-    // 5. Call AI API with streaming
     const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: {
@@ -240,7 +231,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[ai-help-assistant] API error:", response.status, errorText);
+      console.error("[ai-help-personal] API error:", response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -261,13 +252,12 @@ serve(async (req) => {
       );
     }
 
-    // 6. Stream response
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
 
   } catch (error) {
-    console.error("[ai-help-assistant] Error:", error);
+    console.error("[ai-help-personal] Error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Erro interno" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

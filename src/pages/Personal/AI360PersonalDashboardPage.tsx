@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePersonalContext } from '@/hooks/usePersonalAI360Agent';
 import { AI360PersonalChatInterface } from '@/components/ai/AI360PersonalChatInterface';
 import { AI360PersonalSummaryCards } from '@/components/ai/AI360PersonalSummaryCards';
+import { PersonalHelpChatInterface } from '@/components/ai/PersonalHelpChatInterface';
 
 export default function AI360PersonalDashboardPage() {
   const { data: context, isLoading: isLoadingContext } = usePersonalContext();
@@ -25,11 +26,16 @@ export default function AI360PersonalDashboardPage() {
       </div>
 
       {/* Main Content with Tabs */}
-      <Tabs defaultValue="chat" className="space-y-4">
+      <Tabs defaultValue="help" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="help">Ajuda</TabsTrigger>
           <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard Pessoal</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="help" className="space-y-4">
+          <PersonalHelpChatInterface />
+        </TabsContent>
 
         <TabsContent value="chat" className="space-y-4">
           <AI360PersonalChatInterface />

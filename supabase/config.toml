@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.ai-360-personal]
 verify_jwt = false
+
+[functions.ai-help-assistant]
+verify_jwt = false
+
+[functions.ai-help-personal]
+verify_jwt = false
