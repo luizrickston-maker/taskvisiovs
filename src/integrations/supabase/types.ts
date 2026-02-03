@@ -374,6 +374,7 @@ export type Database = {
           paid: boolean
           type: string
           updated_at: string
+          user_category_id: string | null
           user_id: string
         }
         Insert: {
@@ -389,6 +390,7 @@ export type Database = {
           paid?: boolean
           type: string
           updated_at?: string
+          user_category_id?: string | null
           user_id: string
         }
         Update: {
@@ -404,6 +406,7 @@ export type Database = {
           paid?: boolean
           type?: string
           updated_at?: string
+          user_category_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -412,6 +415,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debts_user_category_id_fkey"
+            columns: ["user_category_id"]
+            isOneToOne: false
+            referencedRelation: "user_debt_categories"
             referencedColumns: ["id"]
           },
         ]
