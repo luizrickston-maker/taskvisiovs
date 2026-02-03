@@ -48,10 +48,18 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodEntry[]>([]);
 
-  const activePlans = servicePlans.filter(p => p.is_active);
+  // IMPORTANT:
+  // - We must allow selecting plans even if they are currently inactive.
+  //   Otherwise, older leads that reference an inactive plan cannot compute price,
+  //   and the payment-method UI never appears (finalValue becomes 0).
+  // - We still visually mark inactive plans so the user understands the status.
+  const plansForSelect = useMemo(() => {
+    // Keep stable ordering: active first, then inactive
+    return [...servicePlans].sort((a, b) => Number(b.is_active) - Number(a.is_active));
+  }, [servicePlans]);
   
   // Calculate final value from plan price minus discount
-  const selectedPlan = activePlans.find(p => p.id === planId);
+  const selectedPlan = plansForSelect.find(p => p.id === planId);
   const planPrice = selectedPlan?.final_price || 0;
   const discountValue = parseFloat(discount) || 0;
   const finalValue = Math.max(0, planPrice - discountValue);
@@ -86,19 +94,19 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
       
       // If prospect already has a plan, auto-fill payment type from it
       if (prospect.plan_id) {
-        const existingPlan = activePlans.find(p => p.id === prospect.plan_id);
+        const existingPlan = plansForSelect.find(p => p.id === prospect.plan_id);
         if (existingPlan) {
           setPaymentType(existingPlan.plan_type as PaymentType);
         }
       }
     }
-  }, [open, prospect, activePlans, hasExistingProject]);
+  }, [open, prospect, plansForSelect, hasExistingProject]);
 
   const handlePlanChange = (value: string) => {
     setPlanId(value);
     setDiscount('0'); // Reset discount when plan changes
     setPaymentMethods([]); // Reset payment methods
-    const plan = activePlans.find(p => p.id === value);
+    const plan = plansForSelect.find(p => p.id === value);
     if (plan) {
       setPaymentType(plan.plan_type as PaymentType);
     }
@@ -249,10 +257,17 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
                   <SelectValue placeholder="Selecione o plano" />
                 </SelectTrigger>
                 <SelectContent className="z-[200]">
-                  {activePlans.map(plan => (
+                  {plansForSelect.map(plan => (
                     <SelectItem key={plan.id} value={plan.id}>
                       <div className="flex items-center justify-between gap-4">
-                        <span>{plan.name} ({plan.tier})</span>
+                        <span>
+                          {plan.name} ({plan.tier})
+                          {!plan.is_active ? (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              (inativo)
+                            </span>
+                          ) : null}
+                        </span>
                         <span className="text-muted-foreground text-xs">
                           {formatCurrency(plan.final_price)}
                         </span>
