@@ -18,8 +18,8 @@ import {
 } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Loader2 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { CalendarIcon, Loader2, X } from 'lucide-react';
+import { format, parseISO, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
@@ -149,6 +149,24 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
     return parseISO(formData.deadline);
   }, [formData.deadline]);
 
+  // Quick period options
+  const QUICK_PERIODS = [
+    { label: 'Hoje', days: 0 },
+    { label: '3 dias', days: 3 },
+    { label: '7 dias', days: 7 },
+    { label: '15 dias', days: 15 },
+    { label: '30 dias', days: 30 },
+  ];
+
+  const handleQuickPeriod = (days: number) => {
+    const targetDate = addDays(new Date(), days);
+    setFormData(prev => ({ ...prev, deadline: format(targetDate, 'yyyy-MM-dd') }));
+  };
+
+  const clearDeadline = () => {
+    setFormData(prev => ({ ...prev, deadline: '' }));
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-lg max-h-[85vh] flex flex-col p-0">
@@ -181,15 +199,30 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Prazo</Label>
+            {/* Prazo - full width with quick options */}
+            <div className="space-y-2">
+              <Label>Prazo</Label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {QUICK_PERIODS.map((period) => (
+                  <Button
+                    key={period.days}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => handleQuickPeriod(period.days)}
+                  >
+                    {period.label}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "flex-1 justify-start text-left font-normal",
                         !formData.deadline && "text-muted-foreground"
                       )}
                     >
@@ -197,7 +230,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
                       <span className="truncate">
                         {formData.deadline 
                           ? format(selectedDate!, "dd/MM/yyyy", { locale: ptBR })
-                          : "Selecionar"
+                          : "Escolher data específica"
                         }
                       </span>
                     </Button>
@@ -215,7 +248,22 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
                     />
                   </PopoverContent>
                 </Popover>
+                {formData.deadline && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 shrink-0"
+                    onClick={clearDeadline}
+                    title="Limpar prazo"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               
               <div className="space-y-2">
                 <Label htmlFor="priority">Prioridade</Label>
