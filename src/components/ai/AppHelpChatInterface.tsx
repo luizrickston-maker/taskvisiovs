@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, HelpCircle, User, Loader2, AlertCircle, Lightbulb, RefreshCw, BookOpen } from 'lucide-react';
+import { Send, Bot, User, Loader2, AlertCircle, Lightbulb, RefreshCw, BookOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -285,10 +285,10 @@ function HelpMessageBubble({ message, isStreaming }: HelpMessageBubbleProps) {
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-emerald-500/20 text-emerald-500'
+          isUser ? 'bg-primary text-primary-foreground' : 'bg-orange-500/20'
         }`}
       >
-        {isUser ? <User className="h-4 w-4" /> : <HelpCircle className="h-4 w-4" />}
+        {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4 text-orange-500" />}
       </div>
       <div className="max-w-[85%]">
         <div
