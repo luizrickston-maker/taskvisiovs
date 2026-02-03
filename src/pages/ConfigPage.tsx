@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings, Moon, Sun, Check, User, Building2 } from 'lucide-react';
+import { Settings, Moon, Sun, Monitor, Check, User, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -98,6 +98,14 @@ export default function ConfigPage() {
             <Label>Tema</Label>
             <div className="flex gap-2">
               <Button
+                variant={theme === 'light' ? 'default' : 'outline'}
+                onClick={() => setTheme('light')}
+                className="flex-1"
+              >
+                <Sun className="w-4 h-4 mr-2" />
+                Claro
+              </Button>
+              <Button
                 variant={theme === 'dark' ? 'default' : 'outline'}
                 onClick={() => setTheme('dark')}
                 className="flex-1"
@@ -110,7 +118,7 @@ export default function ConfigPage() {
                 onClick={() => setTheme('system')}
                 className="flex-1"
               >
-                <Sun className="w-4 h-4 mr-2" />
+                <Monitor className="w-4 h-4 mr-2" />
                 Sistema
               </Button>
             </div>
