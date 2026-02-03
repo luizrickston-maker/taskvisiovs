@@ -67,6 +67,7 @@ export function QuickIncomeForm() {
       amount: numAmount,
       date: format(new Date(), 'yyyy-MM-dd'),
       category_id: categoryId || undefined,
+      income_type: 'fixed',
     };
 
     const { data, error } = await supabase

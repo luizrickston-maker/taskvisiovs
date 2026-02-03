@@ -1,4 +1,5 @@
 export type CategoryType = 'income' | 'expense' | 'debt';
+export type IncomeType = 'fixed' | 'recurring' | 'variable';
 export type DebtType = 'fixed' | 'installment' | 'variable' | 'weekly';
 export type TaskType = 'inbox' | 'today';
 export type TimeBlockType = 'cash' | 'client' | 'project';
@@ -78,6 +79,24 @@ export interface Category {
   created_at: string;
 }
 
+export interface UserIncomeCategory {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserDebtCategory {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Income {
   id: string;
   user_id: string;
@@ -85,6 +104,10 @@ export interface Income {
   amount: number;
   date: string;
   category_id?: string;
+  user_category_id?: string;
+  income_type: IncomeType;
+  variable_min_amount?: number;
+  variable_max_amount?: number;
   created_at: string;
 }
 
@@ -107,6 +130,7 @@ export interface Debt {
   paid: boolean;
   type: DebtType;
   category_id?: string;
+  user_category_id?: string;
   installment_current?: number;
   installment_total?: number;
   notes?: string;
