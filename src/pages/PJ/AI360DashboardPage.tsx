@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAI360Context, useAIAgents } from '@/hooks/useAI360Agent';
 import { AI360ChatInterface } from '@/components/ai/AI360ChatInterface';
 import { AI360SummaryCards } from '@/components/ai/AI360SummaryCards';
+import { AppHelpChatInterface } from '@/components/ai/AppHelpChatInterface';
 
 export default function AI360DashboardPage() {
   const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>();
@@ -63,11 +64,16 @@ export default function AI360DashboardPage() {
       </div>
 
       {/* Main Content with Tabs */}
-      <Tabs defaultValue="chat" className="space-y-4">
+      <Tabs defaultValue="help" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="help">Ajuda</TabsTrigger>
           <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard 360°</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="help" className="space-y-4">
+          <AppHelpChatInterface agentId={currentAgentId} />
+        </TabsContent>
 
         <TabsContent value="chat" className="space-y-4">
           <AI360ChatInterface agentId={currentAgentId} />
