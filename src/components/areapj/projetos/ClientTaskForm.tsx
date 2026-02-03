@@ -151,146 +151,151 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-lg">
-        <DialogHeader>
+      <DialogContent className="w-[95vw] max-w-lg max-h-[85vh] flex flex-col p-0">
+        <DialogHeader className="p-4 pb-2 shrink-0">
           <DialogTitle>{task ? 'Editar Tarefa' : 'Nova Tarefa'}</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título *</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Ex: Desenvolver homepage"
-              maxLength={200}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Detalhes da tarefa..."
-              maxLength={500}
-              rows={3}
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
+          <form id="client-task-form" onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Prazo</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.deadline && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.deadline 
-                      ? format(new Date(formData.deadline), "dd/MM/yyyy", { locale: ptBR })
-                      : "Selecionar"
-                    }
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => setFormData(prev => ({ 
-                      ...prev, 
-                      deadline: date ? format(date, 'yyyy-MM-dd') : '' 
-                    }))}
-                    locale={ptBR}
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="title">Título *</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Ex: Desenvolver homepage"
+                maxLength={200}
+              />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="priority">Prioridade</Label>
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Detalhes da tarefa..."
+                maxLength={500}
+                rows={3}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Prazo</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.deadline && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                      <span className="truncate">
+                        {formData.deadline 
+                          ? format(selectedDate!, "dd/MM/yyyy", { locale: ptBR })
+                          : "Selecionar"
+                        }
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-[200]" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => setFormData(prev => ({ 
+                        ...prev, 
+                        deadline: date ? format(date, 'yyyy-MM-dd') : '' 
+                      }))}
+                      locale={ptBR}
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="priority">Prioridade</Label>
+                <Select
+                  value={String(formData.priority)}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, priority: Number(v) }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[200]">
+                    <SelectItem value="1">P1 - Crítica</SelectItem>
+                    <SelectItem value="2">P2 - Alta</SelectItem>
+                    <SelectItem value="3">P3 - Média</SelectItem>
+                    <SelectItem value="4">P4 - Baixa</SelectItem>
+                    <SelectItem value="5">P5 - Mínima</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="estimated_hours">Horas Estimadas</Label>
+                <Input
+                  id="estimated_hours"
+                  type="number"
+                  min={0}
+                  max={9999}
+                  step={0.5}
+                  value={formData.estimated_hours}
+                  onChange={(e) => setFormData(prev => ({ ...prev, estimated_hours: Number(e.target.value) }))}
+                  placeholder="0"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="actual_hours">Horas Executadas</Label>
+                <Input
+                  id="actual_hours"
+                  type="number"
+                  min={0}
+                  max={9999}
+                  step={0.5}
+                  value={formData.actual_hours}
+                  onChange={(e) => setFormData(prev => ({ ...prev, actual_hours: Number(e.target.value) }))}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
               <Select
-                value={String(formData.priority)}
-                onValueChange={(v) => setFormData(prev => ({ ...prev, priority: Number(v) }))}
+                value={formData.status}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, status: v as ProjectTaskStatus }))}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">P1 - Crítica</SelectItem>
-                  <SelectItem value="2">P2 - Alta</SelectItem>
-                  <SelectItem value="3">P3 - Média</SelectItem>
-                  <SelectItem value="4">P4 - Baixa</SelectItem>
-                  <SelectItem value="5">P5 - Mínima</SelectItem>
+                <SelectContent className="z-[200]">
+                  <SelectItem value="todo">A Fazer</SelectItem>
+                  <SelectItem value="in_progress">Em Andamento</SelectItem>
+                  <SelectItem value="done">Concluída</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="estimated_hours">Horas Estimadas</Label>
-              <Input
-                id="estimated_hours"
-                type="number"
-                min={0}
-                max={9999}
-                step={0.5}
-                value={formData.estimated_hours}
-                onChange={(e) => setFormData(prev => ({ ...prev, estimated_hours: Number(e.target.value) }))}
-                placeholder="0"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="actual_hours">Horas Executadas</Label>
-              <Input
-                id="actual_hours"
-                type="number"
-                min={0}
-                max={9999}
-                step={0.5}
-                value={formData.actual_hours}
-                onChange={(e) => setFormData(prev => ({ ...prev, actual_hours: Number(e.target.value) }))}
-                placeholder="0"
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(v) => setFormData(prev => ({ ...prev, status: v as ProjectTaskStatus }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todo">A Fazer</SelectItem>
-                <SelectItem value="in_progress">Em Andamento</SelectItem>
-                <SelectItem value="done">Concluída</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {task ? 'Salvar' : 'Criar Tarefa'}
-            </Button>
-          </div>
-        </form>
+          </form>
+        </div>
+        
+        {/* Footer fixo com botões */}
+        <div className="flex justify-end gap-2 p-4 pt-2 border-t shrink-0">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button type="submit" form="client-task-form" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {task ? 'Salvar' : 'Criar Tarefa'}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
