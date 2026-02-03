@@ -31,6 +31,7 @@ const personalNavItems = [
 ];
 
 const businessNavItems = [
+  { title: 'Cérebro IA', url: '/pj/cerebro-operacional', icon: Brain },
   { title: 'Comercial', url: '/comercial', icon: Briefcase },
   { title: 'Projetos', url: '/pj/projetos', icon: FolderKanban },
   { title: 'Calendário', url: '/pj/calendario-editorial', icon: Calendar },
@@ -38,7 +39,6 @@ const businessNavItems = [
   { title: 'Planos', url: '/pj/planos', icon: Package },
   { title: 'Investimentos', url: '/pj/investimentos', icon: TrendingUp },
   { title: 'Time', url: '/pj/time', icon: Users },
-  { title: 'Cérebro IA', url: '/pj/cerebro-operacional', icon: Brain },
 ];
 
 const settingsItem = { title: 'Config', url: '/config', icon: Settings };
