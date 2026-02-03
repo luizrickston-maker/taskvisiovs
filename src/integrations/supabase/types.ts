@@ -637,8 +637,12 @@ export type Database = {
           created_at: string
           date: string
           id: string
+          income_type: string
           source: string
+          user_category_id: string | null
           user_id: string
+          variable_max_amount: number | null
+          variable_min_amount: number | null
         }
         Insert: {
           amount: number
@@ -646,8 +650,12 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          income_type?: string
           source: string
+          user_category_id?: string | null
           user_id: string
+          variable_max_amount?: number | null
+          variable_min_amount?: number | null
         }
         Update: {
           amount?: number
@@ -655,8 +663,12 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          income_type?: string
           source?: string
+          user_category_id?: string | null
           user_id?: string
+          variable_max_amount?: number | null
+          variable_min_amount?: number | null
         }
         Relationships: [
           {
@@ -664,6 +676,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incomes_user_category_id_fkey"
+            columns: ["user_category_id"]
+            isOneToOne: false
+            referencedRelation: "user_income_categories"
             referencedColumns: ["id"]
           },
         ]
