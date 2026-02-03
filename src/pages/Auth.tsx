@@ -1,39 +1,32 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Wallet, Loader2, Mail } from 'lucide-react';
+import { Loader2, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
+import { FuturisticBackground } from '@/components/auth/FuturisticBackground';
+import { FuturisticLoginCard } from '@/components/auth/FuturisticLoginCard';
 
 const emailSchema = z.string().email('Email inválido');
-const passwordSchema = z.string().min(6, 'Senha deve ter no mínimo 6 caracteres');
-
-// Stronger password schema for signup
-const signupPasswordSchema = z
-  .string()
-  .min(10, 'Senha deve ter no mínimo 10 caracteres')
-  .regex(/[a-zA-Z]/, 'Senha deve conter pelo menos uma letra')
-  .regex(/[0-9]/, 'Senha deve conter pelo menos um número')
-  .regex(/[^a-zA-Z0-9]/, 'Senha deve conter pelo menos um símbolo (!@#$%...)');
 
 export default function Auth() {
-  const { user, loading, signIn, signUp, resetPassword } = useAuthContext();
-  const navigate = useNavigate();
+  const { user, loading, resetPassword } = useAuthContext();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showEmailSent, setShowEmailSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState('');
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
+          <Loader2 className="w-10 h-10 animate-spin text-primary relative" />
+        </div>
       </div>
     );
   }
@@ -41,102 +34,6 @@ export default function Auth() {
   if (user) {
     return <Navigate to="/caixa" replace />;
   }
-
-  const validateInputs = () => {
-    try {
-      emailSchema.parse(email);
-      if (!showResetPassword) {
-        passwordSchema.parse(password);
-      }
-      return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
-      }
-      return false;
-    }
-  };
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateInputs()) return;
-
-    setIsSubmitting(true);
-    const { error } = await signIn(email, password);
-
-    if (error) {
-      setIsSubmitting(false);
-      if (error.message.includes('Invalid login credentials')) {
-        toast.error('Email ou senha incorretos');
-      } else {
-        toast.error(error.message);
-      }
-    } else {
-      toast.success('Login realizado com sucesso!');
-      // Usar window.location para garantir navegação limpa após login
-      window.location.replace('/caixa');
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate email
-    try {
-      emailSchema.parse(email);
-    } catch {
-      toast.error('Email inválido');
-      return;
-    }
-    
-    // Validate password with stronger schema for signup
-    try {
-      signupPasswordSchema.parse(password);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
-      }
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    try {
-      const { error } = await signUp(email, password);
-      
-      if (error) {
-        // Map specific error codes to friendly messages
-        const errorCode = (error as any)?.code || '';
-        const errorMessage = error.message || '';
-        
-        if (errorCode === 'weak_password' || errorMessage.includes('weak') || errorMessage.includes('pwned')) {
-          toast.error('Senha muito fraca ou já comprometida em vazamentos. Use uma senha mais forte e única.');
-        } else if (errorMessage.includes('User already registered') || errorCode === 'user_already_exists') {
-          toast.error('Este email já está cadastrado');
-        } else if (errorCode === 'email_not_confirmed' || errorMessage.includes('Email not confirmed')) {
-          toast.error('Email ainda não confirmado. Verifique sua caixa de entrada.');
-        } else if (errorMessage.includes('rate limit') || errorCode === 'over_request_rate_limit') {
-          toast.error('Muitas tentativas. Aguarde alguns minutos.');
-        } else {
-          // Generic message for unknown errors
-          toast.error('Não foi possível criar a conta. Tente novamente.');
-          if (import.meta.env.DEV) {
-            console.error('[Auth] Signup error:', error);
-          }
-        }
-      } else {
-        setShowEmailSent(true);
-      }
-    } catch (unexpectedError) {
-      // Catch any unexpected exceptions to prevent ErrorBoundary crash
-      toast.error('Erro inesperado ao criar conta. Tente novamente.');
-      if (import.meta.env.DEV) {
-        console.error('[Auth] Unexpected signup error:', unexpectedError);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,9 +49,6 @@ export default function Auth() {
     setIsSubmitting(false);
 
     if (error) {
-      if (import.meta.env.DEV) {
-        console.error('[Auth] Reset password error:', error);
-      }
       if (error.message?.includes('rate limit')) {
         toast.error('Muitas tentativas. Aguarde alguns minutos.');
       } else {
@@ -167,185 +61,131 @@ export default function Auth() {
     }
   };
 
+  // Reset Password Screen
   if (showResetPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md glass-card animate-scale-in">
-          <CardHeader className="text-center">
-            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mx-auto mb-4 glow-primary">
-              <Wallet className="w-6 h-6 text-primary-foreground" />
+      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <FuturisticBackground />
+        
+        <div className="relative w-full max-w-md animate-scale-in z-10">
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 via-purple-500/50 to-cyan-500/50 rounded-2xl blur-xl opacity-30" />
+          
+          <div className="relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-8 glow-card">
+            <button
+              type="button"
+              onClick={() => setShowResetPassword(false)}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Voltar ao login
+            </button>
+
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
+                <Mail className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-2xl font-display font-bold">Recuperar Senha</h1>
+              <p className="text-muted-foreground mt-2">
+                Digite seu email para receber o link
+              </p>
             </div>
-            <CardTitle className="text-2xl font-display">Recuperar Senha</CardTitle>
-            <CardDescription>
-              Digite seu email para receber o link de recuperação
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleResetPassword} className="space-y-4">
+
+            <form onSubmit={handleResetPassword} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="reset-email">Email</Label>
-                <Input
-                  id="reset-email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+                <div className="relative group">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 h-12 bg-background/50"
+                    required
+                  />
+                </div>
               </div>
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Enviar Link
-              </Button>
+
               <Button
-                type="button"
-                variant="ghost"
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-12 bg-gradient-to-r from-primary to-purple-600"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  'Enviar Link de Recuperação'
+                )}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Email Sent Confirmation Screen
+  if (showEmailSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <FuturisticBackground />
+        
+        <div className="relative w-full max-w-md animate-scale-in z-10">
+          <div className="absolute -inset-1 bg-gradient-to-r from-success/50 via-emerald-500/50 to-teal-500/50 rounded-2xl blur-xl opacity-30" />
+          
+          <div className="relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-8 glow-card">
+            <div className="text-center">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-success to-emerald-600 flex items-center justify-center animate-scale-in">
+                <CheckCircle className="w-10 h-10 text-white" />
+              </div>
+              
+              <h1 className="text-2xl font-display font-bold mb-2">
+                Verifique seu Email
+              </h1>
+              <p className="text-muted-foreground mb-6">
+                Enviamos um link de confirmação para{' '}
+                <strong className="text-foreground">{sentEmail}</strong>
+              </p>
+
+              <div className="p-4 bg-muted/50 rounded-lg mb-6">
+                <p className="text-sm text-muted-foreground">
+                  Não recebeu o email? Verifique sua pasta de spam.
+                </p>
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEmailSent(false);
+                  setEmail('');
+                  setSentEmail('');
+                }}
                 className="w-full"
-                onClick={() => setShowResetPassword(false)}
               >
                 Voltar ao Login
               </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Show email sent confirmation
-  if (showEmailSent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md glass-card animate-scale-in">
-          <CardHeader className="text-center">
-            <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-6 h-6 text-success" />
             </div>
-            <CardTitle className="text-2xl font-display">Verifique seu Email</CardTitle>
-            <CardDescription className="text-base">
-              Enviamos um link de confirmação para <strong>{email}</strong>. 
-              Clique no link para ativar sua conta.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center text-sm text-muted-foreground">
-              <p>Não recebeu o email? Verifique sua pasta de spam.</p>
-            </div>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setShowEmailSent(false);
-                setEmail('');
-                setPassword('');
-              }}
-            >
-              Voltar ao Login
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md glass-card animate-scale-in">
-        <CardHeader className="text-center">
-          <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mx-auto mb-4 glow-primary">
-            <Wallet className="w-6 h-6 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-display">Flow Control</CardTitle>
-          <CardDescription>
-            Gerencie suas finanças e produtividade
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Criar Conta</TabsTrigger>
-            </TabsList>
+        </div>
+      </div>
+    );
+  }
 
-            <TabsContent value="login">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Senha</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Entrar
-                </Button>
-                <Button
-                  type="button"
-                  variant="link"
-                  className="w-full text-muted-foreground"
-                  onClick={() => setShowResetPassword(true)}
-                >
-                  Esqueceu a senha?
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Senha</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Dica: use 10+ caracteres com letras, números e um símbolo. Evite senhas comuns.
-                  </p>
-                </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Criar Conta
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+  // Main Login Screen
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <FuturisticBackground />
+      
+      <div className="relative z-10">
+        <FuturisticLoginCard
+          onShowReset={() => setShowResetPassword(true)}
+          onShowEmailSent={(email) => {
+            setSentEmail(email);
+            setShowEmailSent(true);
+          }}
+        />
+      </div>
     </div>
   );
 }
