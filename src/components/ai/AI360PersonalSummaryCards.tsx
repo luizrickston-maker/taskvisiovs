@@ -89,7 +89,13 @@ export function AI360PersonalSummaryCards({ summary, isLoading }: AI360PersonalS
         </CardHeader>
         <CardContent className="space-y-3">
           <Progress value={financialHealth} className="h-2" />
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          
+          {/* Explicação da pontuação */}
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <strong>Como funciona:</strong> Score base 50%. Aumenta com saldo positivo (+20), reservas (+10) e metas em dia (+10). Diminui com dívidas vencidas (-5 cada) e saldo negativo (-20).
+          </p>
+          
+          <div className="grid grid-cols-2 gap-4 text-sm pt-2 border-t">
             <div className="space-y-1">
               <div className="flex items-center gap-1 text-muted-foreground">
                 <TrendingUp className="h-3 w-3 text-emerald-500" />
