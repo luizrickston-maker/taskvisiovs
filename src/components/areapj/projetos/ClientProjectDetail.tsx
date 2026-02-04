@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   ArrowLeft, Plus, Calendar, Clock, Building2, User, 
-  CheckCircle2, Circle, Hourglass, Trash2, Edit2, AlertTriangle, MoreHorizontal
+  CheckCircle2, Circle, Hourglass, Trash2, Edit2, AlertTriangle, MoreHorizontal, CalendarDays
 } from 'lucide-react';
 import { format, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
