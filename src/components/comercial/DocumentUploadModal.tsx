@@ -13,6 +13,8 @@ import type { DocumentType, ProspectDocument } from '@/types/database';
 
 const ACCEPTED_FILE_TYPES = {
   'application/pdf': ['.pdf'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+  'application/msword': ['.doc'],
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
   'application/vnd.ms-excel': ['.xls'],
   'image/jpeg': ['.jpg', '.jpeg'],
@@ -32,6 +34,7 @@ interface DocumentUploadModalProps {
 
 const getFileIcon = (file: File) => {
   if (file.type.includes('pdf')) return FileText;
+  if (file.type.includes('word') || file.type.includes('msword')) return FileText;
   if (file.type.includes('spreadsheet') || file.type.includes('excel')) return FileSpreadsheet;
   if (file.type.includes('image')) return ImageIcon;
   return FileText;
@@ -58,7 +61,7 @@ export function DocumentUploadModal({
 
   const validateFile = (file: File): boolean => {
     if (!Object.keys(ACCEPTED_FILE_TYPES).includes(file.type)) {
-      toast.error('Tipo de arquivo não suportado. Use PDF, Excel ou imagens.');
+      toast.error('Tipo de arquivo não suportado. Use PDF, Word, Excel ou imagens.');
       return false;
     }
     if (file.size > MAX_FILE_SIZE) {
@@ -190,7 +193,7 @@ export function DocumentUploadModal({
         <DialogHeader>
           <DialogTitle>Anexar Documento</DialogTitle>
           <DialogDescription>
-            Selecione um arquivo PDF, Excel ou imagem (máx. 10MB)
+            Selecione um arquivo PDF, Word, Excel ou imagem (máx. 10MB)
           </DialogDescription>
         </DialogHeader>
 
@@ -245,7 +248,7 @@ export function DocumentUploadModal({
                   Arraste um arquivo ou clique para selecionar
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  PDF, Excel, JPG, PNG, WebP (máx. 10MB)
+                  PDF, Word, Excel, JPG, PNG, WebP (máx. 10MB)
                 </p>
               </>
             )}
