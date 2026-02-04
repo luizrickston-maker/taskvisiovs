@@ -61,7 +61,7 @@ export function DocumentUploadModal({
 
   const validateFile = (file: File): boolean => {
     if (!Object.keys(ACCEPTED_FILE_TYPES).includes(file.type)) {
-      toast.error('Tipo de arquivo não suportado. Use PDF, Excel ou imagens.');
+      toast.error('Tipo de arquivo não suportado. Use PDF, Word, Excel ou imagens.');
       return false;
     }
     if (file.size > MAX_FILE_SIZE) {
