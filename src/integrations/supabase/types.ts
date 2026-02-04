@@ -772,6 +772,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           deadline: string | null
+          deadline_days: number | null
           description: string | null
           estimated_hours: number | null
           id: string
@@ -787,6 +788,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           deadline?: string | null
+          deadline_days?: number | null
           description?: string | null
           estimated_hours?: number | null
           id?: string
@@ -802,6 +804,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           deadline?: string | null
+          deadline_days?: number | null
           description?: string | null
           estimated_hours?: number | null
           id?: string

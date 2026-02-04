@@ -57,6 +57,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
     title: '',
     description: '',
     deadline: '',
+    deadline_days: null as number | null,
     priority: 3,
     status: 'todo' as ProjectTaskStatus,
     estimated_hours: 0,
@@ -69,6 +70,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
         title: task.title,
         description: task.description || '',
         deadline: task.deadline || '',
+        deadline_days: task.deadline_days ?? null,
         priority: task.priority,
         status: task.status,
         estimated_hours: task.estimated_hours || 0,
@@ -79,6 +81,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
         title: '',
         description: '',
         deadline: '',
+        deadline_days: null,
         priority: 3,
         status: 'todo',
         estimated_hours: 0,
@@ -106,6 +109,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
         title: formData.title,
         description: formData.description || null,
         deadline: formData.deadline || null,
+        deadline_days: formData.deadline_days,
         priority: formData.priority,
         status: formData.status,
         estimated_hours: formData.estimated_hours,
@@ -160,12 +164,17 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
   // Apply the date range - use the end date as the deadline
   const handleApplyRange = () => {
     if (!dateRange?.to) return;
-    setFormData(prev => ({ ...prev, deadline: format(dateRange.to!, 'yyyy-MM-dd') }));
+    const days = dateRange.from ? differenceInDays(dateRange.to, dateRange.from) : null;
+    setFormData(prev => ({ 
+      ...prev, 
+      deadline: format(dateRange.to!, 'yyyy-MM-dd'),
+      deadline_days: days 
+    }));
     setDateRange(undefined);
   };
 
   const clearDeadline = () => {
-    setFormData(prev => ({ ...prev, deadline: '' }));
+    setFormData(prev => ({ ...prev, deadline: '', deadline_days: null }));
     setDateRange(undefined);
   };
 
