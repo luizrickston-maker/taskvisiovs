@@ -193,6 +193,12 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
             <Badge className={taskPriority.color} variant="secondary">
               {taskPriority.label}
             </Badge>
+            {task.deadline_days !== null && task.deadline_days !== undefined && (
+              <span className="text-xs flex items-center gap-1 text-primary font-medium">
+                <CalendarDays className="w-3 h-3" />
+                {task.deadline_days} {task.deadline_days === 1 ? 'dia' : 'dias'}
+              </span>
+            )}
             {task.deadline && (
               <span className={cn(
                 "text-xs flex items-center gap-1",

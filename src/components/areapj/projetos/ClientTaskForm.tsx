@@ -164,12 +164,17 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
   // Apply the date range - use the end date as the deadline
   const handleApplyRange = () => {
     if (!dateRange?.to) return;
-    setFormData(prev => ({ ...prev, deadline: format(dateRange.to!, 'yyyy-MM-dd') }));
+    const days = dateRange.from ? differenceInDays(dateRange.to, dateRange.from) : null;
+    setFormData(prev => ({ 
+      ...prev, 
+      deadline: format(dateRange.to!, 'yyyy-MM-dd'),
+      deadline_days: days 
+    }));
     setDateRange(undefined);
   };
 
   const clearDeadline = () => {
-    setFormData(prev => ({ ...prev, deadline: '' }));
+    setFormData(prev => ({ ...prev, deadline: '', deadline_days: null }));
     setDateRange(undefined);
   };
 
