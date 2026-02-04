@@ -228,6 +228,7 @@ export interface ProjectTask {
   status: ProjectTaskStatus;
   // Task management fields
   deadline?: string;
+  deadline_days?: number;
   estimated_hours: number;
   actual_hours: number;
   completed_at?: string;
