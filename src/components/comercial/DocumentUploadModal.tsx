@@ -193,7 +193,7 @@ export function DocumentUploadModal({
         <DialogHeader>
           <DialogTitle>Anexar Documento</DialogTitle>
           <DialogDescription>
-            Selecione um arquivo PDF, Excel ou imagem (máx. 10MB)
+            Selecione um arquivo PDF, Word, Excel ou imagem (máx. 10MB)
           </DialogDescription>
         </DialogHeader>
 
