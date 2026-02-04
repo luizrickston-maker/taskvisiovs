@@ -109,6 +109,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
         title: formData.title,
         description: formData.description || null,
         deadline: formData.deadline || null,
+        deadline_days: formData.deadline_days,
         priority: formData.priority,
         status: formData.status,
         estimated_hours: formData.estimated_hours,
