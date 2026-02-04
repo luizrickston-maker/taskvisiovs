@@ -34,6 +34,7 @@ interface DocumentUploadModalProps {
 
 const getFileIcon = (file: File) => {
   if (file.type.includes('pdf')) return FileText;
+  if (file.type.includes('word') || file.type.includes('msword')) return FileText;
   if (file.type.includes('spreadsheet') || file.type.includes('excel')) return FileSpreadsheet;
   if (file.type.includes('image')) return ImageIcon;
   return FileText;
