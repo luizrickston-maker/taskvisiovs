@@ -248,7 +248,7 @@ export function DocumentUploadModal({
                   Arraste um arquivo ou clique para selecionar
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  PDF, Excel, JPG, PNG, WebP (máx. 10MB)
+                  PDF, Word, Excel, JPG, PNG, WebP (máx. 10MB)
                 </p>
               </>
             )}
