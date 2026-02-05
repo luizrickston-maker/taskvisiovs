@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,14 +13,15 @@ import { FuturisticLoginCard } from '@/components/auth/FuturisticLoginCard';
 const emailSchema = z.string().email('Email inválido');
 
 export default function Auth() {
-  const { user, loading, resetPassword } = useAuthContext();
+  const authContext = useAuthContextSafe();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showEmailSent, setShowEmailSent] = useState(false);
   const [sentEmail, setSentEmail] = useState('');
 
-  if (loading) {
+  // Se contexto não existir ou estiver carregando, mostra loading
+  if (!authContext || authContext.loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="relative">
@@ -30,6 +31,8 @@ export default function Auth() {
       </div>
     );
   }
+
+  const { user, resetPassword } = authContext;
 
   if (user) {
     return <Navigate to="/caixa" replace />;
