@@ -6,7 +6,7 @@ import type {
   UserPreference, CustomTimeBlockType, ProjectTask, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
   DocumentType, CorporateCostCategory, CorporateCost, PaymentFeeSetting, PurchasePlan,
-  UserIncomeCategory, UserDebtCategory
+  UserIncomeCategory, UserDebtCategory, Product, ProductPricingDetail
 } from '@/types/database';
 import type { EditorialCalendarItem, EditorialComment } from '@/types/editorial';
 
@@ -43,6 +43,8 @@ export function useInitializeData(userId: string | undefined) {
     setEditorialCalendarItems,
     setEditorialComments,
     setPurchasePlans,
+    setProducts,
+    setProductPricingDetails,
     setIsLoading,
     setDataInitialized,
     dataInitialized,
@@ -95,6 +97,8 @@ export function useInitializeData(userId: string | undefined) {
           editorialCalendarItemsRes,
           editorialCommentsRes,
           purchasePlansRes,
+          productsRes,
+          productPricingDetailsRes,
         ] = await Promise.all([
           supabase.from('categories').select('*').order('created_at', { ascending: true }),
           supabase.from('incomes').select('*').order('date', { ascending: false }),
@@ -126,6 +130,8 @@ export function useInitializeData(userId: string | undefined) {
           supabase.from('editorial_calendar_items').select('*').order('due_date', { ascending: true }),
           supabase.from('editorial_comments').select('*').order('created_at', { ascending: false }),
           supabase.from('purchase_plans').select('*').order('created_at', { ascending: false }),
+          supabase.from('products').select('*').order('name', { ascending: true }),
+          supabase.from('product_pricing_details').select('*').order('created_at', { ascending: true }),
         ]);
 
         if (categoriesRes.data) setCategories(categoriesRes.data as Category[]);
@@ -158,6 +164,8 @@ export function useInitializeData(userId: string | undefined) {
         if (editorialCalendarItemsRes.data) setEditorialCalendarItems(editorialCalendarItemsRes.data as EditorialCalendarItem[]);
         if (editorialCommentsRes.data) setEditorialComments(editorialCommentsRes.data as EditorialComment[]);
         if (purchasePlansRes.data) setPurchasePlans(purchasePlansRes.data as PurchasePlan[]);
+        if (productsRes.data) setProducts(productsRes.data as Product[]);
+        if (productPricingDetailsRes.data) setProductPricingDetails(productPricingDetailsRes.data as ProductPricingDetail[]);
 
         setDataInitialized(true);
       } catch (error) {
