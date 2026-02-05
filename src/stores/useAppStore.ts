@@ -6,12 +6,14 @@ import {
   createSalesSlice,
   createCorporateSlice,
   createContentSlice,
+  createCatalogSlice,
   type FinancialSlice,
   type ProductivitySlice,
   type ProjectsSlice,
   type SalesSlice,
   type CorporateSlice,
   type ContentSlice,
+  type CatalogSlice,
 } from './slices';
 
 // =====================================================
@@ -32,6 +34,7 @@ export type AppState = FinancialSlice
   & SalesSlice 
   & CorporateSlice 
   & ContentSlice 
+  & CatalogSlice
   & AppLoadingState;
 
 // =====================================================
@@ -55,6 +58,7 @@ export const useAppStore = create<AppState>()((...args) => ({
   ...createSalesSlice(...args),
   ...createCorporateSlice(...args),
   ...createContentSlice(...args),
+  ...createCatalogSlice(...args),
   
   // Loading State
   ...initialLoadingState,
@@ -105,6 +109,10 @@ export const useAppStore = create<AppState>()((...args) => ({
     editorialComments: [],
     purchasePlans: [],
     userPreferences: null,
+    
+    // Catalog
+    services: [],
+    servicePricingDetails: [],
     
     // Loading
     ...initialLoadingState,
