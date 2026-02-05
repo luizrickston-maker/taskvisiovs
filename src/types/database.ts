@@ -429,6 +429,31 @@ export interface EditorialComment {
 export type PurchasePlanPriority = 'low' | 'medium' | 'high';
 export type PurchasePlanStatus = 'planning' | 'in_progress' | 'completed';
 
+// Catalog Types
+export interface Service {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  base_cost: number;
+  expected_duration_hours?: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServicePricingDetail {
+  id: string;
+  service_id: string;
+  pricing_model_id: string;
+  base_price?: number;
+  hourly_rate?: number;
+  min_hours?: number;
+  max_hours?: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PurchasePlan {
   id: string;
   user_id: string;
