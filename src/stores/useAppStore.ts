@@ -113,6 +113,8 @@ export const useAppStore = create<AppState>()((...args) => ({
     // Catalog
     services: [],
     servicePricingDetails: [],
+    products: [],
+    productPricingDetails: [],
     
     // Loading
     ...initialLoadingState,

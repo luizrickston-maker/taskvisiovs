@@ -5,7 +5,8 @@ import type {
   Income, Expense, Debt, Saving, Task, 
   TimeBlock, Project, Script, Goal, Category, ProjectTask, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
-  CorporateCostCategory, CorporateCost, PurchasePlan, UserIncomeCategory, UserDebtCategory
+  CorporateCostCategory, CorporateCost, PurchasePlan, UserIncomeCategory, UserDebtCategory,
+  Product, ProductPricingDetail
 } from '@/types/database';
 import type { EditorialCalendarItem, EditorialComment } from '@/types/editorial';
 
@@ -42,6 +43,8 @@ export function useRealtimeSync(userId: string | undefined) {
     addPurchasePlan, updatePurchasePlan, deletePurchasePlan,
     addUserIncomeCategory, updateUserIncomeCategory, deleteUserIncomeCategory,
     addUserDebtCategory, updateUserDebtCategory, deleteUserDebtCategory,
+    addProduct, updateProduct, deleteProduct,
+    addProductPricingDetail, updateProductPricingDetail, deleteProductPricingDetail,
   } = useAppStore();
 
   useEffect(() => {
@@ -444,6 +447,38 @@ export function useRealtimeSync(userId: string | undefined) {
             updateUserDebtCategory(newRecord.id, newRecord);
           } else if (eventType === 'DELETE') {
             deleteUserDebtCategory(oldRecord.id);
+          }
+        }
+      )
+      // Products
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Product>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().products.some(p => p.id === newRecord.id);
+            if (!exists) addProduct(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateProduct(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteProduct(oldRecord.id);
+          }
+        }
+      )
+      // Product Pricing Details
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'product_pricing_details' },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<ProductPricingDetail>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().productPricingDetails.some(d => d.id === newRecord.id);
+            if (!exists) addProductPricingDetail(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateProductPricingDetail(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteProductPricingDetail(oldRecord.id);
           }
         }
       )
