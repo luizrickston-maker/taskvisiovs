@@ -468,3 +468,29 @@ export interface PurchasePlan {
   image_url?: string;
   created_at: string;
 }
+
+// Catalog Types - Products
+export interface Product {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  sku?: string;
+  cost_price: number;
+  image_url?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductPricingDetail {
+  id: string;
+  product_id: string;
+  pricing_model_id: string;
+  base_price?: number;
+  min_units?: number;
+  max_units?: number;
+  unit_name?: string;
+  created_at: string;
+  updated_at: string;
+}
