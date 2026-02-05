@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { CurrencyInput, parseBRLToNumber, numberToBRL } from '@/components/ui/currency-input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { Product } from '@/types/database';
 import { Loader2, Package } from 'lucide-react';
@@ -18,7 +18,7 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ product, onClose }: ProductFormProps) {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { addProduct, updateProduct } = useAppStore();
   
   const [name, setName] = useState('');
