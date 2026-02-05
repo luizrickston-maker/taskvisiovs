@@ -1,92 +1,93 @@
 
-# Plano: Adicionar Suporte a Arquivos Word (.doc/.docx)
 
-## Resumo
-Permitir upload de documentos Microsoft Word (formatos .doc e .docx) no sistema de anexos de clientes/prospects.
+# Correção do Erro: useAuthContext fora do AuthProvider
 
----
+## Diagnóstico
 
-## Alterações Necessárias
+O erro ocorre porque o `ProtectedRoute` tenta usar `useAuthContext()` em um momento em que o contexto de autenticação ainda não está disponível. Isso acontece principalmente em dois cenários:
 
-### 1. Atualizar tipos de arquivo aceitos
-**Arquivo:** `src/components/comercial/DocumentUploadModal.tsx`
+1. **Hot Module Replacement (HMR)**: Quando o Vite recarrega módulos durante o desenvolvimento, a ordem de inicialização pode causar componentes serem renderizados antes dos seus providers
+2. **ErrorBoundary Recovery**: O `ErrorBoundary` está posicionado fora do `AuthProvider`, então quando ocorre um erro e o usuário clica em "Tentar novamente", o estado do provider pode estar inconsistente
 
-Adicionar os MIME types do Word ao objeto `ACCEPTED_FILE_TYPES`:
-- `.docx` → `application/vnd.openxmlformats-officedocument.wordprocessingml.document`  
-- `.doc` → `application/msword`
-
-### 2. Atualizar função de ícone
-Adicionar lógica para exibir um ícone específico para arquivos Word (usando o ícone `FileText` já existente ou importando um mais apropriado).
-
-### 3. Atualizar mensagens de interface
-- Atualizar a mensagem de erro para incluir "Word"
-- Atualizar a descrição do dropzone: "PDF, Word, Excel, JPG, PNG, WebP (máx. 10MB)"
-
----
-
-## Detalhes Técnicos
+## Estrutura Atual do App
 
 ```text
-┌──────────────────────────────────────────────────────────┐
-│              ACCEPTED_FILE_TYPES (atual)                 │
-├──────────────────────────────────────────────────────────┤
-│  PDF         → application/pdf                           │
-│  Excel XLSX  → application/vnd.openxmlformats-...sheet  │
-│  Excel XLS   → application/vnd.ms-excel                  │
-│  Imagens     → image/jpeg, image/png, image/webp         │
-└──────────────────────────────────────────────────────────┘
-                          ↓ Após alteração
-┌──────────────────────────────────────────────────────────┐
-│              ACCEPTED_FILE_TYPES (novo)                  │
-├──────────────────────────────────────────────────────────┤
-│  PDF         → application/pdf                           │
-│  Word DOCX   → application/vnd.openxmlformats-...word   │  ← NOVO
-│  Word DOC    → application/msword                        │  ← NOVO
-│  Excel XLSX  → application/vnd.openxmlformats-...sheet  │
-│  Excel XLS   → application/vnd.ms-excel                  │
-│  Imagens     → image/jpeg, image/png, image/webp         │
-└──────────────────────────────────────────────────────────┘
+ErrorBoundary (fora do AuthProvider)
+  └── QueryClientProvider
+        └── AuthProvider
+              └── BrowserRouter
+                    └── Routes
+                          ├── /auth (usa useAuthContext)
+                          └── ProtectedRoute (usa useAuthContext)
 ```
 
-### Código a ser modificado:
+## Solução
 
-**Linha 14-21** - Adicionar novos MIME types:
+### 1. Modificar o ProtectedRoute para usar `useAuthContextSafe`
+
+O projeto já possui um hook seguro `useAuthContextSafe()` que retorna `null` em vez de lançar erro quando fora do provider. Devemos usá-lo no `ProtectedRoute` e tratar o caso de contexto ausente como um estado de loading.
+
+**Arquivo**: `src/components/ProtectedRoute.tsx`
+
 ```typescript
-const ACCEPTED_FILE_TYPES = {
-  'application/pdf': ['.pdf'],
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-  'application/msword': ['.doc'],
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-  'application/vnd.ms-excel': ['.xls'],
-  'image/jpeg': ['.jpg', '.jpeg'],
-  'image/png': ['.png'],
-  'image/webp': ['.webp'],
-};
+// Mudança de:
+import { useAuthContext } from '@/contexts/AuthContext';
+
+// Para:
+import { useAuthContextSafe } from '@/contexts/AuthContext';
+
+export function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const authContext = useAuthContextSafe();
+  
+  // Se o contexto não existir, trata como loading
+  if (!authContext) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground text-sm">Inicializando...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  const { user, loading: authLoading } = authContext;
+  // ... resto da lógica
+}
 ```
 
-**Linha 33-38** - Atualizar função `getFileIcon`:
+### 2. Modificar a página Auth para usar `useAuthContextSafe`
+
+A página `/auth` também usa `useAuthContext` diretamente, o que pode causar o mesmo problema.
+
+**Arquivo**: `src/pages/Auth.tsx`
+
 ```typescript
-const getFileIcon = (file: File) => {
-  if (file.type.includes('pdf')) return FileText;
-  if (file.type.includes('word') || file.type.includes('msword')) return FileText;
-  if (file.type.includes('spreadsheet') || file.type.includes('excel')) return FileSpreadsheet;
-  if (file.type.includes('image')) return ImageIcon;
-  return FileText;
-};
+// Usar useAuthContextSafe e tratar contexto ausente como loading
+const authContext = useAuthContextSafe();
+
+if (!authContext || authContext.loading) {
+  return <LoadingSpinner />;
+}
+
+const { user, resetPassword } = authContext;
 ```
 
-**Linha 61** - Atualizar mensagem de erro:
-```typescript
-toast.error('Tipo de arquivo não suportado. Use PDF, Word, Excel ou imagens.');
-```
+### 3. (Opcional) Mover ErrorBoundary para dentro do AuthProvider
 
-**Linhas 193 e 247-248** - Atualizar textos do modal:
-- Descrição: "Selecione um arquivo PDF, Word, Excel ou imagem (máx. 10MB)"
-- Dropzone: "PDF, Word, Excel, JPG, PNG, WebP (máx. 10MB)"
+Para garantir que erros sejam tratados corretamente com o contexto de auth disponível, podemos criar um ErrorBoundary interno.
 
----
+## Arquivos a Modificar
 
-## Impacto
-- **Arquivos afetados:** 1 (`DocumentUploadModal.tsx`)
-- **Risco:** Baixo (apenas adição de novos tipos)
-- **Compatibilidade:** Total com uploads existentes
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/components/ProtectedRoute.tsx` | Usar `useAuthContextSafe` com fallback para loading |
+| `src/pages/Auth.tsx` | Usar `useAuthContextSafe` com fallback para loading |
+
+## Benefícios
+
+- Elimina erros de contexto durante HMR
+- Experiência mais suave com loading state em vez de tela de erro
+- Mantém compatibilidade com o padrão existente (já há `useAuthContextSafe` definido)
+- Segue o padrão "resilient-context-hooks-pattern" já documentado na arquitetura
+
