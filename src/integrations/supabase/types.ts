@@ -426,6 +426,45 @@ export type Database = {
           },
         ]
       }
+      discounts: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          start_date: string | null
+          type: string
+          updated_at: string | null
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          start_date?: string | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+          value?: number
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          start_date?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
       document_types: {
         Row: {
           color: string | null
@@ -734,6 +773,126 @@ export type Database = {
           is_active?: boolean | null
           method?: string
           receiving_days?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pricing_models: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      product_pricing_details: {
+        Row: {
+          base_price: number | null
+          created_at: string | null
+          id: string
+          max_units: number | null
+          min_units: number | null
+          pricing_model_id: string
+          product_id: string
+          unit_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          base_price?: number | null
+          created_at?: string | null
+          id?: string
+          max_units?: number | null
+          min_units?: number | null
+          pricing_model_id: string
+          product_id: string
+          unit_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          base_price?: number | null
+          created_at?: string | null
+          id?: string
+          max_units?: number | null
+          min_units?: number | null
+          pricing_model_id?: string
+          product_id?: string
+          unit_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_pricing_details_pricing_model_id_fkey"
+            columns: ["pricing_model_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_pricing_details_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          cost_price: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          sku: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cost_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          sku?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cost_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          sku?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1347,6 +1506,93 @@ export type Database = {
         }
         Relationships: []
       }
+      service_pricing_details: {
+        Row: {
+          base_price: number | null
+          created_at: string | null
+          hourly_rate: number | null
+          id: string
+          max_hours: number | null
+          min_hours: number | null
+          pricing_model_id: string
+          service_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_price?: number | null
+          created_at?: string | null
+          hourly_rate?: number | null
+          id?: string
+          max_hours?: number | null
+          min_hours?: number | null
+          pricing_model_id: string
+          service_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_price?: number | null
+          created_at?: string | null
+          hourly_rate?: number | null
+          id?: string
+          max_hours?: number | null
+          min_hours?: number | null
+          pricing_model_id?: string
+          service_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_pricing_details_pricing_model_id_fkey"
+            columns: ["pricing_model_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_pricing_details_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          base_cost: number | null
+          created_at: string | null
+          description: string | null
+          expected_duration_hours: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          base_cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          expected_duration_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          base_cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          expected_duration_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           completed: boolean
@@ -1376,6 +1622,36 @@ export type Database = {
           scheduled_date?: string | null
           title?: string
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      taxes: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          rate: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          rate?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          rate?: number
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
