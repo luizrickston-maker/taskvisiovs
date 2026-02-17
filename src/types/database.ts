@@ -291,6 +291,7 @@ export interface UserPreference {
   user_id: string;
   app_name: string;
   business_app_name?: string;
+  default_available_hours: number;
   created_at: string;
   updated_at: string;
 }

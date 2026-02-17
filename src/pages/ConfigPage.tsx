@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings, Moon, Sun, Monitor, Check, User, Building2 } from 'lucide-react';
+import { Settings, Moon, Sun, Monitor, Check, User, Building2, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,16 +11,20 @@ export default function ConfigPage() {
   const { 
     personalAppName, 
     businessAppName, 
+    defaultAvailableHours,
     theme, 
     setTheme, 
     updateAppName, 
-    updateBusinessAppName 
+    updateBusinessAppName,
+    updateDefaultAvailableHours,
   } = useUserPreferences();
   
   const [newPersonalName, setNewPersonalName] = useState(personalAppName);
   const [newBusinessName, setNewBusinessName] = useState(businessAppName);
+  const [newDefaultHours, setNewDefaultHours] = useState(String(defaultAvailableHours));
   const [isSavingPersonal, setIsSavingPersonal] = useState(false);
   const [isSavingBusiness, setIsSavingBusiness] = useState(false);
+  const [isSavingHours, setIsSavingHours] = useState(false);
 
   const handleSavePersonalName = async () => {
     if (!newPersonalName.trim()) return;
@@ -36,6 +40,18 @@ export default function ConfigPage() {
     await updateBusinessAppName(newBusinessName.trim());
     setIsSavingBusiness(false);
     toast.success('Nome empresarial atualizado!');
+  };
+
+  const handleSaveDefaultHours = async () => {
+    const hours = parseInt(newDefaultHours);
+    if (isNaN(hours) || hours < 1 || hours > 999) {
+      toast.error('Informe um valor entre 1 e 999');
+      return;
+    }
+    setIsSavingHours(true);
+    await updateDefaultAvailableHours(hours);
+    setIsSavingHours(false);
+    toast.success('Horas padrão atualizadas!');
   };
 
   return (
@@ -90,6 +106,31 @@ export default function ConfigPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               Este nome aparece quando você está no modo empresarial.
+            </p>
+          </div>
+
+          {/* Default Available Hours */}
+          <div className="space-y-2">
+            <Label htmlFor="defaultHours" className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              Horas Disponíveis Padrão (mensal)
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="defaultHours"
+                type="number"
+                min={1}
+                max={999}
+                value={newDefaultHours}
+                onChange={(e) => setNewDefaultHours(e.target.value)}
+                placeholder="160"
+              />
+              <Button onClick={handleSaveDefaultHours} disabled={isSavingHours}>
+                <Check className="w-4 h-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Usado no Precificador para calcular o custo/hora quando não há equipe cadastrada.
             </p>
           </div>
 

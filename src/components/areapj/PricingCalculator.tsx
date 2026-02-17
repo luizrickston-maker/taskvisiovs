@@ -33,6 +33,7 @@ export function PricingCalculator() {
     corporateCosts,
     corporateTeam,
     corporateInvestments,
+    userPreferences,
   } = useAppStore();
   
   const [itemName, setItemName] = useState('');
@@ -119,11 +120,12 @@ export function PricingCalculator() {
         return sum + m.cost;
       }, 0);
 
-    // Total hours available from team (fallback to 160h if no team members)
+    // Total hours available from team (fallback to user-configured default)
+    const defaultHours = userPreferences?.default_available_hours || 160;
     const teamHours = corporateTeam
       .filter(m => m.is_active)
       .reduce((sum, m) => sum + (m.hours_available || 160), 0);
-    const totalHoursAvailable = teamHours > 0 ? teamHours : 160;
+    const totalHoursAvailable = teamHours > 0 ? teamHours : defaultHours;
 
     // Recurring/Fixed costs (monthly)
     const activeCosts = corporateCosts.filter(c => c.is_active);
@@ -161,7 +163,7 @@ export function PricingCalculator() {
       totalMonthlyCost,
       costPerHour,
     };
-  }, [corporateCosts, corporateTeam, corporateInvestments]);
+  }, [corporateCosts, corporateTeam, corporateInvestments, userPreferences?.default_available_hours]);
 
   // Pricing calculations
   const calculations = useMemo(() => {
