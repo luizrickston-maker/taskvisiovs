@@ -40,6 +40,7 @@ const businessNavItems = [
   { title: 'Planos', url: '/pj/planos', icon: Package },
   { title: 'Investimentos', url: '/pj/investimentos', icon: TrendingUp },
   { title: 'Time', url: '/pj/time', icon: Users },
+  { title: 'Ferramentas', url: '/ferramentas', icon: Wrench },
 ];
 
 const settingsItem = { title: 'Config', url: '/config', icon: Settings };
