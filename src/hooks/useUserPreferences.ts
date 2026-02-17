@@ -93,13 +93,30 @@ export function useUserPreferences() {
     }
   };
 
+  const updateDefaultAvailableHours = async (hours: number) => {
+    if (!userPreferences) return;
+
+    updateUserPreferences({ default_available_hours: hours });
+
+    const { error } = await supabase
+      .from('user_preferences')
+      .update({ default_available_hours: hours })
+      .eq('id', userPreferences.id);
+
+    if (error && import.meta.env.DEV) {
+      console.error('Error updating default hours:', error);
+    }
+  };
+
   return {
     appName: getAppName(),
     personalAppName: userPreferences?.app_name || 'Flow Control',
     businessAppName: userPreferences?.business_app_name || 'Minha Empresa',
+    defaultAvailableHours: userPreferences?.default_available_hours || 160,
     theme: getTheme(),
     setTheme,
     updateAppName,
     updateBusinessAppName,
+    updateDefaultAvailableHours,
   };
 }

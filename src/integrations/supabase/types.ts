@@ -1778,6 +1778,7 @@ export type Database = {
           app_name: string
           business_app_name: string | null
           created_at: string
+          default_available_hours: number
           id: string
           updated_at: string
           user_id: string
@@ -1786,6 +1787,7 @@ export type Database = {
           app_name?: string
           business_app_name?: string | null
           created_at?: string
+          default_available_hours?: number
           id?: string
           updated_at?: string
           user_id: string
@@ -1794,6 +1796,7 @@ export type Database = {
           app_name?: string
           business_app_name?: string | null
           created_at?: string
+          default_available_hours?: number
           id?: string
           updated_at?: string
           user_id?: string
