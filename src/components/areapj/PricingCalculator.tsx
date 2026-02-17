@@ -119,10 +119,11 @@ export function PricingCalculator() {
         return sum + m.cost;
       }, 0);
 
-    // Total hours available from team
-    const totalHoursAvailable = corporateTeam
+    // Total hours available from team (fallback to 160h if no team members)
+    const teamHours = corporateTeam
       .filter(m => m.is_active)
       .reduce((sum, m) => sum + (m.hours_available || 160), 0);
+    const totalHoursAvailable = teamHours > 0 ? teamHours : 160;
 
     // Recurring/Fixed costs (monthly)
     const activeCosts = corporateCosts.filter(c => c.is_active);
@@ -152,6 +153,7 @@ export function PricingCalculator() {
 
     return {
       teamCost,
+      teamHours,
       totalHoursAvailable,
       monthlyRecurring,
       monthlyFixed,
@@ -294,7 +296,10 @@ export function PricingCalculator() {
             </div>
             <div>
               <p className="text-muted-foreground">Horas Disponíveis</p>
-              <p className="font-semibold">{operationalData.totalHoursAvailable}h/mês</p>
+              <p className="font-semibold">
+                {operationalData.totalHoursAvailable}h/mês
+                {operationalData.teamHours === 0 && <span className="text-xs text-muted-foreground ml-1">(padrão)</span>}
+              </p>
             </div>
             <div className="col-span-2 md:col-span-2">
               <p className="text-muted-foreground">Custo por Hora da Operação</p>
