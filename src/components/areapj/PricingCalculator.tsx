@@ -382,6 +382,16 @@ export function PricingCalculator() {
                     + {formatCurrency(calculations.operationalCost)} ({formatHoursDisplay(estimatedHours)} × {formatCurrency(operationalData.costPerHour)}/h)
                   </p>
                 )}
+                {useOperationalCost && parseTimeToHours(estimatedHours) === 0 && (
+                  <p className="text-sm text-destructive/80">
+                    ⚠ Preencha as "Horas Estimadas" acima para calcular o custo operacional proporcional.
+                  </p>
+                )}
+                {useOperationalCost && operationalData.costPerHour === 0 && (
+                  <p className="text-sm text-destructive/80">
+                    ⚠ Cadastre custos operacionais e/ou membros do time para calcular o custo por hora.
+                  </p>
+                )}
               </div>
               
               <div className="space-y-2">
