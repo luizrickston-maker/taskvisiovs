@@ -40,6 +40,7 @@ const AI360DashboardPage = lazy(() => import("@/pages/PJ/AI360DashboardPage"));
 const AiAgentsManagerPage = lazy(() => import("@/pages/PJ/AiAgentsManagerPage"));
 const AI360PersonalDashboardPage = lazy(() => import("@/pages/Personal/AI360PersonalDashboardPage"));
 const FinanceCategoryManagementPage = lazy(() => import("@/pages/Personal/FinanceCategoryManagementPage"));
+const FerramentasPage = lazy(() => import("@/pages/FerramentasPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -137,6 +138,11 @@ const App = () => {
                 <Route path="/financas/categorias" element={
                   <Suspense fallback={<PageLoader />}>
                     <FinanceCategoryManagementPage />
+                  </Suspense>
+                } />
+                <Route path="/ferramentas" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <FerramentasPage />
                   </Suspense>
                 } />
                 
