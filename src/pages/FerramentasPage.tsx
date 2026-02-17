@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, ExternalLink, Trash2, Wrench } from 'lucide-react';
+import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+
+const toolSchema = z.object({
+  name: z.string().trim().min(1, 'Nome é obrigatório').max(200, 'Máximo 200 caracteres'),
+  url: z.string().trim().min(1, 'Link é obrigatório').max(2000, 'URL muito longa'),
+});
 
 interface UserTool {
   id: string;
@@ -49,14 +55,19 @@ export default function FerramentasPage() {
   }, [userId]);
 
   const handleAdd = async () => {
-    if (!userId || !name.trim() || !url.trim()) return;
+    if (!userId) return;
+    const parsed = toolSchema.safeParse({ name, url });
+    if (!parsed.success) {
+      toast({ title: 'Dados inválidos', description: parsed.error.issues[0]?.message, variant: 'destructive' });
+      return;
+    }
     setSaving(true);
-    let finalUrl = url.trim();
+    let finalUrl = parsed.data.url;
     if (!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
 
     const { error } = await supabase
       .from('user_tools')
-      .insert({ user_id: userId, name: name.trim(), url: finalUrl });
+      .insert({ user_id: userId, name: parsed.data.name, url: finalUrl });
 
     if (error) {
       toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
@@ -98,11 +109,11 @@ export default function FerramentasPage() {
             <div className="space-y-4 pt-2">
               <div className="space-y-2">
                 <Label>Nome</Label>
-                <Input placeholder="Ex: Figma" value={name} onChange={(e) => setName(e.target.value)} />
+                <Input placeholder="Ex: Figma" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} />
               </div>
               <div className="space-y-2">
                 <Label>Link</Label>
-                <Input placeholder="https://figma.com" value={url} onChange={(e) => setUrl(e.target.value)} />
+                <Input placeholder="https://figma.com" value={url} onChange={(e) => setUrl(e.target.value)} maxLength={2000} />
               </div>
               <Button onClick={handleAdd} disabled={saving || !name.trim() || !url.trim()} className="w-full">
                 {saving ? 'Salvando...' : 'Salvar'}
