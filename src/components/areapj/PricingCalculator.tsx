@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Calculator, DollarSign, Percent, TrendingUp, Save, Trash2, Clock, HelpCircle, Building2 } from 'lucide-react';
+import { Calculator, DollarSign, Percent, TrendingUp, Save, Trash2, Clock, HelpCircle, Building2, Pencil, X } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +29,7 @@ export function PricingCalculator() {
   const { 
     corporatePricings, 
     addCorporatePricing, 
+    updateCorporatePricing,
     deleteCorporatePricing,
     corporateCosts,
     corporateTeam,
@@ -36,6 +37,7 @@ export function PricingCalculator() {
     userPreferences,
   } = useAppStore();
   
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [itemName, setItemName] = useState('');
   const [cost, setCost] = useState('');
   const [taxRate, setTaxRate] = useState('');
@@ -206,6 +208,32 @@ export function PricingCalculator() {
     };
   }, [cost, taxRate, marginPercent, estimatedHours, useOperationalCost, operationalData.costPerHour, chargedPrice]);
 
+  const resetForm = () => {
+    setEditingId(null);
+    setItemName('');
+    setCost('');
+    setTaxRate('');
+    setMarginPercent('');
+    setEstimatedHours('');
+    setUseOperationalCost(false);
+    setChargedPrice('');
+    setNotes('');
+  };
+
+  const handleEdit = (pricing: CorporatePricing) => {
+    setEditingId(pricing.id);
+    setItemName(pricing.item_name);
+    setCost(pricing.cost.toString());
+    setTaxRate(pricing.tax_rate.toString());
+    setMarginPercent(pricing.margin_percent.toString());
+    setChargedPrice(pricing.charged_price ? pricing.charged_price.toString() : '');
+    setNotes(pricing.notes || '');
+    setEstimatedHours('');
+    setUseOperationalCost(false);
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSave = async () => {
     if (!user || !itemName.trim()) {
       toast.error('Preencha o nome do produto/serviço');
@@ -214,10 +242,9 @@ export function PricingCalculator() {
 
     setSaving(true);
     
-    const newPricing = {
-      user_id: user.id,
+    const pricingData = {
       item_name: itemName.trim(),
-      cost: calculations.totalCost, // Save total cost including operational
+      cost: calculations.totalCost,
       tax_rate: parseFloat(taxRate) || 0,
       margin_percent: parseFloat(marginPercent) || 0,
       final_price: calculations.finalPrice,
@@ -227,27 +254,37 @@ export function PricingCalculator() {
       notes: notes.trim() || null,
     };
 
-    const { data, error } = await supabase
-      .from('corporate_pricing')
-      .insert(newPricing)
-      .select()
-      .single();
+    if (editingId) {
+      const { data, error } = await supabase
+        .from('corporate_pricing')
+        .update(pricingData)
+        .eq('id', editingId)
+        .select()
+        .single();
 
-    if (error) {
-      toast.error('Erro ao salvar precificação');
-      console.error(error);
+      if (error) {
+        toast.error('Erro ao atualizar precificação');
+        console.error(error);
+      } else {
+        updateCorporatePricing(editingId, data as Partial<CorporatePricing>);
+        toast.success('Precificação atualizada!');
+        resetForm();
+      }
     } else {
-      addCorporatePricing(data as CorporatePricing);
-      toast.success('Precificação salva com sucesso!');
-      // Reset form
-      setItemName('');
-      setCost('');
-      setTaxRate('');
-      setMarginPercent('');
-      setEstimatedHours('');
-      setUseOperationalCost(false);
-      setChargedPrice('');
-      setNotes('');
+      const { data, error } = await supabase
+        .from('corporate_pricing')
+        .insert({ ...pricingData, user_id: user.id })
+        .select()
+        .single();
+
+      if (error) {
+        toast.error('Erro ao salvar precificação');
+        console.error(error);
+      } else {
+        addCorporatePricing(data as CorporatePricing);
+        toast.success('Precificação salva com sucesso!');
+        resetForm();
+      }
     }
     
     setSaving(false);
@@ -318,7 +355,13 @@ export function PricingCalculator() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Calculator className="w-5 h-5 text-primary" />
-              Calcular Preço
+              {editingId ? 'Editar Precificação' : 'Calcular Preço'}
+              {editingId && (
+                <Button variant="ghost" size="sm" onClick={resetForm} className="ml-auto h-7 text-xs">
+                  <X className="w-3.5 h-3.5 mr-1" />
+                  Cancelar
+                </Button>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -492,7 +535,7 @@ export function PricingCalculator() {
             
             <Button onClick={handleSave} disabled={saving} className="w-full md:w-auto">
               <Save className="w-4 h-4 mr-2" />
-              {saving ? 'Salvando...' : 'Salvar Precificação'}
+              {saving ? 'Salvando...' : editingId ? 'Atualizar Precificação' : 'Salvar Precificação'}
             </Button>
           </CardContent>
         </Card>
@@ -609,7 +652,15 @@ export function PricingCalculator() {
                         <TableCell className="text-muted-foreground text-sm">
                           {format(new Date(pricing.created_at), 'dd/MM/yy', { locale: ptBR })}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(pricing)}
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -636,14 +687,24 @@ export function PricingCalculator() {
                           {format(new Date(pricing.created_at), 'dd/MM/yyyy', { locale: ptBR })}
                         </p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(pricing.id)}
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(pricing)}
+                          className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(pricing.id)}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
