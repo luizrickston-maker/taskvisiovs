@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
     } else {
       // Create user with a temporary password and send invite email
       const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${req.headers.get('origin') ?? 'https://taskvisionpro.lovable.app'}/auth/callback`,
+        redirectTo: 'https://taskvisionpro.lovable.app/auth/callback',
       });
       if (createErr || !newUser?.user) {
         return new Response(JSON.stringify({ error: `Failed to invite user: ${createErr?.message}` }), {
