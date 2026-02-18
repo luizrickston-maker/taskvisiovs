@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +54,7 @@ function StatCard({ icon: Icon, label, value, color }: {
 
 export default function SuperAdminDashboard() {
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
 
   const { data: workspaces = [], isLoading: loadingWorkspaces, refetch } = useQuery({
     queryKey: ['super-admin-workspaces'],
@@ -223,6 +225,14 @@ export default function SuperAdminDashboard() {
                       )}
                       {ws.status}
                     </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => navigate(`/super-admin/workspace/${ws.id}`)}
+                      className="shrink-0"
+                    >
+                      Ver Detalhes
+                    </Button>
                   </div>
                 </div>
               ))}
