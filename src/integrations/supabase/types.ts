@@ -2668,6 +2668,8 @@ export type Database = {
         Args: { _email: string; _full_name?: string; _user_id: string }
         Returns: string
       }
+      get_client_portal_info: { Args: never; Returns: Json }
+      get_my_client_id: { Args: { _workspace_id: string }; Returns: string }
       get_my_workspace_id: { Args: never; Returns: string }
       get_personal_360_summary: { Args: { p_user_id: string }; Returns: Json }
       get_user_360_summary: { Args: { p_user_id: string }; Returns: Json }

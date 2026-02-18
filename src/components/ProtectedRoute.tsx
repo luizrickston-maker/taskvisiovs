@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { useAppStore } from '@/stores/useAppStore';
+import { useIsClientPortalUser } from '@/hooks/useClientPortalInfo';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -13,10 +14,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isLoading } = useAppStore();
   const location = useLocation();
   const [isInitialCheck, setIsInitialCheck] = useState(true);
+  const { data: isClientUser, isLoading: checkingClientUser } = useIsClientPortalUser();
   
   const authLoading = authContext?.loading ?? true;
 
-  // Aguardar um ciclo para garantir que o estado de auth foi propagado
   useEffect(() => {
     if (!authLoading) {
       const timer = setTimeout(() => {
@@ -26,7 +27,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [authLoading]);
 
-  // Mostrar loading se contexto não existir ou durante verificação inicial
   if (!authContext || authLoading || isInitialCheck) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -42,6 +42,19 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!user) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  // Client-only users must go to the portal, not the main app
+  if (checkingClientUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isClientUser === true) {
+    return <Navigate to="/portal" replace />;
   }
 
   if (isLoading) {
