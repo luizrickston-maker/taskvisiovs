@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppBootstrap } from "@/components/bootstrap/AppBootstrap";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SuperAdminRoute } from "@/components/SuperAdminRoute";
 
 // Auth pages - loaded eagerly (needed immediately)
 import Auth from "@/pages/Auth";
@@ -41,6 +42,7 @@ const AiAgentsManagerPage = lazy(() => import("@/pages/PJ/AiAgentsManagerPage"))
 const AI360PersonalDashboardPage = lazy(() => import("@/pages/Personal/AI360PersonalDashboardPage"));
 const FinanceCategoryManagementPage = lazy(() => import("@/pages/Personal/FinanceCategoryManagementPage"));
 const FerramentasPage = lazy(() => import("@/pages/FerramentasPage"));
+const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdmin/SuperAdminDashboard"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,6 +92,14 @@ const App = () => {
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/" element={<Navigate to="/caixa" replace />} />
+              {/* Super Admin - outside AppLayout */}
+              <Route path="/super-admin" element={
+                <SuperAdminRoute>
+                  <Suspense fallback={<PageLoader />}>
+                    <SuperAdminDashboard />
+                  </Suspense>
+                </SuperAdminRoute>
+              } />
               <Route
                 element={
                   <ProtectedRoute>

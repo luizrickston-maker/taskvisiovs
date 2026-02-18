@@ -1,4 +1,4 @@
-import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays, Wrench } from 'lucide-react';
+import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays, Wrench, Shield } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -18,6 +18,7 @@ import {
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
 const personalNavItems = [
   { title: 'Assistente IA', url: '/assistente-pessoal', icon: Brain },
@@ -54,6 +55,7 @@ export function AppSidebar() {
   const signOut = authContext?.signOut;
   const { mode } = useAppContext();
   const collapsed = state === 'collapsed';
+  const { isSuperAdmin } = useSuperAdmin();
 
   // Get nav items based on current mode
   const navItems = mode === 'personal' ? personalNavItems : businessNavItems;
@@ -122,6 +124,28 @@ export function AppSidebar() {
       <SidebarFooter className="p-2">
         <Separator className="mb-2" />
         <SidebarMenu>
+          {isSuperAdmin && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={location.pathname.startsWith('/super-admin')}
+                tooltip="Super Admin"
+              >
+                <NavLink
+                  to="/super-admin"
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200",
+                    location.pathname.startsWith('/super-admin')
+                      ? "bg-amber-500 text-white shadow-lg"
+                      : "hover:bg-amber-500/10 text-amber-500"
+                  )}
+                >
+                  <Shield className="w-5 h-5 shrink-0" />
+                  {!collapsed && <span className="truncate">Super Admin</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
