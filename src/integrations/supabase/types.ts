@@ -2671,6 +2671,7 @@ export type Database = {
       get_my_workspace_id: { Args: never; Returns: string }
       get_personal_360_summary: { Args: { p_user_id: string }; Returns: Json }
       get_user_360_summary: { Args: { p_user_id: string }; Returns: Json }
+      get_user_workspace_id: { Args: never; Returns: string }
       get_workspace_id_for_user: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
