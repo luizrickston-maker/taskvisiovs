@@ -145,31 +145,26 @@ export function ClientUsersPanel({ clientId, clientName, workspaceId }: ClientUs
             </div>
           ))}
           {inactiveUsers.length > 0 && (
-            <details className="text-xs text-muted-foreground mt-1">
-              <summary className="cursor-pointer select-none hover:text-foreground transition-colors">
-                {inactiveUsers.length} acesso{inactiveUsers.length !== 1 ? 's' : ''} revogado{inactiveUsers.length !== 1 ? 's' : ''}
-              </summary>
-              <div className="space-y-1 mt-1">
-                  {inactiveUsers.map(user => (
-                  <div key={user.id} className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-muted/20 border border-border/20">
-                    <div className="flex items-center gap-2 min-w-0 opacity-60">
-                      <span className="text-xs truncate">{user.email}</span>
-                      <Badge variant="outline" className="text-xs shrink-0">Inativo</Badge>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs gap-1.5 text-primary border-primary/40 hover:bg-primary/10"
-                      onClick={() => reactivateMutation.mutate(user.id)}
-                      disabled={reactivateMutation.isPending}
-                    >
-                      <UserCheck className="w-3 h-3" />
-                      Ativar
-                    </Button>
+            <div className="space-y-1 mt-1">
+              {inactiveUsers.map(user => (
+                <div key={user.id} className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-muted/20 border border-border/20">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs truncate text-muted-foreground">{user.email}</span>
+                    <Badge variant="outline" className="text-xs shrink-0">Inativo</Badge>
                   </div>
-                ))}
-              </div>
-            </details>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1.5 text-primary border-primary/40 hover:bg-primary/10"
+                    onClick={() => reactivateMutation.mutate(user.id)}
+                    disabled={reactivateMutation.isPending}
+                  >
+                    <UserCheck className="w-3 h-3" />
+                    Ativar
+                  </Button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}
