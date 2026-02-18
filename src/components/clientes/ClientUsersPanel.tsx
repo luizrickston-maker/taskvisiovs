@@ -150,21 +150,21 @@ export function ClientUsersPanel({ clientId, clientName, workspaceId }: ClientUs
                 {inactiveUsers.length} acesso{inactiveUsers.length !== 1 ? 's' : ''} revogado{inactiveUsers.length !== 1 ? 's' : ''}
               </summary>
               <div className="space-y-1 mt-1">
-                {inactiveUsers.map(user => (
+                  {inactiveUsers.map(user => (
                   <div key={user.id} className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-muted/20 border border-border/20">
                     <div className="flex items-center gap-2 min-w-0 opacity-60">
                       <span className="text-xs truncate">{user.email}</span>
                       <Badge variant="outline" className="text-xs shrink-0">Inativo</Badge>
                     </div>
                     <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-muted-foreground hover:text-primary"
-                      title="Reativar acesso"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1.5 text-primary border-primary/40 hover:bg-primary/10"
                       onClick={() => reactivateMutation.mutate(user.id)}
                       disabled={reactivateMutation.isPending}
                     >
-                      <UserCheck className="w-3.5 h-3.5" />
+                      <UserCheck className="w-3 h-3" />
+                      Ativar
                     </Button>
                   </div>
                 ))}
