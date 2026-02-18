@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Shield, Users, Building2, Search, RefreshCw,
-  CheckCircle, XCircle, Calendar, Crown, UserCheck
+  CheckCircle, XCircle, Calendar, Crown, UserCheck, ArrowLeft
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -122,10 +122,16 @@ export default function SuperAdminDashboard() {
             <p className="text-sm text-muted-foreground">Gestão de workspaces e assinantes</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
-          <RefreshCw className="w-4 h-4" />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate('/caixa')} className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Voltar ao App
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
+            <RefreshCw className="w-4 h-4" />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
