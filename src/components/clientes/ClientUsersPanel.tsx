@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { InviteClientUserModal } from './InviteClientUserModal';
 import { toast } from 'sonner';
-import { UserPlus, UserMinus, Users, Mail } from 'lucide-react';
+import { UserPlus, UserMinus, Users, Mail, UserCheck } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,6 +72,23 @@ export function ClientUsersPanel({ clientId, clientName, workspaceId }: ClientUs
     },
   });
 
+  const reactivateMutation = useMutation({
+    mutationFn: async (clientUserId: string) => {
+      const { error } = await supabase
+        .from('client_users')
+        .update({ is_active: true })
+        .eq('id', clientUserId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('Acesso reativado com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao reativar acesso');
+    },
+  });
+
   const activeUsers = users.filter(u => u.is_active);
   const inactiveUsers = users.filter(u => !u.is_active);
 
@@ -134,9 +151,21 @@ export function ClientUsersPanel({ clientId, clientName, workspaceId }: ClientUs
               </summary>
               <div className="space-y-1 mt-1">
                 {inactiveUsers.map(user => (
-                  <div key={user.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg opacity-50">
-                    <span className="truncate">{user.email}</span>
-                    <Badge variant="outline" className="text-xs border-muted text-muted-foreground shrink-0">Inativo</Badge>
+                  <div key={user.id} className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-muted/20 border border-border/20">
+                    <div className="flex items-center gap-2 min-w-0 opacity-60">
+                      <span className="text-xs truncate">{user.email}</span>
+                      <Badge variant="outline" className="text-xs shrink-0">Inativo</Badge>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      title="Reativar acesso"
+                      onClick={() => reactivateMutation.mutate(user.id)}
+                      disabled={reactivateMutation.isPending}
+                    >
+                      <UserCheck className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 ))}
               </div>
