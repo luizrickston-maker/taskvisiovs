@@ -52,8 +52,27 @@ export function InviteClientUserModal({
         body: { email: trimmed, clientId, workspaceId },
       });
 
-      if (fnError) throw fnError;
-      if (data?.error) throw new Error(data.error);
+      // 409 = usuário já tem acesso — tratar como aviso, não erro
+      if (fnError) {
+        const errMsg = (fnError as { message?: string })?.message ?? '';
+        const context = (fnError as { context?: { status?: number } })?.context;
+        if (context?.status === 409 || errMsg.includes('already has access')) {
+          toast.info('Este e-mail já possui acesso a este cliente.');
+          setEmail('');
+          onOpenChange(false);
+          return;
+        }
+        throw fnError;
+      }
+      if (data?.error) {
+        if (data.error.includes('already has access')) {
+          toast.info('Este e-mail já possui acesso a este cliente.');
+          setEmail('');
+          onOpenChange(false);
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       toast.success(
         data?.invited
@@ -65,11 +84,7 @@ export function InviteClientUserModal({
       onSuccess?.();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao enviar convite';
-      if (msg.includes('already has access')) {
-        toast.error('Este usuário já tem acesso a este cliente.');
-      } else {
-        toast.error(msg);
-      }
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
