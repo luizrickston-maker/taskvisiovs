@@ -52,18 +52,38 @@ export function InviteClientUserModal({
         body: { email: trimmed, clientId, workspaceId },
       });
 
-      // 409 = usuário já tem acesso — tratar como aviso, não erro
       if (fnError) {
-        const errMsg = (fnError as { message?: string })?.message ?? '';
-        const context = (fnError as { context?: { status?: number } })?.context;
-        if (context?.status === 409 || errMsg.includes('already has access')) {
+        // FunctionsHttpError: context is a Response object
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response: Response | undefined = (fnError as any)?.context;
+        const httpStatus = response?.status;
+
+        if (httpStatus === 409) {
           toast.info('Este e-mail já possui acesso a este cliente.');
           setEmail('');
           onOpenChange(false);
           return;
         }
-        throw fnError;
+
+        let errMessage = fnError.message ?? 'Erro ao enviar convite';
+        if (response) {
+          try {
+            const body = await response.clone().json();
+            errMessage = body?.error ?? errMessage;
+          } catch {
+            // ignore parse errors
+          }
+        }
+        if (errMessage.includes('already has access')) {
+          toast.info('Este e-mail já possui acesso a este cliente.');
+          setEmail('');
+          onOpenChange(false);
+          return;
+        }
+        toast.error(errMessage);
+        return;
       }
+
       if (data?.error) {
         if (data.error.includes('already has access')) {
           toast.info('Este e-mail já possui acesso a este cliente.');
@@ -71,7 +91,8 @@ export function InviteClientUserModal({
           onOpenChange(false);
           return;
         }
-        throw new Error(data.error);
+        toast.error(data.error);
+        return;
       }
 
       toast.success(
