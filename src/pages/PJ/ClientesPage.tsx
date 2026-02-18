@@ -317,18 +317,13 @@ export default function ClientesPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Fetch workspace id for current user
+  // Fetch workspace id for current user using RPC function
   const { data: workspaceId } = useQuery({
     queryKey: ['my-workspace-id', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('workspace_members')
-        .select('workspace_id')
-        .eq('user_id', user!.id)
-        .limit(1)
-        .single();
+      const { data, error } = await supabase.rpc('get_my_workspace_id');
       if (error) throw error;
-      return data.workspace_id as string;
+      return data as string | null;
     },
     enabled: !!user?.id,
   });
