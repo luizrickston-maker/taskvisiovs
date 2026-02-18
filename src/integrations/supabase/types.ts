@@ -2699,7 +2699,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "super_admin"
       content_platform: "instagram" | "tiktok" | "linkedin" | "blog" | "youtube"
       content_status: "idea" | "draft" | "review" | "approved" | "published"
       content_type_enum: "post" | "reel" | "story" | "article" | "video"
@@ -2830,7 +2830,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "super_admin"],
       content_platform: ["instagram", "tiktok", "linkedin", "blog", "youtube"],
       content_status: ["idea", "draft", "review", "approved", "published"],
       content_type_enum: ["post", "reel", "story", "article", "video"],
