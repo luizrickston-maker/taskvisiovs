@@ -13,6 +13,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -77,6 +78,7 @@ function ClientFormDialog({
   );
   const [errors, setErrors] = useState<Partial<ClientFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [generatePortalAccess, setGeneratePortalAccess] = useState(false);
 
   const set = (field: keyof ClientFormData, value: string) => {
     setForm(f => ({ ...f, [field]: value }));
@@ -88,6 +90,8 @@ function ClientFormDialog({
     if (!form.name.trim()) e.name = 'Nome é obrigatório';
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
       e.email = 'E-mail inválido';
+    if (!isEdit && generatePortalAccess && !form.email.trim())
+      e.email = 'E-mail é obrigatório para gerar acesso ao portal';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -110,14 +114,39 @@ function ClientFormDialog({
         if (error) throw error;
         toast.success('Cliente atualizado!');
       } else {
-        const { error } = await supabase.from('clients').insert({ ...payload, workspace_id: workspaceId });
+        const { data: newClient, error } = await supabase
+          .from('clients')
+          .insert({ ...payload, workspace_id: workspaceId })
+          .select('id')
+          .single();
         if (error) throw error;
-        toast.success('Cliente criado!');
+
+        if (generatePortalAccess && form.email.trim() && newClient) {
+          const { data, error: fnError } = await supabase.functions.invoke('invite-client-user', {
+            body: { email: form.email.trim().toLowerCase(), clientId: newClient.id, workspaceId },
+          });
+          if (fnError) throw fnError;
+          if (data?.error) throw new Error(data.error);
+          toast.success(
+            data?.invited
+              ? `Cliente criado e convite enviado para ${form.email.trim()}!`
+              : `Cliente criado com acesso ao portal gerado!`
+          );
+        } else {
+          toast.success('Cliente criado!');
+        }
       }
       onSuccess();
       onOpenChange(false);
     } catch (err) {
-      toast.error('Erro ao salvar cliente. Tente novamente.');
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('already has access')) {
+        toast.warning('Cliente criado, mas este e-mail já possui acesso ao portal.');
+        onSuccess();
+        onOpenChange(false);
+      } else {
+        toast.error('Erro ao salvar cliente. Tente novamente.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -162,6 +191,27 @@ function ClientFormDialog({
             <Textarea id="c-notes" value={form.notes} onChange={e => set('notes', e.target.value)}
               placeholder="Notas internas sobre o cliente..." rows={3} maxLength={500} />
           </div>
+
+          {!isEdit && (
+            <div className="flex items-start gap-3 rounded-lg border border-border/50 bg-muted/30 p-3">
+              <Checkbox
+                id="portal-access"
+                checked={generatePortalAccess}
+                onCheckedChange={(checked) => setGeneratePortalAccess(checked === true)}
+                disabled={isLoading}
+                className="mt-0.5"
+              />
+              <div className="space-y-1">
+                <Label htmlFor="portal-access" className="cursor-pointer font-medium text-sm">
+                  Gerar acesso ao Portal do Cliente
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Um e-mail de convite será enviado para o cliente acessar o portal. O campo E-mail é obrigatório.
+                </p>
+              </div>
+            </div>
+          )}
+
           <DialogFooter className="pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
               Cancelar
