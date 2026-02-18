@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -307,6 +308,7 @@ function ClientDetailSheet({
 export default function ClientesPage() {
   const { user } = useAuthContext();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -505,7 +507,7 @@ export default function ClientesPage() {
                 <div
                   key={c.id}
                   className="flex items-center justify-between p-4 rounded-xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all duration-200 cursor-pointer gap-3"
-                  onClick={() => setSelectedClient(c)}
+                  onClick={() => navigate(`/pj/clientes/${c.id}`)}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -589,17 +591,6 @@ export default function ClientesPage() {
           client={editingClient}
           workspaceId={workspaceId}
           onSuccess={handleRefresh}
-        />
-      )}
-
-      {/* Client Detail Sheet */}
-      {workspaceId && (
-        <ClientDetailSheet
-          client={selectedClient}
-          open={!!selectedClient}
-          onOpenChange={v => !v && setSelectedClient(null)}
-          workspaceId={workspaceId}
-          onEdit={() => selectedClient && openEdit(selectedClient)}
         />
       )}
 
