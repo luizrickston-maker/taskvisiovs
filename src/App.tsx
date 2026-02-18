@@ -10,6 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AppBootstrap } from "@/components/bootstrap/AppBootstrap";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SuperAdminRoute } from "@/components/SuperAdminRoute";
+import { ClientPortalRoute } from "@/components/ClientPortalRoute";
 
 // Auth pages - loaded eagerly (needed immediately)
 import Auth from "@/pages/Auth";
@@ -46,6 +47,7 @@ const FinanceCategoryManagementPage = lazy(() => import("@/pages/Personal/Financ
 const FerramentasPage = lazy(() => import("@/pages/FerramentasPage"));
 const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdmin/SuperAdminDashboard"));
 const WorkspaceDetailsPage = lazy(() => import("@/pages/SuperAdmin/WorkspaceDetailsPage"));
+const PortalDashboard = lazy(() => import("@/pages/ClientPortal/PortalDashboard"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -95,6 +97,14 @@ const App = () => {
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/" element={<Navigate to="/caixa" replace />} />
+              {/* Client Portal - isolated from main app */}
+              <Route path="/portal" element={
+                <ClientPortalRoute>
+                  <Suspense fallback={<PageLoader />}>
+                    <PortalDashboard />
+                  </Suspense>
+                </ClientPortalRoute>
+              } />
               {/* Super Admin - outside AppLayout */}
               <Route path="/super-admin" element={
                 <SuperAdminRoute>

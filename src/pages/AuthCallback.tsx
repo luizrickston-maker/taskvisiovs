@@ -5,6 +5,25 @@ import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+/**
+ * Determines where to redirect after auth:
+ * - /portal  → client-only users (no workspace membership)
+ * - /caixa   → regular workspace members
+ */
+async function getRedirectDestination(userId: string): Promise<string> {
+  const { data: workspaceId } = await supabase.rpc('get_my_workspace_id');
+  if (workspaceId) return '/caixa';
+
+  const { data: clientUser } = await supabase
+    .from('client_users')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  return clientUser ? '/portal' : '/caixa';
+}
+
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -13,11 +32,9 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get the hash params from the URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const queryParams = new URLSearchParams(window.location.search);
         
-        // Check for error in URL params
         const error = hashParams.get('error') || queryParams.get('error');
         const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
         
@@ -27,11 +44,9 @@ export default function AuthCallback() {
           return;
         }
 
-        // Check for access_token (means user is authenticated)
         const accessToken = hashParams.get('access_token');
         
         if (accessToken) {
-          // Session should be automatically set by Supabase
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
           if (sessionError) {
@@ -43,12 +58,12 @@ export default function AuthCallback() {
           if (session) {
             setStatus('success');
             setMessage('Conta verificada com sucesso!');
-            setTimeout(() => navigate('/caixa', { replace: true }), 1500);
+            const dest = await getRedirectDestination(session.user.id);
+            setTimeout(() => navigate(dest, { replace: true }), 1500);
             return;
           }
         }
 
-        // Check for token_hash and type (email confirmation flow)
         const tokenHash = queryParams.get('token_hash');
         const type = queryParams.get('type');
         
@@ -64,7 +79,6 @@ export default function AuthCallback() {
             return;
           }
           
-          // If it's a recovery type, redirect to reset password page
           if (type === 'recovery') {
             navigate('/reset-password', { replace: true });
             return;
@@ -72,17 +86,20 @@ export default function AuthCallback() {
           
           setStatus('success');
           setMessage('Conta verificada com sucesso!');
-          setTimeout(() => navigate('/caixa', { replace: true }), 1500);
+
+          const { data: { session } } = await supabase.auth.getSession();
+          const dest = session ? await getRedirectDestination(session.user.id) : '/caixa';
+          setTimeout(() => navigate(dest, { replace: true }), 1500);
           return;
         }
 
-        // If we got here with no tokens, check if already authenticated
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
           setStatus('success');
           setMessage('Você já está autenticado!');
-          setTimeout(() => navigate('/caixa', { replace: true }), 1000);
+          const dest = await getRedirectDestination(session.user.id);
+          setTimeout(() => navigate(dest, { replace: true }), 1000);
         } else {
           setStatus('error');
           setMessage('Link inválido ou expirado');
