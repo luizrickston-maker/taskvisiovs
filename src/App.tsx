@@ -43,6 +43,7 @@ const AI360PersonalDashboardPage = lazy(() => import("@/pages/Personal/AI360Pers
 const FinanceCategoryManagementPage = lazy(() => import("@/pages/Personal/FinanceCategoryManagementPage"));
 const FerramentasPage = lazy(() => import("@/pages/FerramentasPage"));
 const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdmin/SuperAdminDashboard"));
+const WorkspaceDetailsPage = lazy(() => import("@/pages/SuperAdmin/WorkspaceDetailsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,6 +98,13 @@ const App = () => {
                 <SuperAdminRoute>
                   <Suspense fallback={<PageLoader />}>
                     <SuperAdminDashboard />
+                  </Suspense>
+                </SuperAdminRoute>
+              } />
+              <Route path="/super-admin/workspace/:id" element={
+                <SuperAdminRoute>
+                  <Suspense fallback={<PageLoader />}>
+                    <WorkspaceDetailsPage />
                   </Suspense>
                 </SuperAdminRoute>
               } />
