@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { InviteClientUserModal } from './InviteClientUserModal';
+import { CredentialsModal } from './CredentialsModal';
 import { toast } from 'sonner';
 import { UserPlus, UserMinus, Users, Mail, UserCheck } from 'lucide-react';
 import {
@@ -17,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+
 
 interface ClientUser {
   id: string;
@@ -36,6 +38,8 @@ export function ClientUsersPanel({ clientId, clientName, workspaceId }: ClientUs
   const queryClient = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [reactivatingUser, setReactivatingUser] = useState<{ email: string } | null>(null);
+  const [credentials, setCredentials] = useState<{ email: string; password: string } | null>(null);
 
   const queryKey = ['client-users', clientId];
 
@@ -73,19 +77,39 @@ export function ClientUsersPanel({ clientId, clientName, workspaceId }: ClientUs
   });
 
   const reactivateMutation = useMutation({
-    mutationFn: async (clientUserId: string) => {
-      const { error } = await supabase
-        .from('client_users')
-        .update({ is_active: true })
-        .eq('id', clientUserId);
-      if (error) throw error;
+    mutationFn: async (user: ClientUser) => {
+      // Call edge function to generate new password and reactivate
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/invite-client-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': anonKey,
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ email: user.email, clientId, workspaceId, clientName }),
+      });
+
+      const responseData = await res.json();
+      if (!res.ok && res.status !== 409) {
+        throw new Error(responseData?.error ?? 'Erro ao reativar acesso');
+      }
+      return { email: user.email, password: responseData?.password as string };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey });
-      toast.success('Acesso reativado com sucesso!');
+      if (result.password) {
+        setCredentials({ email: result.email, password: result.password });
+      } else {
+        toast.success('Acesso reativado com sucesso!');
+      }
     },
-    onError: () => {
-      toast.error('Erro ao reativar acesso');
+    onError: (err: Error) => {
+      toast.error(err.message ?? 'Erro ao reativar acesso');
     },
   });
 
@@ -156,7 +180,7 @@ export function ClientUsersPanel({ clientId, clientName, workspaceId }: ClientUs
                     size="sm"
                     variant="outline"
                     className="h-7 text-xs gap-1.5 text-primary border-primary/40 hover:bg-primary/10"
-                    onClick={() => reactivateMutation.mutate(user.id)}
+                    onClick={() => reactivateMutation.mutate(user)}
                     disabled={reactivateMutation.isPending}
                   >
                     <UserCheck className="w-3 h-3" />
@@ -177,6 +201,16 @@ export function ClientUsersPanel({ clientId, clientName, workspaceId }: ClientUs
         workspaceId={workspaceId}
         onSuccess={() => queryClient.invalidateQueries({ queryKey })}
       />
+
+      {credentials && (
+        <CredentialsModal
+          open={!!credentials}
+          onOpenChange={(open) => { if (!open) setCredentials(null); }}
+          email={credentials.email}
+          password={credentials.password}
+          clientName={clientName}
+        />
+      )}
 
       <AlertDialog open={!!revokingId} onOpenChange={() => setRevokingId(null)}>
         <AlertDialogContent>
