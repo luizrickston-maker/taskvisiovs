@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Globe, UserPlus, UserMinus, RefreshCw, Loader2, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Globe, UserPlus, UserMinus, RefreshCw, Loader2, ShieldCheck, ShieldOff, UserCheck } from 'lucide-react';
 
 interface ClientUser {
   id: string;
@@ -44,6 +44,7 @@ export function ClientPortalAccessCard({
   const [inviteOpen, setInviteOpen] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [reactivatingId, setReactivatingId] = useState<string | null>(null);
 
   const queryKey = ['client-users', clientId];
 
@@ -77,6 +78,25 @@ export function ClientPortalAccessCard({
     onError: () => {
       toast.error('Erro ao revogar acesso.');
       setRevokingId(null);
+    },
+  });
+
+  const reactivateMutation = useMutation({
+    mutationFn: async (clientUserId: string) => {
+      const { error } = await supabase
+        .from('client_users')
+        .update({ is_active: true })
+        .eq('id', clientUserId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('Acesso reativado com sucesso!');
+      setReactivatingId(null);
+    },
+    onError: () => {
+      toast.error('Erro ao reativar acesso.');
+      setReactivatingId(null);
     },
   });
 
@@ -196,9 +216,27 @@ export function ClientPortalAccessCard({
                   </summary>
                   <div className="space-y-1 mt-2">
                     {inactiveUsers.map(user => (
-                      <div key={user.id} className="flex items-center justify-between px-3 py-2 rounded-lg opacity-50 bg-muted/20 border border-border/30">
-                        <span className="truncate">{user.email}</span>
-                        <Badge variant="outline" className="text-xs border-muted text-muted-foreground">Inativo</Badge>
+                      <div key={user.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/20 border border-border/30">
+                        <span className="truncate text-muted-foreground">{user.email}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge variant="outline" className="text-xs border-muted text-muted-foreground">Inativo</Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1.5 text-primary border-primary/40 hover:bg-primary/10"
+                            onClick={() => {
+                              setReactivatingId(user.id);
+                              reactivateMutation.mutate(user.id);
+                            }}
+                            disabled={reactivatingId === user.id && reactivateMutation.isPending}
+                          >
+                            {reactivatingId === user.id && reactivateMutation.isPending
+                              ? <Loader2 className="w-3 h-3 animate-spin" />
+                              : <UserCheck className="w-3 h-3" />
+                            }
+                            Reativar
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
