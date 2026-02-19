@@ -107,6 +107,7 @@ export function useAddEditorialCalendarItem() {
         .insert({
           title: newItem.title,
           description: newItem.description,
+          content_link: (newItem as any).content_link ?? null,
           due_date: newItem.due_date,
           status: newItem.status,
           platform: newItem.platform,

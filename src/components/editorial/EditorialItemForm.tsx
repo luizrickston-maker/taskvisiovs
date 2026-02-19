@@ -44,6 +44,7 @@ import { toast } from 'sonner';
 const formSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   description: z.string().optional(),
+  content_link: z.string().url('URL inválida').optional().or(z.literal('')),
   due_date: z.date({ required_error: 'Data é obrigatória' }),
   platform: z.enum(['instagram', 'tiktok', 'linkedin', 'blog', 'youtube']),
   content_type: z.enum(['post', 'reel', 'story', 'article', 'video']),
@@ -69,6 +70,7 @@ export function EditorialItemForm({ onSuccess, defaultValues, clientId }: Editor
     defaultValues: {
       title: '',
       description: '',
+      content_link: '',
       platform: 'instagram',
       content_type: 'post',
       status: 'idea',
@@ -81,6 +83,7 @@ export function EditorialItemForm({ onSuccess, defaultValues, clientId }: Editor
       await addItem.mutateAsync({
         title: data.title,
         description: data.description || null,
+        content_link: data.content_link || null,
         due_date: data.due_date.toISOString(),
         platform: data.platform as ContentPlatform,
         content_type: data.content_type as ContentTypeEnum,
@@ -129,6 +132,20 @@ export function EditorialItemForm({ onSuccess, defaultValues, clientId }: Editor
                   rows={3}
                   {...field} 
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="content_link"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Link do conteúdo <span className="text-muted-foreground font-normal">(opcional)</span></FormLabel>
+              <FormControl>
+                <Input placeholder="https://drive.google.com/..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
