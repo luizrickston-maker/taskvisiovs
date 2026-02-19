@@ -17,7 +17,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Globe, UserPlus, UserMinus, RefreshCw, Loader2, ShieldCheck, ShieldOff, UserCheck } from 'lucide-react';
+import { Globe, UserPlus, UserMinus, RefreshCw, Loader2, ShieldCheck, ShieldOff, UserCheck, Copy, Check, ExternalLink } from 'lucide-react';
+
+const PORTAL_URL = 'https://taskvisionpro.lovable.app/auth';
 
 interface ClientUser {
   id: string;
@@ -45,6 +47,14 @@ export function ClientPortalAccessCard({
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [reactivatingId, setReactivatingId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(PORTAL_URL);
+    setCopied(true);
+    toast.success('Link copiado!');
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const queryKey = ['client-users', clientId];
 
@@ -243,10 +253,44 @@ export function ClientPortalAccessCard({
                 </details>
               )}
 
+              {/* Portal access link */}
+              <div className="mt-3 rounded-lg border border-border/50 bg-muted/20 p-3 space-y-2">
+                <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+                  <Globe className="w-3 h-3" />
+                  Link de acesso ao portal
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs text-foreground bg-background border border-border/50 rounded-md px-3 py-1.5 truncate font-mono">
+                    {PORTAL_URL}
+                  </code>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-primary"
+                    onClick={handleCopyLink}
+                    title="Copiar link"
+                  >
+                    {copied
+                      ? <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      : <Copy className="w-3.5 h-3.5" />
+                    }
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-primary"
+                    onClick={() => window.open(PORTAL_URL, '_blank')}
+                    title="Abrir portal"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+
               <Button
                 size="sm"
                 variant="outline"
-                className="w-full gap-2 mt-2"
+                className="w-full gap-2 mt-1"
                 onClick={() => setInviteOpen(true)}
               >
                 <UserPlus className="w-4 h-4" />
