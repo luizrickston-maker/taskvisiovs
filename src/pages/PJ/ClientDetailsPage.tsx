@@ -285,7 +285,7 @@ export default function ClientDetailsPage() {
         {/* Left: main info + calendar */}
         <div className="lg:col-span-2 space-y-6">
           <ClientInfoCard client={client} />
-          <ClientContentCalendarPreview workspaceId={client.workspace_id} />
+          <ClientContentCalendarPreview workspaceId={client.workspace_id} clientId={client.id} />
         </div>
 
         {/* Right: portal access */}

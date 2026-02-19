@@ -19,6 +19,7 @@ interface EditorialItem {
 
 interface PortalCalendarProps {
   workspaceId: string;
+  clientId: string;
 }
 
 const PLATFORM_ICONS: Record<string, React.ReactNode> = {
@@ -67,20 +68,21 @@ function formatDueDate(dateStr: string): { label: string; isUrgent: boolean } {
   return { label: format(date, "dd 'de' MMM", { locale: ptBR }), isUrgent: false };
 }
 
-export function PortalCalendar({ workspaceId }: PortalCalendarProps) {
+export function PortalCalendar({ workspaceId, clientId }: PortalCalendarProps) {
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ['portal-calendar', workspaceId],
+    queryKey: ['portal-calendar', workspaceId, clientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('editorial_calendar_items')
         .select('id, title, platform, content_type, status, due_date, description')
         .eq('workspace_id', workspaceId)
+        .eq('client_id', clientId)
         .order('due_date', { ascending: true })
         .limit(30);
       if (error) throw error;
       return data as EditorialItem[];
     },
-    enabled: !!workspaceId,
+    enabled: !!workspaceId && !!clientId,
   });
 
   const upcoming = items.filter(i => !isPast(new Date(i.due_date)) || isToday(new Date(i.due_date)));

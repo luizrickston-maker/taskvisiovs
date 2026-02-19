@@ -9,6 +9,7 @@ export interface EditorialCalendarItem {
   id: string;
   user_id: string;
   project_id: string | null;
+  client_id: string | null;
   title: string;
   description: string | null;
   due_date: string; // ISO string timestamp

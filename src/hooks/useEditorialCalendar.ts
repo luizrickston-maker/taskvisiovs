@@ -106,6 +106,7 @@ export function useAddEditorialCalendarItem() {
           content_type: newItem.content_type,
           project_id: newItem.project_id,
           assigned_to: newItem.assigned_to,
+          client_id: newItem.client_id ?? null,
           moodboard_refs: (newItem.moodboard_refs || []) as Json,
           ai_suggestions: (newItem.ai_suggestions || {}) as Json,
           user_id: user.id,

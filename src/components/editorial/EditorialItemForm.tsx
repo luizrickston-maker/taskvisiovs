@@ -56,9 +56,10 @@ type FormData = z.infer<typeof formSchema>;
 interface EditorialItemFormProps {
   onSuccess?: () => void;
   defaultValues?: Partial<FormData>;
+  clientId?: string | null;
 }
 
-export function EditorialItemForm({ onSuccess, defaultValues }: EditorialItemFormProps) {
+export function EditorialItemForm({ onSuccess, defaultValues, clientId }: EditorialItemFormProps) {
   const addItem = useAddEditorialCalendarItem();
   const { corporateTeam } = useAppStore();
   const activeTeamMembers = corporateTeam.filter(m => m.is_active);
@@ -86,6 +87,7 @@ export function EditorialItemForm({ onSuccess, defaultValues }: EditorialItemFor
         status: data.status as ContentStatus,
         assigned_to: data.assigned_to || null,
         project_id: null,
+        client_id: clientId || null,
       });
       
       toast.success('Conteúdo adicionado com sucesso!');
