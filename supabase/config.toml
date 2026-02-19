@@ -1,5 +1,8 @@
 project_id = "kxuwzhnkragzsqafszpo"
 
+[functions.invite-client-user]
+verify_jwt = false
+
 [functions.operational-brain]
 verify_jwt = false
 
