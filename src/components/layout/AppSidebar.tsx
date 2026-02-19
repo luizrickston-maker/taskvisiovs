@@ -35,7 +35,6 @@ const personalNavItems = [
 const businessNavItems = [
   { title: 'Cérebro IA', url: '/pj/cerebro-operacional', icon: Brain },
   { title: 'Comercial', url: '/comercial', icon: Briefcase },
-  { title: 'Clientes', url: '/pj/clientes', icon: Users },
   { title: 'Projetos', url: '/pj/projetos', icon: FolderKanban },
   { title: 'Calendário', url: '/pj/calendario-editorial', icon: Calendar },
   { title: 'Financeiro', url: '/pj/financeiro', icon: Wallet },
