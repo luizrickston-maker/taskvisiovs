@@ -54,6 +54,11 @@ export function InviteClientUserModal({
         body: { email: trimmed, clientId, workspaceId, clientName },
       });
 
+      const isConflict = (msg: string) =>
+        msg.includes('already has access') ||
+        msg.includes('já possui acesso') ||
+        msg.includes('already has access');
+
       if (fnError) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response: Response | undefined = (fnError as any)?.context;
@@ -75,7 +80,7 @@ export function InviteClientUserModal({
             // ignore parse errors
           }
         }
-        if (errMessage.includes('already has access')) {
+        if (isConflict(errMessage)) {
           toast.info('Este e-mail já possui acesso a este cliente.');
           setEmail('');
           onOpenChange(false);
@@ -86,7 +91,7 @@ export function InviteClientUserModal({
       }
 
       if (data?.error) {
-        if (data.error.includes('already has access')) {
+        if (isConflict(data.error)) {
           toast.info('Este e-mail já possui acesso a este cliente.');
           setEmail('');
           onOpenChange(false);
