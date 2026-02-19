@@ -10,7 +10,7 @@ import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
-import { Building2, User, Package, Calendar, CheckCircle2, FolderKanban, Percent } from 'lucide-react';
+import { Building2, User, Package, Calendar, CheckCircle2, FolderKanban, Percent, Globe } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
 import { PaymentMethodSelector } from './PaymentMethodSelector';
 import type { Prospect, PaymentType, Project, PaymentMethodEntry } from '@/types/database';
@@ -47,6 +47,8 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
   const [projectDeadline, setProjectDeadline] = useState(format(addDays(new Date(), 30), 'yyyy-MM-dd'));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodEntry[]>([]);
+  const [createClientPortal, setCreateClientPortal] = useState(false);
+  const [clientEmail, setClientEmail] = useState('');
 
   // IMPORTANT:
   // - We must allow selecting plans even if they are currently inactive.
@@ -84,6 +86,8 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
       setPaymentInstallments(prospect.payment_installments?.toString() || '1');
       setCreateProject(!hasExistingProject);
       setPaymentMethods([]);
+      setCreateClientPortal(false);
+      setClientEmail('');
       
       // Generate suggested project name
       const suggestedName = prospect.project_type 
@@ -195,7 +199,52 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
       if (updateError) throw updateError;
 
       updateProspect(prospect.id, prospectUpdate);
-      
+
+      // Create client portal access if requested
+      if (createClientPortal && clientEmail.trim()) {
+        try {
+          const workspaceData = await supabase.rpc('get_my_workspace_id');
+          const workspaceId = workspaceData.data;
+
+          // Upsert client linked to this prospect
+          const { data: existingClient } = await supabase
+            .from('clients')
+            .select('id')
+            .eq('workspace_id', workspaceId)
+            .ilike('name', prospect.client_name)
+            .maybeSingle();
+
+          let clientId = existingClient?.id;
+
+          if (!clientId) {
+            const { data: newClient } = await supabase
+              .from('clients')
+              .insert({
+                workspace_id: workspaceId,
+                name: prospect.client_name,
+                company_name: prospect.company_name || null,
+                email: clientEmail.trim().toLowerCase(),
+              })
+              .select('id')
+              .single();
+            clientId = newClient?.id;
+          }
+
+          if (clientId) {
+            await supabase.functions.invoke('invite-client-user', {
+              body: {
+                email: clientEmail.trim().toLowerCase(),
+                clientId,
+                workspaceId,
+              },
+            });
+          }
+        } catch (portalErr) {
+          console.warn('Portal invite failed (non-blocking):', portalErr);
+          toast.warning('Venda fechada, mas houve um erro ao criar o acesso ao portal.');
+        }
+      }
+
       // Play money sound on success
       playMoneySound();
       
@@ -435,6 +484,39 @@ export function CloseProspectModal({ open, onOpenChange, prospect, onSuccess }: 
                 Esta prospecção já possui um projeto vinculado
               </div>
             )}
+
+            {/* Create Client Portal */}
+            <div className="border-t border-border/50 pt-3 space-y-3">
+              <div className="flex items-start gap-3 rounded-lg border border-border/50 bg-muted/30 p-3">
+                <Checkbox
+                  id="createPortal"
+                  checked={createClientPortal}
+                  onCheckedChange={(checked) => setCreateClientPortal(checked as boolean)}
+                />
+                <div className="space-y-0.5">
+                  <Label htmlFor="createPortal" className="cursor-pointer font-medium text-sm flex items-center gap-1.5">
+                    <Globe className="w-4 h-4 text-primary" />
+                    Criar acesso ao Portal do Cliente
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Envia convite de acesso ao portal para o cliente.
+                  </p>
+                </div>
+              </div>
+
+              {createClientPortal && (
+                <div className="space-y-2 pl-1">
+                  <Label htmlFor="clientPortalEmail">E-mail do cliente *</Label>
+                  <Input
+                    id="clientPortalEmail"
+                    type="email"
+                    value={clientEmail}
+                    onChange={(e) => setClientEmail(e.target.value)}
+                    placeholder="email@cliente.com"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
