@@ -40,8 +40,6 @@ const ProjetosClientesPage = lazy(() => import("@/pages/PJ/ProjetosClientesPage"
 const CalendarioEditorialPage = lazy(() => import("@/pages/PJ/CalendarioEditorialPage"));
 const AI360DashboardPage = lazy(() => import("@/pages/PJ/AI360DashboardPage"));
 const AiAgentsManagerPage = lazy(() => import("@/pages/PJ/AiAgentsManagerPage"));
-const ClientesPage = lazy(() => import("@/pages/PJ/ClientesPage"));
-const ClientDetailsPage = lazy(() => import("@/pages/PJ/ClientDetailsPage"));
 const ClientesFinaisPage = lazy(() => import("@/pages/Comercial/ClientesFinaisPage"));
 const ClientFinalDetailsPage = lazy(() => import("@/pages/Comercial/ClientFinalDetailsPage"));
 const AI360PersonalDashboardPage = lazy(() => import("@/pages/Personal/AI360PersonalDashboardPage"));
