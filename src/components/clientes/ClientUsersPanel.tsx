@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { InviteClientUserModal } from './InviteClientUserModal';
-import { CredentialsModal } from './CredentialsModal';
+
 import { toast } from 'sonner';
 import { UserPlus, UserMinus, Users, Mail, UserCheck } from 'lucide-react';
 import {
@@ -38,8 +38,6 @@ export function ClientUsersPanel({ clientId, clientName, workspaceId }: ClientUs
   const queryClient = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
-  const [reactivatingUser, setReactivatingUser] = useState<{ email: string } | null>(null);
-  const [credentials, setCredentials] = useState<{ email: string; password: string } | null>(null);
 
   const queryKey = ['client-users', clientId];
 
@@ -78,38 +76,18 @@ export function ClientUsersPanel({ clientId, clientName, workspaceId }: ClientUs
 
   const reactivateMutation = useMutation({
     mutationFn: async (user: ClientUser) => {
-      // Call edge function to generate new password and reactivate
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      const res = await fetch(`${supabaseUrl}/functions/v1/invite-client-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': anonKey,
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ email: user.email, clientId, workspaceId, clientName }),
-      });
-
-      const responseData = await res.json();
-      if (!res.ok && res.status !== 409) {
-        throw new Error(responseData?.error ?? 'Erro ao reativar acesso');
-      }
-      return { email: user.email, password: responseData?.password as string };
+      const { error } = await supabase
+        .from('client_users')
+        .update({ is_active: true })
+        .eq('id', user.id);
+      if (error) throw error;
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      if (result.password) {
-        setCredentials({ email: result.email, password: result.password });
-      } else {
-        toast.success('Acesso reativado com sucesso!');
-      }
+      toast.success('Acesso reativado com sucesso!');
     },
-    onError: (err: Error) => {
-      toast.error(err.message ?? 'Erro ao reativar acesso');
+    onError: () => {
+      toast.error('Erro ao reativar acesso');
     },
   });
 
@@ -202,15 +180,6 @@ export function ClientUsersPanel({ clientId, clientName, workspaceId }: ClientUs
         onSuccess={() => queryClient.invalidateQueries({ queryKey })}
       />
 
-      {credentials && (
-        <CredentialsModal
-          open={!!credentials}
-          onOpenChange={(open) => { if (!open) setCredentials(null); }}
-          email={credentials.email}
-          password={credentials.password}
-          clientName={clientName}
-        />
-      )}
 
       <AlertDialog open={!!revokingId} onOpenChange={() => setRevokingId(null)}>
         <AlertDialogContent>
