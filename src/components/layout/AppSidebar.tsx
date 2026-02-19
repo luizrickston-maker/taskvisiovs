@@ -1,4 +1,5 @@
-import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays, Wrench, Shield } from 'lucide-react';
+import { useState } from 'react';
+import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays, Wrench, Shield, ChevronDown } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -20,7 +21,14 @@ import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
-const personalNavItems = [
+interface NavItem {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children?: { title: string; url: string; icon: React.ComponentType<{ className?: string }> }[];
+}
+
+const personalNavItems: NavItem[] = [
   { title: 'Assistente IA', url: '/assistente-pessoal', icon: Brain },
   { title: 'Meu Dia', url: '/meu-dia', icon: CalendarDays },
   { title: 'Caixa', url: '/caixa', icon: Wallet },
@@ -32,10 +40,19 @@ const personalNavItems = [
   { title: 'Ferramentas', url: '/ferramentas', icon: Wrench },
 ];
 
-const businessNavItems = [
+
+
+
+const businessNavItems: NavItem[] = [
   { title: 'Cérebro IA', url: '/pj/cerebro-operacional', icon: Brain },
-  { title: 'Comercial', url: '/comercial', icon: Briefcase },
-  { title: 'Clientes', url: '/pj/clientes', icon: Users },
+  {
+    title: 'Comercial',
+    url: '/comercial',
+    icon: Briefcase,
+    children: [
+      { title: 'Clientes', url: '/pj/clientes', icon: Users },
+    ],
+  },
   { title: 'Projetos', url: '/pj/projetos', icon: FolderKanban },
   { title: 'Calendário', url: '/pj/calendario-editorial', icon: Calendar },
   { title: 'Financeiro', url: '/pj/financeiro', icon: Wallet },
@@ -58,6 +75,9 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const { isSuperAdmin } = useSuperAdmin();
 
+  // Track which parent items are expanded
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Comercial']);
+
   // Get nav items based on current mode
   const navItems = mode === 'personal' ? personalNavItems : businessNavItems;
 
@@ -67,6 +87,15 @@ export function AppSidebar() {
     }
     navigate('/auth', { replace: true });
   };
+
+  const toggleExpanded = (title: string) => {
+    setExpandedItems(prev =>
+      prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]
+    );
+  };
+
+  const isChildActive = (item: NavItem) =>
+    item.children?.some(c => location.pathname.startsWith(c.url)) ?? false;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -93,7 +122,69 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
+                const hasChildren = item.children && item.children.length > 0;
+                const isExpanded = expandedItems.includes(item.title);
                 const isActive = location.pathname === item.url;
+                const childActive = isChildActive(item);
+                const isParentHighlighted = isActive || childActive;
+
+                if (hasChildren) {
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      {/* Parent item — clicking navigates and toggles children */}
+                      <SidebarMenuButton
+                        isActive={isParentHighlighted}
+                        tooltip={item.title}
+                        onClick={() => {
+                          navigate(item.url);
+                          if (!collapsed) toggleExpanded(item.title);
+                        }}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 w-full cursor-pointer",
+                          isParentHighlighted
+                            ? "bg-primary text-primary-foreground shadow-lg"
+                            : "hover:bg-sidebar-accent text-sidebar-foreground"
+                        )}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        {!collapsed && (
+                          <>
+                            <span className="truncate flex-1">{item.title}</span>
+                            <ChevronDown className={cn(
+                              "w-4 h-4 shrink-0 transition-transform duration-200",
+                              isExpanded && "rotate-180"
+                            )} />
+                          </>
+                        )}
+                      </SidebarMenuButton>
+
+                      {/* Children */}
+                      {!collapsed && isExpanded && (
+                        <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-3">
+                          {item.children!.map(child => {
+                            const childIsActive = location.pathname.startsWith(child.url);
+                            return (
+                              <NavLink
+                                key={child.url}
+                                to={child.url}
+                                className={cn(
+                                  "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-all duration-200",
+                                  childIsActive
+                                    ? "bg-primary/15 text-primary font-medium"
+                                    : "hover:bg-sidebar-accent text-sidebar-foreground"
+                                )}
+                              >
+                                <child.icon className="w-4 h-4 shrink-0" />
+                                <span className="truncate">{child.title}</span>
+                              </NavLink>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                }
+
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
@@ -105,8 +196,8 @@ export function AppSidebar() {
                         to={item.url}
                         className={cn(
                           "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200",
-                          isActive 
-                            ? "bg-primary text-primary-foreground shadow-lg" 
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-lg"
                             : "hover:bg-sidebar-accent text-sidebar-foreground"
                         )}
                       >
