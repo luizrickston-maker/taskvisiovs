@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, CalendarDays, Building2 } from 'lucide-react';
+import { LogOut, CalendarDays, Building2, ShieldOff, Loader2 } from 'lucide-react';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { useClientPortalInfo } from '@/hooks/useClientPortalInfo';
+import { useClientAccessRealtime } from '@/hooks/useClientAccessRealtime';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface PortalLayoutProps {
@@ -13,6 +14,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
   const navigate = useNavigate();
   const authContext = useAuthContextSafe();
   const { data: portalInfo, isLoading } = useClientPortalInfo();
+  const accessStatus = useClientAccessRealtime(portalInfo?.workspace_id);
 
   const handleSignOut = async () => {
     if (authContext?.signOut) {
@@ -64,7 +66,42 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
       {/* Content */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
-        {children}
+        {accessStatus === 'loading' ? (
+          /* Loading state */
+          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <p className="text-sm text-muted-foreground">Verificando acesso...</p>
+          </div>
+        ) : accessStatus === 'inactive' ? (
+          /* Blocked state — shown instantly via realtime */
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center gap-6 px-4">
+            <div className="w-20 h-20 rounded-2xl bg-destructive/10 flex items-center justify-center">
+              <ShieldOff className="w-10 h-10 text-destructive" />
+            </div>
+            <div className="space-y-2 max-w-sm">
+              <h2 className="text-xl font-semibold text-foreground">Acesso suspenso</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                O seu acesso a este portal foi temporariamente desativado.
+                Entre em contato com a agência para mais informações.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 border border-border/50 rounded-full px-4 py-2">
+              <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-pulse" />
+              Aguardando reativação em tempo real...
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 text-muted-foreground"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-4 h-4" />
+              Sair
+            </Button>
+          </div>
+        ) : (
+          children
+        )}
       </main>
     </div>
   );
