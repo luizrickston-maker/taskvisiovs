@@ -288,8 +288,8 @@ export function PortalCalendar({ workspaceId, clientId }: PortalCalendarProps) {
   return (
     <>
       <Card className="glass-card">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base flex items-center gap-2">
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
             <CalendarDays className="w-4 h-4 text-primary" />
             Calendário de Conteúdo
             {!isLoading && (
@@ -299,7 +299,7 @@ export function PortalCalendar({ workspaceId, clientId }: PortalCalendarProps) {
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-lg" />)}

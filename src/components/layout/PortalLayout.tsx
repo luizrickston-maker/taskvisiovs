@@ -27,45 +27,45 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top bar */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center glow-primary">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 h-14 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center glow-primary shrink-0">
               <CalendarDays className="w-4 h-4 text-primary-foreground" />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0">
               <span className="font-semibold text-sm text-foreground leading-none">
                 Portal do Cliente
               </span>
               {isLoading ? (
-                <Skeleton className="h-3 w-28 mt-1" />
+                <Skeleton className="h-3 w-24 mt-1" />
               ) : portalInfo ? (
-                <span className="text-xs text-muted-foreground leading-none mt-0.5 flex items-center gap-1">
-                  <Building2 className="w-2.5 h-2.5" />
-                  {portalInfo.client_company || portalInfo.client_name}
+                <span className="text-xs text-muted-foreground leading-none mt-0.5 flex items-center gap-1 truncate">
+                  <Building2 className="w-2.5 h-2.5 shrink-0" />
+                  <span className="truncate">{portalInfo.client_company || portalInfo.client_name}</span>
                 </span>
               ) : null}
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground hidden sm:block">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <span className="text-xs text-muted-foreground hidden md:block truncate max-w-[180px]">
               {authContext?.user?.email}
             </span>
             <Button
               size="sm"
               variant="ghost"
-              className="gap-2 text-muted-foreground hover:text-destructive"
+              className="gap-1.5 sm:gap-2 text-muted-foreground hover:text-destructive px-2 sm:px-3"
               onClick={handleSignOut}
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sair</span>
+              <span className="hidden sm:inline text-xs sm:text-sm">Sair</span>
             </Button>
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
         {accessStatus === 'loading' ? (
           /* Loading state */
           <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
