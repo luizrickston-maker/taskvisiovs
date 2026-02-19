@@ -48,12 +48,33 @@ export function ClientPortalAccessCard({
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [reactivatingId, setReactivatingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copyingLinkId, setCopyingLinkId] = useState<string | null>(null);
+  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(PORTAL_URL);
     setCopied(true);
     toast.success('Link copiado!');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyUserLink = async (userEmail: string, userId: string) => {
+    setCopyingLinkId(userId);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-client-portal-link', {
+        body: { email: userEmail, clientId, workspaceId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      await navigator.clipboard.writeText(data.link);
+      setCopiedLinkId(userId);
+      toast.success('Link exclusivo copiado! Envie para o cliente.');
+      setTimeout(() => setCopiedLinkId(null), 3000);
+    } catch {
+      toast.error('Erro ao gerar link de acesso.');
+    } finally {
+      setCopyingLinkId(null);
+    }
   };
 
   const queryKey = ['client-users', clientId];
@@ -196,9 +217,27 @@ export function ClientPortalAccessCard({
                       size="sm"
                       variant="ghost"
                       className="h-8 px-2 gap-1 text-muted-foreground hover:text-foreground text-xs"
+                      onClick={() => handleCopyUserLink(user.email, user.user_id)}
+                      disabled={copyingLinkId === user.user_id}
+                      title="Copiar link de acesso exclusivo"
+                    >
+                      {copyingLinkId === user.user_id
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : copiedLinkId === user.user_id
+                          ? <Check className="w-3.5 h-3.5 text-primary" />
+                          : <Copy className="w-3.5 h-3.5" />
+                      }
+                      <span className="hidden sm:inline">
+                        {copiedLinkId === user.user_id ? 'Copiado!' : 'Link'}
+                      </span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 px-2 gap-1 text-muted-foreground hover:text-foreground text-xs"
                       onClick={() => handleResend(user.email)}
                       disabled={resendingId === user.email}
-                      title="Reenviar convite"
+                      title="Reenviar convite por email"
                     >
                       {resendingId === user.email
                         ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
