@@ -64,14 +64,13 @@ export function ClientContentCalendarPreview({ workspaceId, clientId }: ClientCo
       const { data, error } = await supabase
         .from('editorial_calendar_items')
         .select('id, title, platform, content_type, status, due_date')
-        .eq('workspace_id', workspaceId)
         .eq('client_id', clientId)
         .order('due_date', { ascending: true })
         .limit(10);
       if (error) throw error;
       return data as EditorialItem[];
     },
-    enabled: !!workspaceId && !!clientId,
+    enabled: !!clientId,
   });
 
   const handleSuccess = () => {

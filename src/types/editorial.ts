@@ -10,6 +10,7 @@ export interface EditorialCalendarItem {
   user_id: string;
   project_id: string | null;
   client_id: string | null;
+  workspace_id: string | null;
   title: string;
   description: string | null;
   due_date: string; // ISO string timestamp
@@ -36,7 +37,8 @@ export type NewEditorialCalendarItem = Omit<EditorialCalendarItem, 'id' | 'creat
 export type NewEditorialComment = Omit<EditorialComment, 'id' | 'created_at'>;
 
 // Input type for form (user_id, moodboard_refs, ai_suggestions handled by hook)
-export type EditorialCalendarItemInput = Omit<NewEditorialCalendarItem, 'user_id' | 'moodboard_refs' | 'ai_suggestions'> & {
+export type EditorialCalendarItemInput = Omit<NewEditorialCalendarItem, 'user_id' | 'moodboard_refs' | 'ai_suggestions' | 'workspace_id'> & {
+  workspace_id?: string | null;
   moodboard_refs?: unknown[] | null;
   ai_suggestions?: Record<string, unknown> | null;
 };

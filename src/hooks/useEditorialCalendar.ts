@@ -95,6 +95,13 @@ export function useAddEditorialCalendarItem() {
     mutationFn: async (newItem: EditorialCalendarItemInput) => {
       if (!user?.id) throw new Error('Usuário não autenticado');
 
+      // Fetch workspace_id if not provided
+      let workspaceId = newItem.workspace_id ?? null;
+      if (!workspaceId) {
+        const { data: wsData } = await supabase.rpc('get_user_workspace_id');
+        workspaceId = wsData ?? null;
+      }
+
       const { data, error } = await supabase
         .from('editorial_calendar_items')
         .insert({
@@ -110,6 +117,7 @@ export function useAddEditorialCalendarItem() {
           moodboard_refs: (newItem.moodboard_refs || []) as Json,
           ai_suggestions: (newItem.ai_suggestions || {}) as Json,
           user_id: user.id,
+          workspace_id: workspaceId,
         })
         .select()
         .single();

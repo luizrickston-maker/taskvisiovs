@@ -75,14 +75,13 @@ export function PortalCalendar({ workspaceId, clientId }: PortalCalendarProps) {
       const { data, error } = await supabase
         .from('editorial_calendar_items')
         .select('id, title, platform, content_type, status, due_date, description')
-        .eq('workspace_id', workspaceId)
         .eq('client_id', clientId)
         .order('due_date', { ascending: true })
         .limit(30);
       if (error) throw error;
       return data as EditorialItem[];
     },
-    enabled: !!workspaceId && !!clientId,
+    enabled: !!clientId,
   });
 
   const upcoming = items.filter(i => !isPast(new Date(i.due_date)) || isToday(new Date(i.due_date)));
