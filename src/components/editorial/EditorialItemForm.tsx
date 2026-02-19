@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useAddEditorialCalendarItem } from '@/hooks/useEditorialCalendar';
+import { useAddEditorialCalendarItem, useUpdateEditorialCalendarItem } from '@/hooks/useEditorialCalendar';
 import { useAppStore } from '@/stores/useAppStore';
 import { 
   contentPlatformConfig, 
@@ -54,20 +54,46 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+interface EditingItem {
+  id: string;
+  title: string;
+  platform: string;
+  content_type: string;
+  status: string | null;
+  due_date: string;
+  description: string | null;
+  content_link: string | null;
+  [key: string]: unknown;
+}
+
 interface EditorialItemFormProps {
   onSuccess?: () => void;
   defaultValues?: Partial<FormData>;
   clientId?: string | null;
+  editingItem?: EditingItem | null;
 }
 
-export function EditorialItemForm({ onSuccess, defaultValues, clientId }: EditorialItemFormProps) {
+export function EditorialItemForm({ onSuccess, defaultValues, clientId, editingItem }: EditorialItemFormProps) {
   const addItem = useAddEditorialCalendarItem();
+  const updateItem = useUpdateEditorialCalendarItem();
   const { corporateTeam } = useAppStore();
   const activeTeamMembers = corporateTeam.filter(m => m.is_active);
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
+  const isEditing = !!editingItem;
+
+  const getDefaultValues = (): Partial<FormData> => {
+    if (editingItem) {
+      return {
+        title: editingItem.title,
+        description: editingItem.description ?? '',
+        content_link: editingItem.content_link ?? '',
+        due_date: new Date(editingItem.due_date),
+        platform: editingItem.platform as ContentPlatform,
+        content_type: editingItem.content_type as ContentTypeEnum,
+        status: (editingItem.status ?? 'idea') as ContentStatus,
+      };
+    }
+    return {
       title: '',
       description: '',
       content_link: '',
@@ -75,32 +101,60 @@ export function EditorialItemForm({ onSuccess, defaultValues, clientId }: Editor
       content_type: 'post',
       status: 'idea',
       ...defaultValues,
-    },
+    };
+  };
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: getDefaultValues(),
   });
+
+  // Reset form when editingItem changes
+  useEffect(() => {
+    form.reset(getDefaultValues());
+  }, [editingItem?.id]);
 
   const onSubmit = async (data: FormData) => {
     try {
-      await addItem.mutateAsync({
-        title: data.title,
-        description: data.description || null,
-        content_link: data.content_link || null,
-        due_date: data.due_date.toISOString(),
-        platform: data.platform as ContentPlatform,
-        content_type: data.content_type as ContentTypeEnum,
-        status: data.status as ContentStatus,
-        assigned_to: data.assigned_to || null,
-        project_id: null,
-        client_id: clientId || null,
-      });
-      
-      toast.success('Conteúdo adicionado com sucesso!');
+      if (isEditing && editingItem) {
+        await updateItem.mutateAsync({
+          id: editingItem.id,
+          updates: {
+            title: data.title,
+            description: data.description || null,
+            content_link: data.content_link || null,
+            due_date: data.due_date.toISOString(),
+            platform: data.platform as ContentPlatform,
+            content_type: data.content_type as ContentTypeEnum,
+            status: data.status as ContentStatus,
+            assigned_to: data.assigned_to || null,
+          } as any,
+        });
+        toast.success('Conteúdo atualizado com sucesso!');
+      } else {
+        await addItem.mutateAsync({
+          title: data.title,
+          description: data.description || null,
+          content_link: data.content_link || null,
+          due_date: data.due_date.toISOString(),
+          platform: data.platform as ContentPlatform,
+          content_type: data.content_type as ContentTypeEnum,
+          status: data.status as ContentStatus,
+          assigned_to: data.assigned_to || null,
+          project_id: null,
+          client_id: clientId || null,
+        });
+        toast.success('Conteúdo adicionado com sucesso!');
+      }
       form.reset();
       onSuccess?.();
     } catch (error) {
-      toast.error('Erro ao adicionar conteúdo');
+      toast.error(isEditing ? 'Erro ao atualizar conteúdo' : 'Erro ao adicionar conteúdo');
       console.error(error);
     }
   };
+
+  const isPending = addItem.isPending || updateItem.isPending;
 
   return (
     <Form {...form}>
@@ -159,7 +213,7 @@ export function EditorialItemForm({ onSuccess, defaultValues, clientId }: Editor
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Plataforma</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -184,7 +238,7 @@ export function EditorialItemForm({ onSuccess, defaultValues, clientId }: Editor
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Tipo</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -250,7 +304,7 @@ export function EditorialItemForm({ onSuccess, defaultValues, clientId }: Editor
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Status</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -277,7 +331,7 @@ export function EditorialItemForm({ onSuccess, defaultValues, clientId }: Editor
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Responsável</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione (opcional)" />
@@ -297,9 +351,9 @@ export function EditorialItemForm({ onSuccess, defaultValues, clientId }: Editor
           />
         )}
 
-        <Button type="submit" className="w-full" disabled={addItem.isPending}>
-          {addItem.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          Adicionar Conteúdo
+        <Button type="submit" className="w-full" disabled={isPending}>
+          {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          {isEditing ? 'Salvar alterações' : 'Adicionar Conteúdo'}
         </Button>
       </form>
     </Form>
