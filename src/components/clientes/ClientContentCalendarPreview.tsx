@@ -27,6 +27,7 @@ interface EditorialItem {
   description: string | null;
   content_link: string | null;
   client_approval_status: string | null;
+  client_adjustment_notes: string | null;
   [key: string]: unknown;
 }
 
@@ -80,7 +81,7 @@ export function ClientContentCalendarPreview({ workspaceId, clientId }: ClientCo
     queryFn: async () => {
       const { data, error } = await supabase
         .from('editorial_calendar_items')
-        .select('id, title, platform, content_type, status, due_date, description, content_link, client_approval_status')
+        .select('id, title, platform, content_type, status, due_date, description, content_link, client_approval_status, client_adjustment_notes')
         .eq('client_id', clientId)
         .order('due_date', { ascending: true })
         .limit(10);
@@ -178,48 +179,62 @@ export function ClientContentCalendarPreview({ workspaceId, clientId }: ClientCo
               {items.map(item => {
                 const approvalKey = item.client_approval_status ?? 'pending';
                 const approval = APPROVAL_CONFIG[approvalKey] ?? APPROVAL_CONFIG.pending;
+                const hasAdjustmentNotes = approvalKey === 'adjustment_requested' && item.client_adjustment_notes;
                 return (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:border-primary/30 hover:bg-primary/5 transition-all duration-200 group"
+                    className="flex flex-col gap-2 p-3 rounded-lg border border-border/40 hover:border-primary/30 hover:bg-primary/5 transition-all duration-200"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 text-muted-foreground">
-                      {PLATFORM_ICONS[item.platform] ?? <Globe className="w-3.5 h-3.5" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground capitalize">
-                            {formatDateWithDay(item.due_date)}
-                          </span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 text-muted-foreground">
+                        {PLATFORM_ICONS[item.platform] ?? <Globe className="w-3.5 h-3.5" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground capitalize">
+                              {formatDateWithDay(item.due_date)}
+                            </span>
+                          </div>
+                          {item.client_approval_status && (
+                            <Badge variant="outline" className={`text-xs gap-1 ${approval.color}`}>
+                              {approval.icon}
+                              {approval.label}
+                            </Badge>
+                          )}
                         </div>
-                        {item.client_approval_status && (
-                          <Badge variant="outline" className={`text-xs gap-1 ${approval.color}`}>
-                            {approval.icon}
-                            {approval.label}
-                          </Badge>
-                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${STATUS_COLORS[item.status ?? 'idea'] ?? STATUS_COLORS.idea}`}
+                        >
+                          {STATUS_LABELS[item.status ?? 'idea'] ?? item.status}
+                        </Badge>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="w-6 h-6"
+                          onClick={() => openEdit(item)}
+                          title="Editar conteúdo"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <Badge
-                        variant="outline"
-                        className={`text-xs ${STATUS_COLORS[item.status ?? 'idea'] ?? STATUS_COLORS.idea}`}
-                      >
-                        {STATUS_LABELS[item.status ?? 'idea'] ?? item.status}
-                      </Badge>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => openEdit(item)}
-                        title="Editar conteúdo"
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                    </div>
+
+                    {/* Adjustment notes visible to manager */}
+                    {hasAdjustmentNotes && (
+                      <div className="flex items-start gap-2 p-2 rounded-md bg-orange-500/10 border border-orange-500/20 text-xs text-orange-500">
+                        <MessageSquare className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                        <div>
+                          <span className="font-medium">Pedido de ajuste do cliente: </span>
+                          {item.client_adjustment_notes as string}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
