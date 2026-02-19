@@ -50,59 +50,46 @@ export function InviteClientUserModal({
 
     setIsLoading(true);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('invite-client-user', {
-        body: { email: trimmed, clientId, workspaceId, clientName },
+      // Use fetch directly to have full control over HTTP status codes,
+      // avoiding supabase-js SDK inconsistencies with non-2xx edge function responses.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/invite-client-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': anonKey,
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ email: trimmed, clientId, workspaceId, clientName }),
       });
 
-      const isConflict = (msg: string) =>
-        msg.includes('already has access') ||
-        msg.includes('já possui acesso') ||
-        msg.includes('already has access');
+      let responseData: Record<string, unknown> = {};
+      try {
+        responseData = await res.json();
+      } catch {
+        // ignore JSON parse error
+      }
 
-      if (fnError) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response: Response | undefined = (fnError as any)?.context;
-        const httpStatus = response?.status;
-
-        if (httpStatus === 409) {
-          toast.info('Este e-mail já possui acesso a este cliente.');
-          setEmail('');
-          onOpenChange(false);
-          return;
-        }
-
-        let errMessage = fnError.message ?? 'Erro ao enviar convite';
-        if (response) {
-          try {
-            const body = await response.clone().json();
-            errMessage = body?.error ?? errMessage;
-          } catch {
-            // ignore parse errors
-          }
-        }
-        if (isConflict(errMessage)) {
-          toast.info('Este e-mail já possui acesso a este cliente.');
-          setEmail('');
-          onOpenChange(false);
-          return;
-        }
-        toast.error(errMessage);
+      if (res.status === 409) {
+        toast.info('Este e-mail já possui acesso a este cliente.');
+        setEmail('');
+        onOpenChange(false);
         return;
       }
 
-      if (data?.error) {
-        if (isConflict(data.error)) {
-          toast.info('Este e-mail já possui acesso a este cliente.');
-          setEmail('');
-          onOpenChange(false);
-          return;
-        }
-        toast.error(data.error);
+      if (!res.ok) {
+        const errMsg = (responseData?.error as string) ?? `Erro ao criar acesso (${res.status})`;
+        toast.error(errMsg);
         return;
       }
 
-      // Show credentials modal with the generated password
-      setCredentials({ email: trimmed, password: data?.password ?? '' });
+      // Success — show credentials modal with generated password
+      setCredentials({ email: trimmed, password: (responseData?.password as string) ?? '' });
       setEmail('');
       onOpenChange(false);
       onSuccess?.();
