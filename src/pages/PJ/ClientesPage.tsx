@@ -25,7 +25,7 @@ import {
 import { toast } from 'sonner';
 import {
   Users, Plus, Search, Building2, Mail, Phone, Edit2, Trash2,
-  UserCheck, UserX, ChevronRight, Loader2,
+  UserCheck, UserX, ChevronRight, Loader2, Globe, EyeOff,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -312,6 +312,7 @@ export default function ClientesPage() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [portalFilter, setPortalFilter] = useState<'all' | 'with_portal' | 'no_portal'>('all');
   const [formOpen, setFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -340,6 +341,26 @@ export default function ClientesPage() {
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as Client[];
+    },
+    enabled: !!workspaceId,
+  });
+
+  // Fetch portal user counts per client
+  const { data: portalUserCounts = {} } = useQuery({
+    queryKey: ['clients-portal-counts', workspaceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('client_users')
+        .select('client_id, is_active')
+        .eq('workspace_id', workspaceId!);
+      if (error) throw error;
+      const counts: Record<string, { total: number; active: number }> = {};
+      for (const row of data) {
+        if (!counts[row.client_id]) counts[row.client_id] = { total: 0, active: 0 };
+        counts[row.client_id].total++;
+        if (row.is_active) counts[row.client_id].active++;
+      }
+      return counts;
     },
     enabled: !!workspaceId,
   });
@@ -373,6 +394,9 @@ export default function ClientesPage() {
     return clients.filter(c => {
       if (statusFilter === 'active' && !c.is_active) return false;
       if (statusFilter === 'inactive' && c.is_active) return false;
+      const portalCount = portalUserCounts[c.id];
+      if (portalFilter === 'with_portal' && (!portalCount || portalCount.active === 0)) return false;
+      if (portalFilter === 'no_portal' && portalCount && portalCount.active > 0) return false;
       if (search) {
         const s = search.toLowerCase();
         return (
@@ -383,15 +407,19 @@ export default function ClientesPage() {
       }
       return true;
     });
-  }, [clients, search, statusFilter]);
+  }, [clients, search, statusFilter, portalFilter, portalUserCounts]);
 
   const stats = useMemo(() => ({
     total: clients.length,
     active: clients.filter(c => c.is_active).length,
     inactive: clients.filter(c => !c.is_active).length,
-  }), [clients]);
+    withPortal: clients.filter(c => portalUserCounts[c.id]?.active > 0).length,
+  }), [clients, portalUserCounts]);
 
-  const handleRefresh = () => queryClient.invalidateQueries({ queryKey: clientsQueryKey });
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: clientsQueryKey });
+    queryClient.invalidateQueries({ queryKey: ['clients-portal-counts', workspaceId] });
+  };
 
   const openEdit = (c: Client) => {
     setEditingClient(c);
@@ -419,11 +447,12 @@ export default function ClientesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: 'Total', value: stats.total, icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
           { label: 'Ativos', value: stats.active, icon: UserCheck, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
           { label: 'Inativos', value: stats.inactive, icon: UserX, color: 'text-muted-foreground', bg: 'bg-muted/50' },
+          { label: 'Com Portal', value: stats.withPortal, icon: Globe, color: 'text-blue-400', bg: 'bg-blue-400/10' },
         ].map(({ label, value, icon: Icon, color, bg }) => (
           <Card key={label} className="glass-card">
             <CardContent className="p-4">
@@ -444,7 +473,7 @@ export default function ClientesPage() {
       {/* Filters */}
       <Card className="glass-card">
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -454,21 +483,45 @@ export default function ClientesPage() {
                 className="pl-10"
               />
             </div>
-            <div className="flex gap-2">
-              {(['all', 'active', 'inactive'] as const).map(f => (
-                <Button
-                  key={f}
-                  size="sm"
-                  variant={statusFilter === f ? 'default' : 'outline'}
-                  onClick={() => setStatusFilter(f)}
-                >
-                  {f === 'all' ? 'Todos' : f === 'active' ? 'Ativos' : 'Inativos'}
-                </Button>
-              ))}
+            <div className="flex flex-wrap gap-2">
+              <div className="flex gap-1.5">
+                {(['all', 'active', 'inactive'] as const).map(f => (
+                  <Button
+                    key={f}
+                    size="sm"
+                    variant={statusFilter === f ? 'default' : 'outline'}
+                    onClick={() => setStatusFilter(f)}
+                    className="text-xs h-8"
+                  >
+                    {f === 'all' ? 'Todos' : f === 'active' ? 'Ativos' : 'Inativos'}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex gap-1.5 ml-auto">
+                <span className="text-xs text-muted-foreground flex items-center gap-1 mr-1">
+                  <Globe className="w-3.5 h-3.5" />Portal:
+                </span>
+                {([
+                  { key: 'all', label: 'Todos' },
+                  { key: 'with_portal', label: 'Com acesso' },
+                  { key: 'no_portal', label: 'Sem acesso' },
+                ] as const).map(f => (
+                  <Button
+                    key={f.key}
+                    size="sm"
+                    variant={portalFilter === f.key ? 'default' : 'outline'}
+                    onClick={() => setPortalFilter(f.key)}
+                    className="text-xs h-8"
+                  >
+                    {f.label}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
 
       {/* Client List */}
       <Card className="glass-card">
@@ -528,44 +581,26 @@ export default function ClientesPage() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <Badge
-                      variant="outline"
-                      className={c.is_active
-                        ? 'border-emerald-500/50 text-emerald-500 text-xs'
-                        : 'border-muted text-muted-foreground text-xs'
-                      }
-                    >
+                    {(() => {
+                      const pc = portalUserCounts[c.id];
+                      const hasPortal = pc && pc.active > 0;
+                      return (
+                        <div className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${hasPortal ? 'border-blue-400/40 text-blue-400 bg-blue-400/10' : 'border-border/40 text-muted-foreground'}`}>
+                          {hasPortal ? <><Globe className="w-3 h-3" /><span className="hidden sm:inline">{pc.active}</span></> : <EyeOff className="w-3 h-3" />}
+                        </div>
+                      );
+                    })()}
+                    <Badge variant="outline" className={c.is_active ? 'border-emerald-500/50 text-emerald-500 text-xs' : 'border-muted text-muted-foreground text-xs'}>
                       {c.is_active ? 'Ativo' : 'Inativo'}
                     </Badge>
                     <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        onClick={() => openEdit(c)}
-                        title="Editar"
-                      >
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)} title="Editar">
                         <Edit2 className="w-3.5 h-3.5" />
                       </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        onClick={() => toggleActiveMutation.mutate({ id: c.id, is_active: !c.is_active })}
-                        title={c.is_active ? 'Desativar' : 'Ativar'}
-                      >
-                        {c.is_active
-                          ? <UserX className="w-3.5 h-3.5 text-muted-foreground" />
-                          : <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
-                        }
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => toggleActiveMutation.mutate({ id: c.id, is_active: !c.is_active })} title={c.is_active ? 'Desativar' : 'Ativar'}>
+                        {c.is_active ? <UserX className="w-3.5 h-3.5 text-muted-foreground" /> : <UserCheck className="w-3.5 h-3.5 text-emerald-500" />}
                       </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 hover:text-destructive"
-                        onClick={() => setDeletingId(c.id)}
-                        title="Excluir"
-                      >
+                      <Button size="icon" variant="ghost" className="h-8 w-8 hover:text-destructive" onClick={() => setDeletingId(c.id)} title="Excluir">
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
