@@ -83,7 +83,7 @@ function formatDueDate(dateStr: string): { label: string; isUrgent: boolean } {
   if (isPast(date) && !isToday(date)) return { label: 'Atrasado', isUrgent: true };
   if (isToday(date)) return { label: 'Hoje', isUrgent: true };
   if (isTomorrow(date)) return { label: 'Amanhã', isUrgent: false };
-  return { label: format(date, "dd 'de' MMM", { locale: ptBR }), isUrgent: false };
+  return { label: format(date, "EEE, dd 'de' MMM", { locale: ptBR }), isUrgent: false };
 }
 
 function ItemCard({ item, onReview }: { item: EditorialItem; onReview: (item: EditorialItem) => void }) {

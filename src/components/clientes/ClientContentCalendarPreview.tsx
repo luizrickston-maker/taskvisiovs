@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Plus, Instagram, Youtube, Linkedin, Globe, Clock } from 'lucide-react';
+import { CalendarDays, Plus, Instagram, Youtube, Linkedin, Globe, Clock, Pencil, ThumbsUp, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { parseISO } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,10 @@ interface EditorialItem {
   content_type: string;
   status: string | null;
   due_date: string;
+  description: string | null;
+  content_link: string | null;
+  client_approval_status: string | null;
+  [key: string]: unknown;
 }
 
 interface ClientContentCalendarPreviewProps {
@@ -52,8 +57,20 @@ const STATUS_LABELS: Record<string, string> = {
   published: 'Publicado',
 };
 
+const APPROVAL_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+  pending: { label: 'Aguardando revisão', color: 'border-yellow-500/50 text-yellow-500', icon: <Clock className="w-3 h-3" /> },
+  approved: { label: 'Aprovado pelo cliente', color: 'border-emerald-500/50 text-emerald-500', icon: <ThumbsUp className="w-3 h-3" /> },
+  adjustment_requested: { label: 'Ajuste solicitado', color: 'border-orange-500/50 text-orange-500', icon: <MessageSquare className="w-3 h-3" /> },
+};
+
+function formatDateWithDay(dateStr: string): string {
+  const date = parseISO(dateStr.includes('T') ? dateStr : dateStr);
+  return format(new Date(dateStr), "EEE, dd 'de' MMM", { locale: ptBR });
+}
+
 export function ClientContentCalendarPreview({ workspaceId, clientId }: ClientContentCalendarPreviewProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<EditorialItem | null>(null);
   const queryClient = useQueryClient();
 
   const queryKey = ['editorial-calendar-preview', workspaceId, clientId];
@@ -63,7 +80,7 @@ export function ClientContentCalendarPreview({ workspaceId, clientId }: ClientCo
     queryFn: async () => {
       const { data, error } = await supabase
         .from('editorial_calendar_items')
-        .select('id, title, platform, content_type, status, due_date')
+        .select('id, title, platform, content_type, status, due_date, description, content_link, client_approval_status')
         .eq('client_id', clientId)
         .order('due_date', { ascending: true })
         .limit(10);
@@ -73,9 +90,45 @@ export function ClientContentCalendarPreview({ workspaceId, clientId }: ClientCo
     enabled: !!clientId,
   });
 
+  // Real-time subscription for manager side
+  useEffect(() => {
+    if (!clientId) return;
+
+    const channel = supabase
+      .channel(`manager-calendar-preview-${clientId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'editorial_calendar_items',
+          filter: `client_id=eq.${clientId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [clientId, queryClient]);
+
   const handleSuccess = () => {
     setIsFormOpen(false);
+    setEditingItem(null);
     queryClient.invalidateQueries({ queryKey });
+  };
+
+  const openEdit = (item: EditorialItem) => {
+    setEditingItem(item);
+    setIsFormOpen(true);
+  };
+
+  const openNew = () => {
+    setEditingItem(null);
+    setIsFormOpen(true);
   };
 
   return (
@@ -91,7 +144,7 @@ export function ClientContentCalendarPreview({ workspaceId, clientId }: ClientCo
               size="sm"
               variant="outline"
               className="gap-1.5 text-xs"
-              onClick={() => setIsFormOpen(true)}
+              onClick={openNew}
             >
               <Plus className="w-3 h-3" />
               Novo Conteúdo
@@ -114,7 +167,7 @@ export function ClientContentCalendarPreview({ workspaceId, clientId }: ClientCo
                 size="sm"
                 variant="outline"
                 className="gap-2"
-                onClick={() => setIsFormOpen(true)}
+                onClick={openNew}
               >
                 <Plus className="w-3.5 h-3.5" />
                 Adicionar Conteúdo
@@ -122,36 +175,59 @@ export function ClientContentCalendarPreview({ workspaceId, clientId }: ClientCo
             </div>
           ) : (
             <div className="space-y-2">
-              {items.map(item => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:border-primary/30 hover:bg-primary/5 transition-all duration-200"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 text-muted-foreground">
-                    {PLATFORM_ICONS[item.platform] ?? <Globe className="w-3.5 h-3.5" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <Clock className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(item.due_date), "dd 'de' MMM", { locale: ptBR })}
-                      </span>
+              {items.map(item => {
+                const approvalKey = item.client_approval_status ?? 'pending';
+                const approval = APPROVAL_CONFIG[approvalKey] ?? APPROVAL_CONFIG.pending;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:border-primary/30 hover:bg-primary/5 transition-all duration-200 group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 text-muted-foreground">
+                      {PLATFORM_ICONS[item.platform] ?? <Globe className="w-3.5 h-3.5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground capitalize">
+                            {formatDateWithDay(item.due_date)}
+                          </span>
+                        </div>
+                        {item.client_approval_status && (
+                          <Badge variant="outline" className={`text-xs gap-1 ${approval.color}`}>
+                            {approval.icon}
+                            {approval.label}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${STATUS_COLORS[item.status ?? 'idea'] ?? STATUS_COLORS.idea}`}
+                      >
+                        {STATUS_LABELS[item.status ?? 'idea'] ?? item.status}
+                      </Badge>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => openEdit(item)}
+                        title="Editar conteúdo"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
                     </div>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs shrink-0 ${STATUS_COLORS[item.status ?? 'idea'] ?? STATUS_COLORS.idea}`}
-                  >
-                    {STATUS_LABELS[item.status ?? 'idea'] ?? item.status}
-                  </Badge>
-                </div>
-              ))}
+                );
+              })}
               <Button
                 size="sm"
                 variant="ghost"
                 className="w-full gap-2 text-muted-foreground hover:text-foreground mt-1"
-                onClick={() => setIsFormOpen(true)}
+                onClick={openNew}
               >
                 <Plus className="w-3.5 h-3.5" />
                 Adicionar conteúdo ao cliente
@@ -161,15 +237,16 @@ export function ClientContentCalendarPreview({ workspaceId, clientId }: ClientCo
         </CardContent>
       </Card>
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog open={isFormOpen} onOpenChange={open => { if (!open) { setIsFormOpen(false); setEditingItem(null); } }}>
         <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-visible">
           <DialogHeader className="shrink-0">
-            <DialogTitle>Novo Conteúdo para o Cliente</DialogTitle>
+            <DialogTitle>{editingItem ? 'Editar Conteúdo' : 'Novo Conteúdo para o Cliente'}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 min-h-0 overflow-y-auto">
             <EditorialItemForm
               onSuccess={handleSuccess}
               clientId={clientId}
+              editingItem={editingItem}
             />
           </div>
         </DialogContent>

@@ -156,6 +156,7 @@ export function useUpdateEditorialCalendarItem() {
       const updateData: Record<string, unknown> = {};
       if (updates.title !== undefined) updateData.title = updates.title;
       if (updates.description !== undefined) updateData.description = updates.description;
+      if ((updates as any).content_link !== undefined) updateData.content_link = (updates as any).content_link;
       if (updates.due_date !== undefined) updateData.due_date = updates.due_date;
       if (updates.status !== undefined) updateData.status = updates.status;
       if (updates.platform !== undefined) updateData.platform = updates.platform;
