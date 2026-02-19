@@ -52,12 +52,12 @@ export function PortalContents() {
   return (
     <Card className="glass-card">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
+        <CardTitle className="text-sm sm:text-base flex items-center gap-2">
           <FolderOpen className="w-4 h-4 text-primary" />
           Meus Conteúdos
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6">
         {isLoading ? (
           <div className="space-y-2">
             {[1, 2, 3].map(i => <Skeleton key={i} className="h-14 rounded-lg" />)}
@@ -79,14 +79,14 @@ export function PortalContents() {
             {contents.map(content => (
               <div
                 key={content.id}
-                className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-muted/20 hover:bg-muted/30 transition-colors"
+                className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg border border-border/50 bg-muted/20 hover:bg-muted/30 transition-colors"
               >
                 <div className="shrink-0">
                   {typeIcons[content.type] ?? typeIcons.other}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-foreground truncate">{content.title}</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                    <span className="text-xs sm:text-sm font-medium text-foreground truncate">{content.title}</span>
                     <Badge variant="outline" className="text-xs shrink-0">
                       {typeLabels[content.type] ?? content.type}
                     </Badge>
@@ -95,16 +95,16 @@ export function PortalContents() {
                     <p className="text-xs text-muted-foreground mt-0.5 truncate">{content.notes}</p>
                   )}
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {format(new Date(content.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    {format(new Date(content.created_at), "dd 'de' MMM 'de' yyyy", { locale: ptBR })}
                   </p>
                 </div>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-primary"
+                  className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 text-muted-foreground hover:text-primary"
                   onClick={() => window.open(content.drive_link, '_blank')}
                 >
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
               </div>
             ))}
