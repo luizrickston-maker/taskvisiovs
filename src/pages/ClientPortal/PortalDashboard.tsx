@@ -65,7 +65,7 @@ export default function PortalDashboard() {
           </div>
         ) : portalInfo ? (
           <>
-            <PortalCalendar workspaceId={portalInfo.workspace_id} />
+            <PortalCalendar workspaceId={portalInfo.workspace_id} clientId={portalInfo.client_id} />
             <PortalContents />
           </>
         ) : null}

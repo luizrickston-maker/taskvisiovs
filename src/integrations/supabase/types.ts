@@ -714,6 +714,7 @@ export type Database = {
         Row: {
           ai_suggestions: Json | null
           assigned_to: string | null
+          client_id: string | null
           content_type: Database["public"]["Enums"]["content_type_enum"]
           created_at: string
           description: string | null
@@ -731,6 +732,7 @@ export type Database = {
         Insert: {
           ai_suggestions?: Json | null
           assigned_to?: string | null
+          client_id?: string | null
           content_type: Database["public"]["Enums"]["content_type_enum"]
           created_at?: string
           description?: string | null
@@ -748,6 +750,7 @@ export type Database = {
         Update: {
           ai_suggestions?: Json | null
           assigned_to?: string | null
+          client_id?: string | null
           content_type?: Database["public"]["Enums"]["content_type_enum"]
           created_at?: string
           description?: string | null
@@ -768,6 +771,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "corporate_team"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "editorial_calendar_items_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
