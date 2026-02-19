@@ -13,11 +13,150 @@ function generatePassword(length = 12): string {
   const all = upper + lower + digits + symbols;
 
   const rand = (chars: string) => chars[Math.floor(Math.random() * chars.length)];
-  // Guarantee at least one from each set
   const required = [rand(upper), rand(lower), rand(digits), rand(symbols)];
   const rest = Array.from({ length: length - required.length }, () => rand(all));
-  // Shuffle
   return [...required, ...rest].sort(() => Math.random() - 0.5).join('');
+}
+
+async function sendCredentialsEmail(
+  email: string,
+  password: string,
+  clientName: string,
+): Promise<void> {
+  const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+  if (!RESEND_API_KEY) {
+    console.error('RESEND_API_KEY não configurado — email não enviado');
+    return;
+  }
+
+  const portalUrl = 'https://taskvisionpro.lovable.app/auth';
+
+  const htmlBody = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acesso ao Portal do Cliente</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0f172a;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0f172a;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#1e293b;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.4);">
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px 40px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:-0.5px;">
+                🔐 Acesso ao Portal do Cliente
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px;">
+              <p style="margin:0 0 16px;color:#cbd5e1;font-size:16px;line-height:1.6;">
+                Olá! Seu acesso ao portal foi criado com sucesso.
+              </p>
+              <p style="margin:0 0 28px;color:#94a3b8;font-size:14px;line-height:1.6;">
+                Abaixo estão suas credenciais de acesso para o portal de <strong style="color:#e2e8f0;">${clientName}</strong>:
+              </p>
+
+              <!-- Credentials Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0f172a;border-radius:8px;border:1px solid #334155;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:24px;">
+                    <table width="100%" cellpadding="0" cellspacing="8">
+                      <tr>
+                        <td style="color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;padding-bottom:4px;">Portal</td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom:20px;">
+                          <a href="${portalUrl}" style="color:#818cf8;font-size:14px;text-decoration:none;">${portalUrl}</a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;padding-bottom:4px;">E-mail</td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom:20px;">
+                          <span style="color:#e2e8f0;font-size:14px;font-family:monospace;">${email}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;padding-bottom:4px;">Senha</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span style="color:#a78bfa;font-size:16px;font-family:monospace;font-weight:700;background-color:#1e1b4b;padding:8px 16px;border-radius:6px;display:inline-block;letter-spacing:2px;">${password}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td align="center">
+                    <a href="${portalUrl}" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:8px;">
+                      Acessar o Portal →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Security Notice -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#422006;border-radius:8px;border:1px solid #92400e;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0;color:#fbbf24;font-size:13px;line-height:1.5;">
+                      ⚠️ <strong>Aviso de segurança:</strong> Por razões de segurança, recomendamos que você altere sua senha no primeiro acesso utilizando a opção "Esqueci minha senha" na tela de login.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#0f172a;padding:20px 40px;text-align:center;border-top:1px solid #1e293b;">
+              <p style="margin:0;color:#475569;font-size:12px;">
+                Este e-mail foi enviado automaticamente. Em caso de dúvidas, entre em contato com seu gestor.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'Portal do Cliente <onboarding@resend.dev>',
+      to: [email],
+      subject: `Suas credenciais de acesso — Portal ${clientName}`,
+      html: htmlBody,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Erro ao enviar email via Resend:', res.status, err);
+  } else {
+    console.log(`Email de credenciais enviado para ${email}`);
+  }
 }
 
 Deno.serve(async (req) => {
@@ -31,10 +170,9 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    // Authenticate caller
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+      return new Response(JSON.stringify({ error: 'Cabeçalho de autorização ausente' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -47,7 +185,7 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: 'Não autorizado' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -55,12 +193,11 @@ Deno.serve(async (req) => {
     const { email, clientId, workspaceId, clientName } = await req.json();
 
     if (!email || !clientId || !workspaceId) {
-      return new Response(JSON.stringify({ error: 'Missing required fields: email, clientId, workspaceId' }), {
+      return new Response(JSON.stringify({ error: 'Campos obrigatórios ausentes: email, clientId, workspaceId' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Verify caller is a workspace admin
     const { data: membership, error: memberErr } = await supabaseAdmin
       .from('workspace_members')
       .select('role')
@@ -69,12 +206,11 @@ Deno.serve(async (req) => {
       .single();
 
     if (memberErr || !membership || !['owner', 'admin'].includes(membership.role)) {
-      return new Response(JSON.stringify({ error: 'Forbidden: must be workspace admin' }), {
+      return new Response(JSON.stringify({ error: 'Acesso negado: é necessário ser administrador do workspace' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Check if client belongs to workspace
     const { data: client, error: clientErr } = await supabaseAdmin
       .from('clients')
       .select('id')
@@ -83,12 +219,11 @@ Deno.serve(async (req) => {
       .single();
 
     if (clientErr || !client) {
-      return new Response(JSON.stringify({ error: 'Client not found in workspace' }), {
+      return new Response(JSON.stringify({ error: 'Cliente não encontrado no workspace' }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Check if client_user relation already exists
     const { data: existingRelation } = await supabaseAdmin
       .from('client_users')
       .select('id, is_active')
@@ -98,11 +233,11 @@ Deno.serve(async (req) => {
 
     if (existingRelation) {
       if (existingRelation.is_active) {
-        return new Response(JSON.stringify({ error: 'User already has access to this client' }), {
+        return new Response(JSON.stringify({ error: 'Usuário já possui acesso a este cliente' }), {
           status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      // Reactivate with a new password
+      // Reativar com nova senha
       const newPassword = generatePassword();
       const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
       const existingUser = existingUsers?.users?.find(u => u.email === email);
@@ -116,9 +251,8 @@ Deno.serve(async (req) => {
         .update({ is_active: true })
         .eq('id', existingRelation.id);
 
-      // Send reactivation email with new credentials
       if (existingUser) {
-        await sendCredentialsEmail(supabaseAdmin, email, newPassword, clientName ?? 'Portal do Cliente');
+        await sendCredentialsEmail(email, newPassword, clientName ?? 'Portal do Cliente');
       }
 
       return new Response(JSON.stringify({ success: true, reactivated: true, password: newPassword }), {
@@ -126,35 +260,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate password for new user
     const password = generatePassword();
 
-    // Check if auth user already exists
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingAuthUser = existingUsers?.users?.find(u => u.email === email);
 
     let targetUserId: string;
 
     if (existingAuthUser) {
-      // Update their password
       await supabaseAdmin.auth.admin.updateUserById(existingAuthUser.id, { password });
       targetUserId = existingAuthUser.id;
     } else {
-      // Create new user with generated password (auto-confirmed)
       const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
       });
       if (createErr || !newUser?.user) {
-        return new Response(JSON.stringify({ error: `Failed to create user: ${createErr?.message}` }), {
+        return new Response(JSON.stringify({ error: `Erro ao criar usuário: ${createErr?.message}` }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       targetUserId = newUser.user.id;
     }
 
-    // Create client_user record
     const { error: insertErr } = await supabaseAdmin.from('client_users').insert({
       client_id: clientId,
       workspace_id: workspaceId,
@@ -164,41 +293,20 @@ Deno.serve(async (req) => {
     });
 
     if (insertErr) {
-      return new Response(JSON.stringify({ error: `Failed to create client user: ${insertErr.message}` }), {
+      return new Response(JSON.stringify({ error: `Erro ao criar acesso: ${insertErr.message}` }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Send credentials email
-    await sendCredentialsEmail(supabaseAdmin, email, password, clientName ?? 'Portal do Cliente');
+    await sendCredentialsEmail(email, password, clientName ?? 'Portal do Cliente');
 
     return new Response(JSON.stringify({ success: true, invited: !existingAuthUser, password }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    console.error('invite-client-user error:', err);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    console.error('invite-client-user erro:', err);
+    return new Response(JSON.stringify({ error: 'Erro interno do servidor' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
-
-async function sendCredentialsEmail(
-  supabaseAdmin: ReturnType<typeof createClient>,
-  email: string,
-  password: string,
-  clientName: string,
-) {
-  try {
-    const portalUrl = 'https://taskvisionpro.lovable.app/auth';
-    // Use Supabase admin to send a custom email via edge function or direct SMTP
-    // We'll use the auth admin generateLink to also trigger the confirmation email,
-    // but primarily send credentials via a custom approach using the Lovable AI gateway or Resend.
-    // For now, we send via Supabase's built-in email (magic link style) as fallback.
-    // The password is returned to the frontend which displays it.
-    // Additional email sending can be wired up when an SMTP provider is configured.
-    console.log(`Credentials for ${email}: portal=${portalUrl} password=${password} client=${clientName}`);
-  } catch (e) {
-    console.error('Email send error:', e);
-  }
-}
