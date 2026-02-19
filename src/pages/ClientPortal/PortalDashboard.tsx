@@ -1,7 +1,8 @@
 import { useClientPortalInfo } from '@/hooks/useClientPortalInfo';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { PortalCalendar } from './PortalCalendar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PortalContents } from './PortalContents';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Building2, Mail, ShieldCheck, CalendarDays } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -56,22 +57,20 @@ export default function PortalDashboard() {
           </CardContent>
         </Card>
 
-        {/* Content Calendar */}
+        {/* Content Calendar + Client Contents */}
         {isLoading ? (
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="text-base">
-                <Skeleton className="h-5 w-40" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 rounded-lg" />)}
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <Skeleton className="h-48 rounded-xl" />
+            <Skeleton className="h-48 rounded-xl" />
+          </div>
         ) : portalInfo ? (
-          <PortalCalendar workspaceId={portalInfo.workspace_id} />
+          <>
+            <PortalCalendar workspaceId={portalInfo.workspace_id} />
+            <PortalContents />
+          </>
         ) : null}
       </div>
     </PortalLayout>
   );
 }
+

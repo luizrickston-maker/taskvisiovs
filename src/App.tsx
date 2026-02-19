@@ -42,6 +42,8 @@ const AI360DashboardPage = lazy(() => import("@/pages/PJ/AI360DashboardPage"));
 const AiAgentsManagerPage = lazy(() => import("@/pages/PJ/AiAgentsManagerPage"));
 const ClientesPage = lazy(() => import("@/pages/PJ/ClientesPage"));
 const ClientDetailsPage = lazy(() => import("@/pages/PJ/ClientDetailsPage"));
+const ClientesFinaisPage = lazy(() => import("@/pages/Comercial/ClientesFinaisPage"));
+const ClientFinalDetailsPage = lazy(() => import("@/pages/Comercial/ClientFinalDetailsPage"));
 const AI360PersonalDashboardPage = lazy(() => import("@/pages/Personal/AI360PersonalDashboardPage"));
 const FinanceCategoryManagementPage = lazy(() => import("@/pages/Personal/FinanceCategoryManagementPage"));
 const FerramentasPage = lazy(() => import("@/pages/FerramentasPage"));
@@ -222,14 +224,14 @@ const App = () => {
                     <AiAgentsManagerPage />
                   </Suspense>
                 } />
-                <Route path="/pj/clientes" element={
+                <Route path="/comercial/clientes" element={
                   <Suspense fallback={<PageLoader />}>
-                    <ClientesPage />
+                    <ClientesFinaisPage />
                   </Suspense>
                 } />
-                <Route path="/pj/clientes/:id" element={
+                <Route path="/comercial/clientes/:id" element={
                   <Suspense fallback={<PageLoader />}>
-                    <ClientDetailsPage />
+                    <ClientFinalDetailsPage />
                   </Suspense>
                 } />
                 

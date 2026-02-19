@@ -50,7 +50,7 @@ const businessNavItems: NavItem[] = [
     url: '/comercial',
     icon: Briefcase,
     children: [
-      { title: 'Clientes', url: '/pj/clientes', icon: Users },
+      { title: 'Clientes', url: '/comercial/clientes', icon: Users },
     ],
   },
   { title: 'Projetos', url: '/pj/projetos', icon: FolderKanban },
