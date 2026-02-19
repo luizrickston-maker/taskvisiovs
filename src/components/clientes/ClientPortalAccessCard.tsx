@@ -326,15 +326,6 @@ export function ClientPortalAccessCard({
                 </div>
               </div>
 
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full gap-2 mt-1"
-                onClick={() => setInviteOpen(true)}
-              >
-                <UserPlus className="w-4 h-4" />
-                Adicionar Usuário
-              </Button>
             </div>
           )}
         </CardContent>
