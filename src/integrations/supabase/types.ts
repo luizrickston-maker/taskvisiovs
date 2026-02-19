@@ -714,7 +714,11 @@ export type Database = {
         Row: {
           ai_suggestions: Json | null
           assigned_to: string | null
+          client_adjustment_notes: string | null
+          client_approval_status: string | null
           client_id: string | null
+          client_reviewed_at: string | null
+          content_link: string | null
           content_type: Database["public"]["Enums"]["content_type_enum"]
           created_at: string
           description: string | null
@@ -732,7 +736,11 @@ export type Database = {
         Insert: {
           ai_suggestions?: Json | null
           assigned_to?: string | null
+          client_adjustment_notes?: string | null
+          client_approval_status?: string | null
           client_id?: string | null
+          client_reviewed_at?: string | null
+          content_link?: string | null
           content_type: Database["public"]["Enums"]["content_type_enum"]
           created_at?: string
           description?: string | null
@@ -750,7 +758,11 @@ export type Database = {
         Update: {
           ai_suggestions?: Json | null
           assigned_to?: string | null
+          client_adjustment_notes?: string | null
+          client_approval_status?: string | null
           client_id?: string | null
+          client_reviewed_at?: string | null
+          content_link?: string | null
           content_type?: Database["public"]["Enums"]["content_type_enum"]
           created_at?: string
           description?: string | null

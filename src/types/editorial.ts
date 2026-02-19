@@ -13,6 +13,7 @@ export interface EditorialCalendarItem {
   workspace_id: string | null;
   title: string;
   description: string | null;
+  content_link: string | null;
   due_date: string; // ISO string timestamp
   status: ContentStatus;
   platform: ContentPlatform;
@@ -20,6 +21,9 @@ export interface EditorialCalendarItem {
   assigned_to: string | null; // ID do membro da equipe (corporate_team)
   moodboard_refs: unknown[] | null; // JSONB - URLs ou referências de inspiração
   ai_suggestions: Record<string, unknown> | null; // JSONB - sugestões geradas por IA
+  client_approval_status: 'pending' | 'approved' | 'adjustment_requested' | null;
+  client_adjustment_notes: string | null;
+  client_reviewed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,7 +41,7 @@ export type NewEditorialCalendarItem = Omit<EditorialCalendarItem, 'id' | 'creat
 export type NewEditorialComment = Omit<EditorialComment, 'id' | 'created_at'>;
 
 // Input type for form (user_id, moodboard_refs, ai_suggestions handled by hook)
-export type EditorialCalendarItemInput = Omit<NewEditorialCalendarItem, 'user_id' | 'moodboard_refs' | 'ai_suggestions' | 'workspace_id'> & {
+export type EditorialCalendarItemInput = Omit<NewEditorialCalendarItem, 'user_id' | 'moodboard_refs' | 'ai_suggestions' | 'workspace_id' | 'client_approval_status' | 'client_adjustment_notes' | 'client_reviewed_at'> & {
   workspace_id?: string | null;
   moodboard_refs?: unknown[] | null;
   ai_suggestions?: Record<string, unknown> | null;
