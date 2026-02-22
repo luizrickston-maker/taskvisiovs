@@ -5,6 +5,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function generateShortCode(length = 8): string {
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const values = crypto.getRandomValues(new Uint8Array(length));
+  return Array.from(values, (v) => charset[v % charset.length]).join('');
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -88,9 +94,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Create short link
+    const code = generateShortCode();
+    const { error: insertError } = await supabaseAdmin
+      .from('portal_short_links')
+      .insert({
+        code,
+        target_url: linkData.properties.action_link,
+      });
+
+    if (insertError) {
+      // Fallback to full link if short link fails
+      return new Response(JSON.stringify({ 
+        success: true, 
+        link: linkData.properties.action_link,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const shortLink = `https://taskvisionpro.lovable.app/p/${code}`;
+
     return new Response(JSON.stringify({ 
       success: true, 
-      link: linkData.properties.action_link,
+      link: shortLink,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

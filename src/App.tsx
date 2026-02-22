@@ -18,6 +18,8 @@ import AuthCallback from "@/pages/AuthCallback";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
+const PortalRedirect = lazy(() => import("@/pages/PortalRedirect"));
+
 // Core pages - loaded eagerly (most accessed)
 import CaixaDashboard from "@/pages/CaixaDashboard";
 import FocoDashboard from "@/pages/FocoDashboard";
@@ -97,6 +99,12 @@ const App = () => {
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/" element={<Navigate to="/caixa" replace />} />
+              {/* Short link redirect - public */}
+              <Route path="/p/:code" element={
+                <Suspense fallback={<PageLoader />}>
+                  <PortalRedirect />
+                </Suspense>
+              } />
               {/* Client Portal - isolated from main app */}
               <Route path="/portal" element={
                 <ClientPortalRoute>
