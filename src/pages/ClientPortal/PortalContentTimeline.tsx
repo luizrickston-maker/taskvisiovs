@@ -205,26 +205,32 @@ export function PortalContentTimeline({ workspaceId, clientId }: PortalContentTi
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
                       {hasLink && (
                         <>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => window.open(item.content_link!, '_blank')}>
-                            <ExternalLink className="w-3.5 h-3.5" />
+                          <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] sm:text-xs gap-1 text-muted-foreground hover:text-primary" onClick={() => window.open(item.content_link!, '_blank')}>
+                            <ExternalLink className="w-3 h-3" />
+                            <span>Ver</span>
                           </Button>
                           {approvalKey !== 'approved' && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-500 hover:bg-emerald-500/10" onClick={() => handleApprove(item)}>
-                              <ThumbsUp className="w-3.5 h-3.5" />
+                            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] sm:text-xs gap-1 border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10" onClick={() => handleApprove(item)}>
+                              <ThumbsUp className="w-3 h-3" />
+                              <span>Aprovar</span>
                             </Button>
                           )}
                           {approvalKey !== 'adjustment_requested' && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-orange-500 hover:bg-orange-500/10" onClick={() => { setReviewItem(item); setAdjustmentNotes(item.client_adjustment_notes ?? ''); }}>
-                              <MessageSquare className="w-3.5 h-3.5" />
+                            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] sm:text-xs gap-1 border-orange-500/30 text-orange-500 hover:bg-orange-500/10" onClick={() => { setReviewItem(item); setAdjustmentNotes(item.client_adjustment_notes ?? ''); }}>
+                              <MessageSquare className="w-3 h-3" />
+                              <span>Ajuste</span>
                             </Button>
                           )}
                         </>
                       )}
                       {!hasLink && (
-                        <AlertCircle className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          Sem link
+                        </span>
                       )}
                     </div>
                   </div>
