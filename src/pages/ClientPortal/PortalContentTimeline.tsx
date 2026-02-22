@@ -212,12 +212,21 @@ export function PortalContentTimeline({ workspaceId, clientId }: PortalContentTi
                             <ExternalLink className="w-3 h-3" />
                             <span>Ver</span>
                           </Button>
-                          {approvalKey !== 'approved' && (
-                            <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] sm:text-xs gap-1 border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10" onClick={() => handleApprove(item)}>
-                              <ThumbsUp className="w-3 h-3" />
-                              <span>Aprovar</span>
-                            </Button>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "h-7 px-2 text-[10px] sm:text-xs gap-1",
+                              approvalKey === 'approved'
+                                ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-500 cursor-default"
+                                : "border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
+                            )}
+                            onClick={() => approvalKey !== 'approved' && handleApprove(item)}
+                            disabled={approvalKey === 'approved'}
+                          >
+                            <ThumbsUp className="w-3 h-3" />
+                            <span>{approvalKey === 'approved' ? 'Aprovado' : 'Aprovar'}</span>
+                          </Button>
                           {approvalKey !== 'adjustment_requested' && (
                             <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] sm:text-xs gap-1 border-orange-500/30 text-orange-500 hover:bg-orange-500/10" onClick={() => { setReviewItem(item); setAdjustmentNotes(item.client_adjustment_notes ?? ''); }}>
                               <MessageSquare className="w-3 h-3" />
