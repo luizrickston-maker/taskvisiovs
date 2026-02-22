@@ -64,7 +64,7 @@ export default function PortalDashboard() {
             <Skeleton className="h-48 rounded-xl" />
           </div>
         ) : portalInfo ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start">
+          <div className="space-y-4 sm:space-y-6">
             <PortalCalendar workspaceId={portalInfo.workspace_id} clientId={portalInfo.client_id} />
             <PortalContents />
           </div>
