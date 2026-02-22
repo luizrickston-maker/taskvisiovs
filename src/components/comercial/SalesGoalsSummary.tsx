@@ -231,7 +231,7 @@ export function SalesGoalsSummary({ onAddGoal }: SalesGoalsSummaryProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute top-2 right-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  className="absolute top-2 right-2 h-8 w-8 transition-opacity text-muted-foreground hover:text-destructive"
                   onClick={() => handleDeleteGoal(goal.id)}
                 >
                   <Trash2 className="w-4 h-4" />

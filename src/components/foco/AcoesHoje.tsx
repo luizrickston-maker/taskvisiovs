@@ -149,7 +149,7 @@ export default function AcoesHoje() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-7 w-7 transition-opacity"
                   onClick={() => handleDelete(task.id)}
                 >
                   <Trash2 className="w-4 h-4 text-destructive" />

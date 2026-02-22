@@ -147,7 +147,7 @@ export default function FerramentasPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                    className="h-7 w-7 transition-opacity text-destructive hover:text-destructive"
                     onClick={() => handleDelete(tool.id)}
                   >
                     <Trash2 className="w-4 h-4" />

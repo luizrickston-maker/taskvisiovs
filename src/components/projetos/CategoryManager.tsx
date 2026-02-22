@@ -174,7 +174,7 @@ export default function CategoryManager({ selectedCategory, onSelectCategory }: 
             <span className="truncate max-w-[100px]">{cat.name}</span>
             <button
               onClick={(e) => handleDelete(e, cat.id)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-white/20 rounded ml-0.5"
+              className="transition-opacity p-0.5 hover:bg-white/20 rounded ml-0.5"
             >
               <Trash2 className="w-3 h-3" />
             </button>

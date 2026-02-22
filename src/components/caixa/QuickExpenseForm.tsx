@@ -180,7 +180,7 @@ export function QuickExpenseForm() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-8 w-8 transition-opacity"
                     onClick={() => handleDelete(expense.id)}
                     aria-label={`Excluir custo ${expense.description}`}
                   >
