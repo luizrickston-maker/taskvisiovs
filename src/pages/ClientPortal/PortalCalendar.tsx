@@ -181,6 +181,7 @@ export function PortalCalendar({ workspaceId, clientId }: PortalCalendarProps) {
       .channel(`portal-calendar-${clientId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'editorial_calendar_items', filter: `client_id=eq.${clientId}` }, () => {
         queryClient.invalidateQueries({ queryKey });
+        queryClient.invalidateQueries({ queryKey: ['portal-timeline', workspaceId, clientId] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };

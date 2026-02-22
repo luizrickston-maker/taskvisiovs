@@ -114,6 +114,7 @@ export function PortalContentTimeline({ workspaceId, clientId }: PortalContentTi
       .channel(`portal-timeline-${clientId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'editorial_calendar_items', filter: `client_id=eq.${clientId}` }, () => {
         queryClient.invalidateQueries({ queryKey });
+        queryClient.invalidateQueries({ queryKey: ['portal-calendar', workspaceId, clientId] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
