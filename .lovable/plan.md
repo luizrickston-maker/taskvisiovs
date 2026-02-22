@@ -1,250 +1,70 @@
 
 
-# Plano: Componente ProductForm para Catálogo de Produtos
+# Encurtar Link do Portal do Cliente
 
-## Visao Geral
+## Problema Identificado
 
-Criar um formulário completo para gerenciamento de produtos do catálogo, incluindo a estrutura de dados e estado necessários.
+O link gerado pelo sistema de magic link aponta para o endpoint de autenticacao do backend, resultando em uma URL extremamente longa:
 
-## Arquitetura da Solucao
-
-```text
-ProductForm (Dialog)
-├── Campos principais do Produto
-│   ├── name (obrigatório)
-│   ├── description (opcional)
-│   ├── sku (código único)
-│   ├── cost_price (CurrencyInput)
-│   └── image_url (opcional)
-├── Gerenciamento de Precificação
-│   └── ProductPricingDetailManager (sub-componente)
-│       └── Lista de detalhes com modelo de precificação
-└── Ações
-    ├── Salvar (create/update via Supabase)
-    └── Cancelar
+```
+https://kxuwzhnkragzsqafszpo.supabase.co/auth/v1/verify?token=<token_longo>&type=magiclink&redirect_to=https%3A%2F%2Ftaskvisionpro.lovable.app%2Fauth%2Fcallback
 ```
 
-## Etapas de Implementacao
+Isso causa dois problemas:
+- Apps de mensagem no mobile truncam ou quebram o link, impedindo o acesso
+- A URL expoe o ID do projeto backend, o que nao e ideal
 
-### Etapa 1: Atualizar Tipos TypeScript
+## Solucao: Sistema de Short Links interno
 
-Adicionar interfaces `Product` e `ProductPricingDetail` em `src/types/database.ts`:
+Criar um encurtador de links interno que transforma a URL longa em algo como:
 
-```typescript
-// Catalog Types - Products
-export interface Product {
-  id: string;
-  user_id: string;
-  name: string;
-  description?: string;
-  sku?: string;
-  cost_price: number;
-  image_url?: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ProductPricingDetail {
-  id: string;
-  product_id: string;
-  pricing_model_id: string;
-  base_price?: number;
-  min_units?: number;
-  max_units?: number;
-  unit_name?: string;
-  created_at: string;
-  updated_at: string;
-}
+```
+https://taskvisionpro.lovable.app/p/aB3xK9
 ```
 
-### Etapa 2: Expandir CatalogSlice
+### Etapas
 
-Adicionar gerenciamento de produtos no store Zustand:
+**1. Nova tabela `portal_short_links`**
 
-| Estado | Tipo | Descricao |
-|--------|------|-----------|
-| products | Product[] | Lista de produtos |
-| productPricingDetails | ProductPricingDetail[] | Detalhes de precificacao |
+Armazena o mapeamento entre codigo curto e a URL completa do magic link.
 
-| Acao | Parametros | Descricao |
-|------|------------|-----------|
-| setProducts | products[] | Define lista completa |
-| addProduct | product | Adiciona produto |
-| updateProduct | id, updates | Atualiza produto |
-| deleteProduct | id | Remove produto |
-| setProductPricingDetails | details[] | Define detalhes |
-| addProductPricingDetail | detail | Adiciona detalhe |
-| updateProductPricingDetail | id, updates | Atualiza detalhe |
-| deleteProductPricingDetail | id | Remove detalhe |
+- `id` (uuid, PK)
+- `code` (text, unique, 8 caracteres alfanumericos)
+- `target_url` (text, a URL completa do magic link)
+- `created_at` (timestamptz)
+- `expires_at` (timestamptz, default now() + 1 hora)
+- RLS: somente leitura publica (SELECT) para que a pagina de redirect funcione sem autenticacao
 
-### Etapa 3: Integrar com useInitializeData
+**2. Modificar Edge Function `generate-client-portal-link`**
 
-Adicionar carregamento inicial das tabelas `products` e `product_pricing_details`:
+Apos gerar o magic link, salvar na tabela `portal_short_links` com um codigo curto aleatorio e retornar a URL curta:
 
-```typescript
-// Adicionar nas queries paralelas
-supabase.from('products').select('*').order('name', { ascending: true }),
-supabase.from('product_pricing_details').select('*'),
+```
+https://taskvisionpro.lovable.app/p/<codigo>
 ```
 
-### Etapa 4: Integrar com useRealtimeSync
+**3. Nova pagina React `/p/:code`**
 
-Adicionar listeners de realtime para sincronizacao automatica:
+Uma pagina simples (sem layout) que:
+1. Busca o `target_url` na tabela `portal_short_links` usando o `code`
+2. Valida que o link nao expirou
+3. Redireciona o navegador para o `target_url` (que e o magic link original)
+4. Mostra mensagem de erro se o link for invalido ou expirado
 
-```typescript
-// Products
-.on('postgres_changes', 
-  { event: '*', schema: 'public', table: 'products', filter: `user_id=eq.${userId}` },
-  // handler INSERT/UPDATE/DELETE
-)
-// Product Pricing Details  
-.on('postgres_changes',
-  { event: '*', schema: 'public', table: 'product_pricing_details' },
-  // handler INSERT/UPDATE/DELETE
-)
-```
+**4. Rota no App.tsx**
 
-### Etapa 5: Atualizar resetStore
+Adicionar a rota `/p/:code` fora do ProtectedRoute (acesso publico).
 
-Incluir `products: []` e `productPricingDetails: []` na funcao de reset.
+**5. Atualizar `ClientPortalAccessCard`**
 
-### Etapa 6: Criar ProductForm Component
+O link geral do portal (`PORTAL_URL`) permanece como `https://taskvisionpro.lovable.app/auth`. Apenas o link individual (magic link) sera encurtado.
 
-Arquivo: `src/components/products/ProductForm.tsx`
+---
 
-**Props:**
-```typescript
-interface ProductFormProps {
-  product?: Product;      // undefined = modo criacao
-  onClose: () => void;
-}
-```
+### Detalhes Tecnicos
 
-**Campos do Formulario:**
-
-| Campo | Componente | Validacao |
-|-------|------------|-----------|
-| name | Input | Obrigatorio, max 50 chars |
-| description | Textarea | Opcional, max 200 chars |
-| sku | Input | Opcional, max 30 chars |
-| cost_price | CurrencyInput | Obrigatorio, max 999.999.999,99 |
-| image_url | Input | Opcional, URL valida |
-
-**Comportamento:**
-- Modo criacao: campos vazios, botao "Criar Produto"
-- Modo edicao: pre-preenche com dados do produto, botao "Salvar Alteracoes"
-- Validacao com feedback visual
-- Toast de sucesso/erro apos operacao
-- Fecha dialog apos sucesso
-
-### Etapa 7: Sub-componente ProductPricingDetailManager (Opcional/Futuro)
-
-Para gerenciar os detalhes de precificacao associados ao produto. Pode ser implementado como segunda fase.
-
-## Arquivos a Criar/Modificar
-
-| Arquivo | Acao | Descricao |
-|---------|------|-----------|
-| `src/types/database.ts` | Editar | Adicionar Product e ProductPricingDetail |
-| `src/stores/slices/catalogSlice.ts` | Editar | Adicionar estado e acoes de products |
-| `src/stores/useAppStore.ts` | Editar | Incluir products no resetStore |
-| `src/hooks/useInitializeData.ts` | Editar | Carregar products e details |
-| `src/hooks/useRealtimeSync.ts` | Editar | Sincronizar products em tempo real |
-| `src/components/products/ProductForm.tsx` | Criar | Formulario principal |
-
-## Secao Tecnica
-
-### Estrutura do Banco de Dados (Existente)
-
-```text
-products
-├── id: uuid (PK)
-├── user_id: uuid (FK -> auth.users)
-├── name: text (NOT NULL)
-├── description: text
-├── sku: text
-├── cost_price: numeric
-├── image_url: text
-├── is_active: boolean (default true)
-├── created_at: timestamptz
-└── updated_at: timestamptz
-
-product_pricing_details
-├── id: uuid (PK)
-├── product_id: uuid (FK -> products)
-├── pricing_model_id: uuid (FK -> pricing_models)
-├── base_price: numeric
-├── min_units: integer
-├── max_units: integer
-├── unit_name: text
-├── created_at: timestamptz
-└── updated_at: timestamptz
-```
-
-### Padrao de Formulario (Seguindo InvestmentForm)
-
-```typescript
-// Estrutura do componente
-export function ProductForm({ product, onClose }: ProductFormProps) {
-  // Estados locais para cada campo
-  const [name, setName] = useState('');
-  const [costPrice, setCostPrice] = useState('');
-  // ...
-
-  // Efeito para popular em modo edicao
-  useEffect(() => {
-    if (product) {
-      setName(product.name);
-      setCostPrice(numberToBRL(product.cost_price));
-      // ...
-    }
-  }, [product]);
-
-  // Handler de submit com persistencia Supabase
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const data = {
-      name: name.trim(),
-      cost_price: parseBRLToNumber(costPrice),
-      // ...
-    };
-
-    if (product?.id) {
-      // UPDATE
-      await supabase.from('products').update(data).eq('id', product.id);
-      updateProduct(product.id, data);
-    } else {
-      // INSERT
-      const { data: newProduct } = await supabase.from('products').insert(data).select().single();
-      addProduct(newProduct);
-    }
-    
-    onClose();
-  };
-
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <form onSubmit={handleSubmit}>
-          {/* Campos */}
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-```
-
-### Validacao com Zod (Opcional)
-
-```typescript
-const productSchema = z.object({
-  name: z.string().trim().min(1).max(50),
-  description: z.string().max(200).optional(),
-  sku: z.string().max(30).optional(),
-  cost_price: z.number().min(0).max(999999999.99),
-  image_url: z.string().url().optional().or(z.literal('')),
-});
-```
+- Geracao do codigo curto: 8 caracteres usando `crypto.getRandomValues` com charset alfanumerico (a-z, A-Z, 0-9) -- 62^8 = ~218 trilhoes de combinacoes
+- Expiracao padrao: 1 hora (magic links do Supabase expiram em 1h por padrao)
+- Tabela com RLS: politica SELECT para `anon` role (necessario para lookup sem autenticacao), INSERT restrito a `service_role` (feito pela edge function)
+- A pagina `/p/:code` exibe um spinner enquanto carrega e mensagem amigavel se expirado
 
