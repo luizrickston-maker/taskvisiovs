@@ -493,7 +493,7 @@ export default function ClientesFinaisPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                         className="h-8 w-8 transition-opacity"
                         onClick={() => toggleActiveMutation.mutate({ id: c.id, is_active: !c.is_active })}
                         disabled={toggleActiveMutation.isPending}
                       >
@@ -502,7 +502,7 @@ export default function ClientesFinaisPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                         className="h-8 w-8 transition-opacity"
                         onClick={() => { setEditingClient(c); setFormOpen(true); }}
                       >
                         <Edit2 className="w-4 h-4 text-muted-foreground" />
@@ -510,7 +510,7 @@ export default function ClientesFinaisPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive"
+                        className="h-8 w-8 transition-opacity hover:text-destructive"
                         onClick={() => setDeletingId(c.id)}
                       >
                         <Trash2 className="w-4 h-4" />

@@ -102,7 +102,7 @@ export default function ProjectCard({ project, category, onEdit, onDelete }: Pro
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-7 w-7 transition-opacity"
               onClick={(e) => e.stopPropagation()}
             >
               <MoreVertical className="w-4 h-4" />
