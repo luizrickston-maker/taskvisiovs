@@ -1,6 +1,7 @@
 import { useClientPortalInfo } from '@/hooks/useClientPortalInfo';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { PortalCalendar } from './PortalCalendar';
+import { PortalContentTimeline } from './PortalContentTimeline';
 import { PortalContents } from './PortalContents';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -66,6 +67,7 @@ export default function PortalDashboard() {
         ) : portalInfo ? (
           <div className="space-y-4 sm:space-y-6">
             <PortalCalendar workspaceId={portalInfo.workspace_id} clientId={portalInfo.client_id} />
+            <PortalContentTimeline workspaceId={portalInfo.workspace_id} clientId={portalInfo.client_id} />
             <PortalContents />
           </div>
         ) : null}
