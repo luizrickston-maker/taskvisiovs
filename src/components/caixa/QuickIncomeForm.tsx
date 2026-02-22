@@ -10,6 +10,7 @@ import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/currency';
 import type { Income } from '@/types/database';
 
 export function QuickIncomeForm() {
@@ -23,13 +24,6 @@ export function QuickIncomeForm() {
 
   const incomeCategories = categories.filter((c) => c.type === 'income');
   const todayIncomes = incomes.filter((i) => isToday(parseISO(i.date)));
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const todayTotal = todayIncomes.reduce((acc, i) => acc + Number(i.amount), 0);
 

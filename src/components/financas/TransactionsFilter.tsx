@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAppStore } from '@/stores/useAppStore';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 
 type TabType = 'all' | 'income' | 'expense';
 
@@ -20,13 +21,6 @@ export function TransactionsFilter() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const getCategoryName = (categoryId?: string) => {
     if (!categoryId) return 'Sem categoria';

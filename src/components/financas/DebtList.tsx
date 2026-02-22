@@ -9,20 +9,34 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAppStore } from '@/stores/useAppStore';
+import { useUserDebtCategories } from '@/hooks/useFinanceCategories';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/currency';
 import { DebtForm } from './DebtForm';
 import type { Debt } from '@/types/database';
 
 export function DebtList() {
   const { debts, categories, updateDebt, deleteDebt } = useAppStore();
+  const { data: userDebtCategories = [] } = useUserDebtCategories();
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
+  const getCategoryInfo = (debt: Debt) => {
+    // First try user custom category
+    if (debt.user_category_id) {
+      const userCat = userDebtCategories.find((c) => c.id === debt.user_category_id);
+      if (userCat) {
+        return { name: userCat.name, color: '#ef4444', isCustom: true };
+      }
+    }
+    // Then try system category
+    if (debt.category_id) {
+      const systemCat = categories.find((c) => c.id === debt.category_id);
+      if (systemCat) {
+        return { name: systemCat.name, color: systemCat.color, isCustom: false };
+      }
+    }
+    return { name: 'Sem categoria', color: '#6b7280', isCustom: false };
   };
 
   const handleTogglePaid = async (debt: Debt) => {
@@ -48,16 +62,6 @@ export function DebtList() {
       deleteDebt(id);
       toast.success('Dívida removida');
     }
-  };
-
-  const getCategoryColor = (categoryId?: string) => {
-    const category = categories.find((c) => c.id === categoryId);
-    return category?.color || '#6b7280';
-  };
-
-  const getCategoryName = (categoryId?: string) => {
-    const category = categories.find((c) => c.id === categoryId);
-    return category?.name || 'Sem categoria';
   };
 
   const getTypeLabel = (type: string) => {
@@ -154,17 +158,22 @@ export function DebtList() {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <Badge
-                            variant="secondary"
-                            className="text-xs gap-1"
-                            style={{ borderColor: getCategoryColor(debt.category_id) }}
-                          >
-                            <div
-                              className="w-2 h-2 rounded-full"
-                              style={{ backgroundColor: getCategoryColor(debt.category_id) }}
-                            />
-                            {getCategoryName(debt.category_id)}
-                          </Badge>
+                          {(() => {
+                            const catInfo = getCategoryInfo(debt);
+                            return (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs gap-1"
+                                style={{ borderColor: catInfo.color }}
+                              >
+                                <div
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: catInfo.color }}
+                                />
+                                {catInfo.name}
+                              </Badge>
+                            );
+                          })()}
 
                           <Badge variant="outline" className="text-xs gap-1">
                             {getTypeIcon(debt.type)}

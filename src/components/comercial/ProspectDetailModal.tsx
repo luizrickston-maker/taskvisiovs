@@ -13,6 +13,7 @@ import { ptBR } from 'date-fns/locale';
 import { useAppStore } from '@/stores/useAppStore';
 import { ProspectDocuments } from './ProspectDocuments';
 import { DocumentTypeManager } from './DocumentTypeManager';
+import { formatCurrency } from '@/lib/currency';
 import type { Prospect, ProspectStatus } from '@/types/database';
 
 const statusConfig: Record<ProspectStatus, { label: string; className: string }> = {
@@ -45,10 +46,6 @@ export function ProspectDetailModal({
   const project = prospect.project_id 
     ? projects.find(p => p.id === prospect.project_id)
     : null;
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
 
   return (
     <>

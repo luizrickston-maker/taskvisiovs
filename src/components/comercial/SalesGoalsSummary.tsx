@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 import type { SalesGoalType } from '@/types/database';
 
 const goalTypeConfig: Record<SalesGoalType, { label: string; icon: typeof Target; colorClass: string }> = {
@@ -44,12 +45,10 @@ export function SalesGoalsSummary({ onAddGoal }: SalesGoalsSummaryProps) {
   
   const filteredGoals = useMemo(() => {
     return salesGoals.filter(goal => {
-      // 1. Filter by type
       if (typeFilter !== 'all' && goal.goal_type !== typeFilter) {
         return false;
       }
       
-      // 2. Filter by project
       if (projectFilter !== 'all') {
         if (projectFilter === 'none' && goal.project_id !== null) {
           return false;
@@ -58,17 +57,14 @@ export function SalesGoalsSummary({ onAddGoal }: SalesGoalsSummaryProps) {
         }
       }
       
-      // 3. Filter by date range
       try {
         const goalStart = parseISO(goal.start_date);
         const goalEnd = parseISO(goal.end_date);
         
-        // If start date filter is set, goal must end after or on that date
         if (startDateFilter && goalEnd < startDateFilter) {
           return false;
         }
         
-        // If end date filter is set, goal must start before or on that date
         if (endDateFilter && goalStart > endDateFilter) {
           return false;
         }
@@ -79,10 +75,6 @@ export function SalesGoalsSummary({ onAddGoal }: SalesGoalsSummaryProps) {
       return true;
     });
   }, [salesGoals, typeFilter, projectFilter, startDateFilter, endDateFilter]);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
 
   const getProjectName = (projectId?: string) => {
     if (!projectId) return null;

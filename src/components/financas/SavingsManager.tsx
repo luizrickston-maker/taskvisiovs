@@ -13,6 +13,7 @@ import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/currency';
 import type { Saving } from '@/types/database';
 
 export function SavingsManager() {
@@ -24,13 +25,6 @@ export function SavingsManager() {
 
   const { user } = useAuthContext();
   const { savings, addSaving, deleteSaving } = useAppStore();
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const totalSavings = savings.reduce((acc, s) => acc + Number(s.amount), 0);
 

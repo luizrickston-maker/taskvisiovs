@@ -8,8 +8,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAppStore } from '@/stores/useAppStore';
+import { useUserDebtCategories } from '@/hooks/useFinanceCategories';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/currency';
 import type { Debt } from '@/types/database';
 
 /**
@@ -29,13 +31,7 @@ function getWeekdayOccurrencesInMonth(dayOfWeek: number, month: Date): number {
 export function ContasCriticas() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const { debts, categories, updateDebt } = useAppStore();
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
+  const { data: userDebtCategories = [] } = useUserDebtCategories();
 
   // Filter debts for current month
   const monthDebts = useMemo(() => {
@@ -163,9 +159,16 @@ export function ContasCriticas() {
     }
   };
 
-  const getCategoryColor = (categoryId?: string) => {
-    const category = categories.find((c) => c.id === categoryId);
-    return category?.color || '#6b7280';
+  const getCategoryColor = (debt: Debt) => {
+    if (debt.user_category_id) {
+      const userCat = userDebtCategories.find((c) => c.id === debt.user_category_id);
+      if (userCat) return '#ef4444';
+    }
+    if (debt.category_id) {
+      const category = categories.find((c) => c.id === debt.category_id);
+      return category?.color || '#6b7280';
+    }
+    return '#6b7280';
   };
 
   const totalMonth = monthDebts.reduce((acc, d) => acc + getMonthlyAmount(d), 0);
@@ -243,7 +246,7 @@ export function ContasCriticas() {
                     
                     <div
                       className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: getCategoryColor(debt.category_id) }}
+                      style={{ backgroundColor: getCategoryColor(debt) }}
                     />
 
                     <div className="flex-1 min-w-0">

@@ -3,16 +3,10 @@ import { Calendar, CalendarDays, CalendarRange } from 'lucide-react';
 import { startOfDay, subDays, isAfter, parseISO, isSameDay } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppStore } from '@/stores/useAppStore';
+import { formatCurrency } from '@/lib/currency';
 
 export function EarningsSummary() {
   const { incomes, expenses } = useAppStore();
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const summary = useMemo(() => {
     const now = new Date();

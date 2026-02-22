@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatCurrency } from '@/lib/currency';
 import type { Prospect, ProspectStatus } from '@/types/database';
 
 const statusConfig: Record<ProspectStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
@@ -36,10 +37,6 @@ export function ProspectList({ onAddProspect, onEditProspect, onViewProspect, on
     if (statusFilter === 'all') return prospects;
     return prospects.filter(p => p.status === statusFilter);
   }, [prospects, statusFilter]);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
 
   const getProjectName = (projectId?: string) => {
     if (!projectId) return '-';
