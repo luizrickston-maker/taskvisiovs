@@ -5,6 +5,7 @@ import { format, subDays, parseISO, startOfDay, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppStore } from '@/stores/useAppStore';
+import { formatCurrency } from '@/lib/currency';
 
 export function FinanceChart() {
   const { incomes, expenses } = useAppStore();
@@ -34,14 +35,6 @@ export function FinanceChart() {
 
     return data;
   }, [incomes, expenses]);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
 
   return (
     <Card className="glass-card animate-fade-in">

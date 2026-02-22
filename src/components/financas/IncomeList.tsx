@@ -13,6 +13,7 @@ import { useUserIncomeCategories } from '@/hooks/useFinanceCategories';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { IncomeForm } from './IncomeForm';
+import { formatCurrency } from '@/lib/currency';
 import type { Income, IncomeType } from '@/types/database';
 
 // =====================================================
@@ -45,13 +46,6 @@ export function IncomeList() {
   const { incomes, categories, deleteIncome } = useAppStore();
   const { data: userIncomeCategories = [] } = useUserIncomeCategories();
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('incomes').delete().eq('id', id);

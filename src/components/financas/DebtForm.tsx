@@ -14,6 +14,7 @@ import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useUserDebtCategories } from '@/hooks/useFinanceCategories';
 import type { Debt, DebtType } from '@/types/database';
 
 const WEEKDAYS = [
@@ -81,6 +82,7 @@ export function DebtForm({ debt, onClose, open: controlledOpen, onOpenChange, tr
   const [dueDate, setDueDate] = useState<Date>();
   const [weekday, setWeekday] = useState<string>('5');
   const [type, setType] = useState<DebtType>('variable');
+  const [userCategoryId, setUserCategoryId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [installmentCurrent, setInstallmentCurrent] = useState('');
   const [installmentTotal, setInstallmentTotal] = useState('');
@@ -89,6 +91,7 @@ export function DebtForm({ debt, onClose, open: controlledOpen, onOpenChange, tr
 
   const { user } = useAuthContext();
   const { categories, addDebt, updateDebt } = useAppStore();
+  const { data: userDebtCategories = [] } = useUserDebtCategories();
 
   const debtCategories = categories.filter((c) => c.type === 'debt');
 
@@ -99,6 +102,7 @@ export function DebtForm({ debt, onClose, open: controlledOpen, onOpenChange, tr
       setAmount(String(debt.amount));
       setType(debt.type as DebtType);
       setCategoryId(debt.category_id || '');
+      setUserCategoryId(debt.user_category_id || '');
       setNotes(debt.notes || '');
       
       if (debt.type === 'weekly') {
@@ -121,6 +125,7 @@ export function DebtForm({ debt, onClose, open: controlledOpen, onOpenChange, tr
     setWeekday('5');
     setType('variable');
     setCategoryId('');
+    setUserCategoryId('');
     setInstallmentCurrent('');
     setInstallmentTotal('');
     setNotes('');
@@ -186,6 +191,7 @@ export function DebtForm({ debt, onClose, open: controlledOpen, onOpenChange, tr
       due_date: format(effectiveDueDate, 'yyyy-MM-dd'),
       type,
       category_id: categoryId || null,
+      user_category_id: userCategoryId || null,
       installment_current: type === 'installment' ? parseInt(installmentCurrent) : null,
       installment_total: type === 'installment' ? parseInt(installmentTotal) : null,
       notes: notes.trim() || null,
@@ -344,18 +350,37 @@ export function DebtForm({ debt, onClose, open: controlledOpen, onOpenChange, tr
 
             <div className="space-y-2">
               <Label>Categoria</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
+              <Select 
+                value={userCategoryId ? `user_${userCategoryId}` : categoryId || ''} 
+                onValueChange={(val) => {
+                  if (val.startsWith('user_')) {
+                    setUserCategoryId(val.replace('user_', ''));
+                    setCategoryId('');
+                  } else {
+                    setCategoryId(val);
+                    setUserCategoryId('');
+                  }
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecionar" />
                 </SelectTrigger>
                 <SelectContent>
-                  {debtCategories.map((cat) => (
+                  {debtCategories.length > 0 && debtCategories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       <div className="flex items-center gap-2">
                         <div
                           className="w-2 h-2 rounded-full"
                           style={{ backgroundColor: cat.color }}
                         />
+                        {cat.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                  {userDebtCategories.length > 0 && userDebtCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={`user_${cat.id}`}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-destructive" />
                         {cat.name}
                       </div>
                     </SelectItem>
