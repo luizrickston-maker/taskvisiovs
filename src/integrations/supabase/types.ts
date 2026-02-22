@@ -1052,6 +1052,30 @@ export type Database = {
           },
         ]
       }
+      portal_short_links: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          target_url: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          target_url: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          target_url?: string
+        }
+        Relationships: []
+      }
       pricing_models: {
         Row: {
           created_at: string | null
