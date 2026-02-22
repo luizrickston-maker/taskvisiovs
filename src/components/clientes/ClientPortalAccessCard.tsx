@@ -17,7 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Globe, UserPlus, UserMinus, RefreshCw, Loader2, ShieldCheck, ShieldOff, UserCheck, Copy, Check, ExternalLink } from 'lucide-react';
+import { Globe, UserPlus, UserMinus, RefreshCw, Loader2, ShieldCheck, ShieldOff, UserCheck, Copy, Check, ExternalLink, KeyRound } from 'lucide-react';
+import { CredentialsModal } from './CredentialsModal';
 
 const PORTAL_URL = 'https://taskvisionpro.lovable.app/auth';
 
@@ -50,6 +51,8 @@ export function ClientPortalAccessCard({
   const [copied, setCopied] = useState(false);
   const [copyingLinkId, setCopyingLinkId] = useState<string | null>(null);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
+  const [generatingPasswordId, setGeneratingPasswordId] = useState<string | null>(null);
+  const [credentialsData, setCredentialsData] = useState<{ email: string; password: string } | null>(null);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(PORTAL_URL);
@@ -147,6 +150,37 @@ export function ClientPortalAccessCard({
     }
   };
 
+  const handleGeneratePassword = async (userEmail: string, userId: string) => {
+    setGeneratingPasswordId(userId);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-client-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ email: userEmail, clientId, workspaceId, clientName }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok && res.status !== 409) throw new Error(data.error || 'Erro');
+      
+      const password = data.password;
+      if (password) {
+        setCredentialsData({ email: userEmail, password });
+      } else {
+        toast.info('Usuário já possui acesso. Use "Reenviar" para enviar email.');
+      }
+    } catch {
+      toast.error('Erro ao gerar nova senha.');
+    } finally {
+      setGeneratingPasswordId(null);
+    }
+  };
+
   const activeUsers = users.filter(u => u.is_active);
   const inactiveUsers = users.filter(u => !u.is_active);
 
@@ -212,7 +246,21 @@ export function ClientPortalAccessCard({
                       </Badge>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 px-2 gap-1 text-muted-foreground hover:text-foreground text-xs"
+                      onClick={() => handleGeneratePassword(user.email, user.user_id)}
+                      disabled={generatingPasswordId === user.user_id}
+                      title="Gerar nova senha para o cliente"
+                    >
+                      {generatingPasswordId === user.user_id
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <KeyRound className="w-3.5 h-3.5" />
+                      }
+                      <span>Senha</span>
+                    </Button>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -360,6 +408,16 @@ export function ClientPortalAccessCard({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {credentialsData && (
+        <CredentialsModal
+          open={!!credentialsData}
+          onOpenChange={(open) => { if (!open) setCredentialsData(null); }}
+          email={credentialsData.email}
+          password={credentialsData.password}
+          clientName={clientName}
+        />
+      )}
     </>
   );
 }
