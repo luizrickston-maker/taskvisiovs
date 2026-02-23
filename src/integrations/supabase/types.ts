@@ -2120,6 +2120,30 @@ export type Database = {
         }
         Relationships: []
       }
+      tool_categories: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_debt_categories: {
         Row: {
           created_at: string
@@ -2227,6 +2251,7 @@ export type Database = {
       }
       user_tools: {
         Row: {
+          category_id: string | null
           created_at: string
           id: string
           name: string
@@ -2235,6 +2260,7 @@ export type Database = {
           workspace_id: string | null
         }
         Insert: {
+          category_id?: string | null
           created_at?: string
           id?: string
           name: string
@@ -2243,6 +2269,7 @@ export type Database = {
           workspace_id?: string | null
         }
         Update: {
+          category_id?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -2251,6 +2278,13 @@ export type Database = {
           workspace_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "user_tools_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "tool_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_tools_workspace_id_fkey"
             columns: ["workspace_id"]
