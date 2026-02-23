@@ -1,4 +1,4 @@
-import { Wallet, TrendingUp, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Package, Users, User, Building2, Brain, CalendarDays, Wrench } from 'lucide-react';
+import { Wallet, TrendingUp, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Package, Users, User, Building2, Brain, CalendarDays, Wrench, ShoppingBag, FileText } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
@@ -19,9 +19,10 @@ const personalMainNavItems = [
 ];
 
 const personalMoreNavItems = [
+  { title: 'Planejamento', url: '/planejamento', icon: ShoppingBag },
   { title: 'Projetos', url: '/projetos', icon: FolderKanban },
   { title: 'Roteiros', url: '/roteiros', icon: Pen },
-  { title: 'Conteúdos', url: '/conteudos', icon: Calendar },
+  { title: 'Conteúdos', url: '/conteudos', icon: FileText },
   { title: 'Ferramentas', url: '/ferramentas', icon: Wrench },
   { title: 'Config', url: '/config', icon: Settings },
 ];
@@ -34,6 +35,8 @@ const businessMainNavItems = [
 ];
 
 const businessMoreNavItems = [
+  { title: 'Calendário', url: '/pj/calendario-editorial', icon: Calendar },
+  { title: 'Clientes', url: '/comercial/clientes', icon: Users },
   { title: 'Time', url: '/pj/time', icon: Users },
   { title: 'Planos', url: '/pj/planos', icon: Package },
   { title: 'Investimentos', url: '/pj/investimentos', icon: TrendingUp },
