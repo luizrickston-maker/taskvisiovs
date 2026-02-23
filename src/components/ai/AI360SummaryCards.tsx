@@ -378,6 +378,7 @@ interface KPICardProps {
   subtitle?: string;
   alert?: number;
   alertLabel?: string;
+  onClick?: () => void;
 }
 
 function KPICard({
@@ -391,9 +392,10 @@ function KPICard({
   subtitle,
   alert,
   alertLabel,
+  onClick,
 }: KPICardProps) {
   return (
-    <Card className="glass-card">
+    <Card className={`glass-card transition-all ${onClick ? 'cursor-pointer hover:bg-muted/50' : ''}`} onClick={onClick}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
