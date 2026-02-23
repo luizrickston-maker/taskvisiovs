@@ -226,7 +226,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         </Card>
 
         {/* Editorial Calendar */}
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:bg-muted/50 transition-all" onClick={() => navigate('/pj/calendario-editorial')}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4 text-kpi-editorial" />
