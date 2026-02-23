@@ -18,13 +18,10 @@ import AuthCallback from "@/pages/AuthCallback";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
+// ALL app pages lazy loaded for fast initial bundle
 const PortalRedirect = lazy(() => import("@/pages/PortalRedirect"));
-
-// Core pages - loaded eagerly (most accessed)
-import CaixaDashboard from "@/pages/CaixaDashboard";
-import FocoDashboard from "@/pages/FocoDashboard";
-
-// Lazy loaded pages - less frequently accessed or heavy
+const CaixaDashboard = lazy(() => import("@/pages/CaixaDashboard"));
+const FocoDashboard = lazy(() => import("@/pages/FocoDashboard"));
 const FinancasDashboard = lazy(() => import("@/pages/FinancasDashboard"));
 const PlanejamentoDashboard = lazy(() => import("@/pages/PlanejamentoDashboard"));
 const ProjetosDashboard = lazy(() => import("@/pages/ProjetosDashboard"));
@@ -55,7 +52,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 5 * 60 * 1000,
+      staleTime: 10 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -137,9 +136,17 @@ const App = () => {
                   </ProtectedRoute>
                 }
               >
-                {/* Personal Routes - Core (eager) */}
-                <Route path="/caixa" element={<CaixaDashboard />} />
-                <Route path="/meu-dia" element={<FocoDashboard />} />
+                {/* Personal Routes - Core */}
+                <Route path="/caixa" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <CaixaDashboard />
+                  </Suspense>
+                } />
+                <Route path="/meu-dia" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <FocoDashboard />
+                  </Suspense>
+                } />
                 <Route path="/foco" element={<Navigate to="/meu-dia" replace />} />
                 
                 {/* Personal Routes - Lazy loaded */}
