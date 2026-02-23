@@ -44,7 +44,6 @@ async function sendCredentialsEmail(
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color:#1e293b;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.4);">
-          <!-- Header -->
           <tr>
             <td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px 40px;text-align:center;">
               <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:-0.5px;">
@@ -52,8 +51,6 @@ async function sendCredentialsEmail(
               </h1>
             </td>
           </tr>
-
-          <!-- Body -->
           <tr>
             <td style="padding:40px;">
               <p style="margin:0 0 16px;color:#cbd5e1;font-size:16px;line-height:1.6;">
@@ -62,42 +59,20 @@ async function sendCredentialsEmail(
               <p style="margin:0 0 28px;color:#94a3b8;font-size:14px;line-height:1.6;">
                 Abaixo estão suas credenciais de acesso para o portal de <strong style="color:#e2e8f0;">${clientName}</strong>:
               </p>
-
-              <!-- Credentials Box -->
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0f172a;border-radius:8px;border:1px solid #334155;margin-bottom:28px;">
                 <tr>
                   <td style="padding:24px;">
                     <table width="100%" cellpadding="0" cellspacing="8">
-                      <tr>
-                        <td style="color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;padding-bottom:4px;">Portal</td>
-                      </tr>
-                      <tr>
-                        <td style="padding-bottom:20px;">
-                          <a href="${portalUrl}" style="color:#818cf8;font-size:14px;text-decoration:none;">${portalUrl}</a>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;padding-bottom:4px;">E-mail</td>
-                      </tr>
-                      <tr>
-                        <td style="padding-bottom:20px;">
-                          <span style="color:#e2e8f0;font-size:14px;font-family:monospace;">${email}</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;padding-bottom:4px;">Senha</td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <span style="color:#a78bfa;font-size:16px;font-family:monospace;font-weight:700;background-color:#1e1b4b;padding:8px 16px;border-radius:6px;display:inline-block;letter-spacing:2px;">${password}</span>
-                        </td>
-                      </tr>
+                      <tr><td style="color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;padding-bottom:4px;">Portal</td></tr>
+                      <tr><td style="padding-bottom:20px;"><a href="${portalUrl}" style="color:#818cf8;font-size:14px;text-decoration:none;">${portalUrl}</a></td></tr>
+                      <tr><td style="color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;padding-bottom:4px;">E-mail</td></tr>
+                      <tr><td style="padding-bottom:20px;"><span style="color:#e2e8f0;font-size:14px;font-family:monospace;">${email}</span></td></tr>
+                      <tr><td style="color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;padding-bottom:4px;">Senha</td></tr>
+                      <tr><td><span style="color:#a78bfa;font-size:16px;font-family:monospace;font-weight:700;background-color:#1e1b4b;padding:8px 16px;border-radius:6px;display:inline-block;letter-spacing:2px;">${password}</span></td></tr>
                     </table>
                   </td>
                 </tr>
               </table>
-
-              <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
                 <tr>
                   <td align="center">
@@ -107,8 +82,6 @@ async function sendCredentialsEmail(
                   </td>
                 </tr>
               </table>
-
-              <!-- Security Notice -->
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#422006;border-radius:8px;border:1px solid #92400e;">
                 <tr>
                   <td style="padding:16px 20px;">
@@ -120,8 +93,6 @@ async function sendCredentialsEmail(
               </table>
             </td>
           </tr>
-
-          <!-- Footer -->
           <tr>
             <td style="background-color:#0f172a;padding:20px 40px;text-align:center;border-top:1px solid #1e293b;">
               <p style="margin:0;color:#475569;font-size:12px;">
@@ -190,7 +161,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, clientId, workspaceId, clientName } = await req.json();
+    const { email, clientId, workspaceId, clientName, regeneratePassword } = await req.json();
 
     if (!email || !clientId || !workspaceId) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios ausentes: email, clientId, workspaceId' }), {
@@ -226,10 +197,29 @@ Deno.serve(async (req) => {
 
     const { data: existingRelation } = await supabaseAdmin
       .from('client_users')
-      .select('id, is_active')
+      .select('id, is_active, user_id')
       .eq('client_id', clientId)
       .eq('email', email)
       .maybeSingle();
+
+    // Handle password regeneration for existing active users
+    if (regeneratePassword && existingRelation?.is_active) {
+      const newPassword = generatePassword();
+      const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+      const existingUser = existingUsers?.users?.find(u => u.email === email);
+
+      if (existingUser) {
+        await supabaseAdmin.auth.admin.updateUserById(existingUser.id, { password: newPassword });
+        await sendCredentialsEmail(email, newPassword, clientName ?? 'Portal do Cliente');
+        return new Response(JSON.stringify({ success: true, regenerated: true, password: newPassword }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      return new Response(JSON.stringify({ error: 'Usuário de autenticação não encontrado' }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     if (existingRelation) {
       if (existingRelation.is_active) {
