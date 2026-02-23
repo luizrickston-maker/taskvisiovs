@@ -233,24 +233,26 @@ export function ClientPortalAccessCard({
               {activeUsers.map(user => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20"
+                  className="p-3 rounded-lg border border-border/50 bg-muted/20 space-y-2.5"
                 >
+                  {/* User info row */}
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       <span className="text-xs font-bold text-primary">{user.email[0].toUpperCase()}</span>
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm text-foreground truncate">{user.email}</p>
-                      <Badge variant="outline" className="text-xs border-emerald-500/40 text-emerald-500 mt-0.5">
-                        Ativo
-                      </Badge>
                     </div>
+                    <Badge variant="outline" className="text-xs border-emerald-500/40 text-emerald-500 shrink-0">
+                      Ativo
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                  {/* Actions row */}
+                  <div className="flex items-center gap-1 border-t border-border/30 pt-2">
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 px-2 gap-1 text-muted-foreground hover:text-foreground text-xs"
+                      className="h-7 px-2 gap-1 text-muted-foreground hover:text-foreground text-xs flex-1"
                       onClick={() => handleGeneratePassword(user.email, user.user_id)}
                       disabled={generatingPasswordId === user.user_id}
                       title="Gerar nova senha para o cliente"
@@ -259,12 +261,12 @@ export function ClientPortalAccessCard({
                         ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         : <KeyRound className="w-3.5 h-3.5" />
                       }
-                      <span>Senha</span>
+                      Senha
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 px-2 gap-1 text-muted-foreground hover:text-foreground text-xs"
+                      className="h-7 px-2 gap-1 text-muted-foreground hover:text-foreground text-xs flex-1"
                       onClick={() => handleCopyUserLink(user.email, user.user_id)}
                       disabled={copyingLinkId === user.user_id}
                       title="Copiar link de acesso exclusivo"
@@ -275,14 +277,12 @@ export function ClientPortalAccessCard({
                           ? <Check className="w-3.5 h-3.5 text-primary" />
                           : <Copy className="w-3.5 h-3.5" />
                       }
-                      <span className="hidden sm:inline">
-                        {copiedLinkId === user.user_id ? 'Copiado!' : 'Link'}
-                      </span>
+                      {copiedLinkId === user.user_id ? 'Copiado!' : 'Link'}
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 px-2 gap-1 text-muted-foreground hover:text-foreground text-xs"
+                      className="h-7 px-2 gap-1 text-muted-foreground hover:text-foreground text-xs flex-1"
                       onClick={() => handleResend(user.email)}
                       disabled={resendingId === user.email}
                       title="Reenviar convite por email"
@@ -291,12 +291,12 @@ export function ClientPortalAccessCard({
                         ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         : <RefreshCw className="w-3.5 h-3.5" />
                       }
-                      <span className="hidden sm:inline">Reenviar</span>
+                      Reenviar
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
                       onClick={() => setRevokingId(user.id)}
                       title="Desativar acesso"
                     >
