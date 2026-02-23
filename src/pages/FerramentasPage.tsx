@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, ExternalLink, Trash2, Wrench, Search, Tag, X } from 'lucide-react';
+import { Plus, ExternalLink, Trash2, Wrench, Search, Tag, X, Pencil } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
@@ -65,6 +65,7 @@ export default function FerramentasPage() {
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [catName, setCatName] = useState('');
   const [catColor, setCatColor] = useState('#6366f1');
+  const [editingTool, setEditingTool] = useState<UserTool | null>(null);
   const authContext = useAuthContextSafe();
   const userId = authContext?.user?.id;
   const { toast } = useToast();
@@ -94,7 +95,27 @@ export default function FerramentasPage() {
     return result;
   }, [tools, filterCategory, search]);
 
-  const handleAdd = async () => {
+  const resetForm = () => {
+    setName('');
+    setUrl('');
+    setSelectedCategoryId('none');
+    setEditingTool(null);
+  };
+
+  const handleOpenAdd = () => {
+    resetForm();
+    setOpen(true);
+  };
+
+  const handleOpenEdit = (tool: UserTool) => {
+    setEditingTool(tool);
+    setName(tool.name);
+    setUrl(tool.url);
+    setSelectedCategoryId(tool.category_id || 'none');
+    setOpen(true);
+  };
+
+  const handleSave = async () => {
     if (!userId) return;
     const parsed = toolSchema.safeParse({ name, url });
     if (!parsed.success) {
@@ -105,24 +126,35 @@ export default function FerramentasPage() {
     let finalUrl = parsed.data.url;
     if (!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
 
-    const { error } = await supabase
-      .from('user_tools')
-      .insert({
-        user_id: userId,
-        name: parsed.data.name,
-        url: finalUrl,
-        category_id: selectedCategoryId === 'none' ? null : selectedCategoryId,
-      });
+    const categoryId = selectedCategoryId === 'none' ? null : selectedCategoryId;
 
-    if (error) {
-      toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
+    if (editingTool) {
+      const { error } = await supabase
+        .from('user_tools')
+        .update({ name: parsed.data.name, url: finalUrl, category_id: categoryId })
+        .eq('id', editingTool.id);
+
+      if (error) {
+        toast({ title: 'Erro ao atualizar', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Ferramenta atualizada!' });
+        resetForm();
+        setOpen(false);
+        fetchData();
+      }
     } else {
-      toast({ title: 'Ferramenta adicionada!' });
-      setName('');
-      setUrl('');
-      setSelectedCategoryId('none');
-      setOpen(false);
-      fetchData();
+      const { error } = await supabase
+        .from('user_tools')
+        .insert({ user_id: userId, name: parsed.data.name, url: finalUrl, category_id: categoryId });
+
+      if (error) {
+        toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Ferramenta adicionada!' });
+        resetForm();
+        setOpen(false);
+        fetchData();
+      }
     }
     setSaving(false);
   };
@@ -216,53 +248,53 @@ export default function FerramentasPage() {
             </DialogContent>
           </Dialog>
 
-          {/* New Tool Dialog */}
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-2">
-                <Plus className="w-4 h-4" /> Adicionar
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Nova Ferramenta</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-2">
-                <div className="space-y-2">
-                  <Label>Nome</Label>
-                  <Input placeholder="Ex: Figma" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Link</Label>
-                  <Input placeholder="https://figma.com" value={url} onChange={(e) => setUrl(e.target.value)} maxLength={2000} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Categoria (opcional)</Label>
-                  <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sem categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem categoria</SelectItem>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          <div className="flex items-center gap-2">
-                            <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
-                            {cat.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={handleAdd} disabled={saving || !name.trim() || !url.trim()} className="w-full">
-                  {saving ? 'Salvando...' : 'Salvar'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          {/* New Tool Button */}
+          <Button size="sm" className="gap-2" onClick={handleOpenAdd}>
+            <Plus className="w-4 h-4" /> Adicionar
+          </Button>
         </div>
       </div>
+
+      {/* Add/Edit Tool Dialog */}
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingTool ? 'Editar Ferramenta' : 'Nova Ferramenta'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>Nome</Label>
+              <Input placeholder="Ex: Figma" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} />
+            </div>
+            <div className="space-y-2">
+              <Label>Link</Label>
+              <Input placeholder="https://figma.com" value={url} onChange={(e) => setUrl(e.target.value)} maxLength={2000} />
+            </div>
+            <div className="space-y-2">
+              <Label>Categoria (opcional)</Label>
+              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sem categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem categoria</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                        {cat.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleSave} disabled={saving || !name.trim() || !url.trim()} className="w-full">
+              {saving ? 'Salvando...' : editingTool ? 'Atualizar' : 'Salvar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Search + Category Filter */}
       <div className="space-y-3">
@@ -348,14 +380,24 @@ export default function FerramentasPage() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base flex items-center justify-between">
                     <span className="truncate">{tool.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(tool.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => handleOpenEdit(tool)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(tool.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-2">
