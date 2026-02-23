@@ -24,6 +24,8 @@ interface AI360SummaryCardsProps {
 }
 
 export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps) {
+  const navigate = useNavigate();
+
   if (isLoading) {
     return <SummaryCardsSkeleton />;
   }
