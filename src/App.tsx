@@ -136,9 +136,17 @@ const App = () => {
                   </ProtectedRoute>
                 }
               >
-                {/* Personal Routes - Core (eager) */}
-                <Route path="/caixa" element={<CaixaDashboard />} />
-                <Route path="/meu-dia" element={<FocoDashboard />} />
+                {/* Personal Routes - Core */}
+                <Route path="/caixa" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <CaixaDashboard />
+                  </Suspense>
+                } />
+                <Route path="/meu-dia" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <FocoDashboard />
+                  </Suspense>
+                } />
                 <Route path="/foco" element={<Navigate to="/meu-dia" replace />} />
                 
                 {/* Personal Routes - Lazy loaded */}
