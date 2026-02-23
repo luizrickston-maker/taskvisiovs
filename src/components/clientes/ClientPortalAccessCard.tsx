@@ -162,17 +162,17 @@ export function ClientPortalAccessCard({
             'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
             'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
-          body: JSON.stringify({ email: userEmail, clientId, workspaceId, clientName }),
+          body: JSON.stringify({ email: userEmail, clientId, workspaceId, clientName, regeneratePassword: true }),
         }
       );
       const data = await res.json();
-      if (!res.ok && res.status !== 409) throw new Error(data.error || 'Erro');
+      if (!res.ok) throw new Error(data.error || 'Erro');
       
       const password = data.password;
       if (password) {
         setCredentialsData({ email: userEmail, password });
       } else {
-        toast.info('Usuário já possui acesso. Use "Reenviar" para enviar email.');
+        toast.info('Não foi possível gerar a senha.');
       }
     } catch {
       toast.error('Erro ao gerar nova senha.');
