@@ -52,6 +52,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
           trendLabel="em progresso"
           alert={summary.projects?.overdue_count}
           alertLabel="atrasados"
+          onClick={() => navigate('/pj/projetos')}
         />
         
         <KPICard
@@ -63,6 +64,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
           trend={summary.sales_pipeline?.total_prospects ?? 0}
           trendLabel="prospects ativos"
           subtitle={`Ponderado: ${formatCurrency(summary.sales_pipeline?.weighted_value ?? 0)}`}
+          onClick={() => navigate('/comercial')}
         />
         
         <KPICard
@@ -75,6 +77,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
           trendLabel="para hoje"
           alert={summary.tasks?.overdue_count}
           alertLabel="atrasadas"
+          onClick={() => navigate('/pj/projetos')}
         />
         
         <KPICard
@@ -86,6 +89,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
           trend={summary.schedule?.tomorrow ?? 0}
           trendLabel="amanhã"
           subtitle={`${summary.schedule?.this_week ?? 0} esta semana`}
+          onClick={() => navigate('/pj/calendario-editorial')}
         />
       </div>
 
