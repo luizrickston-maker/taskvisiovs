@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { 
   FolderKanban, 
   TrendingUp, 
@@ -23,6 +24,8 @@ interface AI360SummaryCardsProps {
 }
 
 export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps) {
+  const navigate = useNavigate();
+
   if (isLoading) {
     return <SummaryCardsSkeleton />;
   }
@@ -49,6 +52,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
           trendLabel="em progresso"
           alert={summary.projects?.overdue_count}
           alertLabel="atrasados"
+          onClick={() => navigate('/pj/projetos')}
         />
         
         <KPICard
@@ -60,6 +64,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
           trend={summary.sales_pipeline?.total_prospects ?? 0}
           trendLabel="prospects ativos"
           subtitle={`Ponderado: ${formatCurrency(summary.sales_pipeline?.weighted_value ?? 0)}`}
+          onClick={() => navigate('/comercial')}
         />
         
         <KPICard
@@ -72,6 +77,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
           trendLabel="para hoje"
           alert={summary.tasks?.overdue_count}
           alertLabel="atrasadas"
+          onClick={() => navigate('/pj/projetos')}
         />
         
         <KPICard
@@ -83,13 +89,14 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
           trend={summary.schedule?.tomorrow ?? 0}
           trendLabel="amanhã"
           subtitle={`${summary.schedule?.this_week ?? 0} esta semana`}
+          onClick={() => navigate('/pj/calendario-editorial')}
         />
       </div>
 
       {/* Detailed Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Projects Breakdown */}
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:bg-muted/50 transition-all" onClick={() => navigate('/pj/projetos')}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <FolderKanban className="h-4 w-4 text-kpi-projects" />
@@ -131,7 +138,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         </Card>
 
         {/* Sales Pipeline */}
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:bg-muted/50 transition-all" onClick={() => navigate('/comercial')}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <TrendingUp className="h-4 w-4 text-kpi-sales" />
@@ -175,7 +182,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         </Card>
 
         {/* Tasks Overview */}
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:bg-muted/50 transition-all" onClick={() => navigate('/pj/projetos')}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <CheckSquare className="h-4 w-4 text-kpi-tasks" />
@@ -219,7 +226,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         </Card>
 
         {/* Editorial Calendar */}
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:bg-muted/50 transition-all" onClick={() => navigate('/pj/calendario-editorial')}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4 text-kpi-editorial" />
@@ -274,7 +281,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         </Card>
 
         {/* Team */}
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:bg-muted/50 transition-all" onClick={() => navigate('/pj/time')}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Users className="h-4 w-4 text-kpi-team" />
@@ -313,7 +320,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         </Card>
 
         {/* Sales Goals */}
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:bg-muted/50 transition-all" onClick={() => navigate('/comercial')}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Target className="h-4 w-4 text-kpi-sales" />
@@ -371,6 +378,7 @@ interface KPICardProps {
   subtitle?: string;
   alert?: number;
   alertLabel?: string;
+  onClick?: () => void;
 }
 
 function KPICard({
@@ -384,9 +392,10 @@ function KPICard({
   subtitle,
   alert,
   alertLabel,
+  onClick,
 }: KPICardProps) {
   return (
-    <Card className="glass-card">
+    <Card className={`glass-card transition-all ${onClick ? 'cursor-pointer hover:bg-muted/50' : ''}`} onClick={onClick}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
