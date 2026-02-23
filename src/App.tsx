@@ -18,13 +18,10 @@ import AuthCallback from "@/pages/AuthCallback";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
+// ALL app pages lazy loaded for fast initial bundle
 const PortalRedirect = lazy(() => import("@/pages/PortalRedirect"));
-
-// Core pages - loaded eagerly (most accessed)
-import CaixaDashboard from "@/pages/CaixaDashboard";
-import FocoDashboard from "@/pages/FocoDashboard";
-
-// Lazy loaded pages - less frequently accessed or heavy
+const CaixaDashboard = lazy(() => import("@/pages/CaixaDashboard"));
+const FocoDashboard = lazy(() => import("@/pages/FocoDashboard"));
 const FinancasDashboard = lazy(() => import("@/pages/FinancasDashboard"));
 const PlanejamentoDashboard = lazy(() => import("@/pages/PlanejamentoDashboard"));
 const ProjetosDashboard = lazy(() => import("@/pages/ProjetosDashboard"));
