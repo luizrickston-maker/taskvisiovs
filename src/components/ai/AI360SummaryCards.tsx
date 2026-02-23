@@ -182,7 +182,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         </Card>
 
         {/* Tasks Overview */}
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:bg-muted/50 transition-all" onClick={() => navigate('/pj/projetos')}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <CheckSquare className="h-4 w-4 text-kpi-tasks" />
