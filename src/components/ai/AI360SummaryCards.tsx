@@ -320,7 +320,7 @@ export function AI360SummaryCards({ summary, isLoading }: AI360SummaryCardsProps
         </Card>
 
         {/* Sales Goals */}
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:bg-muted/50 transition-all" onClick={() => navigate('/comercial')}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Target className="h-4 w-4 text-kpi-sales" />
