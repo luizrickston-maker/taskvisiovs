@@ -107,9 +107,20 @@ export default function ProjectCard({ project, category, onEdit, onDelete }: Pro
               </Badge>
             )}
           </div>
-        </div>
 
-        {/* Actions Dropdown */}
+          {/* Task Progress */}
+          {taskProgress.total > 0 && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-2.5 h-2.5" />
+                  {taskProgress.done}/{taskProgress.total} tarefas
+                </span>
+                <span>{taskProgress.percent}%</span>
+              </div>
+              <Progress value={taskProgress.percent} className="h-1.5" />
+            </div>
+          )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
