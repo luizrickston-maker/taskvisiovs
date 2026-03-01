@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Bot, Key, Loader2, Sparkles, Cpu, Zap } from 'lucide-react';
+import { Plus, Bot, Key, Loader2, Sparkles, Cpu, Zap, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AiAgentCard } from '@/components/ai/AiAgentCard';
 import { AiAgentForm } from '@/components/ai/AiAgentForm';
