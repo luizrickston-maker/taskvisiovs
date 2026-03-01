@@ -1,6 +1,8 @@
-import { Clock, GripVertical, Pencil, Trash2, MoreVertical } from 'lucide-react';
+import { useMemo } from 'react';
+import { Clock, GripVertical, Pencil, Trash2, MoreVertical, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { useAppStore } from '@/stores/useAppStore';
 import type { Project, ProjectCategory } from '@/types/database';
 
 interface ProjectCardProps {
@@ -27,6 +30,16 @@ const priorityConfig: Record<number, { label: string; color: string; border: str
 };
 
 export default function ProjectCard({ project, category, onEdit, onDelete }: ProjectCardProps) {
+  const { projectTasks } = useAppStore();
+
+  const taskProgress = useMemo(() => {
+    const tasks = projectTasks.filter(t => t.project_id === project.id);
+    const total = tasks.length;
+    const done = tasks.filter(t => t.status === 'done').length;
+    const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+    return { total, done, percent };
+  }, [projectTasks, project.id]);
+
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('projectId', project.id);
     e.currentTarget.classList.add('opacity-50', 'scale-95');
@@ -94,6 +107,20 @@ export default function ProjectCard({ project, category, onEdit, onDelete }: Pro
               </Badge>
             )}
           </div>
+
+          {/* Task Progress */}
+          {taskProgress.total > 0 && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-2.5 h-2.5" />
+                  {taskProgress.done}/{taskProgress.total} tarefas
+                </span>
+                <span>{taskProgress.percent}%</span>
+              </div>
+              <Progress value={taskProgress.percent} className="h-1.5" />
+            </div>
+          )}
         </div>
 
         {/* Actions Dropdown */}
