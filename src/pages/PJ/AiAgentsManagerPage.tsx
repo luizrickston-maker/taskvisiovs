@@ -31,6 +31,7 @@ import { useAiApiKeys } from '@/hooks/useAiApiKeys';
 import type { AIAgent, AIAgentCreate } from '@/types/ai';
 
 export default function AiAgentsManagerPage() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { data: agents, isLoading } = useAiAgents();
   const { data: apiKeys } = useAiApiKeys();
