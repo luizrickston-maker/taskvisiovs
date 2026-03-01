@@ -121,6 +121,9 @@ export default function ProjectCard({ project, category, onEdit, onDelete }: Pro
               <Progress value={taskProgress.percent} className="h-1.5" />
             </div>
           )}
+        </div>
+
+        {/* Actions Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
