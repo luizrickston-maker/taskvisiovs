@@ -1,6 +1,8 @@
-import { Clock, GripVertical, Pencil, Trash2, MoreVertical } from 'lucide-react';
+import { useMemo } from 'react';
+import { Clock, GripVertical, Pencil, Trash2, MoreVertical, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { useAppStore } from '@/stores/useAppStore';
 import type { Project, ProjectCategory } from '@/types/database';
 
 interface ProjectCardProps {
