@@ -144,7 +144,16 @@ export default function AiAgentsManagerPage() {
   return (
     <div className="p-4 md:p-6 space-y-6 animate-fade-in">
       {/* Professional Header */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-fit gap-1.5 -ml-2 text-muted-foreground hover:text-foreground"
+          onClick={() => navigate('/pj/cerebro-ia')}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar ao Cérebro Operacional
+        </Button>
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-primary/10">
             <Sparkles className="w-6 h-6 text-primary" />
