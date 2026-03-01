@@ -30,6 +30,16 @@ const priorityConfig: Record<number, { label: string; color: string; border: str
 };
 
 export default function ProjectCard({ project, category, onEdit, onDelete }: ProjectCardProps) {
+  const { projectTasks } = useAppStore();
+
+  const taskProgress = useMemo(() => {
+    const tasks = projectTasks.filter(t => t.project_id === project.id);
+    const total = tasks.length;
+    const done = tasks.filter(t => t.status === 'done').length;
+    const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+    return { total, done, percent };
+  }, [projectTasks, project.id]);
+
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('projectId', project.id);
     e.currentTarget.classList.add('opacity-50', 'scale-95');
