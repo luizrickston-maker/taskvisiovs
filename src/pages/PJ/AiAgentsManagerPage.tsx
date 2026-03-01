@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Bot, Key, Loader2, Sparkles, Cpu, Zap } from 'lucide-react';
+import { Plus, Bot, Key, Loader2, Sparkles, Cpu, Zap, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AiAgentCard } from '@/components/ai/AiAgentCard';
 import { AiAgentForm } from '@/components/ai/AiAgentForm';
@@ -30,6 +31,7 @@ import { useAiApiKeys } from '@/hooks/useAiApiKeys';
 import type { AIAgent, AIAgentCreate } from '@/types/ai';
 
 export default function AiAgentsManagerPage() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { data: agents, isLoading } = useAiAgents();
   const { data: apiKeys } = useAiApiKeys();
@@ -142,7 +144,16 @@ export default function AiAgentsManagerPage() {
   return (
     <div className="p-4 md:p-6 space-y-6 animate-fade-in">
       {/* Professional Header */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-fit gap-1.5 -ml-2 text-muted-foreground hover:text-foreground"
+          onClick={() => navigate('/pj/cerebro-ia')}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar ao Cérebro Operacional
+        </Button>
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-primary/10">
             <Sparkles className="w-6 h-6 text-primary" />
