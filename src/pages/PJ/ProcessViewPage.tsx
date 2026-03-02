@@ -280,7 +280,7 @@ function ProcessViewCanvas() {
             </button>
           </div>
 
-          <Button variant="outline" size="sm" onClick={() => toast.info('Funcionalidade de delegação em breve!')}>
+          <Button variant="outline" size="sm" onClick={() => setDelegateOpen(true)}>
             <Users className="w-4 h-4 mr-1.5" />
             Delegar
           </Button>
