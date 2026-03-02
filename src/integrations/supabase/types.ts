@@ -1219,6 +1219,57 @@ export type Database = {
           },
         ]
       }
+      process_instances: {
+        Row: {
+          assigned_to_user_id: string
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          process_id: string
+          started_at: string | null
+          status: string | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          assigned_to_user_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          process_id: string
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          assigned_to_user_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          process_id?: string
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_instances_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_instances_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       process_links: {
         Row: {
           created_at: string
