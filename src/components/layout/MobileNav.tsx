@@ -1,4 +1,4 @@
-import { Wallet, TrendingUp, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Package, Users, User, Building2, Brain, CalendarDays, Wrench, ShoppingBag, FileText } from 'lucide-react';
+import { Wallet, TrendingUp, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Package, Users, User, Building2, Brain, CalendarDays, Wrench, ShoppingBag, FileText, Workflow } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
@@ -35,6 +35,7 @@ const businessMainNavItems = [
 ];
 
 const businessMoreNavItems = [
+  { title: 'Processos', url: '/pj/processos', icon: Workflow },
   { title: 'Calendário', url: '/pj/calendario-editorial', icon: Calendar },
   { title: 'Clientes', url: '/comercial/clientes', icon: Users },
   { title: 'Time', url: '/pj/time', icon: Users },
