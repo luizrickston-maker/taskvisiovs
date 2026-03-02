@@ -1245,24 +1245,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "process_step_connections_from_step_id_fkey"
-            columns: ["from_step_id"]
-            isOneToOne: false
-            referencedRelation: "process_steps"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "process_step_connections_process_id_fkey"
             columns: ["process_id"]
             isOneToOne: false
             referencedRelation: "processes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "process_step_connections_to_step_id_fkey"
-            columns: ["to_step_id"]
-            isOneToOne: false
-            referencedRelation: "process_steps"
             referencedColumns: ["id"]
           },
           {
@@ -1276,79 +1262,62 @@ export type Database = {
       }
       process_steps: {
         Row: {
-          attachments: Json | null
-          checklist: Json | null
-          color: string | null
-          created_at: string
+          color_scheme: string | null
+          created_at: string | null
           description: string | null
-          estimated_duration_minutes: number | null
+          estimated_time: string | null
+          icon: string | null
           id: string
-          notes: string | null
+          node_type: string | null
+          order_index: number
+          position_x: number
+          position_y: number
           process_id: string
-          responsible_team_member_id: string | null
-          step_order: number
-          step_type: string
+          responsible_role: string | null
+          support_links: Json | null
           title: string
-          updated_at: string
-          user_id: string
-          workspace_id: string | null
+          updated_at: string | null
         }
         Insert: {
-          attachments?: Json | null
-          checklist?: Json | null
-          color?: string | null
-          created_at?: string
+          color_scheme?: string | null
+          created_at?: string | null
           description?: string | null
-          estimated_duration_minutes?: number | null
+          estimated_time?: string | null
+          icon?: string | null
           id?: string
-          notes?: string | null
+          node_type?: string | null
+          order_index: number
+          position_x: number
+          position_y: number
           process_id: string
-          responsible_team_member_id?: string | null
-          step_order?: number
-          step_type?: string
+          responsible_role?: string | null
+          support_links?: Json | null
           title: string
-          updated_at?: string
-          user_id: string
-          workspace_id?: string | null
+          updated_at?: string | null
         }
         Update: {
-          attachments?: Json | null
-          checklist?: Json | null
-          color?: string | null
-          created_at?: string
+          color_scheme?: string | null
+          created_at?: string | null
           description?: string | null
-          estimated_duration_minutes?: number | null
+          estimated_time?: string | null
+          icon?: string | null
           id?: string
-          notes?: string | null
+          node_type?: string | null
+          order_index?: number
+          position_x?: number
+          position_y?: number
           process_id?: string
-          responsible_team_member_id?: string | null
-          step_order?: number
-          step_type?: string
+          responsible_role?: string | null
+          support_links?: Json | null
           title?: string
-          updated_at?: string
-          user_id?: string
-          workspace_id?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "process_steps_process_id_fkey"
             columns: ["process_id"]
             isOneToOne: false
-            referencedRelation: "processes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "process_steps_responsible_team_member_id_fkey"
-            columns: ["responsible_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "corporate_team"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "process_steps_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
+            referencedRelation: "business_processes"
             referencedColumns: ["id"]
           },
         ]
