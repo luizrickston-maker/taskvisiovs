@@ -1,46 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { BusinessProcess, ProcessStep, ProcessConnection } from '@/types/business';
 
-export interface ProcessStep {
-  id: string;
-  process_id: string;
-  title: string;
-  description: string | null;
-  order_index: number;
-  position_x: number;
-  position_y: number;
-  node_type: string | null;
-  icon: string | null;
-  color_scheme: string | null;
-  estimated_time: string | null;
-  responsible_role: string | null;
-  support_links: any | null;
-  created_at: string | null;
-  updated_at: string | null;
-}
+export type { ProcessStep, ProcessConnection };
 
-export interface ProcessConnection {
-  id: string;
-  process_id: string;
-  source_step_id: string;
-  target_step_id: string;
-  label: string | null;
-  connection_type: string | null;
-  animated: boolean | null;
-  created_at: string | null;
-}
-
-export interface ProcessWithDetails {
-  id: string;
-  workspace_id: string;
-  name: string;
-  description: string | null;
-  category: string | null;
-  related_product_id: string | null;
-  related_service_id: string | null;
-  created_at: string | null;
-  updated_at: string | null;
+export interface ProcessWithDetails extends BusinessProcess {
   steps: ProcessStep[];
   connections: ProcessConnection[];
 }
@@ -58,15 +23,8 @@ export function useProcess(processId: string | undefined) {
       if (pErr) throw pErr;
 
       const [stepsRes, connsRes] = await Promise.all([
-        supabase
-          .from('process_steps')
-          .select('*')
-          .eq('process_id', processId!)
-          .order('order_index'),
-        supabase
-          .from('process_connections')
-          .select('*')
-          .eq('process_id', processId!),
+        supabase.from('process_steps').select('*').eq('process_id', processId!).order('order_index'),
+        supabase.from('process_connections').select('*').eq('process_id', processId!),
       ]);
 
       if (stepsRes.error) throw stepsRes.error;
@@ -92,7 +50,7 @@ export function useUpdateProcess() {
       qc.invalidateQueries({ queryKey: ['process', vars.id] });
       qc.invalidateQueries({ queryKey: ['business-processes'] });
     },
-    onError: (e) => toast.error('Erro ao atualizar processo: ' + e.message),
+    onError: (e: Error) => toast.error('Erro ao atualizar processo: ' + e.message),
   });
 }
 
@@ -120,7 +78,7 @@ export function useCreateProcessStep() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['process', data.process_id] });
     },
-    onError: (e) => toast.error('Erro ao criar etapa: ' + e.message),
+    onError: (e: Error) => toast.error('Erro ao criar etapa: ' + e.message),
   });
 }
 
@@ -135,7 +93,7 @@ export function useUpdateProcessStep() {
     onSuccess: (processId) => {
       qc.invalidateQueries({ queryKey: ['process', processId] });
     },
-    onError: (e) => toast.error('Erro ao atualizar etapa: ' + e.message),
+    onError: (e: Error) => toast.error('Erro ao atualizar etapa: ' + e.message),
   });
 }
 
@@ -150,7 +108,7 @@ export function useDeleteProcessStep() {
     onSuccess: (processId) => {
       qc.invalidateQueries({ queryKey: ['process', processId] });
     },
-    onError: (e) => toast.error('Erro ao excluir etapa: ' + e.message),
+    onError: (e: Error) => toast.error('Erro ao excluir etapa: ' + e.message),
   });
 }
 
@@ -172,7 +130,7 @@ export function useCreateProcessConnection() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['process', data.process_id] });
     },
-    onError: (e) => toast.error('Erro ao criar conexão: ' + e.message),
+    onError: (e: Error) => toast.error('Erro ao criar conexão: ' + e.message),
   });
 }
 
@@ -187,6 +145,6 @@ export function useDeleteProcessConnection() {
     onSuccess: (processId) => {
       qc.invalidateQueries({ queryKey: ['process', processId] });
     },
-    onError: (e) => toast.error('Erro ao excluir conexão: ' + e.message),
+    onError: (e: Error) => toast.error('Erro ao excluir conexão: ' + e.message),
   });
 }
