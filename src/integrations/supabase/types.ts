@@ -1106,6 +1106,251 @@ export type Database = {
         }
         Relationships: []
       }
+      process_links: {
+        Row: {
+          created_at: string
+          id: string
+          link_id: string
+          link_type: string
+          process_id: string
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link_id: string
+          link_type: string
+          process_id: string
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link_id?: string
+          link_type?: string
+          process_id?: string
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_links_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      process_step_connections: {
+        Row: {
+          condition: string | null
+          created_at: string
+          from_step_id: string
+          id: string
+          label: string | null
+          process_id: string
+          to_step_id: string
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          condition?: string | null
+          created_at?: string
+          from_step_id: string
+          id?: string
+          label?: string | null
+          process_id: string
+          to_step_id: string
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          condition?: string | null
+          created_at?: string
+          from_step_id?: string
+          id?: string
+          label?: string | null
+          process_id?: string
+          to_step_id?: string
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_step_connections_from_step_id_fkey"
+            columns: ["from_step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_step_connections_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_step_connections_to_step_id_fkey"
+            columns: ["to_step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_step_connections_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      process_steps: {
+        Row: {
+          attachments: Json | null
+          checklist: Json | null
+          color: string | null
+          created_at: string
+          description: string | null
+          estimated_duration_minutes: number | null
+          id: string
+          notes: string | null
+          process_id: string
+          responsible_team_member_id: string | null
+          step_order: number
+          step_type: string
+          title: string
+          updated_at: string
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          checklist?: Json | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          process_id: string
+          responsible_team_member_id?: string | null
+          step_order?: number
+          step_type?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          checklist?: Json | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          process_id?: string
+          responsible_team_member_id?: string | null
+          step_order?: number
+          step_type?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_steps_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_steps_responsible_team_member_id_fkey"
+            columns: ["responsible_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "corporate_team"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_steps_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processes: {
+        Row: {
+          category: string | null
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          is_template: boolean
+          title: string
+          updated_at: string
+          user_id: string
+          version: number
+          workspace_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_template?: boolean
+          title: string
+          updated_at?: string
+          user_id: string
+          version?: number
+          workspace_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_template?: boolean
+          title?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_pricing_details: {
         Row: {
           base_price: number | null
