@@ -1219,6 +1219,51 @@ export type Database = {
           },
         ]
       }
+      process_instance_steps: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          process_instance_id: string
+          process_step_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          process_instance_id: string
+          process_step_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          process_instance_id?: string
+          process_step_id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_instance_steps_process_instance_id_fkey"
+            columns: ["process_instance_id"]
+            isOneToOne: false
+            referencedRelation: "process_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_instance_steps_process_step_id_fkey"
+            columns: ["process_step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       process_instances: {
         Row: {
           assigned_to_user_id: string
