@@ -1164,6 +1164,61 @@ export type Database = {
         }
         Relationships: []
       }
+      process_connections: {
+        Row: {
+          animated: boolean | null
+          connection_type: string | null
+          created_at: string | null
+          id: string
+          label: string | null
+          process_id: string
+          source_step_id: string
+          target_step_id: string
+        }
+        Insert: {
+          animated?: boolean | null
+          connection_type?: string | null
+          created_at?: string | null
+          id?: string
+          label?: string | null
+          process_id: string
+          source_step_id: string
+          target_step_id: string
+        }
+        Update: {
+          animated?: boolean | null
+          connection_type?: string | null
+          created_at?: string | null
+          id?: string
+          label?: string | null
+          process_id?: string
+          source_step_id?: string
+          target_step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_connections_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_connections_source_step_id_fkey"
+            columns: ["source_step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_connections_target_step_id_fkey"
+            columns: ["target_step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       process_links: {
         Row: {
           created_at: string
@@ -1202,57 +1257,6 @@ export type Database = {
           },
           {
             foreignKeyName: "process_links_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      process_step_connections: {
-        Row: {
-          condition: string | null
-          created_at: string
-          from_step_id: string
-          id: string
-          label: string | null
-          process_id: string
-          to_step_id: string
-          user_id: string
-          workspace_id: string | null
-        }
-        Insert: {
-          condition?: string | null
-          created_at?: string
-          from_step_id: string
-          id?: string
-          label?: string | null
-          process_id: string
-          to_step_id: string
-          user_id: string
-          workspace_id?: string | null
-        }
-        Update: {
-          condition?: string | null
-          created_at?: string
-          from_step_id?: string
-          id?: string
-          label?: string | null
-          process_id?: string
-          to_step_id?: string
-          user_id?: string
-          workspace_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "process_step_connections_process_id_fkey"
-            columns: ["process_id"]
-            isOneToOne: false
-            referencedRelation: "processes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "process_step_connections_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
