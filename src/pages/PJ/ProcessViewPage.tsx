@@ -197,6 +197,7 @@ function ProcessViewCanvas() {
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [viewMode, setViewMode] = useState<'timeline' | 'flowchart'>('timeline');
+  const [delegateOpen, setDelegateOpen] = useState(false);
 
   const sortedSteps = useMemo(
     () => (process?.steps ?? []).slice().sort((a, b) => a.order_index - b.order_index),
