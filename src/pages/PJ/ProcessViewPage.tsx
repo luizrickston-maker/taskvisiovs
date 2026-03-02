@@ -410,6 +410,14 @@ function ProcessViewCanvas() {
           </Button>
         </div>
       )}
+
+      {/* Delegate dialog */}
+      <DelegateProcessDialog
+        open={delegateOpen}
+        onOpenChange={setDelegateOpen}
+        processId={processId!}
+        steps={sortedSteps}
+      />
     </div>
   );
 }
