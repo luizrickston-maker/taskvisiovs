@@ -1618,6 +1618,7 @@ export type Database = {
           id: string
           priority: number
           project_id: string | null
+          source_process_step_id: string | null
           status: string
           title: string
           updated_at: string
@@ -1635,6 +1636,7 @@ export type Database = {
           id?: string
           priority?: number
           project_id?: string | null
+          source_process_step_id?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -1652,6 +1654,7 @@ export type Database = {
           id?: string
           priority?: number
           project_id?: string | null
+          source_process_step_id?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -1678,6 +1681,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_source_process_step_id_fkey"
+            columns: ["source_process_step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
             referencedColumns: ["id"]
           },
           {

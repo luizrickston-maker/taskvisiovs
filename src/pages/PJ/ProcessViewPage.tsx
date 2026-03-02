@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { nodeTypes, type ProcessNodeData } from '@/components/areapj/processos/ProcessNode';
 import { useProcess, type ProcessStep } from '@/hooks/useProcessEditor';
+import { DelegateProcessDialog } from '@/components/areapj/processos/DelegateProcessDialog';
 
 // Convert DB steps to React Flow nodes (read-only)
 function stepsToNodes(steps: ProcessStep[]): Node[] {
@@ -196,6 +197,7 @@ function ProcessViewCanvas() {
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [viewMode, setViewMode] = useState<'timeline' | 'flowchart'>('timeline');
+  const [delegateOpen, setDelegateOpen] = useState(false);
 
   const sortedSteps = useMemo(
     () => (process?.steps ?? []).slice().sort((a, b) => a.order_index - b.order_index),
@@ -278,7 +280,7 @@ function ProcessViewCanvas() {
             </button>
           </div>
 
-          <Button variant="outline" size="sm" onClick={() => toast.info('Funcionalidade de delegação em breve!')}>
+          <Button variant="outline" size="sm" onClick={() => setDelegateOpen(true)}>
             <Users className="w-4 h-4 mr-1.5" />
             Delegar
           </Button>
@@ -408,6 +410,14 @@ function ProcessViewCanvas() {
           </Button>
         </div>
       )}
+
+      {/* Delegate dialog */}
+      <DelegateProcessDialog
+        open={delegateOpen}
+        onOpenChange={setDelegateOpen}
+        processId={processId!}
+        steps={sortedSteps}
+      />
     </div>
   );
 }
