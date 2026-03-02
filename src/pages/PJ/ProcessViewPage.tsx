@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { nodeTypes, type ProcessNodeData } from '@/components/areapj/processos/ProcessNode';
 import { useProcess, type ProcessStep } from '@/hooks/useProcessEditor';
+import { DelegateProcessDialog } from '@/components/areapj/processos/DelegateProcessDialog';
 
 // Convert DB steps to React Flow nodes (read-only)
 function stepsToNodes(steps: ProcessStep[]): Node[] {
