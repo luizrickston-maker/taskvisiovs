@@ -254,6 +254,16 @@ const App = () => {
                     <ClientFinalDetailsPage />
                   </Suspense>
                 } />
+                <Route path="/pj/processos/novo" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <ProcessEditorPage />
+                  </Suspense>
+                } />
+                <Route path="/pj/processos/:id" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <ProcessEditorPage />
+                  </Suspense>
+                } />
                 
                 {/* Config - Lazy loaded */}
                 <Route path="/config" element={
