@@ -54,6 +54,7 @@ const businessNavItems: NavItem[] = [
     ],
   },
   { title: 'Projetos', url: '/pj/projetos', icon: FolderKanban },
+  { title: 'Processos', url: '/pj/processos', icon: Workflow },
   { title: 'Calendário', url: '/pj/calendario-editorial', icon: Calendar },
   { title: 'Financeiro', url: '/pj/financeiro', icon: Wallet },
   { title: 'Planos', url: '/pj/planos', icon: Package },
