@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session, User, AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppStore } from "@/stores/useAppStore";
@@ -25,29 +25,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const resetStore = useAppStore((s) => s.resetStore);
+  const manualSignOutRef = useRef(false);
+  const signedOutRecoveryInFlightRef = useRef(false);
 
   useEffect(() => {
     // Set up listener FIRST (before getSession) to avoid race conditions
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[Auth] onAuthStateChange:', event, session?.user?.email ?? 'no-session', 
-        'expires_at:', session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'n/a');
-      
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(
+        "[Auth] onAuthStateChange:",
+        event,
+        session?.user?.email ?? "no-session",
+        "expires_at:",
+        session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : "n/a"
+      );
+
+      if (event === "SIGNED_OUT" && !manualSignOutRef.current) {
+        if (signedOutRecoveryInFlightRef.current) return;
+
+        signedOutRecoveryInFlightRef.current = true;
+        setLoading(true);
+
+        void (async () => {
+          // Grace period para Safari/iPad quando há falha transitória de refresh
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          const {
+            data: { session: recoveredSession },
+          } = await supabase.auth.getSession();
+
+          if (recoveredSession) {
+            console.warn("[Auth] SIGNED_OUT transitório detectado — sessão recuperada");
+            setSession(recoveredSession);
+            setUser(recoveredSession.user ?? null);
+          } else {
+            console.warn("[Auth] SIGNED_OUT confirmado — limpando store");
+            setSession(null);
+            setUser(null);
+            resetStore();
+          }
+
+          setLoading(false);
+          signedOutRecoveryInFlightRef.current = false;
+        })();
+
+        return;
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
 
       if (event === "SIGNED_OUT") {
-        console.warn('[Auth] SIGNED_OUT event received — clearing store');
+        console.warn("[Auth] SIGNED_OUT manual — clearing store");
+        manualSignOutRef.current = false;
         resetStore();
       }
-      
+
       if (event === "TOKEN_REFRESHED") {
-        console.log('[Auth] Token refreshed successfully');
+        console.log("[Auth] Token refreshed successfully");
       }
     });
 
     supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('[Auth] getSession:', session?.user?.email ?? 'no-session', 'error:', error?.message ?? 'none');
+      console.log("[Auth] getSession:", session?.user?.email ?? "no-session", "error:", error?.message ?? "none");
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -72,41 +113,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut: AuthContextValue["signOut"] = async () => {
+    manualSignOutRef.current = true;
+
     // Limpar estado local PRIMEIRO (antes da API)
     setUser(null);
     setSession(null);
     resetStore();
-    
+
     // Tentar fazer logout na API (ignorar erros de sessão não encontrada)
     try {
       await supabase.auth.signOut();
     } catch (error) {
       // Ignorar erros - o estado local já foi limpo
       if (import.meta.env.DEV) {
-        console.log('[Auth] SignOut API error (ignored):', error);
+        console.log("[Auth] SignOut API error (ignored):", error);
       }
     }
   };
 
   const resetPassword: AuthContextValue["resetPassword"] = async (email) => {
     const redirectUrl = `${window.location.origin}/auth/callback`;
-    
+
     if (import.meta.env.DEV) {
-      console.log('[Auth] Requesting password reset for:', email, 'redirectTo:', redirectUrl);
+      console.log("[Auth] Requesting password reset for:", email, "redirectTo:", redirectUrl);
     }
-    
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
     });
-    
+
     if (import.meta.env.DEV) {
       if (error) {
-        console.error('[Auth] Reset password API error:', error);
+        console.error("[Auth] Reset password API error:", error);
       } else {
-        console.log('[Auth] Password reset email requested successfully');
+        console.log("[Auth] Password reset email requested successfully");
       }
     }
-    
+
     return { error };
   };
 
