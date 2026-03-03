@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const manualSignOutRef = useRef(false);
   const signedOutRecoveryInFlightRef = useRef(false);
   const lastGoodSessionRef = useRef<Session | null>(null);
+  const autoRefreshStateRef = useRef<"running" | "stopped" | null>(null);
 
   useEffect(() => {
     // Set up listener FIRST (before getSession) to avoid race conditions
