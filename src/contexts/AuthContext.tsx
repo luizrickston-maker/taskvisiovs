@@ -106,6 +106,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       console.log("[Auth] getSession:", session?.user?.email ?? "no-session", "error:", error?.message ?? "none");
+
+      // Em Safari/iPad, getSession pode falhar transitoriamente mesmo com sessão válida em memória
+      if (!session && error && lastGoodSessionRef.current) {
+        console.warn("[Auth] getSession transitório com fallback para última sessão válida");
+        setSession(lastGoodSessionRef.current);
+        setUser(lastGoodSessionRef.current.user ?? null);
+        setLoading(false);
+        return;
+      }
+
       if (session) {
         lastGoodSessionRef.current = session;
       }
