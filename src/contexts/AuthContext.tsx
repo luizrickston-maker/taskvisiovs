@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const manualSignOutRef = useRef(false);
   const signedOutRecoveryInFlightRef = useRef(false);
   const lastGoodSessionRef = useRef<Session | null>(null);
+  const autoRefreshStateRef = useRef<"running" | "stopped" | null>(null);
 
   useEffect(() => {
     // Set up listener FIRST (before getSession) to avoid race conditions
@@ -105,6 +106,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       console.log("[Auth] getSession:", session?.user?.email ?? "no-session", "error:", error?.message ?? "none");
+
+      // Em Safari/iPad, getSession pode falhar transitoriamente mesmo com sessão válida em memória
+      if (!session && error && lastGoodSessionRef.current) {
+        console.warn("[Auth] getSession transitório com fallback para última sessão válida");
+        setSession(lastGoodSessionRef.current);
+        setUser(lastGoodSessionRef.current.user ?? null);
+        setLoading(false);
+        return;
+      }
+
       if (session) {
         lastGoodSessionRef.current = session;
       }
@@ -121,29 +132,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const syncAutoRefreshWithVisibility = () => {
       const shouldRefresh = document.visibilityState === "visible";
+      const nextState: "running" | "stopped" = shouldRefresh ? "running" : "stopped";
+
+      // Evita start/stop repetidos que podem gerar tempestade de refresh em iPad/Safari
+      if (autoRefreshStateRef.current === nextState) return;
 
       if (shouldRefresh) {
         supabase.auth.startAutoRefresh();
+        autoRefreshStateRef.current = "running";
         if (import.meta.env.DEV) console.log("[Auth] Auto refresh: ON (visible tab)");
       } else {
         supabase.auth.stopAutoRefresh();
+        autoRefreshStateRef.current = "stopped";
         if (import.meta.env.DEV) console.log("[Auth] Auto refresh: OFF (hidden tab)");
       }
     };
 
     syncAutoRefreshWithVisibility();
 
+    // iPad Safari pode disparar focus/blur em momentos não relacionados à aba;
+    // usamos apenas visibilitychange/pageshow para estabilidade.
     document.addEventListener("visibilitychange", syncAutoRefreshWithVisibility);
-    window.addEventListener("focus", syncAutoRefreshWithVisibility);
-    window.addEventListener("blur", syncAutoRefreshWithVisibility);
     window.addEventListener("pageshow", syncAutoRefreshWithVisibility);
 
     return () => {
       document.removeEventListener("visibilitychange", syncAutoRefreshWithVisibility);
-      window.removeEventListener("focus", syncAutoRefreshWithVisibility);
-      window.removeEventListener("blur", syncAutoRefreshWithVisibility);
       window.removeEventListener("pageshow", syncAutoRefreshWithVisibility);
       supabase.auth.startAutoRefresh();
+      autoRefreshStateRef.current = "running";
     };
   }, []);
 
