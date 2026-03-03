@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 import type { Session, User, AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppStore } from "@/stores/useAppStore";
+import { useAuthRefreshCoordinator } from "@/hooks/useAuthRefreshCoordinator";
 
 // Tipos específicos para as respostas de autenticação
 type AuthResult<T> = { data: T; error: AuthError | null };
@@ -28,7 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const manualSignOutRef = useRef(false);
   const signedOutRecoveryInFlightRef = useRef(false);
   const lastGoodSessionRef = useRef<Session | null>(null);
-  const autoRefreshStateRef = useRef<"running" | "stopped" | null>(null);
+
+  useAuthRefreshCoordinator();
 
   useEffect(() => {
     // Set up listener FIRST (before getSession) to avoid race conditions
@@ -126,42 +128,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, [resetStore]);
-
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-
-    const syncAutoRefreshWithVisibility = () => {
-      const shouldRefresh = document.visibilityState === "visible";
-      const nextState: "running" | "stopped" = shouldRefresh ? "running" : "stopped";
-
-      // Evita start/stop repetidos que podem gerar tempestade de refresh em iPad/Safari
-      if (autoRefreshStateRef.current === nextState) return;
-
-      if (shouldRefresh) {
-        supabase.auth.startAutoRefresh();
-        autoRefreshStateRef.current = "running";
-        if (import.meta.env.DEV) console.log("[Auth] Auto refresh: ON (visible tab)");
-      } else {
-        supabase.auth.stopAutoRefresh();
-        autoRefreshStateRef.current = "stopped";
-        if (import.meta.env.DEV) console.log("[Auth] Auto refresh: OFF (hidden tab)");
-      }
-    };
-
-    syncAutoRefreshWithVisibility();
-
-    // iPad Safari pode disparar focus/blur em momentos não relacionados à aba;
-    // usamos apenas visibilitychange/pageshow para estabilidade.
-    document.addEventListener("visibilitychange", syncAutoRefreshWithVisibility);
-    window.addEventListener("pageshow", syncAutoRefreshWithVisibility);
-
-    return () => {
-      document.removeEventListener("visibilitychange", syncAutoRefreshWithVisibility);
-      window.removeEventListener("pageshow", syncAutoRefreshWithVisibility);
-      supabase.auth.startAutoRefresh();
-      autoRefreshStateRef.current = "running";
-    };
-  }, []);
 
   const signUp: AuthContextValue["signUp"] = async (email, password) => {
     const redirectUrl = `${window.location.origin}/auth/callback`;
