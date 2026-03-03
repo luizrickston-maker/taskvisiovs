@@ -27,17 +27,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const resetStore = useAppStore((s) => s.resetStore);
 
   useEffect(() => {
+    // Set up listener FIRST (before getSession) to avoid race conditions
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[Auth] onAuthStateChange:', event, session?.user?.email ?? 'no-session', 
+        'expires_at:', session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'n/a');
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
 
       if (event === "SIGNED_OUT") {
+        console.warn('[Auth] SIGNED_OUT event received — clearing store');
         resetStore();
+      }
+      
+      if (event === "TOKEN_REFRESHED") {
+        console.log('[Auth] Token refreshed successfully');
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('[Auth] getSession:', session?.user?.email ?? 'no-session', 'error:', error?.message ?? 'none');
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
