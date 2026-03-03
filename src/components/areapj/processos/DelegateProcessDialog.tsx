@@ -117,12 +117,12 @@ export function DelegateProcessDialog({ open, onOpenChange, processId, steps }: 
 
             <div className="space-y-2">
               <Label>Vincular a Projeto (opcional)</Label>
-              <Select value={selectedProject} onValueChange={setSelectedProject}>
+              <Select value={selectedProject} onValueChange={(v) => setSelectedProject(v === '__none__' ? '' : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Nenhum projeto" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       <span className="flex items-center gap-2">
