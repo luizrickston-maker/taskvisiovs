@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const resetStore = useAppStore((s) => s.resetStore);
   const manualSignOutRef = useRef(false);
   const signedOutRecoveryInFlightRef = useRef(false);
+  const lastGoodSessionRef = useRef<Session | null>(null);
 
   useEffect(() => {
     // Set up listener FIRST (before getSession) to avoid race conditions
@@ -50,16 +51,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         void (async () => {
           // Grace period para Safari/iPad quando há falha transitória de refresh
           await new Promise((resolve) => setTimeout(resolve, 700));
-          const {
-            data: { session: recoveredSession },
-          } = await supabase.auth.getSession();
+
+          let recoveredSession: Session | null = null;
+          const firstTry = await supabase.auth.getSession();
+          recoveredSession = firstTry.data.session;
+
+          if (!recoveredSession) {
+            // 2ª tentativa curta para absorver jitter/retries após 429 temporário
+            await new Promise((resolve) => setTimeout(resolve, 1200));
+            const secondTry = await supabase.auth.getSession();
+            recoveredSession = secondTry.data.session;
+          }
 
           if (recoveredSession) {
             console.warn("[Auth] SIGNED_OUT transitório detectado — sessão recuperada");
+            lastGoodSessionRef.current = recoveredSession;
             setSession(recoveredSession);
             setUser(recoveredSession.user ?? null);
           } else {
             console.warn("[Auth] SIGNED_OUT confirmado — limpando store");
+            lastGoodSessionRef.current = null;
             setSession(null);
             setUser(null);
             resetStore();
@@ -72,6 +83,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      if (session) {
+        lastGoodSessionRef.current = session;
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -79,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === "SIGNED_OUT") {
         console.warn("[Auth] SIGNED_OUT manual — clearing store");
         manualSignOutRef.current = false;
+        lastGoodSessionRef.current = null;
         resetStore();
       }
 
@@ -89,6 +105,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       console.log("[Auth] getSession:", session?.user?.email ?? "no-session", "error:", error?.message ?? "none");
+      if (session) {
+        lastGoodSessionRef.current = session;
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -96,6 +115,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, [resetStore]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const syncAutoRefreshWithVisibility = () => {
+      const shouldRefresh = document.visibilityState === "visible";
+
+      if (shouldRefresh) {
+        supabase.auth.startAutoRefresh();
+        if (import.meta.env.DEV) console.log("[Auth] Auto refresh: ON (visible tab)");
+      } else {
+        supabase.auth.stopAutoRefresh();
+        if (import.meta.env.DEV) console.log("[Auth] Auto refresh: OFF (hidden tab)");
+      }
+    };
+
+    syncAutoRefreshWithVisibility();
+
+    document.addEventListener("visibilitychange", syncAutoRefreshWithVisibility);
+    window.addEventListener("focus", syncAutoRefreshWithVisibility);
+    window.addEventListener("blur", syncAutoRefreshWithVisibility);
+    window.addEventListener("pageshow", syncAutoRefreshWithVisibility);
+
+    return () => {
+      document.removeEventListener("visibilitychange", syncAutoRefreshWithVisibility);
+      window.removeEventListener("focus", syncAutoRefreshWithVisibility);
+      window.removeEventListener("blur", syncAutoRefreshWithVisibility);
+      window.removeEventListener("pageshow", syncAutoRefreshWithVisibility);
+      supabase.auth.startAutoRefresh();
+    };
+  }, []);
 
   const signUp: AuthContextValue["signUp"] = async (email, password) => {
     const redirectUrl = `${window.location.origin}/auth/callback`;
@@ -114,6 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut: AuthContextValue["signOut"] = async () => {
     manualSignOutRef.current = true;
+    lastGoodSessionRef.current = null;
 
     // Limpar estado local PRIMEIRO (antes da API)
     setUser(null);
