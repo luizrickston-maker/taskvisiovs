@@ -132,29 +132,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const syncAutoRefreshWithVisibility = () => {
       const shouldRefresh = document.visibilityState === "visible";
+      const nextState: "running" | "stopped" = shouldRefresh ? "running" : "stopped";
+
+      // Evita start/stop repetidos que podem gerar tempestade de refresh em iPad/Safari
+      if (autoRefreshStateRef.current === nextState) return;
 
       if (shouldRefresh) {
         supabase.auth.startAutoRefresh();
+        autoRefreshStateRef.current = "running";
         if (import.meta.env.DEV) console.log("[Auth] Auto refresh: ON (visible tab)");
       } else {
         supabase.auth.stopAutoRefresh();
+        autoRefreshStateRef.current = "stopped";
         if (import.meta.env.DEV) console.log("[Auth] Auto refresh: OFF (hidden tab)");
       }
     };
 
     syncAutoRefreshWithVisibility();
 
+    // iPad Safari pode disparar focus/blur em momentos não relacionados à aba;
+    // usamos apenas visibilitychange/pageshow para estabilidade.
     document.addEventListener("visibilitychange", syncAutoRefreshWithVisibility);
-    window.addEventListener("focus", syncAutoRefreshWithVisibility);
-    window.addEventListener("blur", syncAutoRefreshWithVisibility);
     window.addEventListener("pageshow", syncAutoRefreshWithVisibility);
 
     return () => {
       document.removeEventListener("visibilitychange", syncAutoRefreshWithVisibility);
-      window.removeEventListener("focus", syncAutoRefreshWithVisibility);
-      window.removeEventListener("blur", syncAutoRefreshWithVisibility);
       window.removeEventListener("pageshow", syncAutoRefreshWithVisibility);
       supabase.auth.startAutoRefresh();
+      autoRefreshStateRef.current = "running";
     };
   }, []);
 
