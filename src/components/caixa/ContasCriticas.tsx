@@ -30,7 +30,7 @@ function getWeekdayOccurrencesInMonth(dayOfWeek: number, month: Date): number {
 
 export function ContasCriticas() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const { debts, categories, updateDebt } = useAppStore();
+  const { debts = [], categories = [], updateDebt } = useAppStore();
   const { data: userDebtCategories = [] } = useUserDebtCategories();
 
   // Filter debts for current month
@@ -171,8 +171,8 @@ export function ContasCriticas() {
     return '#6b7280';
   };
 
-  const totalMonth = monthDebts.reduce((acc, d) => acc + getMonthlyAmount(d), 0);
-  const paidTotal = monthDebts.filter((d) => d.paid).reduce((acc, d) => acc + getMonthlyAmount(d), 0);
+  const totalMonth = monthDebts.reduce((acc, d) => acc + (getMonthlyAmount(d) || 0), 0);
+  const paidTotal = monthDebts.filter((d) => d.paid).reduce((acc, d) => acc + (getMonthlyAmount(d) || 0), 0);
 
   return (
     <Card className="glass-card animate-fade-in">

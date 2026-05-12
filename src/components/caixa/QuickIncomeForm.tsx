@@ -20,12 +20,12 @@ export function QuickIncomeForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { user } = useAuthContext();
-  const { incomes, categories, addIncome, deleteIncome } = useAppStore();
+  const { incomes = [], categories = [], addIncome, deleteIncome } = useAppStore();
 
   const incomeCategories = categories.filter((c) => c.type === 'income');
   const todayIncomes = incomes.filter((i) => isToday(parseISO(i.date)));
 
-  const todayTotal = todayIncomes.reduce((acc, i) => acc + Number(i.amount), 0);
+  const todayTotal = todayIncomes.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -21,8 +21,11 @@ export function ClientPortalRoute({ children }: ClientPortalRouteProps) {
 
   if (authContext.loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground text-sm">Carregando portal...</p>
+        </div>
       </div>
     );
   }

@@ -8,12 +8,17 @@ import { formatCurrency } from '@/lib/currency';
 export function ProgressMeter() {
   const { savings, goals } = useAppStore();
 
-  const { totalSavings, activeGoal, goalAmount, progress } = useMemo(() => {
-    const total = savings.reduce((acc, s) => acc + Number(s.amount), 0);
+  const { totalSavings, goalAmount, progress, activeGoalName } = useMemo(() => {
+    const total = savings.reduce((acc, s) => acc + (Number(s.amount) || 0), 0);
     const goal = goals.find((g) => g.type === 'savings') || goals[0];
-    const amount = goal?.amount || 10000;
-    const prog = Math.min((total / amount) * 100, 100);
-    return { totalSavings: total, activeGoal: goal, goalAmount: amount, progress: prog };
+    const amount = Number(goal?.amount) || 10000;
+    const prog = amount > 0 ? Math.min((total / amount) * 100, 100) : 0;
+    return { 
+      totalSavings: total, 
+      goalAmount: amount, 
+      progress: prog,
+      activeGoalName: goal?.name || 'Sua meta'
+    };
   }, [savings, goals]);
 
   return (
@@ -50,11 +55,9 @@ export function ProgressMeter() {
           </div>
         </div>
 
-        {activeGoal && (
-          <p className="text-xs text-muted-foreground text-center">
-            {activeGoal.name}
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground text-center">
+          {activeGoalName}
+        </p>
       </CardContent>
     </Card>
   );

@@ -20,12 +20,12 @@ export function QuickExpenseForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { user } = useAuthContext();
-  const { expenses, categories, addExpense, deleteExpense } = useAppStore();
+  const { expenses = [], categories = [], addExpense, deleteExpense } = useAppStore();
 
   const expenseCategories = categories.filter((c) => c.type === 'expense');
   const todayExpenses = expenses.filter((e) => isToday(parseISO(e.date)));
 
-  const todayTotal = todayExpenses.reduce((acc, e) => acc + Number(e.amount), 0);
+  const todayTotal = todayExpenses.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -61,6 +61,7 @@ export function MobileNav() {
     if (signOut) {
       await signOut();
     }
+    // SECURITY: Use replace to prevent back-button navigation to protected content
     navigate('/auth', { replace: true });
   };
 

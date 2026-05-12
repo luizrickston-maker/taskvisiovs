@@ -23,9 +23,13 @@ export function useWorkspaces() {
         .from('workspaces')
         .select('*')
         .order('created_at', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error('[Admin] Failed to fetch workspaces:', error);
+        throw new Error('Não foi possível carregar os espaços de trabalho.');
+      }
       return data as Workspace[];
     },
+    retry: 1,
   });
 }
 
