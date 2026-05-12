@@ -34,7 +34,7 @@ const FREQUENCIES: { value: CostFrequency; label: string }[] = [
 
 export function CostForm({ open, onOpenChange, editingCost }: CostFormProps) {
   const { user } = useAuthContext();
-  const { corporateCostCategories, addCorporateCost, updateCorporateCost } = useAppStore();
+  const { corporateCostCategories = [], addCorporateCost, updateCorporateCost } = useAppStore();
   
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState('none');

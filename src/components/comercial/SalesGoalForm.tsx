@@ -25,7 +25,7 @@ const goalTypeOptions: { value: SalesGoalType; label: string }[] = [
 
 export function SalesGoalForm({ open, onOpenChange, editingGoal }: SalesGoalFormProps) {
   const { user } = useAuthContext();
-  const { projects, addSalesGoal, updateSalesGoal } = useAppStore();
+  const { projects = [], addSalesGoal, updateSalesGoal } = useAppStore();
   
   const [goalType, setGoalType] = useState<SalesGoalType>('faturamento_mensal');
   const [targetAmount, setTargetAmount] = useState('');

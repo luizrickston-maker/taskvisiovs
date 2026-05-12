@@ -33,7 +33,7 @@ const paymentTypeOptions: { value: PaymentType; label: string }[] = [
 
 export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFormProps) {
   const { user } = useAuthContext();
-  const { projects, servicePlans, addProspect, updateProspect } = useAppStore();
+  const { projects = [], servicePlans = [], addProspect, updateProspect } = useAppStore();
   
   const [clientName, setClientName] = useState('');
   const [companyName, setCompanyName] = useState('');

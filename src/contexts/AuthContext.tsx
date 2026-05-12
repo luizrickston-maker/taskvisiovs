@@ -148,18 +148,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     manualSignOutRef.current = true;
     lastGoodSessionRef.current = null;
 
-    // Limpar estado local PRIMEIRO (antes da API)
+    // SECURITY: Immediate local state clear before API call to prevent stale session usage
     setUser(null);
     setSession(null);
     resetStore();
 
-    // Tentar fazer logout na API (ignorar erros de sessão não encontrada)
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error && !error.message?.includes('session_not_found')) {
+        console.error("[Auth] SignOut API error:", error);
+      }
     } catch (error) {
-      // Ignorar erros - o estado local já foi limpo
       if (import.meta.env.DEV) {
-        console.log("[Auth] SignOut API error (ignored):", error);
+        console.log("[Auth] SignOut unexpected error:", error);
       }
     }
   };
