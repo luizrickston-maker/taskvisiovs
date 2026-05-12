@@ -35,7 +35,14 @@ export function useInitializeData(userId: string | undefined) {
         supabase.from('time_blocks').select('*').order('date', { ascending: true }),
         supabase.from('user_preferences').select('*').maybeSingle(),
         supabase.from('goals').select('*').order('deadline', { ascending: true }),
-      ]);
+      ]).catch(error => {
+        console.error('[Initialize] Critical data fetch error:', error);
+        return [
+          { data: [], error }, { data: [], error }, { data: [], error },
+          { data: [], error }, { data: [], error }, { data: [], error },
+          { data: [], error }, { data: null, error }, { data: [], error }
+        ];
+      });
 
       if (categoriesRes.data) store.setCategories(categoriesRes.data as Category[]);
       if (incomesRes.data) store.setIncomes(incomesRes.data as Income[]);

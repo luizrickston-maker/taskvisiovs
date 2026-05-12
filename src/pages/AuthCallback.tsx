@@ -24,6 +24,13 @@ async function getRedirectDestination(userId: string): Promise<string> {
   return clientUser ? '/portal' : '/caixa';
 }
 
+// SECURITY: Sanitize error messages from URL to prevent reflected XSS
+function sanitizeErrorMessage(msg: string | null): string {
+  if (!msg) return 'Ocorreu um erro na verificação';
+  // Strip HTML and suspicious characters
+  return msg.replace(/<[^>]*>?/gm, '').slice(0, 200);
+}
+
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -40,7 +47,7 @@ export default function AuthCallback() {
         
         if (error) {
           setStatus('error');
-          setMessage(errorDescription || 'Ocorreu um erro na verificação');
+          setMessage(sanitizeErrorMessage(errorDescription));
           return;
         }
 
@@ -75,7 +82,7 @@ export default function AuthCallback() {
           
           if (verifyError) {
             setStatus('error');
-            setMessage(verifyError.message || 'Link inválido ou expirado');
+            setMessage(sanitizeErrorMessage(verifyError.message));
             return;
           }
           

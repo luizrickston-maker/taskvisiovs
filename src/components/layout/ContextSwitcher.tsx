@@ -28,7 +28,8 @@ export function ContextSwitcher({ collapsed = false }: ContextSwitcherProps) {
     if (newMode !== mode) {
       setMode(newMode);
       const defaultRoute = newMode === 'personal' ? '/caixa' : '/comercial';
-      navigate(defaultRoute);
+      // UI: Smooth transition to the new mode's landing page
+      navigate(defaultRoute, { replace: true });
     }
   };
 
