@@ -153,11 +153,29 @@ export function useAuthRefreshCoordinator() {
     const runRefresh = async (reason: "timer" | "visibility" | "auth_event") => {
       if (isUnmounted || refreshInFlightRef.current) return;
       if (!isVisible() || !ensureLeadership()) return;
+      
+      // Se for SIGNED_IN, esperamos um pouco para o Supabase processar a sessão inicial
+      if (reason === "auth_event") {
+        await new Promise(r => setTimeout(r, 1000));
+      }
+
       if (!acquireRefreshLock()) return;
 
       refreshInFlightRef.current = true;
 
       try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        // Se a sessão ainda é válida por mais de 5 minutos, não forçamos refresh agora
+        // a menos que o timer tenha disparado (reason === "timer")
+        if (currentSession?.expires_at) {
+          const timeUntilExpiry = currentSession.expires_at * 1000 - now();
+          if (reason !== "timer" && timeUntilExpiry > 300_000) {
+             await scheduleRefreshFromSession(currentSession);
+             return;
+          }
+        }
+
         const { data, error } = await supabase.auth.refreshSession();
 
         if (error) {
@@ -167,6 +185,11 @@ export function useAuthRefreshCoordinator() {
               tabId: tabId.slice(0, 8),
               message: error.message,
             });
+          }
+          
+          // Se o erro for session_not_found e não for inicial, talvez a sessão tenha caído
+          if (error.message?.includes("session_not_found") && reason === "timer") {
+             // Deixa o onAuthStateChange lidar com o logout
           }
           return;
         }
@@ -240,7 +263,7 @@ export function useAuthRefreshCoordinator() {
       }
     });
 
-    // Desativa o auto-refresh interno para evitar tempestade de refresh em iOS/Safari.
+    // Já desativado no createClient, mas garantimos aqui também.
     supabase.auth.stopAutoRefresh();
 
     if (ensureLeadership()) {
