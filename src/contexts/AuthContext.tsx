@@ -33,97 +33,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useAuthRefreshCoordinator();
 
   useEffect(() => {
-    // Set up listener FIRST (before getSession) to avoid race conditions
+    // Flag para evitar múltiplas chamadas iniciais
+    let initialized = false;
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(
         "[Auth] onAuthStateChange:",
         event,
-        session?.user?.email ?? "no-session",
-        "expires_at:",
-        session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : "n/a"
+        session?.user?.email ?? "no-session"
       );
 
+      // Tratamento de SIGNED_OUT inesperado (comum em Safari/iPad após 429)
       if (event === "SIGNED_OUT" && !manualSignOutRef.current) {
         if (signedOutRecoveryInFlightRef.current) return;
 
         signedOutRecoveryInFlightRef.current = true;
         setLoading(true);
 
-        void (async () => {
-          // Grace period para Safari/iPad quando há falha transitória de refresh
-          await new Promise((resolve) => setTimeout(resolve, 700));
+        // Espera um pouco para o Supabase/Rede estabilizar
+        await new Promise((resolve) => setTimeout(resolve, 1500));
 
-          let recoveredSession: Session | null = null;
-          const firstTry = await supabase.auth.getSession();
-          recoveredSession = firstTry.data.session;
-
-          if (!recoveredSession) {
-            // 2ª tentativa curta para absorver jitter/retries após 429 temporário
-            await new Promise((resolve) => setTimeout(resolve, 1200));
-            const secondTry = await supabase.auth.getSession();
-            recoveredSession = secondTry.data.session;
-          }
-
-          if (recoveredSession) {
-            console.warn("[Auth] SIGNED_OUT transitório detectado — sessão recuperada");
-            lastGoodSessionRef.current = recoveredSession;
-            setSession(recoveredSession);
-            setUser(recoveredSession.user ?? null);
-          } else {
-            console.warn("[Auth] SIGNED_OUT confirmado — limpando store");
-            lastGoodSessionRef.current = null;
-            setSession(null);
-            setUser(null);
-            resetStore();
-          }
-
+        const { data: { session: recovered } } = await supabase.auth.getSession();
+        
+        if (recovered) {
+          console.warn("[Auth] Sessão recuperada após SIGNED_OUT falso");
+          setSession(recovered);
+          setUser(recovered.user);
           setLoading(false);
           signedOutRecoveryInFlightRef.current = false;
-        })();
-
+          return;
+        }
+        
+        console.error("[Auth] Logout confirmado");
+        setSession(null);
+        setUser(null);
+        resetStore();
+        setLoading(false);
+        signedOutRecoveryInFlightRef.current = false;
         return;
       }
 
       if (session) {
-        lastGoodSessionRef.current = session;
-      }
-
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-
-      if (event === "SIGNED_OUT") {
-        console.warn("[Auth] SIGNED_OUT manual — clearing store");
-        manualSignOutRef.current = false;
-        lastGoodSessionRef.current = null;
+        setSession(session);
+        setUser(session.user);
+      } else if (event === "SIGNED_OUT") {
+        setSession(null);
+        setUser(null);
         resetStore();
       }
-
-      if (event === "TOKEN_REFRESHED") {
-        console.log("[Auth] Token refreshed successfully");
-      }
+      
+      setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log("[Auth] getSession:", session?.user?.email ?? "no-session", "error:", error?.message ?? "none");
-
-      // Em Safari/iPad, getSession pode falhar transitoriamente mesmo com sessão válida em memória
-      if (!session && error && lastGoodSessionRef.current) {
-        console.warn("[Auth] getSession transitório com fallback para última sessão válida");
-        setSession(lastGoodSessionRef.current);
-        setUser(lastGoodSessionRef.current.user ?? null);
+    // Carga inicial
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!initialized) {
+        setSession(session);
+        setUser(session?.user ?? null);
         setLoading(false);
-        return;
+        initialized = true;
       }
-
-      if (session) {
-        lastGoodSessionRef.current = session;
-      }
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
