@@ -1,23 +1,41 @@
 import subprocess
-import json
 
 user_id = '067f253a-441c-4fca-920b-52036ef97eb9'
 
-# Get all tables with user_id column
-cmd = ["psql", "-t", "-c", "SELECT table_name FROM information_schema.columns WHERE table_schema = 'public' AND column_name = 'user_id';"]
+# Get all base tables with user_id column
+cmd = ["psql", "-t", "-c", """
+    SELECT c.table_name 
+    FROM information_schema.columns c
+    JOIN information_schema.tables t ON c.table_name = t.table_name AND c.table_schema = t.table_schema
+    WHERE c.table_schema = 'public' 
+    AND c.column_name = 'user_id'
+    AND t.table_type = 'BASE TABLE';
+"""]
 result = subprocess.run(cmd, capture_output=True, text=True)
 tables = [t.strip() for t in result.stdout.split('\n') if t.strip()]
 
-delete_queries = []
-for table in tables:
-    # Check if table is a view (views can't be deleted from directly sometimes, but let's try or filter them)
-    # Actually, psql -t -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE';" would be better
-    delete_queries.append(f"DELETE FROM public.{table} WHERE user_id = '{user_id}';")
+# Remove duplicates
+tables = list(set(tables))
 
-# Print queries for inspection or run them
-# We should also check for tables where the user might be an owner via other columns if found earlier
-# but user_id is the primary one here.
+delete_queries = [f"DELETE FROM public.{table} WHERE user_id = '{user_id}';" for table in tables]
+
+# Also check for owner_id or created_by in base tables
+cmd_other = ["psql", "-t", "-c", """
+    SELECT c.table_name, c.column_name
+    FROM information_schema.columns c
+    JOIN information_schema.tables t ON c.table_name = t.table_name AND c.table_schema = t.table_schema
+    WHERE c.table_schema = 'public' 
+    AND (c.column_name = 'owner_id' OR c.column_name = 'created_by')
+    AND t.table_type = 'BASE TABLE';
+"""]
+result_other = subprocess.run(cmd_other, capture_output=True, text=True)
+for line in result_other.stdout.split('\n'):
+    if '|' in line:
+        table, col = [x.strip() for x in line.split('|')]
+        delete_queries.append(f"DELETE FROM public.{table} WHERE {col} = '{user_id}';")
 
 # Combine all into one transaction
+# We'll also delete the user from auth.users at the end if possible, or advise.
+# For now, let's run the public table cleanup.
 full_query = "BEGIN; " + " ".join(delete_queries) + " COMMIT;"
 print(full_query)
