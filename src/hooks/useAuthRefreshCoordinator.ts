@@ -263,7 +263,7 @@ export function useAuthRefreshCoordinator() {
       }
     });
 
-    // Desativa o auto-refresh interno para evitar tempestade de refresh em iOS/Safari.
+    // Já desativado no createClient, mas garantimos aqui também.
     supabase.auth.stopAutoRefresh();
 
     if (ensureLeadership()) {
