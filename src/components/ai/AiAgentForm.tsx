@@ -20,7 +20,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, GripVertical, X } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Loader2, GripVertical, X, Zap, Brain, Activity } from 'lucide-react';
 import type { AIAgent, AIAgentCreate } from '@/types/ai';
 import { AI_MODEL_OPTIONS, CONTEXT_PRIORITY_OPTIONS } from '@/types/ai';
 import { useAiApiKeys } from '@/hooks/useAiApiKeys';
@@ -67,6 +69,10 @@ export function AiAgentForm({
   const [maxTokens, setMaxTokens] = useState(4096);
   const [contextPriority, setContextPriority] = useState<string[]>([]);
   const [apiKeyId, setApiKeyId] = useState<string | null>(null);
+  const [routingEnabled, setRoutingEnabled] = useState(false);
+  const [modelSimple, setModelSimple] = useState('google/gemini-1.5-flash');
+  const [modelStandard, setModelStandard] = useState('google/gemini-1.5-flash');
+  const [modelComplex, setModelComplex] = useState('google/gemini-1.5-pro');
 
   useEffect(() => {
     if (agent) {
@@ -78,6 +84,10 @@ export function AiAgentForm({
       setMaxTokens(agent.max_tokens);
       setContextPriority(agent.context_priority ?? []);
       setApiKeyId(agent.api_key_id ?? null);
+      setRoutingEnabled(agent.routing_enabled ?? false);
+      setModelSimple(agent.model_name_simple || 'google/gemini-1.5-flash');
+      setModelStandard(agent.model_name_standard || 'google/gemini-1.5-flash');
+      setModelComplex(agent.model_name_complex || 'google/gemini-1.5-pro');
     } else {
       setName('');
       setDescription('');
@@ -87,6 +97,10 @@ export function AiAgentForm({
       setMaxTokens(4096);
       setContextPriority([]);
       setApiKeyId(null);
+      setRoutingEnabled(false);
+      setModelSimple('google/gemini-1.5-flash');
+      setModelStandard('google/gemini-1.5-flash');
+      setModelComplex('google/gemini-1.5-pro');
     }
   }, [agent, open]);
 
@@ -121,6 +135,10 @@ export function AiAgentForm({
       max_tokens: maxTokens,
       context_priority: contextPriority.length > 0 ? contextPriority : undefined,
       api_key_id: apiKeyId,
+      routing_enabled: routingEnabled,
+      model_name_simple: modelSimple,
+      model_name_standard: modelStandard,
+      model_name_complex: modelComplex,
     });
   };
 
@@ -155,8 +173,8 @@ export function AiAgentForm({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="model">Modelo de IA *</Label>
-              <Select value={modelName} onValueChange={setModelName}>
+              <Label htmlFor="model">Modelo de IA Padrão *</Label>
+              <Select value={modelName} onValueChange={setModelName} disabled={routingEnabled}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -173,7 +191,101 @@ export function AiAgentForm({
                   ))}
                 </SelectContent>
               </Select>
+              {routingEnabled && (
+                <p className="text-[10px] text-primary font-medium">
+                  Roteamento inteligente ativo (modelo padrão ignorado)
+                </p>
+              )}
             </div>
+          </div>
+
+          {/* AI Routing Feature */}
+          <div className="p-4 rounded-xl border-2 border-primary/20 bg-primary/5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-primary" />
+                  <Label className="text-base font-bold">Inteligência Rotativa</Label>
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Pro</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Alterna automaticamente entre modelos baseado na complexidade da tarefa.
+                </p>
+              </div>
+              <Switch 
+                checked={routingEnabled} 
+                onCheckedChange={setRoutingEnabled} 
+              />
+            </div>
+
+            {routingEnabled && (
+              <div className="grid gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <Separator className="bg-primary/10" />
+                
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-1">
+                      <Zap className="w-3 h-3 text-yellow-500" />
+                      SIMPLES
+                    </div>
+                    <Select value={modelSimple} onValueChange={setModelSimple}>
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AI_MODEL_OPTIONS.map((model) => (
+                          <SelectItem key={model.value} value={model.value} className="text-xs">
+                            {model.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-1">
+                      <Bot className="w-3 h-3 text-blue-500" />
+                      PADRÃO
+                    </div>
+                    <Select value={modelStandard} onValueChange={setModelStandard}>
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AI_MODEL_OPTIONS.map((model) => (
+                          <SelectItem key={model.value} value={model.value} className="text-xs">
+                            {model.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-1">
+                      <Brain className="w-3 h-3 text-purple-500" />
+                      COMPLEXO
+                    </div>
+                    <Select value={modelComplex} onValueChange={setModelComplex}>
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AI_MODEL_OPTIONS.map((model) => (
+                          <SelectItem key={model.value} value={model.value} className="text-xs">
+                            {model.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <p className="text-[10px] text-muted-foreground italic">
+                  * Tarefas simples (saudações, comandos curtos) usam modelos econômicos. Tarefas analíticas usam modelos premium.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

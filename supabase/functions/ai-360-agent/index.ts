@@ -58,7 +58,7 @@ async function fetchAgentConfig(
 ): Promise<AgentWithKey> {
   let query = supabase
     .from("ai_agents")
-    .select("id, name, system_prompt, model_name, temperature, max_tokens, context_priority, api_key_id")
+    .select("id, name, system_prompt, model_name, temperature, max_tokens, context_priority, api_key_id, routing_enabled, model_name_simple, model_name_standard, model_name_complex")
     .eq("user_id", userId)
     .eq("is_active", true);
 
@@ -413,6 +413,36 @@ serve(async (req) => {
       "editorial",
       "team",
     ];
+
+    // 4. Implement routing if enabled
+    if (agent?.routing_enabled) {
+      console.log("[ai-360-agent] Routing enabled, determining task complexity...");
+      const lastMessage = messages[messages.length - 1].content.toLowerCase();
+      
+      // Heuristic classification (Simple vs Complex)
+      const simplePatterns = [
+        "bom dia", "olá", "oi", "boa tarde", "boa noite", "obrigado", "valeu", "ok", "entendido",
+        "concluído", "feito", "marcar como", "listar", "quais as tarefas", "resumo de hoje", "agora"
+      ];
+      const complexPatterns = [
+        "analise", "planeje", "sugira", "estratégia", "relatório", "por que", "comparação", "tendência",
+        "lucro", "performance", "gargalo", "previsão", "crie um plano", "como posso"
+      ];
+
+      const isComplex = complexPatterns.some(p => lastMessage.includes(p)) || lastMessage.length > 200;
+      const isSimple = simplePatterns.some(p => lastMessage.includes(p)) && lastMessage.length < 100;
+
+      if (isSimple) {
+        modelName = agent.model_name_simple || "google/gemini-1.5-flash";
+        console.log("[ai-360-agent] Routed to SIMPLE model:", modelName);
+      } else if (isComplex) {
+        modelName = agent.model_name_complex || "google/gemini-1.5-pro";
+        console.log("[ai-360-agent] Routed to COMPLEX model:", modelName);
+      } else {
+        modelName = agent.model_name_standard || agent.model_name || "google/gemini-1.5-flash";
+        console.log("[ai-360-agent] Routed to STANDARD model:", modelName);
+      }
+    }
 
     console.log(`[ai-360-agent] Using agent: ${agent?.name || "default"}, model: ${modelName}, custom key: ${!!customKeyInfo}`);
 

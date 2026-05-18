@@ -30,6 +30,10 @@ export interface AIAgent {
   max_tokens: number;
   context_priority: string[];
   api_key_id: string | null;
+  routing_enabled?: boolean;
+  model_name_simple?: string;
+  model_name_standard?: string;
+  model_name_complex?: string;
 }
 
 export interface AiApiKey {
