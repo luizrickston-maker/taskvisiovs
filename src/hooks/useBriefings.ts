@@ -14,8 +14,7 @@ export const useBriefings = (workspaceId?: string) => {
         .from('briefings')
         .select(`
           *,
-          client:clients(name, company_name),
-          assigned_to:assigned_to_user_id(full_name, email)
+          client:clients(name, company_name)
         `)
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false });

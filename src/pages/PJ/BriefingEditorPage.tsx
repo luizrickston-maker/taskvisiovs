@@ -89,7 +89,7 @@ export default function BriefingEditorPage() {
         // Fetch workspace users for assignment
         const { data: usersData } = await supabase
           .from('workspace_members')
-          .select('user_id, profiles(full_name, email)')
+          .select('user_id')
           .eq('workspace_id', memberData.workspace_id);
         if (usersData) setWorkspaceUsers(usersData);
       }
@@ -281,7 +281,7 @@ export default function BriefingEditorPage() {
                 <SelectItem value="none">Nenhum (Usar Externo)</SelectItem>
                 {workspaceUsers.map(u => (
                   <SelectItem key={u.user_id} value={u.user_id}>
-                    {u.profiles?.full_name || u.profiles?.email || "Usuário sem nome"}
+                    {u.user_id}
                   </SelectItem>
                 ))}
               </SelectContent>

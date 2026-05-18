@@ -165,6 +165,21 @@ export default function BriefingsPage() {
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
           <p className="text-muted-foreground animate-pulse">Carregando seus briefings...</p>
         </div>
+      ) : briefings.isError ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center space-y-4 bg-red-50/20 rounded-3xl border-2 border-dashed border-red-200">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+            <Inbox className="w-8 h-8 text-red-500/50" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold text-red-600">Erro ao carregar briefings</h3>
+            <p className="text-muted-foreground max-w-sm">
+              Ocorreu um problema ao buscar seus briefings. Por favor, tente novamente.
+            </p>
+          </div>
+          <Button onClick={() => briefings.refetch()} variant="outline" className="mt-4">
+            Tentar novamente
+          </Button>
+        </div>
       ) : filteredBriefings?.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center space-y-4 bg-muted/20 rounded-3xl border-2 border-dashed border-border/50">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
