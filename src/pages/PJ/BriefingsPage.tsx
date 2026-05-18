@@ -163,7 +163,7 @@ export default function BriefingsPage() {
                 </CardContent>
               </Card>
 
-              {templates.data?.map((template) => (
+              {templates.data?.map((template: any) => (
                 <Card key={template.id} className="glass-card group">
                   <CardHeader>
                     <CardTitle>{template.title}</CardTitle>
