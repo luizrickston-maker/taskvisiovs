@@ -478,11 +478,15 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
 
     if (activeCustomKeyInfo) {
       apiKey = activeCustomKeyInfo.key;
-      const provider = activeCustomKeyInfo.provider.toLowerCase();
-      const rawModel = modelName.includes("/") ? modelName.split("/")[1] : modelName;
+      const rawProvider = activeCustomKeyInfo.provider.toLowerCase();
+      let rawModel = modelName.includes("/") ? modelName.split("/")[1] : modelName;
       
+      // Standardize model names and fix common typos
+      if (rawModel.includes("gemini-flash-1.5")) rawModel = "gemini-1.5-flash";
+      if (rawModel.includes("gemini-pro-1.5")) rawModel = "gemini-1.5-pro";
+
       // Route to the correct API based on provider, with model validation
-      switch (provider) {
+      switch (rawProvider) {
         case "openai":
           apiEndpoint = "https://api.openai.com/v1/chat/completions";
           // Validate model belongs to OpenAI; otherwise fallback to a default
@@ -528,7 +532,7 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
           break;
       }
       
-      console.log(`[ai-360-agent] Using ${provider} API at ${apiEndpoint}, model: ${modelName}`);
+      console.log(`[ai-360-agent] Using ${rawProvider} API at ${apiEndpoint}, model: ${modelName}`);
     } else {
       // Use Lovable AI Gateway (default)
       apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
