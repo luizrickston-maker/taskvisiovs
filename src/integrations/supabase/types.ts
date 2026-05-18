@@ -277,6 +277,66 @@ export type Database = {
         }
         Relationships: []
       }
+      briefings: {
+        Row: {
+          assigned_to_user_id: string | null
+          client_id: string | null
+          created_at: string | null
+          created_by_user_id: string
+          external_filler_email: string | null
+          id: string
+          magic_link_expires_at: string | null
+          magic_link_token: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          assigned_to_user_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          created_by_user_id: string
+          external_filler_email?: string | null
+          id?: string
+          magic_link_expires_at?: string | null
+          magic_link_token?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          assigned_to_user_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          created_by_user_id?: string
+          external_filler_email?: string | null
+          id?: string
+          magic_link_expires_at?: string | null
+          magic_link_token?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "briefings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_processes: {
         Row: {
           category: string | null
