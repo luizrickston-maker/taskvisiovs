@@ -129,7 +129,7 @@ export default function BriefingEditorPage() {
     setVideoItems(newItems);
   };
 
-  const handleSave = async (status: string = 'draft') => {
+  const handleSave = async (status: BriefingStatus = 'draft') => {
     try {
       let currentId = id;
       
