@@ -17,6 +17,7 @@ import Auth from "@/pages/Auth";
 import AuthCallback from "@/pages/AuthCallback";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
+import BriefingFillPage from "@/pages/BriefingFillPage";
 
 // Componentes core que serão carregados com prioridade (mas ainda lazy para não travar o main thread)
 const CaixaDashboard = lazy(() => import(/* vitePrefetch: true */ "@/pages/CaixaDashboard"));
@@ -111,6 +112,7 @@ const App = () => {
                   <PortalRedirect />
                 </Suspense>
               } />
+              <Route path="/briefing/fill" element={<BriefingFillPage />} />
               {/* Client Portal - isolated from main app */}
               <Route path="/portal" element={
                 <ClientPortalRoute>
