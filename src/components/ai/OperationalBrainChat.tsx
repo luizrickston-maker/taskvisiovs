@@ -77,14 +77,22 @@ export function OperationalBrainChat() {
     const assistantId = crypto.randomUUID();
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error('Sessão expirada. Por favor, faça login novamente.');
+      }
+
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({
           messages: [...messages, userMsg].map(m => ({
+            role: m.role,
             content: m.content,
           })),
           agent_id: selectedAgent?.id,
