@@ -349,10 +349,20 @@ export function OperationalBrainChat() {
                   <div
                     key={msg.id}
                     className={cn(
-                      "flex",
-                      msg.role === 'user' ? 'justify-end' : 'justify-start'
+                      "flex items-start gap-2",
+                      msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                     )}
                   >
+                    <div className={cn(
+                      "w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-1",
+                      msg.role === 'user' ? "bg-primary/20" : "bg-muted"
+                    )}>
+                      {msg.role === 'user' ? (
+                        <User className="h-3 w-3 text-primary" />
+                      ) : (
+                        <Bot className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </div>
                     <div
                       className={cn(
                         "max-w-[85%] rounded-xl px-3 py-2 text-sm",
