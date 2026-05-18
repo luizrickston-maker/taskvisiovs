@@ -50,9 +50,9 @@ export default function BriefingFillPage() {
             client:clients(name)
           `);
 
-        if (token) {
+        if (token && token !== 'none') {
           query = query.eq('magic_link_token', token).gt('magic_link_expires_at', new Date().toISOString());
-        } else if (routeId) {
+        } else if (routeId && routeId !== 'none') {
           query = query.eq('id', routeId);
         } else {
           throw new Error("Acesso não autorizado");
