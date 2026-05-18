@@ -483,21 +483,17 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
       switch (activeCustomKeyInfo.provider.toLowerCase()) {
         case "openai":
           apiEndpoint = "https://api.openai.com/v1/chat/completions";
-          // Convert model name from OpenRouter format to OpenAI format
-          if (modelName.startsWith("openai/")) {
-            modelName = modelName.replace("openai/", "");
+          // Convert model name from OpenRouter format if needed
+          if (modelName.includes("/")) {
+            modelName = modelName.split("/")[1];
           }
-          // Map model names to OpenAI equivalents
-          if (modelName === "gpt-5-mini") modelName = "gpt-4o-mini";
-          if (modelName === "gpt-5") modelName = "gpt-4o";
-          if (modelName === "gpt-5-nano") modelName = "gpt-4o-mini";
           break;
         case "gemini":
         case "google":
           apiEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
           // Convert model name for Google API
-          if (modelName.startsWith("google/")) {
-            modelName = modelName.replace("google/", "");
+          if (modelName.includes("/")) {
+            modelName = modelName.split("/")[1];
           }
           break;
         case "anthropic":
@@ -506,6 +502,12 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
             "anthropic-version": "2023-06-01",
             "x-api-key": apiKey,
           };
+          // Anthropic doesn't use "Bearer "
+          apiKey = ""; 
+          // Convert model name
+          if (modelName.includes("/")) {
+            modelName = modelName.split("/")[1];
+          }
           break;
         case "openrouter":
         default:
