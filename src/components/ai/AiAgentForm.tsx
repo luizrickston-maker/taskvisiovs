@@ -87,9 +87,19 @@ export function AiAgentForm({
   }, [agent, open]);
 
   const handleAddContext = (value: string) => {
+    if (value === 'all') {
+      const allValues = CONTEXT_PRIORITY_OPTIONS.map(opt => opt.value);
+      setContextPriority(allValues);
+      return;
+    }
     if (!contextPriority.includes(value)) {
       setContextPriority([...contextPriority, value]);
     }
+  };
+
+  const handleSelectAllContexts = () => {
+    const allValues = CONTEXT_PRIORITY_OPTIONS.map(opt => opt.value);
+    setContextPriority(allValues);
   };
 
   const handleRemoveContext = (value: string) => {
@@ -228,7 +238,19 @@ export function AiAgentForm({
 
           {/* Context Priority */}
           <div className="space-y-3">
-            <Label>Prioridade de Contexto</Label>
+            <div className="flex items-center justify-between">
+              <Label>Prioridade de Contexto</Label>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 text-xs text-primary hover:text-primary/80"
+                onClick={handleSelectAllContexts}
+                disabled={contextPriority.length === CONTEXT_PRIORITY_OPTIONS.length}
+              >
+                Selecionar Todos
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">
               Defina a ordem de importância dos módulos de dados para este agente.
             </p>
