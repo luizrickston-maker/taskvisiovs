@@ -143,6 +143,57 @@ export type Database = {
         }
         Relationships: []
       }
+      briefing_notifications: {
+        Row: {
+          briefing_id: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          briefing_id: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          briefing_id?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefing_notifications_briefing_id_fkey"
+            columns: ["briefing_id"]
+            isOneToOne: false
+            referencedRelation: "briefings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "briefing_notifications_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       briefing_responses: {
         Row: {
           block_name: string
