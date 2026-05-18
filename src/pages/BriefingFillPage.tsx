@@ -88,18 +88,19 @@ export default function BriefingFillPage() {
 
         if (error || !data) throw new Error("Link inválido ou expirado");
 
-        setBriefing(data);
-        setBriefingId(data.id);
+        const briefingData = data as any;
+        setBriefing(briefingData);
+        setBriefingId(briefingData.id);
         
         // Map data
-        data.responses.forEach((resp: any) => {
+        briefingData.responses.forEach((resp: any) => {
           if (resp.block_name === 'identificacao') setBlock1(resp.response_data);
           if (resp.block_name === 'objetivo_mes') setBlock2(resp.response_data);
           if (resp.block_name === 'referencias') setBlock4(resp.response_data);
           if (resp.block_name === 'restricoes') setBlock5(resp.response_data);
           if (resp.block_name === 'fechamento') setBlock6(resp.response_data);
         });
-        setVideoItems(data.video_items.sort((a: any, b: any) => a.item_index - b.item_index));
+        setVideoItems(briefingData.video_items.sort((a: any, b: any) => a.item_index - b.item_index));
       } catch (err: any) {
         toast.error(err.message);
       } finally {
