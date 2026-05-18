@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBriefings } from "@/hooks/useBriefings";
 import { useAppContext } from "@/hooks/useAppContext";
 import { useAuthContextSafe } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,25 @@ import { ptBR } from "date-fns/locale";
 export default function BriefingsPage() {
   const { mode } = useAppContext();
   const authContext = useAuthContextSafe();
-  const workspaceId = authContext?.userWorkspace?.id;
+  const [workspaceId, setWorkspaceId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const fetchWorkspace = async () => {
+      const { data } = await supabase
+        .from('workspace_members')
+        .select('workspace_id')
+        .eq('user_id', authContext?.user?.id)
+        .limit(1)
+        .maybeSingle();
+      
+      if (data) setWorkspaceId(data.workspace_id);
+    };
+
+    if (authContext?.user?.id) {
+      fetchWorkspace();
+    }
+  }, [authContext?.user?.id]);
+
   const { templates, responses } = useBriefings(workspaceId);
   const [activeTab, setActiveTab] = useState("responses");
 
