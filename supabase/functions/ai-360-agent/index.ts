@@ -410,7 +410,7 @@ serve(async (req) => {
     let activeCustomKeyInfo = customKeyInfo;
 
     const systemPrompt = agent?.system_prompt || DEFAULT_SYSTEM_PROMPT;
-    let modelName = agent?.model_name || "google/gemini-3-flash-preview";
+    let modelName = agent?.model_name || "google/gemini-1.5-flash";
     const temperature = agent?.temperature ?? 0.7;
     const maxTokens = agent?.max_tokens || 4096;
     const contextPriority = agent?.context_priority || [
@@ -462,7 +462,7 @@ serve(async (req) => {
     const formattedContext = formatAIContext(context, contextPriority);
 
     // 5. Handle token limits
-    const finalContext = truncateContextToFit(systemPrompt, formattedContext, messages, maxTokens * 4); // input can be larger
+    const finalContext = truncateContextToFit(systemPrompt, formattedContext, messages, maxTokens);
 
     // 6. Build final prompt - Add safety instruction to ALL agents
     const safetyInstruction = `\n\n## INSTRUÇÃO DE SEGURANÇA GLOBAL:
@@ -559,13 +559,16 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
       requestBody.system = systemWithContext;
       requestBody.messages = messages.map(m => ({
         role: m.role === "assistant" ? "assistant" : "user",
-        content: m.content,
+        content: m.content || "",
       }));
       requestBody.max_tokens = maxTokens || 4096;
     } else {
       requestBody.messages = [
         { role: "system", content: systemWithContext },
-        ...messages,
+        ...messages.map(m => ({
+          role: m.role,
+          content: m.content || "",
+        })),
       ];
       requestBody.max_tokens = maxTokens;
     }
