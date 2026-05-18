@@ -1,10 +1,20 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Brain, Send, X, Minimize2, Maximize2, Loader2, Sparkles, Trash2 } from 'lucide-react';
+import { Brain, Send, X, Minimize2, Maximize2, Loader2, Sparkles, Trash2, ChevronDown, User, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+import { useAiAgents } from '@/hooks/useAiAgents';
+import type { AIAgent } from '@/types/ai';
 
 interface Message {
   id: string;
@@ -28,6 +38,18 @@ export function OperationalBrainChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
+  
+  const { data: agents } = useAiAgents();
+  const activeAgents = agents?.filter(a => a.is_active) ?? [];
+
+  useEffect(() => {
+    if (activeAgents.length > 0 && !selectedAgent) {
+      const defaultAgent = activeAgents.find(a => a.is_default) || activeAgents[0];
+      setSelectedAgent(defaultAgent);
+    }
+  }, [activeAgents, selectedAgent]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -62,9 +84,9 @@ export function OperationalBrainChat() {
         },
         body: JSON.stringify({
           messages: [...messages, userMsg].map(m => ({
-            role: m.role,
             content: m.content,
           })),
+          agent_id: selectedAgent?.id,
         }),
       });
 
@@ -156,7 +178,7 @@ export function OperationalBrainChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages]);
+  }, [messages, selectedAgent]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,15 +221,62 @@ export function OperationalBrainChat() {
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-border/50 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-            <Brain className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-sm">Cérebro Operacional</h3>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="p-0 h-auto hover:bg-transparent">
+                <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center shrink-0">
+                  <Brain className="h-4 w-4 text-primary-foreground" />
+                </div>
+                <div className="flex items-center gap-1 ml-2 text-left">
+                  <div>
+                    <h3 className="font-semibold text-sm leading-tight">
+                      {selectedAgent?.name || "Cérebro Operacional"}
+                    </h3>
+                    {!isMinimized && (
+                      <p className="text-[10px] text-muted-foreground leading-tight">
+                        {selectedAgent ? "Agente selecionado" : "Visão 360° do seu negócio"}
+                      </p>
+                    )}
+                  </div>
+                  {!isMinimized && <ChevronDown className="h-3 w-3 text-muted-foreground" />}
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
             {!isMinimized && (
-              <p className="text-[10px] text-muted-foreground">Visão 360° do seu negócio</p>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuLabel>Escolher Agente</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {activeAgents.length > 0 ? (
+                  activeAgents.map((agent) => (
+                    <DropdownMenuItem 
+                      key={agent.id}
+                      onClick={() => {
+                        setSelectedAgent(agent);
+                        if (messages.length > 0) {
+                          // Clear chat if switching agent to keep context clean
+                          setMessages([]);
+                        }
+                      }}
+                      className={cn(
+                        "flex items-center gap-2",
+                        selectedAgent?.id === agent.id && "bg-accent"
+                      )}
+                    >
+                      <Bot className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{agent.name}</span>
+                        {agent.is_default && (
+                          <span className="text-[10px] text-primary">Padrão</span>
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>Nenhum agente ativo</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
             )}
-          </div>
+          </DropdownMenu>
         </div>
         <div className="flex items-center gap-1">
           {!isMinimized && messages.length > 0 && (
@@ -250,7 +319,7 @@ export function OperationalBrainChat() {
                   <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-3">
                     <Sparkles className="h-8 w-8 text-primary" />
                   </div>
-                  <h4 className="font-semibold mb-1">Olá! Sou seu Cérebro Operacional 🧠</h4>
+                  <h4 className="font-semibold mb-1">Olá! Sou {selectedAgent?.name || "seu Cérebro Operacional"} 🧠</h4>
                   <p className="text-sm text-muted-foreground">
                     Posso analisar seus projetos, vendas, agenda e conteúdos para te dar insights personalizados.
                   </p>
@@ -280,10 +349,20 @@ export function OperationalBrainChat() {
                   <div
                     key={msg.id}
                     className={cn(
-                      "flex",
-                      msg.role === 'user' ? 'justify-end' : 'justify-start'
+                      "flex items-start gap-2",
+                      msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                     )}
                   >
+                    <div className={cn(
+                      "w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-1",
+                      msg.role === 'user' ? "bg-primary/20" : "bg-muted"
+                    )}>
+                      {msg.role === 'user' ? (
+                        <User className="h-3 w-3 text-primary" />
+                      ) : (
+                        <Bot className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </div>
                     <div
                       className={cn(
                         "max-w-[85%] rounded-xl px-3 py-2 text-sm",
