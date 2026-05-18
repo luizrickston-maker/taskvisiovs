@@ -1,10 +1,20 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Brain, Send, X, Minimize2, Maximize2, Loader2, Sparkles, Trash2 } from 'lucide-react';
+import { Brain, Send, X, Minimize2, Maximize2, Loader2, Sparkles, Trash2, ChevronDown, User, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+import { useAiAgents } from '@/hooks/useAiAgents';
+import type { AIAgent } from '@/types/ai';
 
 interface Message {
   id: string;
