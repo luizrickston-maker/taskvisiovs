@@ -68,6 +68,24 @@ export default function BriefingReviewPage() {
   const { briefing, updateBriefing } = useBriefingEditor(id);
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectNotes, setRejectNotes] = useState("");
+  const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isProcessingTasks, setIsProcessingTasks] = useState(false);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const briefingData = briefing.data as any;
+      if (briefingData?.workspace_id) {
+        const { data } = await supabase
+          .from('projects')
+          .select('id, project')
+          .eq('workspace_id', briefingData.workspace_id);
+        if (data) setProjects(data);
+      }
+    };
+    fetchProjects();
+  }, [briefing.data]);
 
   if (briefing.isLoading) {
     return (
