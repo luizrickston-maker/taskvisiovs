@@ -58,7 +58,7 @@ async function fetchAgentConfig(
 ): Promise<AgentWithKey> {
   let query = supabase
     .from("ai_agents")
-    .select("id, name, system_prompt, model_name, temperature, max_tokens, context_priority, api_key_id, routing_enabled, model_name_simple, model_name_standard, model_name_complex")
+    .select("id, name, system_prompt, model_name, temperature, max_tokens, context_priority, api_key_id, routing_enabled, model_name_simple, model_name_standard, model_name_complex, api_key_id_simple, api_key_id_standard, api_key_id_complex")
     .eq("user_id", userId)
     .eq("is_active", true);
 
@@ -77,32 +77,39 @@ async function fetchAgentConfig(
 
   const agent = agentData as AIAgent;
 
-  // If agent has a custom API key, fetch it
-  let customKeyInfo: AgentKeyInfo | null = null;
-  if (agent.api_key_id) {
-    const { data: keyData, error: keyError } = await supabase
+  // Helper to fetch key info
+  const fetchKey = async (keyId: string | null): Promise<AgentKeyInfo | null> => {
+    if (!keyId) return null;
+    const { data, error } = await supabase
       .from("ai_api_keys")
       .select("id, provider, api_key, is_active")
-      .eq("id", agent.api_key_id)
+      .eq("id", keyId)
       .eq("is_active", true)
       .single();
 
-    if (!keyError && keyData) {
-      const apiKeyRecord = keyData as AiApiKey;
-      // Validate the API key is not empty or a placeholder
-      const keyValue = apiKeyRecord.api_key?.trim();
-      if (keyValue && keyValue.length > 10 && !keyValue.startsWith("sk-xxx") && !keyValue.includes("your-api-key")) {
-        customKeyInfo = { key: keyValue, provider: apiKeyRecord.provider };
-        console.log(`[ai-360-agent] Using custom API key for provider: ${apiKeyRecord.provider}`);
-      } else {
-        console.log("[ai-360-agent] Custom API key appears invalid or is a placeholder, using system key");
-      }
-    } else {
-      console.log("[ai-360-agent] Custom API key not found or inactive, using system key");
+    if (error || !data) return null;
+    const apiKeyRecord = data as AiApiKey;
+    const keyValue = apiKeyRecord.api_key?.trim();
+    if (keyValue && keyValue.length > 10 && !keyValue.startsWith("sk-xxx")) {
+      return { key: keyValue, provider: apiKeyRecord.provider };
     }
+    return null;
+  };
+
+  // Fetch primary key
+  const customKeyInfo = await fetchKey(agent.api_key_id);
+  
+  // Fetch level keys if routing enabled
+  let levelKeys = undefined;
+  if (agent.routing_enabled) {
+    levelKeys = {
+      simple: await fetchKey(agent.api_key_id_simple),
+      standard: await fetchKey(agent.api_key_id_standard),
+      complex: await fetchKey(agent.api_key_id_complex),
+    };
   }
 
-  return { agent, customKeyInfo };
+  return { agent, customKeyInfo, levelKeys };
 }
 
 // =====================================================
@@ -399,7 +406,8 @@ serve(async (req) => {
 
     // 3. Fetch agent configuration
     console.log("[ai-360-agent] Fetching agent config for user:", userId);
-    const { agent, customKeyInfo } = await fetchAgentConfig(supabase, userId, agent_id);
+    const { agent, customKeyInfo, levelKeys } = await fetchAgentConfig(supabase, userId, agent_id);
+    let activeCustomKeyInfo = customKeyInfo;
 
     const systemPrompt = agent?.system_prompt || DEFAULT_SYSTEM_PROMPT;
     let modelName = agent?.model_name || "google/gemini-3-flash-preview";
@@ -434,17 +442,20 @@ serve(async (req) => {
 
       if (isSimple) {
         modelName = agent.model_name_simple || "google/gemini-1.5-flash";
-        console.log("[ai-360-agent] Routed to SIMPLE model:", modelName);
+        if (levelKeys?.simple) activeCustomKeyInfo = levelKeys.simple;
+        console.log("[ai-360-agent] Routed to SIMPLE model:", modelName, "Custom Key:", !!levelKeys?.simple);
       } else if (isComplex) {
         modelName = agent.model_name_complex || "google/gemini-1.5-pro";
-        console.log("[ai-360-agent] Routed to COMPLEX model:", modelName);
+        if (levelKeys?.complex) activeCustomKeyInfo = levelKeys.complex;
+        console.log("[ai-360-agent] Routed to COMPLEX model:", modelName, "Custom Key:", !!levelKeys?.complex);
       } else {
         modelName = agent.model_name_standard || agent.model_name || "google/gemini-1.5-flash";
-        console.log("[ai-360-agent] Routed to STANDARD model:", modelName);
+        if (levelKeys?.standard) activeCustomKeyInfo = levelKeys.standard;
+        console.log("[ai-360-agent] Routed to STANDARD model:", modelName, "Custom Key:", !!levelKeys?.standard);
       }
     }
 
-    console.log(`[ai-360-agent] Using agent: ${agent?.name || "default"}, model: ${modelName}, custom key: ${!!customKeyInfo}`);
+    console.log(`[ai-360-agent] Using agent: ${agent?.name || "default"}, model: ${modelName}, custom key: ${!!activeCustomKeyInfo}`);
 
     // 4. Fetch operational context
     const context = await fetchOperationalContext(supabase, userId);
@@ -465,11 +476,11 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
     let apiEndpoint: string;
     let extraHeaders: Record<string, string> = {};
 
-    if (customKeyInfo) {
-      apiKey = customKeyInfo.key;
+    if (activeCustomKeyInfo) {
+      apiKey = activeCustomKeyInfo.key;
       
       // Route to the correct API based on provider
-      switch (customKeyInfo.provider.toLowerCase()) {
+      switch (activeCustomKeyInfo.provider.toLowerCase()) {
         case "openai":
           apiEndpoint = "https://api.openai.com/v1/chat/completions";
           // Convert model name from OpenRouter format to OpenAI format

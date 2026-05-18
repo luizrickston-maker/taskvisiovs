@@ -73,6 +73,9 @@ export function AiAgentForm({
   const [modelSimple, setModelSimple] = useState('google/gemini-1.5-flash');
   const [modelStandard, setModelStandard] = useState('google/gemini-1.5-flash');
   const [modelComplex, setModelComplex] = useState('google/gemini-1.5-pro');
+  const [apiKeySimple, setApiKeySimple] = useState<string | null>(null);
+  const [apiKeyStandard, setApiKeyStandard] = useState<string | null>(null);
+  const [apiKeyComplex, setApiKeyComplex] = useState<string | null>(null);
 
   useEffect(() => {
     if (agent) {
@@ -88,6 +91,9 @@ export function AiAgentForm({
       setModelSimple(agent.model_name_simple || 'google/gemini-1.5-flash');
       setModelStandard(agent.model_name_standard || 'google/gemini-1.5-flash');
       setModelComplex(agent.model_name_complex || 'google/gemini-1.5-pro');
+      setApiKeySimple(agent.api_key_id_simple ?? null);
+      setApiKeyStandard(agent.api_key_id_standard ?? null);
+      setApiKeyComplex(agent.api_key_id_complex ?? null);
     } else {
       setName('');
       setDescription('');
@@ -101,6 +107,9 @@ export function AiAgentForm({
       setModelSimple('google/gemini-1.5-flash');
       setModelStandard('google/gemini-1.5-flash');
       setModelComplex('google/gemini-1.5-pro');
+      setApiKeySimple(null);
+      setApiKeyStandard(null);
+      setApiKeyComplex(null);
     }
   }, [agent, open]);
 
@@ -139,6 +148,9 @@ export function AiAgentForm({
       model_name_simple: modelSimple,
       model_name_standard: modelStandard,
       model_name_complex: modelComplex,
+      api_key_id_simple: apiKeySimple,
+      api_key_id_standard: apiKeyStandard,
+      api_key_id_complex: apiKeyComplex,
     });
   };
 
@@ -222,62 +234,128 @@ export function AiAgentForm({
               <div className="grid gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <Separator className="bg-primary/10" />
                 
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="space-y-2">
+                <div className="grid gap-6 sm:grid-cols-3">
+                  <div className="space-y-3">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-1">
                       <Zap className="w-3 h-3 text-yellow-500" />
                       SIMPLES
                     </div>
-                    <Select value={modelSimple} onValueChange={setModelSimple}>
-                      <SelectTrigger className="h-9 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {AI_MODEL_OPTIONS.map((model) => (
-                          <SelectItem key={model.value} value={model.value} className="text-xs">
-                            {model.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase opacity-70">Modelo</Label>
+                      <Select value={modelSimple} onValueChange={setModelSimple}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AI_MODEL_OPTIONS.map((model) => (
+                            <SelectItem key={model.value} value={model.value} className="text-xs">
+                              {model.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase opacity-70">Chave API</Label>
+                      <Select 
+                        value={apiKeySimple ?? 'system'} 
+                        onValueChange={(val) => setApiKeySimple(val === 'system' ? null : val)}
+                      >
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Sistema" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="system" className="text-xs">🔑 Sistema</SelectItem>
+                          {activeApiKeys.map((key) => (
+                            <SelectItem key={key.id} value={key.id} className="text-xs">
+                              {key.label ?? key.provider}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-1">
                       <Bot className="w-3 h-3 text-blue-500" />
                       PADRÃO
                     </div>
-                    <Select value={modelStandard} onValueChange={setModelStandard}>
-                      <SelectTrigger className="h-9 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {AI_MODEL_OPTIONS.map((model) => (
-                          <SelectItem key={model.value} value={model.value} className="text-xs">
-                            {model.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase opacity-70">Modelo</Label>
+                      <Select value={modelStandard} onValueChange={setModelStandard}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AI_MODEL_OPTIONS.map((model) => (
+                            <SelectItem key={model.value} value={model.value} className="text-xs">
+                              {model.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase opacity-70">Chave API</Label>
+                      <Select 
+                        value={apiKeyStandard ?? 'system'} 
+                        onValueChange={(val) => setApiKeyStandard(val === 'system' ? null : val)}
+                      >
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Sistema" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="system" className="text-xs">🔑 Sistema</SelectItem>
+                          {activeApiKeys.map((key) => (
+                            <SelectItem key={key.id} value={key.id} className="text-xs">
+                              {key.label ?? key.provider}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-1">
                       <Brain className="w-3 h-3 text-purple-500" />
                       COMPLEXO
                     </div>
-                    <Select value={modelComplex} onValueChange={setModelComplex}>
-                      <SelectTrigger className="h-9 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {AI_MODEL_OPTIONS.map((model) => (
-                          <SelectItem key={model.value} value={model.value} className="text-xs">
-                            {model.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase opacity-70">Modelo</Label>
+                      <Select value={modelComplex} onValueChange={setModelComplex}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AI_MODEL_OPTIONS.map((model) => (
+                            <SelectItem key={model.value} value={model.value} className="text-xs">
+                              {model.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase opacity-70">Chave API</Label>
+                      <Select 
+                        value={apiKeyComplex ?? 'system'} 
+                        onValueChange={(val) => setApiKeyComplex(val === 'system' ? null : val)}
+                      >
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Sistema" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="system" className="text-xs">🔑 Sistema</SelectItem>
+                          {activeApiKeys.map((key) => (
+                            <SelectItem key={key.id} value={key.id} className="text-xs">
+                              {key.label ?? key.provider}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
                 

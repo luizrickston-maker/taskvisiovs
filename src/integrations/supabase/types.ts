@@ -17,6 +17,9 @@ export type Database = {
       ai_agents: {
         Row: {
           api_key_id: string | null
+          api_key_id_complex: string | null
+          api_key_id_simple: string | null
+          api_key_id_standard: string | null
           context_priority: string[] | null
           created_at: string
           description: string | null
@@ -38,6 +41,9 @@ export type Database = {
         }
         Insert: {
           api_key_id?: string | null
+          api_key_id_complex?: string | null
+          api_key_id_simple?: string | null
+          api_key_id_standard?: string | null
           context_priority?: string[] | null
           created_at?: string
           description?: string | null
@@ -59,6 +65,9 @@ export type Database = {
         }
         Update: {
           api_key_id?: string | null
+          api_key_id_complex?: string | null
+          api_key_id_simple?: string | null
+          api_key_id_standard?: string | null
           context_priority?: string[] | null
           created_at?: string
           description?: string | null
@@ -80,8 +89,29 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "ai_agents_api_key_id_complex_fkey"
+            columns: ["api_key_id_complex"]
+            isOneToOne: false
+            referencedRelation: "ai_api_keys"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ai_agents_api_key_id_fkey"
             columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "ai_api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agents_api_key_id_simple_fkey"
+            columns: ["api_key_id_simple"]
+            isOneToOne: false
+            referencedRelation: "ai_api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agents_api_key_id_standard_fkey"
+            columns: ["api_key_id_standard"]
             isOneToOne: false
             referencedRelation: "ai_api_keys"
             referencedColumns: ["id"]
