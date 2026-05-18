@@ -64,13 +64,14 @@ export const useBriefingEditor = (briefingId?: string) => {
   });
 
   const updateResponse = useMutation({
-    mutationFn: async ({ block_name, response_data }: { block_name: string, response_data: any }) => {
-      if (!briefingId) throw new Error("ID do briefing é necessário para salvar respostas");
+    mutationFn: async ({ block_name, response_data, briefingId: idOverride }: { block_name: string, response_data: any, briefingId?: string }) => {
+      const targetId = idOverride || briefingId;
+      if (!targetId) throw new Error("ID do briefing é necessário para salvar respostas");
       
       const { data, error } = await supabase
         .from('briefing_responses')
         .upsert(
-          { briefing_id: briefingId, block_name, response_data, updated_at: new Date().toISOString() }, 
+          { briefing_id: targetId, block_name, response_data, updated_at: new Date().toISOString() }, 
           { onConflict: 'briefing_id, block_name' }
         )
         .select()
@@ -85,14 +86,15 @@ export const useBriefingEditor = (briefingId?: string) => {
   });
 
   const manageVideoItems = useMutation({
-    mutationFn: async (items: Partial<BriefingVideoItem>[]) => {
-      if (!briefingId) throw new Error("ID do briefing é necessário para gerenciar itens de vídeo");
+    mutationFn: async ({ items, briefingId: idOverride }: { items: Partial<BriefingVideoItem>[], briefingId?: string }) => {
+      const targetId = idOverride || briefingId;
+      if (!targetId) throw new Error("ID do briefing é necessário para gerenciar itens de vídeo");
       
       // Step 1: Remove existing items for this briefing
       const { error: deleteError } = await supabase
         .from('briefing_video_items')
         .delete()
-        .eq('briefing_id', briefingId);
+        .eq('briefing_id', targetId);
         
       if (deleteError) throw deleteError;
 
@@ -102,7 +104,7 @@ export const useBriefingEditor = (briefingId?: string) => {
           const { id, created_at, updated_at, briefing_id: bId, ...rest } = item as any;
           return {
             ...rest,
-            briefing_id: briefingId,
+            briefing_id: targetId,
             item_index: index + 1
           };
         });
