@@ -195,6 +195,9 @@ export default function BriefingsPage() {
                 const b = briefings.data?.find(x => x.id === id);
                 if (b?.status === 'in_review' || b?.status === 'approved') {
                   navigate(`/pj/briefings/${id}/review`);
+                } else if (b?.status === 'pending_fill') {
+                  // If it's pending, gestor can still review the current progress
+                  navigate(`/pj/briefings/${id}/review`);
                 } else {
                   navigate(`/pj/briefings/${id}/editar`);
                 }
