@@ -581,30 +581,30 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos.", code: "RATE_LIMIT" }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Créditos de IA esgotados. Adicione mais créditos para continuar.", code: "INSUFFICIENT_CREDITS" }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 401) {
-        return new Response(
-          JSON.stringify({ error: "Chave de API inválida ou expirada.", code: "AI_ERROR" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      const errorText = await response.text();
+      const errorText = await response.text().catch(() => "");
       console.error(`[ai-360-agent] AI API error (${response.status}):`, errorText);
+
+      let userMessage = "Erro ao processar solicitação de IA";
+      let code = "AI_ERROR";
+      if (response.status === 429) {
+        userMessage = "Limite de requisições da chave de IA excedido. Tente novamente em alguns minutos ou troque de modelo.";
+        code = "RATE_LIMIT";
+      } else if (response.status === 402) {
+        userMessage = "Créditos de IA esgotados. Adicione mais créditos para continuar.";
+        code = "INSUFFICIENT_CREDITS";
+      } else if (response.status === 401) {
+        userMessage = "Chave de API inválida ou expirada.";
+        code = "INVALID_KEY";
+      } else if (response.status === 404) {
+        userMessage = "Modelo de IA não encontrado para esta chave. Verifique a configuração do agente.";
+        code = "MODEL_NOT_FOUND";
+      }
+
+      // Return 200 with error payload to avoid triggering runtime error overlays.
+      // Frontend renders the message inline in the chat.
       return new Response(
-        JSON.stringify({ error: "Erro ao processar solicitação de IA", code: "AI_ERROR" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: userMessage, code, upstream_status: response.status }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
