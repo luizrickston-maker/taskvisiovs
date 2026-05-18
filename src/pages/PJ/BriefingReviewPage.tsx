@@ -255,9 +255,50 @@ export default function BriefingReviewPage() {
           )}
           
           {briefingData.status === 'approved' && (
-            <Button className="gradient-primary gap-2" onClick={() => toast.info("Funcionalidade em desenvolvimento")}>
-              <Plus className="w-4 h-4" /> Gerar Tarefas
-            </Button>
+            <Dialog open={isGeneratingTasks} onOpenChange={setIsGeneratingTasks}>
+              <DialogTrigger asChild>
+                <Button className="gradient-primary glow-primary gap-2">
+                  <Rocket className="w-4 h-4" /> Gerar Tarefas
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Gerar Tarefas do Projeto</DialogTitle>
+                  <DialogDescription>
+                    Selecione o projeto onde as tarefas de vídeo serão criadas automaticamente.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Projeto de Destino</Label>
+                    <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um projeto" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projects.map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.project}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="bg-muted/50 p-3 rounded-lg text-xs text-muted-foreground">
+                    <p>Serão criadas {briefingData.video_items?.length || 0} tarefas baseadas no planejamento de vídeos.</p>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setIsGeneratingTasks(false)}>Cancelar</Button>
+                  <Button 
+                    className="gradient-primary" 
+                    onClick={handleGenerateTasks}
+                    disabled={isProcessingTasks || !selectedProjectId}
+                  >
+                    {isProcessingTasks ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Rocket className="w-4 h-4 mr-2" />}
+                    Criar Tarefas Agora
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </div>
