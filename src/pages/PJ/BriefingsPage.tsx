@@ -99,7 +99,7 @@ export default function BriefingsPage() {
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {responses.data?.map((response) => (
+              {responses.data?.map((response: any) => (
                 <Card key={response.id} className="glass-card overflow-hidden hover:shadow-xl transition-all duration-300 border-primary/10 group">
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
@@ -163,7 +163,7 @@ export default function BriefingsPage() {
                 </CardContent>
               </Card>
 
-              {templates.data?.map((template) => (
+              {templates.data?.map((template: any) => (
                 <Card key={template.id} className="glass-card group">
                   <CardHeader>
                     <CardTitle>{template.title}</CardTitle>
