@@ -2,48 +2,23 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
-} from "@/components/ui/card";
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from "@/components/ui/accordion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { Accordion } from "@/components/ui/accordion";
 import { 
   Send, 
-  Plus, 
-  Trash2, 
   Loader2,
   CheckCircle2,
   AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import { BriefingWithDetails } from "@/types/briefing";
+import { BriefingBlockWrapper } from "@/components/briefings/BriefingBlockWrapper";
+import { BriefingBlock1 } from "@/components/briefings/BriefingBlock1";
+import { BriefingBlock2 } from "@/components/briefings/BriefingBlock2";
+import { BriefingBlock3 } from "@/components/briefings/BriefingBlock3";
+import { BriefingBlock4 } from "@/components/briefings/BriefingBlock4";
+import { BriefingBlock5 } from "@/components/briefings/BriefingBlock5";
+import { BriefingBlock6 } from "@/components/briefings/BriefingBlock6";
 
 export default function BriefingFillPage() {
   const [searchParams] = useSearchParams();
@@ -53,14 +28,13 @@ export default function BriefingFillPage() {
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [briefing, setBriefing] = useState<any>(null);
-  const [briefingId, setBriefingId] = useState<string | null>(routeId || null);
+  const [briefing, setBriefing] = useState<BriefingWithDetails | null>(null);
 
   // Form States
-  const [block1, setBlock1] = useState<any>({ plano: [] });
-  const [block2, setBlock2] = useState<any>({ objetivos: [] });
+  const [block1, setBlock1] = useState<any>({});
+  const [block2, setBlock2] = useState<any>({});
   const [videoItems, setVideoItems] = useState<any[]>([]);
-  const [block4, setBlock4] = useState<any>({ tons: [] });
+  const [block4, setBlock4] = useState<any>({});
   const [block5, setBlock5] = useState<any>({});
   const [block6, setBlock6] = useState<any>({});
 
@@ -68,12 +42,12 @@ export default function BriefingFillPage() {
     const fetchBriefing = async () => {
       try {
         let query = supabase
-          .from('briefings' as any)
+          .from('briefings')
           .select(`
             *,
             responses:briefing_responses(*),
             video_items:briefing_video_items(*),
-            clients(name)
+            client:clients(name)
           `);
 
         if (token) {
@@ -88,19 +62,19 @@ export default function BriefingFillPage() {
 
         if (error || !data) throw new Error("Link inválido ou expirado");
 
-        const briefingData = data as any;
+        const briefingData = data as any as BriefingWithDetails;
         setBriefing(briefingData);
-        setBriefingId(briefingData.id);
         
         // Map data
-        briefingData.responses.forEach((resp: any) => {
-          if (resp.block_name === 'identificacao') setBlock1(resp.response_data);
-          if (resp.block_name === 'objetivo_mes') setBlock2(resp.response_data);
-          if (resp.block_name === 'referencias') setBlock4(resp.response_data);
-          if (resp.block_name === 'restricoes') setBlock5(resp.response_data);
-          if (resp.block_name === 'fechamento') setBlock6(resp.response_data);
+        briefingData.responses.forEach((resp) => {
+          const blockData = resp.response_data;
+          if (resp.block_name === 'identificacao') setBlock1(blockData);
+          if (resp.block_name === 'estrutura') setBlock2(blockData);
+          if (resp.block_name === 'referencias') setBlock4(blockData);
+          if (resp.block_name === 'distribuicao') setBlock5(blockData);
+          if (resp.block_name === 'prazos') setBlock6(blockData);
         });
-        setVideoItems(briefingData.video_items.sort((a: any, b: any) => a.item_index - b.item_index));
+        setVideoItems(briefingData.video_items.sort((a, b) => a.item_index - b.item_index));
       } catch (err: any) {
         toast.error(err.message);
       } finally {
@@ -112,71 +86,74 @@ export default function BriefingFillPage() {
   }, [token, routeId]);
 
   const calculateProgress = () => {
-    let totalFields = 10; // Simplified weight
-    let filledFields = 0;
-    if (block1.responsavel) filledFields++;
-    if (block2.detalhes) filledFields++;
-    if (videoItems.length > 0) filledFields++;
-    if (block4.referencias) filledFields++;
-    if (block5.observacoes) filledFields++;
-    // ... add more logic
-    return Math.min(Math.round((filledFields / 5) * 100), 100);
+    const blocks = [block1, block2, block4, block5, block6];
+    const filledBlocks = blocks.filter(b => Object.keys(b || {}).length > 0).length;
+    const videoFilled = videoItems.length > 0 ? 1 : 0;
+    return Math.round(((filledBlocks + videoFilled) / 6) * 100);
   };
 
-  const addVideoRow = () => {
-    setVideoItems([...videoItems, { 
-      item_index: videoItems.length + 1, 
-      theme: "", 
-      format: "Reel", 
-      priority: "Normal" 
-    }]);
-  };
-
-  const removeVideoRow = (index: number) => {
-    const newItems = videoItems.filter((_, i) => i !== index).map((item, i) => ({ ...item, item_index: i + 1 }));
-    setVideoItems(newItems);
-  };
-
-  const handleSubmit = async (final: boolean = false) => {
-    if (!briefingId) return;
-    setSubmitting(true);
+  const handleAutoSave = async () => {
+    if (!briefing?.id || briefing.status === 'in_review') return;
+    
     try {
-      // Upsert Responses
       const blocks = [
         { name: 'identificacao', data: block1 },
-        { name: 'objetivo_mes', data: block2 },
+        { name: 'estrutura', data: block2 },
         { name: 'referencias', data: block4 },
-        { name: 'restricoes', data: block5 },
-        { name: 'fechamento', data: block6 }
+        { name: 'distribuicao', data: block5 },
+        { name: 'prazos', data: block6 }
       ];
 
       for (const block of blocks) {
-        await supabase
-          .from('briefing_responses' as any)
-          .upsert({ 
-            briefing_id: briefingId, 
-            block_name: block.name, 
-            response_data: block.data 
-          }, { onConflict: 'briefing_id, block_name' });
+        if (Object.keys(block.data || {}).length > 0) {
+          await supabase
+            .from('briefing_responses')
+            .upsert({ 
+              briefing_id: briefing.id, 
+              block_name: block.name, 
+              response_data: block.data,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'briefing_id, block_name' });
+        }
       }
 
-      // Sync Video Items
-      await supabase.from('briefing_video_items' as any).delete().eq('briefing_id', briefingId);
+      // Sync video items
+      await supabase.from('briefing_video_items').delete().eq('briefing_id', briefing.id);
       if (videoItems.length > 0) {
-        await supabase.from('briefing_video_items' as any).insert(
-          videoItems.map(v => ({ ...v, briefing_id: briefingId }))
+        await supabase.from('briefing_video_items').insert(
+          videoItems.map((v, i) => ({ ...v, briefing_id: briefing.id, item_index: i + 1 }))
         );
       }
+    } catch (err) {
+      console.error("Auto-save error:", err);
+    }
+  };
 
-      if (final) {
-        await supabase.from('briefings' as any).update({ status: 'in_review' }).eq('id', briefingId);
-        toast.success("Briefing enviado com sucesso!");
-        setBriefing({ ...briefing, status: 'in_review' });
-      } else {
-        toast.success("Progresso salvo automaticamente");
-      }
+  // Debounced auto-save would be better, but for now we'll trigger on specific actions
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleAutoSave();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [block1, block2, videoItems, block4, block5, block6]);
+
+  const handleSubmit = async () => {
+    if (!briefing?.id) return;
+    setSubmitting(true);
+    try {
+      await handleAutoSave();
+      
+      const { error } = await supabase
+        .from('briefings')
+        .update({ status: 'in_review', updated_at: new Date().toISOString() })
+        .eq('id', briefing.id);
+
+      if (error) throw error;
+      
+      toast.success("Briefing enviado com sucesso!");
+      setBriefing({ ...briefing, status: 'in_review' });
     } catch (err: any) {
-      toast.error("Erro ao salvar: " + err.message);
+      toast.error("Erro ao enviar: " + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -205,129 +182,93 @@ export default function BriefingFillPage() {
 
   if (briefing.status === 'in_review' || briefing.status === 'approved') {
     return (
-      <div className="flex flex-col items-center justify-center h-screen p-6 text-center space-y-4">
+      <div className="flex flex-col items-center justify-center h-screen p-6 text-center space-y-4 animate-in zoom-in duration-300">
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
           <CheckCircle2 className="w-10 h-10 text-green-600" />
         </div>
         <h1 className="text-2xl font-bold">Briefing Já Enviado!</h1>
-        <p className="text-muted-foreground max-w-md">Este briefing já foi preenchido e está em fase de revisão. Obrigado pela sua colaboração!</p>
+        <p className="text-muted-foreground max-w-md">Obrigado! Este briefing já foi preenchido e está em fase de revisão pelo gestor.</p>
+        <Button variant="outline" onClick={() => navigate("/")}>Voltar para o Início</Button>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b shadow-sm">
         <div className="container mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="space-y-1">
             <h1 className="text-xl font-bold text-primary">{briefing.title}</h1>
             <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
-              Cliente: {briefing.clients?.name || "Geral"}
+              Cliente: {briefing.client?.name || "Geral"}
             </p>
           </div>
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="flex-1 md:w-48">
-              <div className="flex justify-between text-[10px] mb-1 font-medium">
-                <span>Progresso</span>
+          <div className="flex items-center gap-6 w-full md:w-auto">
+            <div className="flex-1 md:w-64">
+              <div className="flex justify-between text-[10px] mb-1.5 font-bold uppercase text-muted-foreground">
+                <span>Progresso de Preenchimento</span>
                 <span>{calculateProgress()}%</span>
               </div>
-              <Progress value={calculateProgress()} className="h-1.5" />
+              <Progress value={calculateProgress()} className="h-2" />
             </div>
-            <Button onClick={() => handleSubmit(true)} disabled={submitting} className="gradient-primary glow-primary h-9 px-6">
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Finalizar Envio"}
+            <Button 
+              onClick={handleSubmit} 
+              disabled={submitting} 
+              className="gradient-primary glow-primary h-10 px-8 font-bold"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Finalizar e Enviar"}
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 pt-8 max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-amber-800 text-sm flex gap-3 items-start">
-          <AlertCircle className="w-5 h-5 shrink-0" />
-          <p>Suas alterações são salvas automaticamente. Você pode fechar e voltar a qualquer momento usando o mesmo link.</p>
+      <main className="container mx-auto px-6 pt-10 max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 text-blue-800 text-sm flex gap-4 items-center shadow-sm">
+          <div className="bg-blue-100 p-2 rounded-full">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+          <p className="font-medium">
+            Fique tranquilo: Suas alterações são salvas automaticamente enquanto você preenche.
+          </p>
         </div>
 
         <Accordion type="multiple" defaultValue={["b1"]} className="space-y-4">
-          {/* Blocos implementados similarmente ao Editor, mas com foco em preenchimento */}
-          {/* ... Implementação dos blocos 1 a 6 adaptados para o filler ... */}
-          <AccordionItem value="b1" className="bg-white px-6 border rounded-xl shadow-sm overflow-hidden">
-            <AccordionTrigger className="hover:no-underline py-6">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">1</div>
-                <span className="font-semibold text-lg">Identificação</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-8 pt-2 space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Responsável pelo Cliente</Label>
-                  <Input value={block1.responsavel || ""} onChange={(e) => setBlock1({...block1, responsavel: e.target.value})} onBlur={() => handleSubmit()} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Mês de Referência</Label>
-                  <Input value={block1.mes || ""} onChange={(e) => setBlock1({...block1, mes: e.target.value})} onBlur={() => handleSubmit()} />
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+          <BriefingBlockWrapper value="b1" number={1} title="Detalhes do Cliente e Projeto">
+            <BriefingBlock1 data={block1} onChange={setBlock1} />
+          </BriefingBlockWrapper>
 
-          <AccordionItem value="b3" className="bg-white px-6 border rounded-xl shadow-sm overflow-hidden">
-            <AccordionTrigger className="hover:no-underline py-6">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">3</div>
-                <span className="font-semibold text-lg">Planejamento dos Vídeos</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-8 pt-2">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tema / Ideia</TableHead>
-                    <TableHead className="w-[140px]">Formato</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {videoItems.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <Input value={item.theme} onChange={(e) => {
-                          const newItems = [...videoItems];
-                          newItems[index].theme = e.target.value;
-                          setVideoItems(newItems);
-                        }} onBlur={() => handleSubmit()} />
-                      </TableCell>
-                      <TableCell>
-                        <Select value={item.format} onValueChange={(val) => {
-                          const newItems = [...videoItems];
-                          newItems[index].format = val;
-                          setVideoItems(newItems);
-                          handleSubmit();
-                        }}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Reel">Reel</SelectItem>
-                            <SelectItem value="Talk">Talk</SelectItem>
-                            <SelectItem value="Outro">Outro</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" onClick={() => { removeVideoRow(index); handleSubmit(); }}>
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <Button variant="outline" className="mt-4 w-full border-dashed" onClick={() => { addVideoRow(); handleSubmit(); }}>
-                <Plus className="w-4 h-4 mr-2" /> Adicionar Novo Vídeo
-              </Button>
-            </AccordionContent>
-          </AccordionItem>
-          
-          {/* ... Outros blocos seguem o mesmo padrão de autosave no onBlur/onChange ... */}
+          <BriefingBlockWrapper value="b2" number={2} title="Estrutura e Formato">
+            <BriefingBlock2 data={block2} onChange={setBlock2} />
+          </BriefingBlockWrapper>
+
+          <BriefingBlockWrapper value="b3" number={3} title="Planejamento dos Vídeos (Temas)">
+            <BriefingBlock3 items={videoItems} onChange={setVideoItems} />
+          </BriefingBlockWrapper>
+
+          <BriefingBlockWrapper value="b4" number={4} title="Referências e Identidade Visual">
+            <BriefingBlock4 data={block4} onChange={setBlock4} />
+          </BriefingBlockWrapper>
+
+          <BriefingBlockWrapper value="b5" number={5} title="Distribuição e Canais">
+            <BriefingBlock5 data={block5} onChange={setBlock5} />
+          </BriefingBlockWrapper>
+
+          <BriefingBlockWrapper value="b6" number={6} title="Prazos e Orçamento">
+            <BriefingBlock6 data={block6} onChange={setBlock6} />
+          </BriefingBlockWrapper>
         </Accordion>
+
+        <div className="flex justify-center pt-8">
+           <Button 
+            onClick={handleSubmit} 
+            disabled={submitting} 
+            size="lg"
+            className="gradient-primary glow-primary px-12 py-6 text-lg font-bold rounded-2xl"
+          >
+            {submitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <Send className="w-6 h-6 mr-3" />}
+            Concluir e Enviar para Revisão
+          </Button>
+        </div>
       </main>
     </div>
   );

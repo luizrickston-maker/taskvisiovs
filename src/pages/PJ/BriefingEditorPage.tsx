@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useBriefingEditor } from "@/hooks/useBriefingEditor";
+import { useBriefingEditor, useGenerateMagicLink } from "@/hooks/useBriefingEditor";
 import { useAuthContextSafe } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Card, 
   CardContent, 
@@ -14,12 +13,7 @@ import {
   CardTitle, 
   CardDescription 
 } from "@/components/ui/card";
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from "@/components/ui/accordion";
+import { Accordion } from "@/components/ui/accordion";
 import {
   Select,
   SelectContent,
@@ -27,26 +21,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  ChevronLeft, 
   Save, 
   Send, 
-  Plus, 
-  Trash2, 
   Loader2,
-  Calendar as CalendarIcon
+  Copy,
+  Users
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { BriefingStatus, BriefingWithDetails } from "@/types/briefing";
+import { BriefingHeader } from "@/components/briefings/BriefingHeader";
+import { BriefingBlockWrapper } from "@/components/briefings/BriefingBlockWrapper";
+import { BriefingBlock1 } from "@/components/briefings/BriefingBlock1";
+import { BriefingBlock2 } from "@/components/briefings/BriefingBlock2";
+import { BriefingBlock3 } from "@/components/briefings/BriefingBlock3";
+import { BriefingBlock4 } from "@/components/briefings/BriefingBlock4";
+import { BriefingBlock5 } from "@/components/briefings/BriefingBlock5";
+import { BriefingBlock6 } from "@/components/briefings/BriefingBlock6";
 
 export default function BriefingEditorPage() {
   const { id } = useParams();
@@ -55,86 +46,87 @@ export default function BriefingEditorPage() {
   const isNew = !id;
   
   const { briefing, updateBriefing, updateResponse, manageVideoItems } = useBriefingEditor(id);
+  const generateMagicLink = useGenerateMagicLink();
   
   const [title, setTitle] = useState("");
   const [clientId, setClientId] = useState<string>("");
   const [clients, setClients] = useState<any[]>([]);
   const [assignedUserId, setAssignedUserId] = useState<string>("");
+  const [workspaceUsers, setWorkspaceUsers] = useState<any[]>([]);
   const [externalEmail, setExternalEmail] = useState("");
   
   // States for blocks
-  const [block1, setBlock1] = useState<any>({ plano: [] });
-  const [block2, setBlock2] = useState<any>({ objetivos: [] });
+  const [block1, setBlock1] = useState<any>({});
+  const [block2, setBlock2] = useState<any>({});
   const [videoItems, setVideoItems] = useState<any[]>([]);
-  const [block4, setBlock4] = useState<any>({ tons: [] });
+  const [block4, setBlock4] = useState<any>({});
   const [block5, setBlock5] = useState<any>({});
   const [block6, setBlock6] = useState<any>({});
 
-  useEffect(() => {
-    const loadData = async () => {
-      let activeWorkspaceId;
-      
-      if (authContext?.user?.id) {
-        const { data: memberData } = await supabase
-          .from('workspace_members')
-          .select('workspace_id')
-          .eq('user_id', authContext.user.id)
-          .limit(1)
-          .maybeSingle();
-        activeWorkspaceId = memberData?.workspace_id;
-      }
+  const [isSaving, setIsSaving] = useState(false);
 
-      if (activeWorkspaceId) {
+  useEffect(() => {
+    const loadWorkspaceData = async () => {
+      if (!authContext?.user?.id) return;
+      
+      const { data: memberData } = await supabase
+        .from('workspace_members')
+        .select('workspace_id')
+        .eq('user_id', authContext.user.id)
+        .limit(1)
+        .maybeSingle();
+        
+      if (memberData?.workspace_id) {
+        // Fetch clients
         const { data: clientsData } = await supabase
           .from('clients')
           .select('id, name')
-          .eq('workspace_id', activeWorkspaceId);
+          .eq('workspace_id', memberData.workspace_id);
         if (clientsData) setClients(clientsData);
+
+        // Fetch workspace users for assignment
+        const { data: usersData } = await supabase
+          .from('workspace_members')
+          .select('user_id, profiles(full_name, email)')
+          .eq('workspace_id', memberData.workspace_id);
+        if (usersData) setWorkspaceUsers(usersData);
       }
     };
-    loadData();
+    loadWorkspaceData();
   }, [authContext?.user?.id]);
 
   useEffect(() => {
     if (briefing.data) {
-      setTitle(briefing.data.title);
-      setClientId(briefing.data.client_id || "");
-      setAssignedUserId(briefing.data.assigned_to_user_id || "");
-      setExternalEmail(briefing.data.external_filler_email || "");
+      const data = briefing.data as BriefingWithDetails;
+      setTitle(data.title);
+      setClientId(data.client_id || "");
+      setAssignedUserId(data.assigned_to_user_id || "");
+      setExternalEmail(data.external_filler_email || "");
       
-      // Map responses to blocks
-      briefing.data.responses.forEach((resp: any) => {
-        if (resp.block_name === 'identificacao') setBlock1(resp.response_data);
-        if (resp.block_name === 'objetivo_mes') setBlock2(resp.response_data);
-        if (resp.block_name === 'referencias') setBlock4(resp.response_data);
-        if (resp.block_name === 'restricoes') setBlock5(resp.response_data);
-        if (resp.block_name === 'fechamento') setBlock6(resp.response_data);
+      data.responses.forEach((resp) => {
+        const blockData = resp.response_data;
+        if (resp.block_name === 'identificacao') setBlock1(blockData);
+        if (resp.block_name === 'estrutura') setBlock2(blockData);
+        if (resp.block_name === 'referencias') setBlock4(blockData);
+        if (resp.block_name === 'distribuicao') setBlock5(blockData);
+        if (resp.block_name === 'prazos') setBlock6(blockData);
       });
       
-      setVideoItems(briefing.data.video_items.sort((a: any, b: any) => a.item_index - b.item_index));
+      setVideoItems(data.video_items.sort((a, b) => a.item_index - b.item_index));
     }
   }, [briefing.data]);
 
-  const addVideoRow = () => {
-    setVideoItems([...videoItems, { 
-      item_index: videoItems.length + 1, 
-      theme: "", 
-      format: "Reel", 
-      priority: "Normal" 
-    }]);
-  };
+  const handleSave = async (status: BriefingStatus = 'draft') => {
+    if (!title) {
+      toast.error("Por favor, informe o título do briefing.");
+      return;
+    }
 
-  const removeVideoRow = (index: number) => {
-    const newItems = videoItems.filter((_, i) => i !== index).map((item, i) => ({ ...item, item_index: i + 1 }));
-    setVideoItems(newItems);
-  };
-
-  const handleSave = async (status: string = 'draft') => {
+    setIsSaving(true);
     try {
       let currentId = id;
       
       if (isNew) {
-        // Obter workspace_id
         const { data: memberData } = await supabase
           .from('workspace_members')
           .select('workspace_id')
@@ -160,7 +152,7 @@ export default function BriefingEditorPage() {
         
         if (error) throw error;
         currentId = newBriefing.id;
-        toast.success("Briefing criado!");
+        toast.success("Briefing criado com sucesso!");
         navigate(`/pj/briefings/${currentId}/editar`, { replace: true });
       } else {
         await updateBriefing.mutateAsync({
@@ -170,36 +162,47 @@ export default function BriefingEditorPage() {
           external_filler_email: externalEmail || null,
           status
         });
-        toast.success("Briefing atualizado!");
       }
 
-      // Save blocks
+      // Save blocks in parallel
       const blockPromises = [
         updateResponse.mutateAsync({ block_name: 'identificacao', response_data: block1 }),
-        updateResponse.mutateAsync({ block_name: 'objetivo_mes', response_data: block2 }),
+        updateResponse.mutateAsync({ block_name: 'estrutura', response_data: block2 }),
         updateResponse.mutateAsync({ block_name: 'referencias', response_data: block4 }),
-        updateResponse.mutateAsync({ block_name: 'restricoes', response_data: block5 }),
-        updateResponse.mutateAsync({ block_name: 'fechamento', response_data: block6 }),
-        manageVideoItems.mutateAsync(videoItems.map(item => ({ ...item, briefing_id: currentId })))
+        updateResponse.mutateAsync({ block_name: 'distribuicao', response_data: block5 }),
+        updateResponse.mutateAsync({ block_name: 'prazos', response_data: block6 }),
+        manageVideoItems.mutateAsync(videoItems)
       ];
 
       await Promise.all(blockPromises);
 
       if (status === 'pending_fill') {
-        const { data, error: functionError } = await supabase.functions.invoke('generate-briefing-magic-link', {
-          body: { briefing_id: currentId }
-        });
-        
-        if (functionError) throw functionError;
-
-        if (data?.magicLink) {
-          navigator.clipboard.writeText(data.magicLink);
-          toast.info("Link de preenchimento gerado e copiado!");
+        const result = await generateMagicLink.mutateAsync(currentId!);
+        if (result?.magicLink) {
+          navigator.clipboard.writeText(result.magicLink);
+          toast.success("Link de preenchimento gerado e copiado para a área de transferência!");
         }
+      } else if (!isNew) {
+        toast.success("Briefing atualizado com sucesso!");
       }
     } catch (error: any) {
       console.error(error);
-      toast.error("Erro ao salvar: " + error.message);
+      toast.error(`Erro ao salvar: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const copyMagicLink = async () => {
+    if (!id) return;
+    try {
+      const result = await generateMagicLink.mutateAsync(id);
+      if (result?.magicLink) {
+        navigator.clipboard.writeText(result.magicLink);
+        toast.success("Link copiado!");
+      }
+    } catch (error) {
+      toast.error("Erro ao gerar link.");
     }
   };
 
@@ -212,34 +215,43 @@ export default function BriefingEditorPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/pj/briefings")}>
-            <ChevronLeft className="w-5 h-5" />
+    <div className="container mx-auto p-6 max-w-5xl space-y-8 animate-in fade-in duration-500">
+      <BriefingHeader 
+        title={isNew ? "Novo Briefing" : "Editar Briefing"}
+        subtitle="Configure a estrutura e os responsáveis pelo preenchimento"
+        status={briefing.data?.status}
+        backPath="/pj/briefings"
+      >
+        {!isNew && briefing.data?.status === 'pending_fill' && (
+          <Button variant="outline" size="sm" onClick={copyMagicLink} disabled={generateMagicLink.isPending}>
+            <Copy className="w-4 h-4 mr-2" /> Copiar Link Mágico
           </Button>
-          <h1 className="text-2xl font-bold">{isNew ? "Novo Briefing" : "Editar Briefing"}</h1>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => handleSave('draft')}>
-            <Save className="w-4 h-4 mr-2" /> Salvar Rascunho
-          </Button>
-          <Button className="gradient-primary" onClick={() => handleSave('pending_fill')}>
-            <Send className="w-4 h-4 mr-2" /> Enviar p/ Preenchimento
-          </Button>
-        </div>
-      </div>
+        )}
+        <Button variant="outline" onClick={() => handleSave('draft')} disabled={isSaving}>
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+          Salvar Rascunho
+        </Button>
+        <Button className="gradient-primary" onClick={() => handleSave('pending_fill')} disabled={isSaving}>
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+          Enviar para Preenchimento
+        </Button>
+      </BriefingHeader>
 
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Configurações Gerais</CardTitle>
-          <CardDescription>Defina quem será o responsável por preencher este briefing.</CardDescription>
+      <Card className="glass-card overflow-hidden border-primary/10">
+        <CardHeader className="bg-primary/5">
+          <div className="flex items-center gap-3">
+            <Users className="w-5 h-5 text-primary" />
+            <div>
+              <CardTitle>Configurações Gerais</CardTitle>
+              <CardDescription>Defina o cliente e quem será o responsável por responder este briefing.</CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
           <div className="space-y-2">
             <Label>Título do Briefing</Label>
             <Input 
-              placeholder="Ex: Briefing de Maio - Cliente X" 
+              placeholder="Ex: Conteúdo de Maio - Cliente X" 
               value={title} 
               onChange={(e) => setTitle(e.target.value)} 
             />
@@ -256,216 +268,60 @@ export default function BriefingEditorPage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Email do Freelancer Externo</Label>
+            <Label>Responsável (Interno)</Label>
+            <Select value={assignedUserId} onValueChange={setAssignedUserId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um membro" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum (Usar Externo)</SelectItem>
+                {workspaceUsers.map(u => (
+                  <SelectItem key={u.user_id} value={u.user_id}>
+                    {u.profiles?.full_name || u.profiles?.email || "Usuário sem nome"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2 lg:col-span-3">
+            <Label>Email do Freelancer Externo (Opcional)</Label>
             <Input 
               type="email" 
               placeholder="exemplo@freelancer.com" 
               value={externalEmail} 
               onChange={(e) => setExternalEmail(e.target.value)} 
             />
+            <p className="text-[10px] text-muted-foreground italic">
+              Se preenchido, um link mágico será gerado para este email quando você clicar em "Enviar para Preenchimento".
+            </p>
           </div>
         </CardContent>
       </Card>
 
-      <Accordion type="multiple" defaultValue={["b1"]} className="space-y-4">
-        {/* Bloco 1 */}
-        <AccordionItem value="b1" className="glass-card px-6 border rounded-xl overflow-hidden">
-          <AccordionTrigger className="hover:no-underline py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">1</div>
-              <span className="font-semibold text-lg text-left">Identificação</span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="pb-6 pt-2 space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Responsável pelo Cliente</Label>
-                <Input value={block1.responsavel || ""} onChange={(e) => setBlock1({...block1, responsavel: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <Label>Mês de Referência</Label>
-                <Input value={block1.mes || ""} onChange={(e) => setBlock1({...block1, mes: e.target.value})} />
-              </div>
-            </div>
-            <div className="space-y-3">
-              <Label>Plano Contratado</Label>
-              <div className="flex flex-wrap gap-4">
-                {["Plano A", "Plano B", "Plano C"].map(p => (
-                  <div key={p} className="flex items-center gap-2">
-                    <Checkbox 
-                      checked={block1.plano?.includes(p)} 
-                      onCheckedChange={(checked) => {
-                        const newPlano = checked 
-                          ? [...(block1.plano || []), p] 
-                          : (block1.plano || []).filter((i: string) => i !== p);
-                        setBlock1({...block1, plano: newPlano});
-                      }}
-                    />
-                    <span>{p}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+      <Accordion type="multiple" defaultValue={["b1", "b2", "b3"]} className="space-y-4">
+        <BriefingBlockWrapper value="b1" number={1} title="Detalhes do Cliente e Projeto">
+          <BriefingBlock1 data={block1} onChange={setBlock1} />
+        </BriefingBlockWrapper>
 
-        {/* Bloco 2 */}
-        <AccordionItem value="b2" className="glass-card px-6 border rounded-xl overflow-hidden">
-          <AccordionTrigger className="hover:no-underline py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">2</div>
-              <span className="font-semibold text-lg text-left">Objetivo do Mês</span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="pb-6 pt-2 space-y-4">
-            <div className="space-y-3">
-              <Label>Objetivo Principal</Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {["Vendas", "Brand Awareness", "Engajamento", "Autoridade"].map(o => (
-                  <div key={o} className="flex items-center gap-2">
-                    <Checkbox 
-                      checked={block2.objetivos?.includes(o)} 
-                      onCheckedChange={(checked) => {
-                        const newObjs = checked 
-                          ? [...(block2.objetivos || []), o] 
-                          : (block2.objetivos || []).filter((i: string) => i !== o);
-                        setBlock2({...block2, objetivos: newObjs});
-                      }}
-                    />
-                    <span>{o}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Detalhe o objetivo</Label>
-              <Textarea 
-                placeholder="Descreva o que se espera alcançar..." 
-                value={block2.detalhes || ""}
-                onChange={(e) => setBlock2({...block2, detalhes: e.target.value})}
-              />
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+        <BriefingBlockWrapper value="b2" number={2} title="Estrutura e Formato">
+          <BriefingBlock2 data={block2} onChange={setBlock2} />
+        </BriefingBlockWrapper>
 
-        {/* Bloco 3 */}
-        <AccordionItem value="b3" className="glass-card px-6 border rounded-xl overflow-hidden">
-          <AccordionTrigger className="hover:no-underline py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">3</div>
-              <span className="font-semibold text-lg text-left">Planejamento dos Vídeos</span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="pb-6 pt-2">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]">#</TableHead>
-                  <TableHead>Tema / Ideia</TableHead>
-                  <TableHead className="w-[150px]">Formato</TableHead>
-                  <TableHead className="w-[150px]">Gravação</TableHead>
-                  <TableHead className="w-[120px]">Prioridade</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {videoItems.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.item_index}</TableCell>
-                    <TableCell>
-                      <Input value={item.theme} onChange={(e) => {
-                        const newItems = [...videoItems];
-                        newItems[index].theme = e.target.value;
-                        setVideoItems(newItems);
-                      }} />
-                    </TableCell>
-                    <TableCell>
-                      <Select value={item.format} onValueChange={(val) => {
-                        const newItems = [...videoItems];
-                        newItems[index].format = val;
-                        setVideoItems(newItems);
-                      }}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Reel">Reel</SelectItem>
-                          <SelectItem value="Talk">Talk</SelectItem>
-                          <SelectItem value="Outro">Outro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Input type="date" value={item.recording_date || ""} onChange={(e) => {
-                        const newItems = [...videoItems];
-                        newItems[index].recording_date = e.target.value;
-                        setVideoItems(newItems);
-                      }} />
-                    </TableCell>
-                    <TableCell>
-                      <Select value={item.priority} onValueChange={(val) => {
-                        const newItems = [...videoItems];
-                        newItems[index].priority = val;
-                        setVideoItems(newItems);
-                      }}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Normal">Normal</SelectItem>
-                          <SelectItem value="Urgente">Urgente</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => removeVideoRow(index)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <Button variant="outline" className="mt-4 w-full border-dashed" onClick={addVideoRow}>
-              <Plus className="w-4 h-4 mr-2" /> Adicionar Vídeo
-            </Button>
-          </AccordionContent>
-        </AccordionItem>
+        <BriefingBlockWrapper value="b3" number={3} title="Planejamento dos Vídeos (Temas)">
+          <BriefingBlock3 items={videoItems} onChange={setVideoItems} />
+        </BriefingBlockWrapper>
 
-        {/* Bloco 4 */}
-        <AccordionItem value="b4" className="glass-card px-6 border rounded-xl overflow-hidden">
-          <AccordionTrigger className="hover:no-underline py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">4</div>
-              <span className="font-semibold text-lg text-left">Referências & Identidade</span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="pb-6 pt-2 space-y-6">
-            <div className="space-y-3">
-              <Label>Tom de Comunicação</Label>
-              <div className="flex flex-wrap gap-4">
-                {["Descontraído", "Formal", "Didático", "Vendedor"].map(t => (
-                  <div key={t} className="flex items-center gap-2">
-                    <Checkbox 
-                      checked={block4.tons?.includes(t)} 
-                      onCheckedChange={(checked) => {
-                        const newTons = checked 
-                          ? [...(block4.tons || []), t] 
-                          : (block4.tons || []).filter((i: string) => i !== t);
-                        setBlock4({...block4, tons: newTons});
-                      }}
-                    />
-                    <span>{t}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Referências de vídeos</Label>
-              <Textarea 
-                placeholder="Links ou descrições de referências..." 
-                value={block4.referencias || ""}
-                onChange={(e) => setBlock4({...block4, referencias: e.target.value})}
-              />
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+        <BriefingBlockWrapper value="b4" number={4} title="Referências e Identidade Visual">
+          <BriefingBlock4 data={block4} onChange={setBlock4} />
+        </BriefingBlockWrapper>
+
+        <BriefingBlockWrapper value="b5" number={5} title="Distribuição e Canais">
+          <BriefingBlock5 data={block5} onChange={setBlock5} />
+        </BriefingBlockWrapper>
+
+        <BriefingBlockWrapper value="b6" number={6} title="Prazos e Orçamento">
+          <BriefingBlock6 data={block6} onChange={setBlock6} />
+        </BriefingBlockWrapper>
       </Accordion>
     </div>
   );

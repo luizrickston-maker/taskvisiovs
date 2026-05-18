@@ -11,6 +11,7 @@ export interface Briefing {
   title: string;
   status: BriefingStatus;
   template_id: string | null;
+  review_notes: string | null;
   created_at: string;
   updated_at: string;
   // Join fields
@@ -77,7 +78,8 @@ export type BriefingResponseData =
 export interface BriefingResponse {
   id: string;
   briefing_id: string;
-  block_number: number;
+  block_number: number | null;
+  block_name: string;
   response_data: Json;
   created_at: string;
   updated_at: string;
@@ -90,6 +92,9 @@ export interface BriefingVideoItem {
   theme: string;
   details: string | null;
   recording_date: string | null;
+  format: string | null;
+  priority: string | null;
+  item_index: number;
   status: 'pending' | 'recorded' | 'delivered';
   created_at: string;
   updated_at: string;

@@ -319,6 +319,7 @@ export type Database = {
           id: string
           magic_link_expires_at: string | null
           magic_link_token: string | null
+          review_notes: string | null
           status: string | null
           title: string
           updated_at: string | null
@@ -333,6 +334,7 @@ export type Database = {
           id?: string
           magic_link_expires_at?: string | null
           magic_link_token?: string | null
+          review_notes?: string | null
           status?: string | null
           title: string
           updated_at?: string | null
@@ -347,6 +349,7 @@ export type Database = {
           id?: string
           magic_link_expires_at?: string | null
           magic_link_token?: string | null
+          review_notes?: string | null
           status?: string | null
           title?: string
           updated_at?: string | null
