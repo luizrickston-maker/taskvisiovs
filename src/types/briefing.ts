@@ -1,4 +1,4 @@
-import { Json } from "./database.types";
+import { Json } from "@/integrations/supabase/types";
 
 export type BriefingStatus = 'draft' | 'pending_fill' | 'in_review' | 'approved' | 'archived';
 
