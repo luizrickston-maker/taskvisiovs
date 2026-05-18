@@ -18,10 +18,12 @@ import AuthCallback from "@/pages/AuthCallback";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
-// ALL app pages lazy loaded for fast initial bundle
+// Componentes core que serão carregados com prioridade (mas ainda lazy para não travar o main thread)
+const CaixaDashboard = lazy(() => import(/* vitePrefetch: true */ "@/pages/CaixaDashboard"));
+const FocoDashboard = lazy(() => import(/* vitePrefetch: true */ "@/pages/FocoDashboard"));
+
+// ALL other app pages lazy loaded for fast initial bundle
 const PortalRedirect = lazy(() => import("@/pages/PortalRedirect"));
-const CaixaDashboard = lazy(() => import("@/pages/CaixaDashboard"));
-const FocoDashboard = lazy(() => import("@/pages/FocoDashboard"));
 const FinancasDashboard = lazy(() => import("@/pages/FinancasDashboard"));
 const PlanejamentoDashboard = lazy(() => import("@/pages/PlanejamentoDashboard"));
 const ProjetosDashboard = lazy(() => import("@/pages/ProjetosDashboard"));

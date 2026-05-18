@@ -20,43 +20,52 @@ export function useInitializeData(userId: string | undefined) {
     loadingRef.current = true;
     store.setIsLoading(true);
 
-    // Phase 1: Critical data for initial view (/caixa + /meu-dia)
+    // Phase 1: ULTRA-Critical data for immediate view (/caixa + /meu-dia)
     const loadCritical = async () => {
+      // Tentar carregar preferências e categorias do cache se disponíveis para renderização instantânea
+      const cachedPrefs = localStorage.getItem(`prefs_${userId}`);
+      if (cachedPrefs) {
+        try { store.setUserPreferences(JSON.parse(cachedPrefs)); } catch(e) {}
+      }
+
       const [
-        categoriesRes, incomesRes, expensesRes, debtsRes,
-        savingsRes, tasksRes, timeBlocksRes, preferencesRes, goalsRes,
+        categoriesRes, incomesRes, expensesRes, goalsRes, preferencesRes
       ] = await Promise.all([
         supabase.from('categories').select('*').order('created_at', { ascending: true }),
-        supabase.from('incomes').select('*').order('date', { ascending: false }),
-        supabase.from('expenses').select('*').order('date', { ascending: false }),
-        supabase.from('debts').select('*').order('due_date', { ascending: true }),
-        supabase.from('savings').select('*').order('date', { ascending: false }),
-        supabase.from('tasks').select('*').order('created_at', { ascending: false }),
-        supabase.from('time_blocks').select('*').order('date', { ascending: true }),
-        supabase.from('user_preferences').select('*').maybeSingle(),
+        supabase.from('incomes').select('*').order('date', { ascending: false }).limit(50),
+        supabase.from('expenses').select('*').order('date', { ascending: false }).limit(50),
         supabase.from('goals').select('*').order('deadline', { ascending: true }),
-      ]).catch(error => {
-        console.error('[Initialize] Critical data fetch error:', error);
-        return [
-          { data: [], error }, { data: [], error }, { data: [], error },
-          { data: [], error }, { data: [], error }, { data: [], error },
-          { data: [], error }, { data: null, error }, { data: [], error }
-        ];
-      });
+        supabase.from('user_preferences').select('*').maybeSingle(),
+      ]);
 
       if (categoriesRes.data) store.setCategories(categoriesRes.data as Category[]);
       if (incomesRes.data) store.setIncomes(incomesRes.data as Income[]);
       if (expensesRes.data) store.setExpenses(expensesRes.data as Expense[]);
+      if (goalsRes.data) store.setGoals(goalsRes.data as Goal[]);
+      
+      if (preferencesRes.data) {
+        store.setUserPreferences(preferencesRes.data as UserPreference);
+        localStorage.setItem(`prefs_${userId}`, JSON.stringify(preferencesRes.data));
+      }
+
+      // Mark critical initialized
+      store.setDataInitialized(true);
+      store.setIsLoading(false);
+    };
+
+    // Phase 2: Secondary data for /meu-dia and background
+    const loadPriorityBackground = async () => {
+      const [debtsRes, savingsRes, tasksRes, timeBlocksRes] = await Promise.all([
+        supabase.from('debts').select('*').order('due_date', { ascending: true }),
+        supabase.from('savings').select('*').order('date', { ascending: false }),
+        supabase.from('tasks').select('*').order('created_at', { ascending: false }),
+        supabase.from('time_blocks').select('*').order('date', { ascending: true }),
+      ]);
+
       if (debtsRes.data) store.setDebts(debtsRes.data as Debt[]);
       if (savingsRes.data) store.setSavings(savingsRes.data as Saving[]);
       if (tasksRes.data) store.setTasks(tasksRes.data as Task[]);
       if (timeBlocksRes.data) store.setTimeBlocks(timeBlocksRes.data as TimeBlock[]);
-      if (preferencesRes.data) store.setUserPreferences(preferencesRes.data as UserPreference);
-      if (goalsRes.data) store.setGoals(goalsRes.data as Goal[]);
-
-      // Mark initialized + stop loading so UI renders immediately
-      store.setDataInitialized(true);
-      store.setIsLoading(false);
     };
 
     // Phase 2: Secondary data loaded in background (non-blocking)
@@ -121,8 +130,9 @@ export function useInitializeData(userId: string | undefined) {
       if (productPricingDetailsRes.data) store.setProductPricingDetails(productPricingDetailsRes.data as ProductPricingDetail[]);
     };
 
-    // Execute: critical first, then secondary in background
+    // Execute: critical first, then secondary in background chunks
     loadCritical()
+      .then(() => loadPriorityBackground())
       .then(() => loadSecondary())
       .catch((error) => {
         console.error('Error loading data:', error);
