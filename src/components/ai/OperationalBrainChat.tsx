@@ -319,7 +319,7 @@ export function OperationalBrainChat() {
                   <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-3">
                     <Sparkles className="h-8 w-8 text-primary" />
                   </div>
-                  <h4 className="font-semibold mb-1">Olá! Sou seu Cérebro Operacional 🧠</h4>
+                  <h4 className="font-semibold mb-1">Olá! Sou {selectedAgent?.name || "seu Cérebro Operacional"} 🧠</h4>
                   <p className="text-sm text-muted-foreground">
                     Posso analisar seus projetos, vendas, agenda e conteúdos para te dar insights personalizados.
                   </p>
