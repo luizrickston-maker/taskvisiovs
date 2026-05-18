@@ -1,5 +1,18 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Bot, User, Loader2, AlertCircle, Lightbulb, RefreshCw, ExternalLink, Settings2 } from 'lucide-react';
+import { 
+  Send, 
+  Bot, 
+  User, 
+  Loader2, 
+  AlertCircle, 
+  Lightbulb, 
+  RefreshCw, 
+  ExternalLink, 
+  Settings2,
+  Trash2,
+  Check,
+  X as XIcon
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,8 +29,15 @@ import {
 } from '@/components/ui/select';
 import { useAskAI360Agent } from '@/hooks/useAI360Agent';
 import { useAiAgents, useDefaultAiAgent } from '@/hooks/useAiAgents';
+import { useAppStore } from '@/stores/useAppStore';
+import { useRemoveEditorialCalendarItem } from '@/hooks/useEditorialCalendar';
+import { useBriefings } from '@/hooks/useBriefings';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import type { ChatMessage } from '@/types/ai';
 import ReactMarkdown from 'react-markdown';
+
+import { useQuery } from '@tanstack/react-query';
 
 interface AI360ChatInterfaceProps {
   agentId?: string;
@@ -63,10 +83,32 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
   const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>(propAgentId);
+  const [pendingAction, setPendingAction] = useState<{
+    type: string;
+    id: string;
+    name: string;
+    messageIndex: number;
+  } | null>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Hooks for deletion
+  const { deleteTask } = useAppStore();
+  const { deleteProject } = useAppStore();
+  const { deleteProspect } = useAppStore();
+  const removeEditorialItem = useRemoveEditorialCalendarItem();
+  
+  // Briefings need a workspace ID, let's try to get it
+  const { data: workspaceId } = useQuery({
+    queryKey: ['user-workspace-id'],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('get_user_workspace_id');
+      return data;
+    }
+  });
+  const { deleteBriefing } = useBriefings(workspaceId);
 
   const { mutate: askAgent, isPending } = useAskAI360Agent();
 
@@ -122,11 +164,23 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
       },
       {
         onSuccess: (fullContent) => {
+          const newAssistantMessage: ChatMessage = { role: 'assistant', content: fullContent };
           setMessages((prev) => [
             ...prev,
-            { role: 'assistant', content: fullContent },
+            newAssistantMessage,
           ]);
           setStreamingContent('');
+
+          // Check for delete requests in the full content
+          const deleteMatch = fullContent.match(/\[REQUEST_DELETE: type=(.+), id=(.+), name="(.+)"\]/);
+          if (deleteMatch) {
+            setPendingAction({
+              type: deleteMatch[1].trim(),
+              id: deleteMatch[2].trim(),
+              name: deleteMatch[3].trim(),
+              messageIndex: messages.length + 1 // New message index
+            });
+          }
         },
         onError: (err) => {
           setError(err.message);
@@ -147,6 +201,78 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
     setMessages([]);
     setStreamingContent('');
     setError(null);
+    setPendingAction(null);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!pendingAction) return;
+
+    const { type, id, name } = pendingAction;
+    let success = false;
+
+    try {
+      switch (type.toLowerCase()) {
+        case 'task':
+        case 'tarefa':
+          const { error: taskError } = await supabase.from('tasks').delete().eq('id', id);
+          if (taskError) throw taskError;
+          deleteTask(id);
+          success = true;
+          break;
+        
+        case 'project':
+        case 'projeto':
+          const { error: projectError } = await supabase.from('projects').delete().eq('id', id);
+          if (projectError) throw projectError;
+          deleteProject(id);
+          success = true;
+          break;
+
+        case 'prospect':
+        case 'oportunidade':
+          const { error: prospectError } = await supabase.from('prospects').delete().eq('id', id);
+          if (prospectError) throw prospectError;
+          deleteProspect(id);
+          success = true;
+          break;
+
+        case 'editorial_item':
+        case 'conteudo':
+          await removeEditorialItem.mutateAsync(id);
+          success = true;
+          break;
+
+        case 'briefing':
+          await deleteBriefing.mutateAsync(id);
+          success = true;
+          break;
+
+        default:
+          toast.error(`Exclusão para o tipo "${type}" ainda não implementada.`);
+          break;
+      }
+
+      if (success) {
+        toast.success(`"${name}" foi excluído com sucesso.`);
+        setPendingAction(null);
+        // Add a system message confirming completion
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: `✅ Confirmado! O item "${name}" foi excluído permanentemente.` }
+        ]);
+      }
+    } catch (err: any) {
+      console.error('Error executing action:', err);
+      toast.error(`Erro ao excluir: ${err.message || 'Erro desconhecido'}`);
+    }
+  };
+
+  const handleCancelAction = () => {
+    setPendingAction(null);
+    setMessages(prev => [
+      ...prev,
+      { role: 'assistant', content: `❌ Ação de exclusão cancelada.` }
+    ]);
   };
 
   return (
@@ -243,7 +369,18 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
           <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
             <div className="space-y-4">
               {messages.map((message, index) => (
-                <MessageBubble key={index} message={message} />
+                <MessageBubble 
+                  key={index} 
+                  message={message} 
+                  isActionPending={pendingAction?.messageIndex === index}
+                  actionDetails={pendingAction?.messageIndex === index ? {
+                    type: pendingAction.type,
+                    id: pendingAction.id,
+                    name: pendingAction.name
+                  } : undefined}
+                  onConfirmAction={handleConfirmAction}
+                  onCancelAction={handleCancelAction}
+                />
               ))}
 
               {/* Streaming content */}
@@ -310,11 +447,27 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
 interface MessageBubbleProps {
   message: ChatMessage;
   isStreaming?: boolean;
+  onConfirmAction?: () => void;
+  onCancelAction?: () => void;
+  isActionPending?: boolean;
+  actionDetails?: { type: string; id: string; name: string };
 }
 
-function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
+function MessageBubble({ 
+  message, 
+  isStreaming, 
+  onConfirmAction, 
+  onCancelAction,
+  isActionPending,
+  actionDetails
+}: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const navigate = useNavigate();
+
+  // Clean content from internal tags
+  const cleanContent = useMemo(() => {
+    return message.content.replace(/\[REQUEST_DELETE: type=.+, id=.+, name=".+"\]/g, '').trim();
+  }, [message.content]);
 
   // Extract module references from the message
   const moduleLinks = useMemo(() => {
@@ -396,8 +549,43 @@ function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
                   ),
                 }}
               >
-                {message.content}
+                {cleanContent}
               </ReactMarkdown>
+              
+              {isActionPending && actionDetails && (
+                <div className="mt-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-start gap-3">
+                    <Trash2 className="h-5 w-5 text-destructive mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-destructive">Confirmação de Exclusão</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Você deseja excluir permanentemente: <span className="font-bold text-foreground">"{actionDetails.name}"</span>?
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={onCancelAction}
+                      className="h-8 gap-1"
+                    >
+                      <XIcon className="h-3.5 w-3.5" />
+                      Cancelar
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      onClick={onConfirmAction}
+                      className="h-8 gap-1"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      Aprovar Exclusão
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {isStreaming && (
                 <span className="inline-block h-4 w-1 animate-pulse bg-primary ml-1" />
               )}
