@@ -186,9 +186,12 @@ export default function BriefingEditorPage() {
       await Promise.all(blockPromises);
 
       if (status === 'pending_fill') {
-        const { data } = await supabase.functions.invoke('generate-briefing-magic-link', {
+        const { data, error: functionError } = await supabase.functions.invoke('generate-briefing-magic-link', {
           body: { briefing_id: currentId }
         });
+        
+        if (functionError) throw functionError;
+
         if (data?.magicLink) {
           navigator.clipboard.writeText(data.magicLink);
           toast.info("Link de preenchimento gerado e copiado!");
