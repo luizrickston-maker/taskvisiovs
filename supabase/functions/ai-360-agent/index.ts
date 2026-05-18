@@ -537,22 +537,38 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
     // 8. Call AI API with streaming
     console.log(`[ai-360-agent] Calling AI API with model: ${modelName}`);
     
+    // Prepare request body
+    let requestBody: any = {
+      model: modelName,
+      temperature,
+      stream: true,
+    };
+
+    const isAnthropic = activeCustomKeyInfo?.provider.toLowerCase() === "anthropic";
+
+    if (isAnthropic) {
+      requestBody.system = systemWithContext;
+      requestBody.messages = messages.map(m => ({
+        role: m.role === "assistant" ? "assistant" : "user",
+        content: m.content,
+      }));
+      requestBody.max_tokens = maxTokens || 4096;
+    } else {
+      requestBody.messages = [
+        { role: "system", content: systemWithContext },
+        ...messages,
+      ];
+      requestBody.max_tokens = maxTokens;
+    }
+
     const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
         "Content-Type": "application/json",
         ...extraHeaders,
       },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          { role: "system", content: systemWithContext },
-          ...messages,
-        ],
-        temperature,
-        stream: true,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
