@@ -98,11 +98,14 @@ export const useBriefingEditor = (briefingId?: string) => {
 
       // Step 2: Insert new items
       if (items.length > 0) {
-        const itemsToInsert = items.map((item, index) => ({
-          ...item,
-          briefing_id: briefingId,
-          item_index: index + 1
-        }));
+        const itemsToInsert = items.map((item, index) => {
+          const { id, created_at, updated_at, briefing_id: bId, ...rest } = item as any;
+          return {
+            ...rest,
+            briefing_id: briefingId,
+            item_index: index + 1
+          };
+        });
         
         const { data, error: insertError } = await supabase
           .from('briefing_video_items')
