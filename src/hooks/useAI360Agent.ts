@@ -415,7 +415,7 @@ export function useCurrentAgentConfig() {
   return {
     agent: defaultAgent,
     isLoading,
-    modelName: defaultAgent?.model_name ?? 'google/gemini-3-flash-preview',
+    modelName: defaultAgent?.model_name ?? 'google/gemini-1.5-flash',
     temperature: defaultAgent?.temperature ?? 0.7,
     maxTokens: defaultAgent?.max_tokens ?? 4096,
     contextPriority: defaultAgent?.context_priority ?? [
