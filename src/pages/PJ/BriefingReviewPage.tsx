@@ -32,7 +32,8 @@ import {
   Calendar,
   User,
   ExternalLink,
-  MessageSquare
+  MessageSquare,
+  Plus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";

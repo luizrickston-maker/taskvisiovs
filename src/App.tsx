@@ -47,6 +47,7 @@ const ProcessEditorPage = lazy(() => import("@/pages/PJ/ProcessEditorPage"));
 const ProcessViewPage = lazy(() => import("@/pages/PJ/ProcessViewPage"));
 const BriefingsPage = lazy(() => import("@/pages/PJ/BriefingsPage"));
 const BriefingEditorPage = lazy(() => import("@/pages/PJ/BriefingEditorPage"));
+const BriefingReviewPage = lazy(() => import("@/pages/PJ/BriefingReviewPage"));
 const ClientesFinaisPage = lazy(() => import("@/pages/Comercial/ClientesFinaisPage"));
 const ClientFinalDetailsPage = lazy(() => import("@/pages/Comercial/ClientFinalDetailsPage"));
 const AI360PersonalDashboardPage = lazy(() => import("@/pages/Personal/AI360PersonalDashboardPage"));
@@ -264,6 +265,11 @@ const App = () => {
                 <Route path="/pj/briefings/:id/editar" element={
                   <Suspense fallback={<PageLoader />}>
                     <BriefingEditorPage />
+                  </Suspense>
+                } />
+                <Route path="/pj/briefings/:id/review" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <BriefingReviewPage />
                   </Suspense>
                 } />
                 <Route path="/comercial/clientes" element={
