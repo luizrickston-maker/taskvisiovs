@@ -14,6 +14,7 @@ import {
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { useAiAgents } from '@/hooks/useAiAgents';
+import { supabase } from '@/integrations/supabase/client';
 import type { AIAgent } from '@/types/ai';
 
 interface Message {
