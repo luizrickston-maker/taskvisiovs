@@ -140,8 +140,8 @@ export default function BriefingEditorPage() {
           .from('briefings')
           .insert([{
             title,
-            client_id: clientId || null,
-            assigned_to_user_id: assignedUserId || null,
+            client_id: clientId && clientId !== "none" ? clientId : null,
+            assigned_to_user_id: assignedUserId && assignedUserId !== "none" ? assignedUserId : null,
             external_filler_email: externalEmail || null,
             workspace_id: memberData.workspace_id,
             created_by_user_id: authContext?.user?.id,
@@ -157,8 +157,8 @@ export default function BriefingEditorPage() {
       } else {
         await updateBriefing.mutateAsync({
           title,
-          client_id: clientId || null,
-          assigned_to_user_id: assignedUserId || null,
+          client_id: clientId && clientId !== "none" ? clientId : null,
+          assigned_to_user_id: assignedUserId && assignedUserId !== "none" ? assignedUserId : null,
           external_filler_email: externalEmail || null,
           status
         });
