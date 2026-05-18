@@ -39,9 +39,9 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    // Get the base URL from environment or fallback to current origin if called from client
-    // For Lovable, we usually use the project's preview or custom domain
-    const siteUrl = Deno.env.get("SITE_URL") || "https://app.taskvision.pro";
+    // Get the base URL from the request origin or fallback
+    const origin = req.headers.get("origin") || req.headers.get("referer");
+    const siteUrl = origin ? new URL(origin).origin : (Deno.env.get("SITE_URL") || "https://app.taskvision.pro");
     const magicLink = `${siteUrl}/briefing/fill?token=${token}`;
 
     return new Response(JSON.stringify({ magicLink, token, expiresAt }), {
