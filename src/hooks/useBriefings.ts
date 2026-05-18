@@ -49,7 +49,7 @@ export const useBriefings = (workspaceId?: string) => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as BriefingTemplate[];
+      return data;
     },
     enabled: !!workspaceId
   });
@@ -61,7 +61,11 @@ export const useBriefings = (workspaceId?: string) => {
       const { data, error } = await supabase
         .from('briefing_responses')
         .select(`
-          *,
+          id,
+          title,
+          status,
+          respondent_name,
+          created_at,
           projects (project),
           clients (name)
         `)
