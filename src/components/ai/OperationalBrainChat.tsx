@@ -38,6 +38,18 @@ export function OperationalBrainChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
+  
+  const { data: agents } = useAiAgents();
+  const activeAgents = agents?.filter(a => a.is_active) ?? [];
+
+  useEffect(() => {
+    if (activeAgents.length > 0 && !selectedAgent) {
+      const defaultAgent = activeAgents.find(a => a.is_default) || activeAgents[0];
+      setSelectedAgent(defaultAgent);
+    }
+  }, [activeAgents, selectedAgent]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
