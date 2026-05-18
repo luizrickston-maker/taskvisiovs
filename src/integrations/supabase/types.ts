@@ -141,102 +141,39 @@ export type Database = {
           token?: string
           used_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "briefing_magic_links_briefing_response_id_fkey"
-            columns: ["briefing_response_id"]
-            isOneToOne: false
-            referencedRelation: "briefing_responses"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       briefing_responses: {
         Row: {
-          answers: Json
-          client_id: string | null
-          created_at: string
+          block_name: string
+          briefing_id: string
+          created_at: string | null
           id: string
-          project_id: string | null
-          respondent_email: string | null
-          respondent_name: string | null
-          review_notes: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          status: Database["public"]["Enums"]["briefing_status"]
-          template_id: string | null
-          title: string
-          updated_at: string
-          workspace_id: string
+          response_data: Json
+          updated_at: string | null
         }
         Insert: {
-          answers?: Json
-          client_id?: string | null
-          created_at?: string
+          block_name: string
+          briefing_id: string
+          created_at?: string | null
           id?: string
-          project_id?: string | null
-          respondent_email?: string | null
-          respondent_name?: string | null
-          review_notes?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: Database["public"]["Enums"]["briefing_status"]
-          template_id?: string | null
-          title: string
-          updated_at?: string
-          workspace_id: string
+          response_data: Json
+          updated_at?: string | null
         }
         Update: {
-          answers?: Json
-          client_id?: string | null
-          created_at?: string
+          block_name?: string
+          briefing_id?: string
+          created_at?: string | null
           id?: string
-          project_id?: string | null
-          respondent_email?: string | null
-          respondent_name?: string | null
-          review_notes?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: Database["public"]["Enums"]["briefing_status"]
-          template_id?: string | null
-          title?: string
-          updated_at?: string
-          workspace_id?: string
+          response_data?: Json
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "briefing_responses_client_id_fkey"
-            columns: ["client_id"]
+            foreignKeyName: "briefing_responses_briefing_id_fkey"
+            columns: ["briefing_id"]
             isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "briefing_responses_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "personal_projects_overview"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "briefing_responses_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "briefing_responses_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects_overview"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "briefing_responses_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "briefing_templates"
+            referencedRelation: "briefings"
             referencedColumns: ["id"]
           },
         ]
