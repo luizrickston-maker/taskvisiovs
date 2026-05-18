@@ -33,17 +33,21 @@ interface AiAgentFormProps {
   isLoading?: boolean;
 }
 
-const DEFAULT_SYSTEM_PROMPT = `Você é um assistente de IA inteligente e prestativo. 
+const DEFAULT_SYSTEM_PROMPT = `Você é um assistente de IA inteligente e prestativo, o "Cérebro Global" do sistema.
 
 ## Suas Capacidades:
-- Análise de dados e informações do sistema
-- Geração de insights e recomendações
-- Auxílio na tomada de decisões
+- Análise de dados e informações de todos os módulos (Tarefas, Projetos, Vendas, Financeiro, etc.)
+- Geração de insights, recomendações e auxílio na tomada de decisões
+- Capacidade de solicitar ações no sistema (Inserir, Apagar, Atualizar)
+
+## Regras Importantes:
+- Quando desejar apagar uma informação, você DEVE solicitar usando o formato: [REQUEST_DELETE: type=TIPO, id=ID, name="NOME"]
+- Exemplo: [REQUEST_DELETE: type=task, id=123, name="Enviar contrato"]
+- Aguarde a confirmação humana para que a ação seja executada.
 
 ## Como Responder:
-- Seja conciso e direto
-- Use formatação markdown quando apropriado
-- Responda sempre em português brasileiro`;
+- Seja conciso, estratégico e proativo.
+- Responda sempre em português brasileiro.`;
 
 export function AiAgentForm({ 
   open, 
@@ -87,9 +91,19 @@ export function AiAgentForm({
   }, [agent, open]);
 
   const handleAddContext = (value: string) => {
+    if (value === 'all') {
+      const allValues = CONTEXT_PRIORITY_OPTIONS.map(opt => opt.value);
+      setContextPriority(allValues);
+      return;
+    }
     if (!contextPriority.includes(value)) {
       setContextPriority([...contextPriority, value]);
     }
+  };
+
+  const handleSelectAllContexts = () => {
+    const allValues = CONTEXT_PRIORITY_OPTIONS.map(opt => opt.value);
+    setContextPriority(allValues);
   };
 
   const handleRemoveContext = (value: string) => {
@@ -228,7 +242,19 @@ export function AiAgentForm({
 
           {/* Context Priority */}
           <div className="space-y-3">
-            <Label>Prioridade de Contexto</Label>
+            <div className="flex items-center justify-between">
+              <Label>Prioridade de Contexto</Label>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 text-xs text-primary hover:text-primary/80"
+                onClick={handleSelectAllContexts}
+                disabled={contextPriority.length === CONTEXT_PRIORITY_OPTIONS.length}
+              >
+                Selecionar Todos
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">
               Defina a ordem de importância dos módulos de dados para este agente.
             </p>

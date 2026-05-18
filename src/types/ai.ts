@@ -338,6 +338,10 @@ export const CONTEXT_PRIORITY_OPTIONS = [
   { value: 'schedule', label: 'Agenda', icon: 'Calendar' },
   { value: 'editorial', label: 'Calendário Editorial', icon: 'FileText' },
   { value: 'team', label: 'Equipe', icon: 'Users' },
+  { value: 'briefings', label: 'Briefings Dinâmicos', icon: 'FileQuestion' },
+  { value: 'finance', label: 'Financeiro', icon: 'DollarSign' },
+  { value: 'products', label: 'Produtos e Serviços', icon: 'Package' },
+  { value: 'processes', label: 'Processos', icon: 'Settings' },
 ] as const;
 
 export type ContextPriorityKey = typeof CONTEXT_PRIORITY_OPTIONS[number]['value'];
