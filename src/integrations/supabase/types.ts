@@ -116,6 +116,167 @@ export type Database = {
         }
         Relationships: []
       }
+      briefing_magic_links: {
+        Row: {
+          briefing_response_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          briefing_response_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          briefing_response_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefing_magic_links_briefing_response_id_fkey"
+            columns: ["briefing_response_id"]
+            isOneToOne: false
+            referencedRelation: "briefing_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      briefing_responses: {
+        Row: {
+          answers: Json
+          client_id: string | null
+          created_at: string
+          id: string
+          project_id: string | null
+          respondent_email: string | null
+          respondent_name: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["briefing_status"]
+          template_id: string | null
+          title: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          answers?: Json
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          respondent_email?: string | null
+          respondent_name?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["briefing_status"]
+          template_id?: string | null
+          title: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          answers?: Json
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          respondent_email?: string | null
+          respondent_name?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["briefing_status"]
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefing_responses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "briefing_responses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "personal_projects_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "briefing_responses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "briefing_responses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "briefing_responses_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "briefing_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      briefing_templates: {
+        Row: {
+          content_structure: Json
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          content_structure?: Json
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          content_structure?: Json
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       business_processes: {
         Row: {
           category: string | null
@@ -3215,6 +3376,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "super_admin"
+      briefing_status: "draft" | "pending" | "review" | "approved" | "archived"
       content_platform: "instagram" | "tiktok" | "linkedin" | "blog" | "youtube"
       content_status: "idea" | "draft" | "review" | "approved" | "published"
       content_type_enum: "post" | "reel" | "story" | "article" | "video"
@@ -3346,6 +3508,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "super_admin"],
+      briefing_status: ["draft", "pending", "review", "approved", "archived"],
       content_platform: ["instagram", "tiktok", "linkedin", "blog", "youtube"],
       content_status: ["idea", "draft", "review", "approved", "published"],
       content_type_enum: ["post", "reel", "story", "article", "video"],
