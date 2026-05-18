@@ -125,6 +125,49 @@ export default function BriefingReviewPage() {
     }
   };
 
+  const handleGenerateTasks = async () => {
+    if (!selectedProjectId) {
+      toast.error("Selecione um projeto para vincular as tarefas.");
+      return;
+    }
+
+    setIsProcessingTasks(true);
+    try {
+      const briefingData = briefing.data as any;
+      const videoItems = briefingData.video_items;
+
+      if (!videoItems || videoItems.length === 0) {
+        toast.warning("Não há itens de vídeo para gerar tarefas.");
+        setIsProcessingTasks(false);
+        return;
+      }
+
+      const taskPromises = videoItems.map((item: any) => {
+        return supabase
+          .from('project_tasks')
+          .insert([{
+            project_id: selectedProjectId,
+            workspace_id: briefingData.workspace_id,
+            user_id: briefingData.created_by_user_id,
+            title: item.theme || "Vídeo sem tema",
+            description: `Gerado automaticamente do Briefing: ${briefingData.title}\nID do Briefing: ${briefingData.id}`,
+            status: 'todo',
+            priority: item.priority === 'Urgente' ? 1 : 2,
+            deadline: item.recording_date || null
+          }]);
+      });
+
+      await Promise.all(taskPromises);
+      toast.success(`${videoItems.length} tarefas geradas no projeto com sucesso!`);
+      setIsGeneratingTasks(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao gerar tarefas.");
+    } finally {
+      setIsProcessingTasks(false);
+    }
+  };
+
   const renderBlockData = (blockName: string, title: string, index: number) => {
     const data = responsesMap[blockName];
     if (!data) return null;
