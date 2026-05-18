@@ -214,6 +214,50 @@ export type Database = {
         }
         Relationships: []
       }
+      briefing_video_items: {
+        Row: {
+          briefing_id: string
+          created_at: string | null
+          format: string | null
+          id: string
+          item_index: number
+          priority: string | null
+          recording_date: string | null
+          theme: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          briefing_id: string
+          created_at?: string | null
+          format?: string | null
+          id?: string
+          item_index: number
+          priority?: string | null
+          recording_date?: string | null
+          theme?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          briefing_id?: string
+          created_at?: string | null
+          format?: string | null
+          id?: string
+          item_index?: number
+          priority?: string | null
+          recording_date?: string | null
+          theme?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefing_video_items_briefing_id_fkey"
+            columns: ["briefing_id"]
+            isOneToOne: false
+            referencedRelation: "briefings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       briefings: {
         Row: {
           assigned_to_user_id: string | null
