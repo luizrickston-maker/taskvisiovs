@@ -365,30 +365,84 @@ export type ContextPriorityKey = typeof CONTEXT_PRIORITY_OPTIONS[number]['value'
 // =====================================================
 
 export const AI_MODEL_OPTIONS = [
+  // OpenAI Models
   { 
-    value: 'google/gemini-3-flash-preview', 
-    label: 'Gemini 3 Flash (Rápido)', 
-    description: 'Balanceado entre velocidade e qualidade' 
+    value: 'openai/gpt-4o', 
+    label: 'GPT-4o (Omni)', 
+    description: 'Mais inteligente e versátil da OpenAI',
+    provider: 'openai'
   },
   { 
-    value: 'google/gemini-2.5-flash', 
-    label: 'Gemini 2.5 Flash', 
-    description: 'Bom para tarefas multimodais e raciocínio' 
+    value: 'openai/gpt-4o-mini', 
+    label: 'GPT-4o Mini', 
+    description: 'Rápido e econômico, ideal para tarefas simples',
+    provider: 'openai'
   },
   { 
-    value: 'google/gemini-2.5-flash-lite', 
-    label: 'Gemini 2.5 Flash Lite (Econômico)', 
-    description: 'Mais rápido e econômico para tarefas simples' 
+    value: 'openai/o1-preview', 
+    label: 'o1 Preview (Raciocínio)', 
+    description: 'Novo modelo focado em raciocínio complexo',
+    provider: 'openai'
+  },
+
+  // Anthropic Models
+  { 
+    value: 'anthropic/claude-3-5-sonnet', 
+    label: 'Claude 3.5 Sonnet', 
+    description: 'Excelente para escrita e codificação',
+    provider: 'anthropic'
   },
   { 
-    value: 'google/gemini-3-pro-preview', 
-    label: 'Gemini 3 Pro (Premium)', 
-    description: 'Máxima qualidade de raciocínio' 
+    value: 'anthropic/claude-3-haiku', 
+    label: 'Claude 3 Haiku', 
+    description: 'Ultra rápido e eficiente para respostas curtas',
+    provider: 'anthropic'
   },
   { 
-    value: 'openai/gpt-5-mini', 
-    label: 'GPT-5 Mini', 
-    description: 'Equilíbrio entre custo e performance' 
+    value: 'anthropic/claude-3-opus', 
+    label: 'Claude 3 Opus', 
+    description: 'Poder máximo para análises profundas',
+    provider: 'anthropic'
+  },
+
+  // Google Models
+  { 
+    value: 'google/gemini-pro-1.5', 
+    label: 'Gemini 1.5 Pro', 
+    description: 'Modelo mais avançado do Google',
+    provider: 'google'
+  },
+  { 
+    value: 'google/gemini-flash-1.5', 
+    label: 'Gemini 1.5 Flash', 
+    description: 'Velocidade e eficiência excepcionais',
+    provider: 'google'
+  },
+  { 
+    value: 'google/gemini-pro-vision', 
+    label: 'Gemini Vision', 
+    description: 'Especialista em análise de imagens e vídeos',
+    provider: 'google'
+  },
+
+  // OpenRouter (Universal)
+  { 
+    value: 'openrouter/auto', 
+    label: 'OpenRouter Auto', 
+    description: 'Roteamento automático pelo melhor custo-benefício',
+    provider: 'openrouter'
+  },
+  { 
+    value: 'meta-llama/llama-3.1-405b', 
+    label: 'Llama 3.1 405B', 
+    description: 'O maior modelo open-source do mundo',
+    provider: 'openrouter'
+  },
+  { 
+    value: 'mistralai/pixtral-12b', 
+    label: 'Pixtral 12B', 
+    description: 'Modelo multimodal de alta performance',
+    provider: 'openrouter'
   },
 ] as const;
 
