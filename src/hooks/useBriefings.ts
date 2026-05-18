@@ -1,32 +1,36 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Briefing, BriefingStatus } from "@/types/briefing";
 
 export const useBriefings = (workspaceId?: string) => {
   const queryClient = useQueryClient();
 
   const briefings = useQuery({
     queryKey: ['briefings', workspaceId],
-    queryFn: async () => {
+    queryFn: async (): Promise<Briefing[]> => {
       if (!workspaceId) return [];
       const { data, error } = await supabase
         .from('briefings')
         .select(`
           *,
-          clients (name),
-          assigned_user:assigned_to_user_id (email)
+          client:clients(name, company_name),
+          assigned_to:assigned_to_user_id(full_name, email)
         `)
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        console.error("Error fetching briefings:", error);
+        throw error;
+      }
+      return data as any as Briefing[];
     },
     enabled: !!workspaceId
   });
 
   const createBriefing = useMutation({
-    mutationFn: async (briefing: any) => {
+    mutationFn: async (briefing: Partial<Briefing>) => {
       const { data, error } = await supabase
         .from('briefings')
         .insert([briefing])
@@ -40,9 +44,9 @@ export const useBriefings = (workspaceId?: string) => {
       queryClient.invalidateQueries({ queryKey: ['briefings'] });
       toast.success("Briefing criado com sucesso!");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Error creating briefing:", error);
-      toast.error("Erro ao criar briefing.");
+      toast.error(`Erro ao criar briefing: ${error.message}`);
     }
   });
 
@@ -59,9 +63,9 @@ export const useBriefings = (workspaceId?: string) => {
       queryClient.invalidateQueries({ queryKey: ['briefings'] });
       toast.success("Briefing excluído com sucesso.");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Error deleting briefing:", error);
-      toast.error("Erro ao excluir briefing.");
+      toast.error(`Erro ao excluir briefing: ${error.message}`);
     }
   });
 
@@ -81,9 +85,9 @@ export const useBriefings = (workspaceId?: string) => {
         toast.info("Link copiado para a área de transferência.");
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Error generating magic link:", error);
-      toast.error("Erro ao gerar link de preenchimento.");
+      toast.error(`Erro ao gerar link de preenchimento: ${error.message}`);
     }
   });
 
