@@ -63,16 +63,16 @@ export function AiAgentForm({
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [modelName, setModelName] = useState('google/gemini-3-flash-preview');
+  const [modelName, setModelName] = useState('google/gemini-flash-1.5');
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(4096);
   const [contextPriority, setContextPriority] = useState<string[]>([]);
   const [apiKeyId, setApiKeyId] = useState<string | null>(null);
   const [routingEnabled, setRoutingEnabled] = useState(false);
-  const [modelSimple, setModelSimple] = useState('google/gemini-1.5-flash');
-  const [modelStandard, setModelStandard] = useState('google/gemini-1.5-flash');
-  const [modelComplex, setModelComplex] = useState('google/gemini-1.5-pro');
+  const [modelSimple, setModelSimple] = useState('google/gemini-flash-1.5');
+  const [modelStandard, setModelStandard] = useState('google/gemini-flash-1.5');
+  const [modelComplex, setModelComplex] = useState('google/gemini-pro-1.5');
   const [apiKeySimple, setApiKeySimple] = useState<string | null>(null);
   const [apiKeyStandard, setApiKeyStandard] = useState<string | null>(null);
   const [apiKeyComplex, setApiKeyComplex] = useState<string | null>(null);
@@ -88,25 +88,25 @@ export function AiAgentForm({
       setContextPriority(agent.context_priority ?? []);
       setApiKeyId(agent.api_key_id ?? null);
       setRoutingEnabled(agent.routing_enabled ?? false);
-      setModelSimple(agent.model_name_simple || 'google/gemini-1.5-flash');
-      setModelStandard(agent.model_name_standard || 'google/gemini-1.5-flash');
-      setModelComplex(agent.model_name_complex || 'google/gemini-1.5-pro');
+      setModelSimple(agent.model_name_simple || 'google/gemini-flash-1.5');
+      setModelStandard(agent.model_name_standard || 'google/gemini-flash-1.5');
+      setModelComplex(agent.model_name_complex || 'google/gemini-pro-1.5');
       setApiKeySimple(agent.api_key_id_simple ?? null);
       setApiKeyStandard(agent.api_key_id_standard ?? null);
       setApiKeyComplex(agent.api_key_id_complex ?? null);
     } else {
       setName('');
       setDescription('');
-      setModelName('google/gemini-3-flash-preview');
+      setModelName('google/gemini-flash-1.5');
       setSystemPrompt(DEFAULT_SYSTEM_PROMPT);
       setTemperature(0.7);
       setMaxTokens(4096);
       setContextPriority([]);
       setApiKeyId(null);
       setRoutingEnabled(false);
-      setModelSimple('google/gemini-1.5-flash');
-      setModelStandard('google/gemini-1.5-flash');
-      setModelComplex('google/gemini-1.5-pro');
+      setModelSimple('google/gemini-flash-1.5');
+      setModelStandard('google/gemini-flash-1.5');
+      setModelComplex('google/gemini-pro-1.5');
       setApiKeySimple(null);
       setApiKeyStandard(null);
       setApiKeyComplex(null);
@@ -154,6 +154,20 @@ export function AiAgentForm({
     });
   };
 
+  const getFilteredModels = (selectedApiKeyId: string | null) => {
+    if (!selectedApiKeyId || selectedApiKeyId === 'system') {
+      // For system key, show a mix of top models
+      return AI_MODEL_OPTIONS.filter(m => 
+        ['google/gemini-flash-1.5', 'openai/gpt-4o-mini', 'google/gemini-pro-1.5'].includes(m.value)
+      );
+    }
+    
+    const selectedKey = activeApiKeys.find(k => k.id === selectedApiKeyId);
+    if (!selectedKey) return AI_MODEL_OPTIONS;
+
+    return AI_MODEL_OPTIONS.filter(m => m.provider === selectedKey.provider || selectedKey.provider === 'openrouter');
+  };
+
   const availableContextOptions = CONTEXT_PRIORITY_OPTIONS.filter(
     opt => !contextPriority.includes(opt.value)
   );
@@ -185,13 +199,33 @@ export function AiAgentForm({
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="apiKey">Chave de API Principal</Label>
+              <Select 
+                value={apiKeyId ?? 'system'} 
+                onValueChange={(val) => setApiKeyId(val === 'system' ? null : val)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sistema" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">🔑 Sistema (Padrão)</SelectItem>
+                  {activeApiKeys.map((key) => (
+                    <SelectItem key={key.id} value={key.id}>
+                      {key.label ?? key.provider}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="model">Modelo de IA Padrão *</Label>
               <Select value={modelName} onValueChange={setModelName} disabled={routingEnabled}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {AI_MODEL_OPTIONS.map((model) => (
+                  {getFilteredModels(apiKeyId).map((model) => (
                     <SelectItem key={model.value} value={model.value}>
                       <div className="flex flex-col">
                         <span>{model.label}</span>
@@ -247,7 +281,7 @@ export function AiAgentForm({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {AI_MODEL_OPTIONS.map((model) => (
+                          {getFilteredModels(apiKeySimple).map((model) => (
                             <SelectItem key={model.value} value={model.value} className="text-xs">
                               {model.label}
                             </SelectItem>
@@ -288,7 +322,7 @@ export function AiAgentForm({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {AI_MODEL_OPTIONS.map((model) => (
+                          {getFilteredModels(apiKeyStandard).map((model) => (
                             <SelectItem key={model.value} value={model.value} className="text-xs">
                               {model.label}
                             </SelectItem>
@@ -329,7 +363,7 @@ export function AiAgentForm({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {AI_MODEL_OPTIONS.map((model) => (
+                          {getFilteredModels(apiKeyComplex).map((model) => (
                             <SelectItem key={model.value} value={model.value} className="text-xs">
                               {model.label}
                             </SelectItem>
