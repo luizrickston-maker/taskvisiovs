@@ -2,6 +2,7 @@ import { User, Building2, ChevronDown, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext, type AppContextMode } from '@/hooks/useAppContext';
+import { useAuthContextSafe } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +21,13 @@ const contexts: { value: AppContextMode; label: string; icon: React.ElementType 
 
 export function ContextSwitcher({ collapsed = false }: ContextSwitcherProps) {
   const { mode, setMode } = useAppContext();
+  const auth = useAuthContextSafe();
   const navigate = useNavigate();
+  
+  // Hide switcher for specific user
+  if (auth?.user?.email === 'chapadadigitalbr@gmail.com') {
+    return null;
+  }
   const current = contexts.find(c => c.value === mode) || contexts[0];
   const CurrentIcon = current.icon;
 

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 import type { Session, User, AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppStore } from "@/stores/useAppStore";
+import { useAppContext } from "@/hooks/useAppContext";
 import { useAuthRefreshCoordinator } from "@/hooks/useAuthRefreshCoordinator";
 
 // Tipos específicos para as respostas de autenticação
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const resetStore = useAppStore((s) => s.resetStore);
+  const { setMode } = useAppContext();
   const manualSignOutRef = useRef(false);
   const signedOutRecoveryInFlightRef = useRef(false);
   const lastGoodSessionRef = useRef<Session | null>(null);
@@ -78,6 +80,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session) {
         setSession(session);
         setUser(session.user);
+        
+        // Force business mode for specific user
+        if (session.user?.email === 'chapadadigitalbr@gmail.com') {
+          console.log("[Auth] Forcing business mode for user");
+          setMode('business');
+        }
       } else if (event === "SIGNED_OUT") {
         setSession(null);
         setUser(null);
@@ -92,6 +100,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!initialized) {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Force business mode for specific user on initial load
+        if (session?.user?.email === 'chapadadigitalbr@gmail.com') {
+          console.log("[Auth] Forcing business mode on initialization");
+          setMode('business');
+        }
+        
         setLoading(false);
         initialized = true;
       }

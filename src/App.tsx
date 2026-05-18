@@ -106,7 +106,7 @@ const App = () => {
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/" element={<Navigate to="/caixa" replace />} />
+              <Route path="/" element={<Navigate to="/comercial" replace />} />
               {/* Short link redirect - public */}
               <Route path="/p/:code" element={
                 <Suspense fallback={<PageLoader />}>

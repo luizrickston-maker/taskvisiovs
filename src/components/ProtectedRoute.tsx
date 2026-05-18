@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { useAppStore } from '@/stores/useAppStore';
+import { useAppContext } from '@/hooks/useAppContext';
 import { useIsClientPortalUser } from '@/hooks/useClientPortalInfo';
 import { Loader2 } from 'lucide-react';
 
@@ -12,6 +13,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const authContext = useAuthContextSafe();
   const { isLoading } = useAppStore();
+  const { mode } = useAppContext();
   const location = useLocation();
   const [isInitialCheck, setIsInitialCheck] = useState(true);
   const { data: isClientUser, isLoading: checkingClientUser } = useIsClientPortalUser();
@@ -55,6 +57,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (isClientUser === true) {
     return <Navigate to="/portal" replace />;
+  }
+
+  // Business-only users redirect to commercial if they try to access personal routes
+  const personalRoutes = ['/caixa', '/meu-dia', '/financas', '/planejamento', '/projetos', '/conteudos', '/roteiros', '/assistente-pessoal'];
+  if (user.email === 'chapadadigitalbr@gmail.com' && personalRoutes.some(route => location.pathname.startsWith(route))) {
+    return <Navigate to="/comercial" replace />;
   }
 
   if (isLoading) {
