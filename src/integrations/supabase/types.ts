@@ -25,7 +25,11 @@ export type Database = {
           is_default: boolean
           max_tokens: number
           model_name: string
+          model_name_complex: string | null
+          model_name_simple: string | null
+          model_name_standard: string | null
           name: string
+          routing_enabled: boolean | null
           system_prompt: string
           temperature: number
           updated_at: string
@@ -42,7 +46,11 @@ export type Database = {
           is_default?: boolean
           max_tokens?: number
           model_name?: string
+          model_name_complex?: string | null
+          model_name_simple?: string | null
+          model_name_standard?: string | null
           name: string
+          routing_enabled?: boolean | null
           system_prompt: string
           temperature?: number
           updated_at?: string
@@ -59,7 +67,11 @@ export type Database = {
           is_default?: boolean
           max_tokens?: number
           model_name?: string
+          model_name_complex?: string | null
+          model_name_simple?: string | null
+          model_name_standard?: string | null
           name?: string
+          routing_enabled?: boolean | null
           system_prompt?: string
           temperature?: number
           updated_at?: string
