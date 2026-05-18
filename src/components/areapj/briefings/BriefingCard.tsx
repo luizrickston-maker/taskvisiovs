@@ -45,7 +45,9 @@ export function BriefingCard({ briefing, onView, onSend, onDelete, onDuplicate }
             <DropdownMenuContent align="end" className="w-52">
               <DropdownMenuItem onClick={() => onView(briefing.id)} className="gap-2">
                 <Eye className="w-4 h-4" /> 
-                {briefing.status === 'approved' ? 'Visualizar' : 'Editar / Revisar'}
+                {briefing.status === 'approved' ? 'Visualizar' : 
+                 briefing.status === 'in_review' ? 'Revisar' : 
+                 briefing.status === 'pending_fill' ? 'Ver Progresso' : 'Editar'}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onSend(briefing.id)} className="gap-2">
                 <Send className="w-4 h-4" /> Enviar p/ Preenchimento
