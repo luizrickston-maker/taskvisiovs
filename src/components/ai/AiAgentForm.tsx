@@ -322,7 +322,7 @@ export function AiAgentForm({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {AI_MODEL_OPTIONS.map((model) => (
+                          {getFilteredModels(apiKeyStandard).map((model) => (
                             <SelectItem key={model.value} value={model.value} className="text-xs">
                               {model.label}
                             </SelectItem>
@@ -363,7 +363,7 @@ export function AiAgentForm({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {AI_MODEL_OPTIONS.map((model) => (
+                          {getFilteredModels(apiKeyComplex).map((model) => (
                             <SelectItem key={model.value} value={model.value} className="text-xs">
                               {model.label}
                             </SelectItem>
