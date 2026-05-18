@@ -478,11 +478,15 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
 
     if (activeCustomKeyInfo) {
       apiKey = activeCustomKeyInfo.key;
-      const provider = activeCustomKeyInfo.provider.toLowerCase();
-      const rawModel = modelName.includes("/") ? modelName.split("/")[1] : modelName;
+      const rawProvider = activeCustomKeyInfo.provider.toLowerCase();
+      let rawModel = modelName.includes("/") ? modelName.split("/")[1] : modelName;
       
+      // Standardize model names and fix common typos
+      if (rawModel.includes("gemini-flash-1.5")) rawModel = "gemini-1.5-flash";
+      if (rawModel.includes("gemini-pro-1.5")) rawModel = "gemini-1.5-pro";
+
       // Route to the correct API based on provider, with model validation
-      switch (provider) {
+      switch (rawProvider) {
         case "openai":
           apiEndpoint = "https://api.openai.com/v1/chat/completions";
           // Validate model belongs to OpenAI; otherwise fallback to a default
@@ -528,12 +532,28 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
           break;
       }
       
-      console.log(`[ai-360-agent] Using ${provider} API at ${apiEndpoint}, model: ${modelName}`);
+      console.log(`[ai-360-agent] Using ${rawProvider} API at ${apiEndpoint}, model: ${modelName}`);
     } else {
       // Use Lovable AI Gateway (default)
       apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
       apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
       
+      // Mapping for models supported by the current Lovable AI Gateway configuration
+      const m = modelName.toLowerCase();
+      if (m.includes("gemini-1.5-flash") || m.includes("gemini-flash-1.5") || m.includes("gemini-flash")) {
+        modelName = "google/gemini-2.5-flash";
+      } else if (m.includes("gemini-1.5-pro") || m.includes("gemini-pro-1.5") || m.includes("gemini-pro")) {
+        modelName = "google/gemini-2.5-pro";
+      } else if (m.includes("gpt-4o-mini") || m.includes("gpt-3.5")) {
+        modelName = "openai/gpt-5-mini";
+      } else if (m.includes("gpt-4") || m.includes("gpt-o1") || m.includes("gpt-o3")) {
+        modelName = "openai/gpt-5";
+      } else {
+        // Fallback to a guaranteed supported model if it's unknown
+        console.warn(`[ai-360-agent] Unknown model "${modelName}" for Lovable Gateway. Falling back to google/gemini-2.5-flash.`);
+        modelName = "google/gemini-2.5-flash";
+      }
+
       if (!apiKey) {
         console.error("[ai-360-agent] No LOVABLE_API_KEY configured");
         return new Response(
