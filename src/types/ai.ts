@@ -291,6 +291,9 @@ export interface AIAgent {
   model_name_simple?: string;
   model_name_standard?: string;
   model_name_complex?: string;
+  api_key_id_simple?: string | null;
+  api_key_id_standard?: string | null;
+  api_key_id_complex?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -310,6 +313,9 @@ export interface AIAgentCreate {
   model_name_simple?: string;
   model_name_standard?: string;
   model_name_complex?: string;
+  api_key_id_simple?: string | null;
+  api_key_id_standard?: string | null;
+  api_key_id_complex?: string | null;
 }
 
 export interface AIAgentUpdate extends Partial<AIAgentCreate> {
