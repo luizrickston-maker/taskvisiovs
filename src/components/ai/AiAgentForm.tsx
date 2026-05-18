@@ -63,16 +63,16 @@ export function AiAgentForm({
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [modelName, setModelName] = useState('google/gemini-3-flash-preview');
+  const [modelName, setModelName] = useState('google/gemini-flash-1.5');
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(4096);
   const [contextPriority, setContextPriority] = useState<string[]>([]);
   const [apiKeyId, setApiKeyId] = useState<string | null>(null);
   const [routingEnabled, setRoutingEnabled] = useState(false);
-  const [modelSimple, setModelSimple] = useState('google/gemini-1.5-flash');
-  const [modelStandard, setModelStandard] = useState('google/gemini-1.5-flash');
-  const [modelComplex, setModelComplex] = useState('google/gemini-1.5-pro');
+  const [modelSimple, setModelSimple] = useState('google/gemini-flash-1.5');
+  const [modelStandard, setModelStandard] = useState('google/gemini-flash-1.5');
+  const [modelComplex, setModelComplex] = useState('google/gemini-pro-1.5');
   const [apiKeySimple, setApiKeySimple] = useState<string | null>(null);
   const [apiKeyStandard, setApiKeyStandard] = useState<string | null>(null);
   const [apiKeyComplex, setApiKeyComplex] = useState<string | null>(null);
