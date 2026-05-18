@@ -154,6 +154,20 @@ export function AiAgentForm({
     });
   };
 
+  const getFilteredModels = (selectedApiKeyId: string | null) => {
+    if (!selectedApiKeyId || selectedApiKeyId === 'system') {
+      // For system key, show a mix of top models
+      return AI_MODEL_OPTIONS.filter(m => 
+        ['google/gemini-flash-1.5', 'openai/gpt-4o-mini', 'google/gemini-pro-1.5'].includes(m.value)
+      );
+    }
+    
+    const selectedKey = activeApiKeys.find(k => k.id === selectedApiKeyId);
+    if (!selectedKey) return AI_MODEL_OPTIONS;
+
+    return AI_MODEL_OPTIONS.filter(m => m.provider === selectedKey.provider || selectedKey.provider === 'openrouter');
+  };
+
   const availableContextOptions = CONTEXT_PRIORITY_OPTIONS.filter(
     opt => !contextPriority.includes(opt.value)
   );
