@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useBriefingEditor } from "@/hooks/useBriefingEditor";
+import { BriefingStatus, BriefingVideoItem } from "@/types/briefing";
 import { useAuthContextSafe } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
