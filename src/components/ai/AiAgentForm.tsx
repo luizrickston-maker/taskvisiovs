@@ -22,7 +22,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, GripVertical, X, Zap, Brain, Activity } from 'lucide-react';
+import { Loader2, GripVertical, X, Zap, Brain, Activity, Bot } from 'lucide-react';
 import type { AIAgent, AIAgentCreate } from '@/types/ai';
 import { AI_MODEL_OPTIONS, CONTEXT_PRIORITY_OPTIONS } from '@/types/ai';
 import { useAiApiKeys } from '@/hooks/useAiApiKeys';
