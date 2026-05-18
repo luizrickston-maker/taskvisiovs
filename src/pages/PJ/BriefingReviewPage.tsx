@@ -33,7 +33,8 @@ import {
   User,
   ExternalLink,
   MessageSquare,
-  Plus
+  Plus,
+  Rocket
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -46,12 +47,20 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function BriefingReviewPage() {
   const { id } = useParams();
@@ -59,6 +68,24 @@ export default function BriefingReviewPage() {
   const { briefing, updateBriefing } = useBriefingEditor(id);
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectNotes, setRejectNotes] = useState("");
+  const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isProcessingTasks, setIsProcessingTasks] = useState(false);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const briefingData = briefing.data as any;
+      if (briefingData?.workspace_id) {
+        const { data } = await supabase
+          .from('projects')
+          .select('id, project')
+          .eq('workspace_id', briefingData.workspace_id);
+        if (data) setProjects(data);
+      }
+    };
+    fetchProjects();
+  }, [briefing.data]);
 
   if (briefing.isLoading) {
     return (
@@ -95,6 +122,49 @@ export default function BriefingReviewPage() {
       setIsRejecting(false);
     } catch (error) {
       toast.error("Erro ao enviar solicitação");
+    }
+  };
+
+  const handleGenerateTasks = async () => {
+    if (!selectedProjectId) {
+      toast.error("Selecione um projeto para vincular as tarefas.");
+      return;
+    }
+
+    setIsProcessingTasks(true);
+    try {
+      const briefingData = briefing.data as any;
+      const videoItems = briefingData.video_items;
+
+      if (!videoItems || videoItems.length === 0) {
+        toast.warning("Não há itens de vídeo para gerar tarefas.");
+        setIsProcessingTasks(false);
+        return;
+      }
+
+      const taskPromises = videoItems.map((item: any) => {
+        return supabase
+          .from('project_tasks')
+          .insert([{
+            project_id: selectedProjectId,
+            workspace_id: briefingData.workspace_id,
+            user_id: briefingData.created_by_user_id,
+            title: item.theme || "Vídeo sem tema",
+            description: `Gerado automaticamente do Briefing: ${briefingData.title}\nID do Briefing: ${briefingData.id}`,
+            status: 'todo',
+            priority: item.priority === 'Urgente' ? 1 : 2,
+            deadline: item.recording_date || null
+          }]);
+      });
+
+      await Promise.all(taskPromises);
+      toast.success(`${videoItems.length} tarefas geradas no projeto com sucesso!`);
+      setIsGeneratingTasks(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao gerar tarefas.");
+    } finally {
+      setIsProcessingTasks(false);
     }
   };
 
@@ -185,9 +255,50 @@ export default function BriefingReviewPage() {
           )}
           
           {briefingData.status === 'approved' && (
-            <Button className="gradient-primary gap-2" onClick={() => toast.info("Funcionalidade em desenvolvimento")}>
-              <Plus className="w-4 h-4" /> Gerar Tarefas
-            </Button>
+            <Dialog open={isGeneratingTasks} onOpenChange={setIsGeneratingTasks}>
+              <DialogTrigger asChild>
+                <Button className="gradient-primary glow-primary gap-2">
+                  <Rocket className="w-4 h-4" /> Gerar Tarefas
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Gerar Tarefas do Projeto</DialogTitle>
+                  <DialogDescription>
+                    Selecione o projeto onde as tarefas de vídeo serão criadas automaticamente.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Projeto de Destino</Label>
+                    <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um projeto" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projects.map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.project}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="bg-muted/50 p-3 rounded-lg text-xs text-muted-foreground">
+                    <p>Serão criadas {briefingData.video_items?.length || 0} tarefas baseadas no planejamento de vídeos.</p>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setIsGeneratingTasks(false)}>Cancelar</Button>
+                  <Button 
+                    className="gradient-primary" 
+                    onClick={handleGenerateTasks}
+                    disabled={isProcessingTasks || !selectedProjectId}
+                  >
+                    {isProcessingTasks ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Rocket className="w-4 h-4 mr-2" />}
+                    Criar Tarefas Agora
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </div>
