@@ -30,7 +30,7 @@ export const useBriefings = (workspaceId?: string) => {
   });
 
   const createBriefing = useMutation({
-    mutationFn: async (briefing: Partial<Briefing>) => {
+    mutationFn: async (briefing: any) => {
       const { data, error } = await supabase
         .from('briefings')
         .insert([briefing])
