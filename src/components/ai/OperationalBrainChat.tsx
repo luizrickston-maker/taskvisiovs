@@ -221,15 +221,62 @@ export function OperationalBrainChat() {
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-border/50 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-            <Brain className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-sm">Cérebro Operacional</h3>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="p-0 h-auto hover:bg-transparent">
+                <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center shrink-0">
+                  <Brain className="h-4 w-4 text-primary-foreground" />
+                </div>
+                <div className="flex items-center gap-1 ml-2 text-left">
+                  <div>
+                    <h3 className="font-semibold text-sm leading-tight">
+                      {selectedAgent?.name || "Cérebro Operacional"}
+                    </h3>
+                    {!isMinimized && (
+                      <p className="text-[10px] text-muted-foreground leading-tight">
+                        {selectedAgent ? "Agente selecionado" : "Visão 360° do seu negócio"}
+                      </p>
+                    )}
+                  </div>
+                  {!isMinimized && <ChevronDown className="h-3 w-3 text-muted-foreground" />}
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
             {!isMinimized && (
-              <p className="text-[10px] text-muted-foreground">Visão 360° do seu negócio</p>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuLabel>Escolher Agente</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {activeAgents.length > 0 ? (
+                  activeAgents.map((agent) => (
+                    <DropdownMenuItem 
+                      key={agent.id}
+                      onClick={() => {
+                        setSelectedAgent(agent);
+                        if (messages.length > 0) {
+                          // Clear chat if switching agent to keep context clean
+                          setMessages([]);
+                        }
+                      }}
+                      className={cn(
+                        "flex items-center gap-2",
+                        selectedAgent?.id === agent.id && "bg-accent"
+                      )}
+                    >
+                      <Bot className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{agent.name}</span>
+                        {agent.is_default && (
+                          <span className="text-[10px] text-primary">Padrão</span>
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>Nenhum agente ativo</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
             )}
-          </div>
+          </DropdownMenu>
         </div>
         <div className="flex items-center gap-1">
           {!isMinimized && messages.length > 0 && (
