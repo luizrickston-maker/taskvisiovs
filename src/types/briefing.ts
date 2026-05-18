@@ -91,6 +91,9 @@ export interface BriefingVideoItem {
   theme: string;
   details: string | null;
   recording_date: string | null;
+  format: string | null;
+  priority: string | null;
+  item_index: number;
   status: 'pending' | 'recorded' | 'delivered';
   created_at: string;
   updated_at: string;
