@@ -78,7 +78,8 @@ export type BriefingResponseData =
 export interface BriefingResponse {
   id: string;
   briefing_id: string;
-  block_number: number;
+  block_number: number | null;
+  block_name: string;
   response_data: Json;
   created_at: string;
   updated_at: string;
