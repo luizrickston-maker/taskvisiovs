@@ -281,7 +281,7 @@ export function AiAgentForm({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {AI_MODEL_OPTIONS.map((model) => (
+                          {getFilteredModels(apiKeySimple).map((model) => (
                             <SelectItem key={model.value} value={model.value} className="text-xs">
                               {model.label}
                             </SelectItem>
