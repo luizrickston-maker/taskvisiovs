@@ -5,13 +5,17 @@ import { toast } from "sonner";
 export const useBriefings = (workspaceId?: string) => {
   const queryClient = useQueryClient();
 
-  const templates = useQuery({
-    queryKey: ['briefing-templates', workspaceId],
+  const briefings = useQuery({
+    queryKey: ['briefings', workspaceId],
     queryFn: async () => {
       if (!workspaceId) return [];
       const { data, error } = await supabase
-        .from('briefing_templates' as any)
-        .select('*')
+        .from('briefings')
+        .select(`
+          *,
+          clients (name),
+          assigned_user:assigned_to_user_id (email)
+        `)
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false });
       
@@ -21,27 +25,11 @@ export const useBriefings = (workspaceId?: string) => {
     enabled: !!workspaceId
   });
 
-  const responses = useQuery({
-    queryKey: ['briefing-responses', workspaceId],
-    queryFn: async () => {
-      if (!workspaceId) return [];
+  const createBriefing = useMutation({
+    mutationFn: async (briefing: any) => {
       const { data, error } = await supabase
-        .from('briefing_responses' as any)
-        .select('id, title, status, respondent_name, created_at, projects(project), clients(name)')
-        .eq('workspace_id', workspaceId)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return (data as any[]) || [];
-    },
-    enabled: !!workspaceId
-  });
-
-  const createTemplate = useMutation({
-    mutationFn: async (template: any) => {
-      const { data, error } = await supabase
-        .from('briefing_templates' as any)
-        .insert([template])
+        .from('briefings')
+        .insert([briefing])
         .select()
         .single();
       
@@ -49,40 +37,60 @@ export const useBriefings = (workspaceId?: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['briefing-templates'] });
-      toast.success("Modelo de briefing criado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['briefings'] });
+      toast.success("Briefing criado com sucesso!");
     },
     onError: (error) => {
-      console.error("Error creating template:", error);
-      toast.error("Erro ao criar modelo de briefing.");
+      console.error("Error creating briefing:", error);
+      toast.error("Erro ao criar briefing.");
     }
   });
 
-  const createResponse = useMutation({
-    mutationFn: async (response: any) => {
-      const { data, error } = await supabase
-        .from('briefing_responses' as any)
-        .insert([response])
-        .select()
-        .single();
+  const deleteBriefing = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('briefings')
+        .delete()
+        .eq('id', id);
       
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['briefings'] });
+      toast.success("Briefing excluído com sucesso.");
+    },
+    onError: (error) => {
+      console.error("Error deleting briefing:", error);
+      toast.error("Erro ao excluir briefing.");
+    }
+  });
+
+  const generateMagicLink = useMutation({
+    mutationFn: async (briefingId: string) => {
+      const { data, error } = await supabase.functions.invoke('generate-briefing-magic-link', {
+        body: { briefing_id: briefingId }
+      });
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['briefing-responses'] });
-      toast.success("Briefing enviado para preenchimento!");
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['briefings'] });
+      toast.success("Link de preenchimento gerado!");
+      if (data.magicLink) {
+        navigator.clipboard.writeText(data.magicLink);
+        toast.info("Link copiado para a área de transferência.");
+      }
     },
     onError: (error) => {
-      console.error("Error creating response:", error);
-      toast.error("Erro ao gerar link de briefing.");
+      console.error("Error generating magic link:", error);
+      toast.error("Erro ao gerar link de preenchimento.");
     }
   });
 
   return {
-    templates,
-    responses,
-    createTemplate,
-    createResponse
+    briefings,
+    createBriefing,
+    deleteBriefing,
+    generateMagicLink
   };
 };
