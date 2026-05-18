@@ -423,8 +423,12 @@ serve(async (req) => {
     // 5. Handle token limits
     const finalContext = truncateContextToFit(systemPrompt, formattedContext, messages, maxTokens * 4); // input can be larger
 
-    // 6. Build final prompt
-    const systemWithContext = `${systemPrompt}\n\n${finalContext}`;
+    // 6. Build final prompt - Add safety instruction to ALL agents
+    const safetyInstruction = `\n\n## INSTRUÇÃO DE SEGURANÇA GLOBAL:
+Se precisar apagar algo, use: [REQUEST_DELETE: type=TIPO, id=ID, name="NOME"]
+Tipos válidos: task, project, prospect, editorial_item, briefing.`;
+    
+    const systemWithContext = `${systemPrompt}${safetyInstruction}\n\n${finalContext}`;
 
     // 7. Determine API endpoint and key based on provider
     let apiKey: string;
