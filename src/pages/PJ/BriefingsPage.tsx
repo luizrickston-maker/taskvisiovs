@@ -191,7 +191,14 @@ export default function BriefingsPage() {
             <BriefingCard 
               key={briefing.id} 
               briefing={briefing}
-              onView={(id) => navigate(`/pj/briefings/${id}`)}
+              onView={(id) => {
+                const b = briefings.data?.find(x => x.id === id);
+                if (b?.status === 'in_review' || b?.status === 'approved') {
+                  navigate(`/pj/briefings/${id}/review`);
+                } else {
+                  navigate(`/pj/briefings/${id}/editar`);
+                }
+              }}
               onSend={handleSend}
               onDelete={handleDelete}
               onDuplicate={(id) => console.log("Duplicate", id)}
