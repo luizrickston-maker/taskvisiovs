@@ -154,6 +154,7 @@ export default function BriefingEditorPage() {
         
         if (error) throw error;
         currentId = newBriefing.id;
+        await queryClient.invalidateQueries({ queryKey: ['briefings'] });
         toast.success("Briefing criado com sucesso!");
         navigate(`/pj/briefings/${currentId}/editar`, { replace: true });
       } else {
