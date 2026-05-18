@@ -84,9 +84,9 @@ export function OperationalBrainChat() {
         },
         body: JSON.stringify({
           messages: [...messages, userMsg].map(m => ({
-            role: m.role,
             content: m.content,
           })),
+          agent_id: selectedAgent?.id,
         }),
       });
 
