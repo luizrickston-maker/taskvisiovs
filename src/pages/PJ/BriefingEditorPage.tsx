@@ -72,11 +72,9 @@ export default function BriefingEditorPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      const workspaceId = authContext?.userWorkspace?.id; // Tentando recuperar workspace se disponível
-      // Se não estiver disponível no authContext, buscamos manualmente
-      let activeWorkspaceId = workspaceId;
+      let activeWorkspaceId;
       
-      if (!activeWorkspaceId && authContext?.user?.id) {
+      if (authContext?.user?.id) {
         const { data: memberData } = await supabase
           .from('workspace_members')
           .select('workspace_id')
@@ -95,7 +93,7 @@ export default function BriefingEditorPage() {
       }
     };
     loadData();
-  }, [authContext]);
+  }, [authContext?.user?.id]);
 
   useEffect(() => {
     if (briefing.data) {
