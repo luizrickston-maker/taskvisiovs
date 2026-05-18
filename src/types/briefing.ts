@@ -11,6 +11,7 @@ export interface Briefing {
   title: string;
   status: BriefingStatus;
   template_id: string | null;
+  review_notes: string | null;
   created_at: string;
   updated_at: string;
   // Join fields
