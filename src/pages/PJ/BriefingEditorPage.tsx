@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useBriefingEditor, useGenerateMagicLink } from "@/hooks/useBriefingEditor";
 import { useAuthContextSafe } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +44,7 @@ export default function BriefingEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const authContext = useAuthContextSafe();
+  const queryClient = useQueryClient();
   const isNew = !id;
   
   const { briefing, updateBriefing, updateResponse, manageVideoItems } = useBriefingEditor(id);
@@ -152,6 +154,7 @@ export default function BriefingEditorPage() {
         
         if (error) throw error;
         currentId = newBriefing.id;
+        await queryClient.invalidateQueries({ queryKey: ['briefings'] });
         toast.success("Briefing criado com sucesso!");
         navigate(`/pj/briefings/${currentId}/editar`, { replace: true });
       } else {
@@ -175,6 +178,7 @@ export default function BriefingEditorPage() {
       ];
 
       await Promise.all(blockPromises);
+      await queryClient.invalidateQueries({ queryKey: ['briefings'] });
 
       if (status === 'pending_fill') {
         const result = await generateMagicLink.mutateAsync(currentId!);
