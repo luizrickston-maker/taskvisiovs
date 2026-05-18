@@ -178,7 +178,7 @@ export function OperationalBrainChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages]);
+  }, [messages, selectedAgent]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
