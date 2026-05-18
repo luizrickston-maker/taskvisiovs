@@ -104,6 +104,13 @@ export function OperationalBrainChat() {
         throw new Error(errorData.error || `HTTP ${resp.status}`);
       }
 
+      // Edge function may return 200 with a JSON error payload (upstream failures)
+      const contentType = resp.headers.get('Content-Type') || '';
+      if (contentType.includes('application/json')) {
+        const errorData = await resp.json().catch(() => ({ error: 'Erro desconhecido' }));
+        throw new Error(errorData.error || 'Falha na IA');
+      }
+
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = '';
