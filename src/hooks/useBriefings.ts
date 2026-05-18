@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Database } from "@/integrations/supabase/types";
 
-export type BriefingStatus = 'draft' | 'pending' | 'review' | 'approved' | 'archived';
+export type BriefingStatus = Database['public']['Enums']['briefing_status'];
 
 export interface BriefingTemplate {
   id: string;
@@ -10,7 +11,7 @@ export interface BriefingTemplate {
   created_by: string;
   title: string;
   description: string | null;
-  content_structure: any[];
+  content_structure: any;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -25,7 +26,7 @@ export interface BriefingResponse {
   title: string;
   respondent_name: string | null;
   respondent_email: string | null;
-  answers: Record<string, any>;
+  answers: any;
   status: BriefingStatus;
   review_notes: string | null;
   reviewed_at: string | null;
@@ -68,13 +69,13 @@ export const useBriefings = (workspaceId?: string) => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as (BriefingResponse & { projects: { project: string } | null, clients: { name: string } | null })[];
+      return data as any[];
     },
     enabled: !!workspaceId
   });
 
   const createTemplate = useMutation({
-    mutationFn: async (template: Partial<BriefingTemplate>) => {
+    mutationFn: async (template: Database['public']['Tables']['briefing_templates']['Insert']) => {
       const { data, error } = await supabase
         .from('briefing_templates')
         .insert([template])
@@ -95,7 +96,7 @@ export const useBriefings = (workspaceId?: string) => {
   });
 
   const createResponse = useMutation({
-    mutationFn: async (response: Partial<BriefingResponse>) => {
+    mutationFn: async (response: Database['public']['Tables']['briefing_responses']['Insert']) => {
       const { data, error } = await supabase
         .from('briefing_responses')
         .insert([response])

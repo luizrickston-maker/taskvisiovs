@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useBriefings } from "@/hooks/useBriefings";
 import { useAppContext } from "@/hooks/useAppContext";
+import { useAuthContextSafe } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function BriefingsPage() {
-  const { workspaceId } = useAppContext();
+  const { mode } = useAppContext();
+  const authContext = useAuthContextSafe();
+  const workspaceId = authContext?.userWorkspace?.id;
   const { templates, responses } = useBriefings(workspaceId);
   const [activeTab, setActiveTab] = useState("responses");
 
