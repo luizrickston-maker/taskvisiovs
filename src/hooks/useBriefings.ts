@@ -60,15 +60,7 @@ export const useBriefings = (workspaceId?: string) => {
       if (!workspaceId) return [];
       const { data, error } = await supabase
         .from('briefing_responses')
-        .select(`
-          id,
-          title,
-          status,
-          respondent_name,
-          created_at,
-          projects (project),
-          clients (name)
-        `)
+        .select('id, title, status, respondent_name, created_at, projects(project), clients(name)')
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false });
       
