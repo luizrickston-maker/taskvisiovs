@@ -44,6 +44,7 @@ export default function BriefingEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const authContext = useAuthContextSafe();
+  const queryClient = useQueryClient();
   const isNew = !id;
   
   const { briefing, updateBriefing, updateResponse, manageVideoItems } = useBriefingEditor(id);
