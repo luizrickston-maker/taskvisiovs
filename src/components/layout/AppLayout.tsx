@@ -6,8 +6,10 @@ import { RealtimeIndicator } from './RealtimeIndicator';
 import { OperationalBrainChat } from '@/components/ai/OperationalBrainChat';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useRealtimeContextSafe } from '@/contexts/RealtimeContext';
+import { useBriefingNotifications } from '@/hooks/useBriefingNotifications';
 
 export function AppLayout() {
+  useBriefingNotifications();
   // Hooks chamados de forma canônica
   const preferences = useUserPreferences();
 
