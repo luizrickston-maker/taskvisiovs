@@ -478,22 +478,29 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
 
     if (activeCustomKeyInfo) {
       apiKey = activeCustomKeyInfo.key;
+      const provider = activeCustomKeyInfo.provider.toLowerCase();
+      const rawModel = modelName.includes("/") ? modelName.split("/")[1] : modelName;
       
-      // Route to the correct API based on provider
-      switch (activeCustomKeyInfo.provider.toLowerCase()) {
+      // Route to the correct API based on provider, with model validation
+      switch (provider) {
         case "openai":
           apiEndpoint = "https://api.openai.com/v1/chat/completions";
-          // Convert model name from OpenRouter format if needed
-          if (modelName.includes("/")) {
-            modelName = modelName.split("/")[1];
+          // Validate model belongs to OpenAI; otherwise fallback to a default
+          if (/^(gpt-|o1|o3|chatgpt)/i.test(rawModel)) {
+            modelName = rawModel;
+          } else {
+            console.warn(`[ai-360-agent] Model "${rawModel}" not compatible with OpenAI key. Falling back to gpt-4o-mini.`);
+            modelName = "gpt-4o-mini";
           }
           break;
         case "gemini":
         case "google":
           apiEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-          // Convert model name for Google API
-          if (modelName.includes("/")) {
-            modelName = modelName.split("/")[1];
+          if (/^gemini/i.test(rawModel)) {
+            modelName = rawModel;
+          } else {
+            console.warn(`[ai-360-agent] Model "${rawModel}" not compatible with Google key. Falling back to gemini-1.5-flash.`);
+            modelName = "gemini-1.5-flash";
           }
           break;
         case "anthropic":
@@ -502,11 +509,12 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
             "anthropic-version": "2023-06-01",
             "x-api-key": apiKey,
           };
-          // Anthropic doesn't use "Bearer "
-          apiKey = ""; 
-          // Convert model name
-          if (modelName.includes("/")) {
-            modelName = modelName.split("/")[1];
+          apiKey = "";
+          if (/^claude/i.test(rawModel)) {
+            modelName = rawModel;
+          } else {
+            console.warn(`[ai-360-agent] Model "${rawModel}" not compatible with Anthropic key. Falling back to claude-3-5-sonnet-latest.`);
+            modelName = "claude-3-5-sonnet-latest";
           }
           break;
         case "openrouter":
@@ -516,10 +524,11 @@ Tipos válidos: task, project, prospect, editorial_item, briefing.`;
             "HTTP-Referer": "https://taskvisionpro.lovable.app",
             "X-Title": "TaskVision PRO",
           };
+          // OpenRouter accepts the full "provider/model" format
           break;
       }
       
-      console.log(`[ai-360-agent] Using ${customKeyInfo.provider} API at ${apiEndpoint}, model: ${modelName}`);
+      console.log(`[ai-360-agent] Using ${provider} API at ${apiEndpoint}, model: ${modelName}`);
     } else {
       // Use Lovable AI Gateway (default)
       apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
