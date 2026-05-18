@@ -41,7 +41,7 @@ serve(async (req) => {
 
     // Get the base URL from the request origin or fallback
     const origin = req.headers.get("origin") || req.headers.get("referer");
-    const siteUrl = origin ? new URL(origin).origin : (Deno.env.get("SITE_URL") || "https://app.taskvision.pro");
+    const siteUrl = origin ? new URL(origin).origin : (Deno.env.get("SITE_URL") || "https://taskvisionpro.lovable.app");
     const magicLink = `${siteUrl}/briefing/fill?token=${token}`;
 
     return new Response(JSON.stringify({ magicLink, token, expiresAt }), {
