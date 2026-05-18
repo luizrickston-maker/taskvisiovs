@@ -166,12 +166,12 @@ export default function BriefingEditorPage() {
 
       // Save blocks in parallel
       const blockPromises = [
-        updateResponse.mutateAsync({ block_name: 'identificacao', response_data: block1 }),
-        updateResponse.mutateAsync({ block_name: 'estrutura', response_data: block2 }),
-        updateResponse.mutateAsync({ block_name: 'referencias', response_data: block4 }),
-        updateResponse.mutateAsync({ block_name: 'distribuicao', response_data: block5 }),
-        updateResponse.mutateAsync({ block_name: 'prazos', response_data: block6 }),
-        manageVideoItems.mutateAsync(videoItems)
+        updateResponse.mutateAsync({ block_name: 'identificacao', response_data: block1, briefingId: currentId! }),
+        updateResponse.mutateAsync({ block_name: 'estrutura', response_data: block2, briefingId: currentId! }),
+        updateResponse.mutateAsync({ block_name: 'referencias', response_data: block4, briefingId: currentId! }),
+        updateResponse.mutateAsync({ block_name: 'distribuicao', response_data: block5, briefingId: currentId! }),
+        updateResponse.mutateAsync({ block_name: 'prazos', response_data: block6, briefingId: currentId! }),
+        manageVideoItems.mutateAsync({ items: videoItems, briefingId: currentId! })
       ];
 
       await Promise.all(blockPromises);
