@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useBriefingEditor, useGenerateMagicLink } from "@/hooks/useBriefingEditor";
 import { useAuthContextSafe } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
