@@ -199,13 +199,33 @@ export function AiAgentForm({
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="apiKey">Chave de API Principal</Label>
+              <Select 
+                value={apiKeyId ?? 'system'} 
+                onValueChange={(val) => setApiKeyId(val === 'system' ? null : val)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sistema" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">🔑 Sistema (Padrão)</SelectItem>
+                  {activeApiKeys.map((key) => (
+                    <SelectItem key={key.id} value={key.id}>
+                      {key.label ?? key.provider}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="model">Modelo de IA Padrão *</Label>
               <Select value={modelName} onValueChange={setModelName} disabled={routingEnabled}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {AI_MODEL_OPTIONS.map((model) => (
+                  {getFilteredModels(apiKeyId).map((model) => (
                     <SelectItem key={model.value} value={model.value}>
                       <div className="flex flex-col">
                         <span>{model.label}</span>
