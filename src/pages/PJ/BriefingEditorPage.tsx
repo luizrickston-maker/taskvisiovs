@@ -178,6 +178,7 @@ export default function BriefingEditorPage() {
       ];
 
       await Promise.all(blockPromises);
+      await queryClient.invalidateQueries({ queryKey: ['briefings'] });
 
       if (status === 'pending_fill') {
         const result = await generateMagicLink.mutateAsync(currentId!);
