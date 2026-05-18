@@ -287,6 +287,10 @@ export interface AIAgent {
   is_default: boolean;
   is_active: boolean;
   api_key_id: string | null;
+  routing_enabled?: boolean;
+  model_name_simple?: string;
+  model_name_standard?: string;
+  model_name_complex?: string;
   created_at: string;
   updated_at: string;
 }
@@ -302,6 +306,10 @@ export interface AIAgentCreate {
   is_default?: boolean;
   is_active?: boolean;
   api_key_id?: string | null;
+  routing_enabled?: boolean;
+  model_name_simple?: string;
+  model_name_standard?: string;
+  model_name_complex?: string;
 }
 
 export interface AIAgentUpdate extends Partial<AIAgentCreate> {
