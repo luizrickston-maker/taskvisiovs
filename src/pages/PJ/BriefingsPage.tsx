@@ -15,6 +15,7 @@ import {
   Loader2,
   Inbox
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
