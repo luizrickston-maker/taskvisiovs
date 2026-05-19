@@ -571,9 +571,9 @@ serve(async (req) => {
       // Mapping for models supported by the current Lovable AI Gateway configuration
       const m = modelName.toLowerCase();
       if (m.includes("gemini-1.5-flash") || m.includes("gemini-flash-1.5") || m.includes("gemini-flash")) {
-        modelName = "google/gemini-2.5-flash";
+        modelName = "google/gemini-1.5-flash";
       } else if (m.includes("gemini-1.5-pro") || m.includes("gemini-pro-1.5") || m.includes("gemini-pro")) {
-        modelName = "google/gemini-2.5-pro";
+        modelName = "google/gemini-1.5-pro";
       } else if (m.includes("gpt-4o-mini") || m.includes("gpt-3.5")) {
         modelName = "openai/gpt-4o-mini";
       } else if (m.includes("gpt-4") || m.includes("gpt-o1") || m.includes("gpt-o3")) {
@@ -581,7 +581,7 @@ serve(async (req) => {
       } else {
         // Fallback to a guaranteed supported model if it's unknown
         console.warn(`[ai-360-agent] Unknown model "${modelName}" for Lovable Gateway. Falling back to google/gemini-2.5-flash.`);
-        modelName = "google/gemini-2.5-flash";
+        modelName = "google/gemini-1.5-flash";
       }
 
       if (!apiKey) {

@@ -102,7 +102,7 @@ async function fetchAgentConfig(
 
   const { data: agentData, error: agentError } = await query.single();
 
-  let modelName = "google/gemini-3-flash-preview";
+  let modelName = "google/gemini-1.5-flash";
   let temperature = 0.7;
   let maxTokens = 2048; // Menor para respostas concisas
   let apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
