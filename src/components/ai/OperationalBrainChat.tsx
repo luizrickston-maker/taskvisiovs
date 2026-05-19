@@ -277,7 +277,73 @@ export function OperationalBrainChat() {
   }, [messages, selectedAgent, isLoading, activeConversationId, createConversation, addMessage, handleInvestmentRequest]);
 
 
+  const handleConfirmAction = async () => {
+    if (!pendingAction) return;
+
+    const { type, id, name } = pendingAction;
+    let success = false;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      switch (type.toLowerCase()) {
+        case 'task':
+        case 'tarefa':
+          const { error: taskError } = await supabase.from('tasks').delete().eq('id', id);
+          if (taskError) throw taskError;
+          deleteTask(id);
+          success = true;
+          break;
+        
+        case 'project':
+        case 'projeto':
+          const { error: projectError } = await supabase.from('projects').delete().eq('id', id);
+          if (projectError) throw projectError;
+          deleteProject(id);
+          success = true;
+          break;
+
+        case 'prospect':
+        case 'oportunidade':
+          const { error: prospectError } = await supabase.from('prospects').delete().eq('id', id);
+          if (prospectError) throw prospectError;
+          deleteProspect(id);
+          success = true;
+          break;
+
+        default:
+          toast.error(`Ação para o tipo "${type}" ainda não implementada no chat flutuante.`);
+          break;
+      }
+
+      if (success) {
+        toast.success(`"${name}" removido com sucesso.`);
+        setPendingAction(null);
+        
+        const confirmContent = `✅ Confirmado! O item "${name}" foi removido com sucesso.`;
+        
+        setMessages(prev => [
+          ...prev,
+          { id: crypto.randomUUID(), role: 'assistant', content: confirmContent, timestamp: new Date() }
+        ]);
+
+        if (activeConversationId) {
+          await addMessage.mutateAsync({
+            conversationId: activeConversationId,
+            role: 'assistant',
+            content: confirmContent
+          });
+        }
+      }
+    } catch (err: any) {
+      console.error('Error executing action:', err);
+      toast.error(`Erro ao executar exclusão: ${err.message || 'Erro desconhecido'}`);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
+
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     streamChat(input.trim());
