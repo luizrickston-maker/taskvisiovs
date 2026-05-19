@@ -488,6 +488,14 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
                   } : undefined}
                   onConfirmAction={handleConfirmAction}
                   onCancelAction={handleCancelAction}
+                  onSuggestDelete={(type, id, name) => {
+                    setPendingAction({
+                      type,
+                      id,
+                      name,
+                      messageIndex: index
+                    });
+                  }}
                 />
               ))}
 
@@ -509,6 +517,7 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
             </div>
           </ScrollArea>
         )}
+
 
         {/* Error Alert */}
         {error && (
