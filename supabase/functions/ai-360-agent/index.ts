@@ -136,7 +136,7 @@ async function fetchOperationalContext(
 
 function formatAIContext(
   ctx: AI360Context | null,
-  priority: string[] = ["tasks", "projects", "sales_pipeline", "schedule", "editorial", "team", "investments"]
+  priority: string[] = ["investments", "tasks", "projects", "sales_pipeline", "schedule", "editorial", "team"]
 ): string {
   if (!ctx) {
     return "## ⚠️ Contexto Indisponível\nNão foi possível carregar os dados operacionais.";
