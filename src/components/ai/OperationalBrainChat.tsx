@@ -41,7 +41,7 @@ export function OperationalBrainChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
   
-  const { data: agents } = useAiAgents();
+  const { data: agents, isLoading: isAgentsLoading } = useAiAgents();
   const activeAgents = agents?.filter(a => a.is_active) ?? [];
 
   useEffect(() => {
@@ -194,7 +194,7 @@ export function OperationalBrainChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, selectedAgent]);
+  }, [messages, selectedAgent, isLoading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -332,13 +332,22 @@ export function OperationalBrainChat() {
             {messages.length === 0 ? (
               <div className="space-y-4">
                 <div className="text-center py-6">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                    <Sparkles className="h-8 w-8 text-primary" />
-                  </div>
-                  <h4 className="font-semibold mb-1">Olá! Sou {selectedAgent?.name || "seu Cérebro Operacional"} 🧠</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Posso analisar seus projetos, vendas, agenda e conteúdos para te dar insights personalizados.
-                  </p>
+                  {isAgentsLoading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+                      <p className="text-xs text-muted-foreground">Carregando agentes...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                        <Sparkles className="h-8 w-8 text-primary" />
+                      </div>
+                      <h4 className="font-semibold mb-1">Olá! Sou {selectedAgent?.name || "seu Cérebro Operacional"} 🧠</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Posso analisar seus projetos, vendas, agenda e conteúdos para te dar insights personalizados.
+                      </p>
+                    </>
+                  )}
                 </div>
                 
                 <div className="space-y-2">

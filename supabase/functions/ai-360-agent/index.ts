@@ -405,9 +405,14 @@ serve(async (req) => {
     }
 
     // 3. Fetch agent configuration
-    console.log("[ai-360-agent] Fetching agent config for user:", userId);
+    console.log("[ai-360-agent] Fetching agent config for user:", userId, "Requested agent_id:", agent_id);
     const { agent, customKeyInfo, levelKeys } = await fetchAgentConfig(supabase, userId, agent_id);
     let activeCustomKeyInfo = customKeyInfo;
+
+    // Use default values if agent not found but agent_id was provided
+    if (agent_id && !agent) {
+      console.warn(`[ai-360-agent] Requested agent ${agent_id} not found or inactive, falling back to default`);
+    }
 
     const systemPrompt = agent?.system_prompt || DEFAULT_SYSTEM_PROMPT;
     let modelName = agent?.model_name || "google/gemini-1.5-flash";
