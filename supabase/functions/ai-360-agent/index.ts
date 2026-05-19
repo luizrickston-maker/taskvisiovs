@@ -631,7 +631,16 @@ serve(async (req) => {
       if (isOSeries || isGpt5Mini) {
         requestBody.max_completion_tokens = maxTokens;
       } else {
+        // Safe check for max_tokens - ensure it is passed correctly or used as max_completion_tokens
         requestBody.max_tokens = maxTokens;
+      }
+    }
+
+    // FINAL ROBUST CHECK: If using Lovable Gateway and a modern model, ALWAYS use max_completion_tokens
+    if (!activeCustomKeyInfo && (modelName.includes("gpt-5") || modelName.includes("gemini-3"))) {
+      if (requestBody.max_tokens) {
+        requestBody.max_completion_tokens = requestBody.max_tokens;
+        delete requestBody.max_tokens;
       }
     }
 
