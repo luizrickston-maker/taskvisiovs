@@ -464,15 +464,15 @@ serve(async (req) => {
       const isSimple = simplePatterns.some(p => lastMessage.includes(p)) && lastMessage.length < 100;
 
       if (isSimple) {
-        modelName = agent.model_name_simple || "google/gemini-1.5-flash";
+        modelName = agent.model_name_simple || "google/gemini-3-flash-preview";
         if (levelKeys?.simple) activeCustomKeyInfo = levelKeys.simple;
         console.log("[ai-360-agent] Routed to SIMPLE model:", modelName, "Custom Key:", !!levelKeys?.simple);
       } else if (isComplex) {
-        modelName = agent.model_name_complex || "google/gemini-1.5-pro";
+        modelName = agent.model_name_complex || "google/gemini-3.1-pro-preview";
         if (levelKeys?.complex) activeCustomKeyInfo = levelKeys.complex;
         console.log("[ai-360-agent] Routed to COMPLEX model:", modelName, "Custom Key:", !!levelKeys?.complex);
       } else {
-        modelName = agent.model_name_standard || agent.model_name || "google/gemini-1.5-flash";
+        modelName = agent.model_name_standard || agent.model_name || "openai/gpt-5-mini";
         if (levelKeys?.standard) activeCustomKeyInfo = levelKeys.standard;
         console.log("[ai-360-agent] Routed to STANDARD model:", modelName, "Custom Key:", !!levelKeys?.standard);
       }
