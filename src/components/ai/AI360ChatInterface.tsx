@@ -207,46 +207,66 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
           },
         },
         {
-          onSuccess: async (fullContent) => {
-            const newAssistantMessage: ChatMessage = { role: 'assistant', content: fullContent };
-            setMessages((prev) => [
-              ...prev,
-              newAssistantMessage,
-            ]);
-            setStreamingContent('');
+        onSuccess: async (fullContent) => {
+          const newAssistantMessage: ChatMessage = { role: 'assistant', content: fullContent };
+          setMessages((prev) => [
+            ...prev,
+            newAssistantMessage,
+          ]);
+          setStreamingContent('');
 
-            // Save assistant message to DB
-            await addMessage.mutateAsync({
-              conversationId: currentConvId!,
-              role: 'assistant',
-              content: fullContent,
+          // Save assistant message to DB
+          await addMessage.mutateAsync({
+            conversationId: currentConvId!,
+            role: 'assistant',
+            content: fullContent,
+          });
+
+          // Check for delete requests
+          const deleteMatch = fullContent.match(/\[REQUEST_DELETE: type=(.+), id=(.+), name="(.+)"\]/);
+          if (deleteMatch) {
+            setPendingAction({
+              type: deleteMatch[1].trim(),
+              id: deleteMatch[2].trim(),
+              name: deleteMatch[3].trim(),
+              messageIndex: newMessages.length // Current message index
             });
+          }
 
-            // Check for delete requests
-            const deleteMatch = fullContent.match(/\[REQUEST_DELETE: type=(.+), id=(.+), name="(.+)"\]/);
-            if (deleteMatch) {
-              setPendingAction({
-                type: deleteMatch[1].trim(),
-                id: deleteMatch[2].trim(),
-                name: deleteMatch[3].trim(),
-                messageIndex: newMessages.length // Current message index
-              });
-            }
+          // Check for investment requests and handle AUTOMATICALLY
+          const investmentMatch = fullContent.match(/\[REQUEST_ADD_INVESTMENT:\s*item_name="([^"]+)",\s*amount=([\d.]+),\s*category="([^"]+)",\s*notes="([^"]*)"\]/);
+          if (investmentMatch) {
+            const [_, item_name, amountStr, category, notes] = investmentMatch;
+            const amount = parseFloat(amountStr);
+            
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                const { data: newData, error: invError } = await supabase
+                  .from('corporate_investments')
+                  .insert({
+                    user_id: user.id,
+                    item_name,
+                    amount,
+                    category: category.toLowerCase(),
+                    notes,
+                    purchase_date: new Date().toISOString().split('T')[0],
+                  })
+                  .select()
+                  .single();
 
-            // Check for investment requests
-            const investmentMatch = fullContent.match(/\[REQUEST_ADD_INVESTMENT:\s*item_name="([^"]+)",\s*amount=([\d.]+),\s*category="([^"]+)",\s*notes="([^"]*)"\]/);
-            if (investmentMatch) {
-              setPendingAction({
-                type: 'investment',
-                id: 'new',
-                name: investmentMatch[1],
-                amount: parseFloat(investmentMatch[2]),
-                category: investmentMatch[3],
-                notes: investmentMatch[4],
-                messageIndex: newMessages.length
-              });
+                if (!invError) {
+                  const { addCorporateInvestment } = useAppStore.getState();
+                  addCorporateInvestment(newData as any);
+                  toast.success(`Investimento adicionado: ${item_name}`);
+                }
+              }
+            } catch (err) {
+              console.error('Erro ao adicionar investimento via IA:', err);
             }
-          },
+          }
+        },
+
           onError: (err) => {
             setError(err.message);
             setStreamingContent('');
