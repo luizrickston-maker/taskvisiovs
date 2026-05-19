@@ -311,11 +311,12 @@ ${(team.members || []).map((m: TeamMember) => `- ${m.name} (${m.role}): ${m.hour
 function formatInvestmentsSection(investments: any | null): string {
   if (!investments || !investments.items || investments.items.length === 0) return "";
 
-  let section = `### 💰 INVESTIMENTOS RECENTES
-| Item | Valor | Data | ID |
-|------|-------|------|----|`;
+  let section = `### 💰 INVESTIMENTOS RECENTES (Use o UUID para ações)
+| Item | Valor | Data | UUID |
+|------|-------|------|------|`;
   
   investments.items.slice(0, 10).forEach((inv: any) => {
+    // We include the UUID in a specific column that the AI can read but we will hide in the frontend
     section += `\n| ${inv.item_name} | R$ ${inv.amount.toLocaleString('pt-BR')} | ${inv.purchase_date} | ${inv.id} |`;
   });
 
