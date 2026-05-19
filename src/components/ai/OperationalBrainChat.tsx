@@ -62,7 +62,15 @@ export function OperationalBrainChat() {
   const addMessage = useAddMessage();
   const deleteConversation = useDeleteConversation();
   
-  const { addCorporateInvestment, deleteTask, deleteProject, deleteProspect, deleteCorporateInvestment } = useAppStore();
+  const { 
+    addCorporateInvestment, 
+    deleteTask, 
+    deleteProject, 
+    deleteProspect, 
+    deleteCorporateInvestment,
+    deleteEditorialCalendarItem,
+    deleteScript
+  } = useAppStore();
 
   const activeAgents = agents?.filter(a => a.is_active) ?? [];
 
