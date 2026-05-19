@@ -34,8 +34,10 @@ import { useRemoveEditorialCalendarItem } from '@/hooks/useEditorialCalendar';
 import { useBriefings } from '@/hooks/useBriefings';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import type { ChatMessage } from '@/types/ai';
+import type { ChatMessage, AIConversation, AIMessage } from '@/types/ai';
 import ReactMarkdown from 'react-markdown';
+import { useAIConversations, useAIMessages, useCreateConversation, useAddMessage, useDeleteConversation } from '@/hooks/useAiHistory';
+
 
 import { useQuery } from '@tanstack/react-query';
 
