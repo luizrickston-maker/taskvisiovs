@@ -628,6 +628,4 @@ export function OperationalBrainChat() {
     </div>
   );
 }
-    </div>
-  );
-}
+
