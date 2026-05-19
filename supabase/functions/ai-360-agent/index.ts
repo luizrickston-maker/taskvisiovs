@@ -575,9 +575,9 @@ serve(async (req) => {
       } else if (m.includes("gemini-1.5-pro") || m.includes("gemini-pro-1.5") || m.includes("gemini-pro")) {
         modelName = "google/gemini-2.5-pro";
       } else if (m.includes("gpt-4o-mini") || m.includes("gpt-3.5")) {
-        modelName = "openai/gpt-5-mini";
+        modelName = "openai/gpt-4o-mini";
       } else if (m.includes("gpt-4") || m.includes("gpt-o1") || m.includes("gpt-o3")) {
-        modelName = "openai/gpt-5";
+        modelName = "openai/gpt-4o";
       } else {
         // Fallback to a guaranteed supported model if it's unknown
         console.warn(`[ai-360-agent] Unknown model "${modelName}" for Lovable Gateway. Falling back to google/gemini-2.5-flash.`);
@@ -603,6 +603,15 @@ serve(async (req) => {
       stream: true,
     };
 
+    // Fix for O-series models and newer OpenAI requirements
+    const isOpenAI = !activeCustomKeyInfo || activeCustomKeyInfo.provider.toLowerCase() === "openai";
+    const isOSeries = isOpenAI && (modelName.startsWith("o1") || modelName.startsWith("o3") || modelName.includes("/o1") || modelName.includes("/o3"));
+    
+    if (isOSeries) {
+      // O-series models don't support max_tokens or temperature
+      delete requestBody.temperature;
+    }
+
     const isAnthropic = activeCustomKeyInfo?.provider.toLowerCase() === "anthropic";
 
     if (isAnthropic) {
@@ -620,7 +629,13 @@ serve(async (req) => {
           content: m.content || "",
         })),
       ];
-      requestBody.max_tokens = maxTokens;
+      
+      // Use max_completion_tokens for newer models if needed, or stick to max_tokens
+      if (isOSeries) {
+        requestBody.max_completion_tokens = maxTokens;
+      } else {
+        requestBody.max_tokens = maxTokens;
+      }
     }
 
     const response = await fetch(apiEndpoint, {
