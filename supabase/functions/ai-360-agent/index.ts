@@ -441,6 +441,7 @@ serve(async (req) => {
       "schedule",
       "editorial",
       "team",
+      "investments",
     ];
 
     // 4. Implement routing if enabled
