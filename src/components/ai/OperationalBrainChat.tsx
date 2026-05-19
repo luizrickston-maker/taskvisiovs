@@ -679,14 +679,14 @@ export function OperationalBrainChat() {
                             <div className="prose prose-sm dark:prose-invert max-w-none">
                               <ReactMarkdown>
                                 {msg.content
-                                  .replace(/\[REQUEST_DELETE: type=.+, id=.+, name=".+"\]/g, '')
-                                  .replace(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g, '$3')
+                                  .replace(/\[REQUEST_DELETE:\s*type=.+?,\s*id=.+?,\s*name=".+?"\]/g, '')
+                                  .replace(/\[DELETE_SUGGESTION:\s*type=(.+?),\s*id=(.+?),\s*name="(.+?)"\]/g, '$3')
                                   .trim()}
                               </ReactMarkdown>
                               
                               {!isLoading && msg.content.includes('[DELETE_SUGGESTION:') && (
                                 <div className="mt-2 flex flex-wrap gap-1.5">
-                                  {Array.from(msg.content.matchAll(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g)).map((match, idx) => (
+                                  {Array.from(msg.content.matchAll(/\[DELETE_SUGGESTION:\s*type=(.+?),\s*id=(.+?),\s*name="(.+?)"\]/g)).map((match, idx) => (
                                     <Button
                                       key={idx}
                                       variant="outline"
