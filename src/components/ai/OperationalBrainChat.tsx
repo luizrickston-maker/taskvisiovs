@@ -289,11 +289,11 @@ export function OperationalBrainChat() {
 
       switch (type.toLowerCase()) {
         case 'investment':
-          // For investment suggestions, the ID might be 'new' and we should have parsed details
-          // but if it's a simple delete/action, we handle it here.
-          // In the floating chat, investment creation was handled automatically on onSuccess.
-          // This switch handles the manual confirmation if needed.
-          toast.info('Processando ação de investimento...');
+        case 'investimento':
+          const { error: invError } = await supabase.from('corporate_investments').delete().eq('id', id);
+          if (invError) throw invError;
+          deleteCorporateInvestment(id);
+          success = true;
           break;
 
         case 'task':
