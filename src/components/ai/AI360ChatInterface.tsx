@@ -586,8 +586,12 @@ function MessageBubble({
 
   // Clean content from internal tags
   const cleanContent = useMemo(() => {
-    return message.content.replace(/\[REQUEST_DELETE: type=.+, id=.+, name=".+"\]/g, '').trim();
+    return message.content
+      .replace(/\[REQUEST_DELETE: type=.+, id=.+, name=".+"\]/g, '')
+      .replace(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g, '$3')
+      .trim();
   }, [message.content]);
+
 
   // Extract module references from the message
   const moduleLinks = useMemo(() => {
