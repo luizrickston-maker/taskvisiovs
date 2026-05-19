@@ -42,12 +42,21 @@ const QUICK_PROMPTS = [
 export function OperationalBrainChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   
   const { data: agents, isLoading: isAgentsLoading } = useAiAgents();
+  const { data: conversations, isLoading: isHistoryLoading } = useAIConversations();
+  const { data: historyMessages } = useAIMessages(activeConversationId);
+  const createConversation = useCreateConversation();
+  const addMessage = useAddMessage();
+  const deleteConversation = useDeleteConversation();
+  
+  const { addCorporateInvestment } = useAppStore();
   const activeAgents = agents?.filter(a => a.is_active) ?? [];
 
   useEffect(() => {
@@ -57,6 +66,20 @@ export function OperationalBrainChat() {
     }
   }, [activeAgents, selectedAgent]);
 
+  // Load messages when conversation changes
+  useEffect(() => {
+    if (activeConversationId && historyMessages) {
+      setMessages(historyMessages.map(m => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        timestamp: new Date(m.created_at),
+      })));
+    } else if (!activeConversationId) {
+      setMessages([]);
+    }
+  }, [activeConversationId, historyMessages]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -65,7 +88,8 @@ export function OperationalBrainChat() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isLoading]);
+
 
   const streamChat = useCallback(async (userMessage: string) => {
     const userMsg: Message = {
