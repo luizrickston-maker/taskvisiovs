@@ -488,6 +488,14 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
                   } : undefined}
                   onConfirmAction={handleConfirmAction}
                   onCancelAction={handleCancelAction}
+                  onSuggestDelete={(type, id, name) => {
+                    setPendingAction({
+                      type,
+                      id,
+                      name,
+                      messageIndex: index
+                    });
+                  }}
                 />
               ))}
 
@@ -509,6 +517,7 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
             </div>
           </ScrollArea>
         )}
+
 
         {/* Error Alert */}
         {error && (
@@ -559,6 +568,7 @@ interface MessageBubbleProps {
   onCancelAction?: () => void;
   isActionPending?: boolean;
   actionDetails?: { type: string; id: string; name: string };
+  onSuggestDelete?: (type: string, id: string, name: string) => void;
 }
 
 function MessageBubble({ 
@@ -567,15 +577,21 @@ function MessageBubble({
   onConfirmAction, 
   onCancelAction,
   isActionPending,
-  actionDetails
+  actionDetails,
+  onSuggestDelete
 }: MessageBubbleProps) {
+
   const isUser = message.role === 'user';
   const navigate = useNavigate();
 
   // Clean content from internal tags
   const cleanContent = useMemo(() => {
-    return message.content.replace(/\[REQUEST_DELETE: type=.+, id=.+, name=".+"\]/g, '').trim();
+    return message.content
+      .replace(/\[REQUEST_DELETE: type=.+, id=.+, name=".+"\]/g, '')
+      .replace(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g, '$3')
+      .trim();
   }, [message.content]);
+
 
   // Extract module references from the message
   const moduleLinks = useMemo(() => {
@@ -659,6 +675,24 @@ function MessageBubble({
               >
                 {cleanContent}
               </ReactMarkdown>
+
+              {!isUser && !isStreaming && message.content.includes('[DELETE_SUGGESTION:') && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {Array.from(message.content.matchAll(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g)).map((match, idx) => (
+                    <Button
+                      key={idx}
+                      variant="outline"
+                      size="sm"
+                      className="h-8 border-destructive/30 hover:bg-destructive/10 hover:text-destructive gap-1.5"
+                      onClick={() => onSuggestDelete?.(match[1].trim(), match[2].trim(), match[3].trim())}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Apagar "{match[3].trim()}"
+                    </Button>
+                  ))}
+                </div>
+              )}
+
               
               {isActionPending && actionDetails && (
                 <div className="mt-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">

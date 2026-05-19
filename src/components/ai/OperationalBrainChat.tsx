@@ -48,6 +48,12 @@ export function OperationalBrainChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    type: string;
+    id: string;
+    name: string;
+    messageIndex: number;
+  } | null>(null);
   
   const { data: agents, isLoading: isAgentsLoading } = useAiAgents();
   const { data: conversations, isLoading: isHistoryLoading } = useAIConversations();
@@ -56,7 +62,8 @@ export function OperationalBrainChat() {
   const addMessage = useAddMessage();
   const deleteConversation = useDeleteConversation();
   
-  const { addCorporateInvestment } = useAppStore();
+  const { addCorporateInvestment, deleteTask, deleteProject, deleteProspect } = useAppStore();
+
   const activeAgents = agents?.filter(a => a.is_active) ?? [];
 
   useEffect(() => {
@@ -270,7 +277,73 @@ export function OperationalBrainChat() {
   }, [messages, selectedAgent, isLoading, activeConversationId, createConversation, addMessage, handleInvestmentRequest]);
 
 
+  const handleConfirmAction = async () => {
+    if (!pendingAction) return;
+
+    const { type, id, name } = pendingAction;
+    let success = false;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      switch (type.toLowerCase()) {
+        case 'task':
+        case 'tarefa':
+          const { error: taskError } = await supabase.from('tasks').delete().eq('id', id);
+          if (taskError) throw taskError;
+          deleteTask(id);
+          success = true;
+          break;
+        
+        case 'project':
+        case 'projeto':
+          const { error: projectError } = await supabase.from('projects').delete().eq('id', id);
+          if (projectError) throw projectError;
+          deleteProject(id);
+          success = true;
+          break;
+
+        case 'prospect':
+        case 'oportunidade':
+          const { error: prospectError } = await supabase.from('prospects').delete().eq('id', id);
+          if (prospectError) throw prospectError;
+          deleteProspect(id);
+          success = true;
+          break;
+
+        default:
+          toast.error(`Ação para o tipo "${type}" ainda não implementada no chat flutuante.`);
+          break;
+      }
+
+      if (success) {
+        toast.success(`"${name}" removido com sucesso.`);
+        setPendingAction(null);
+        
+        const confirmContent = `✅ Confirmado! O item "${name}" foi removido com sucesso.`;
+        
+        setMessages(prev => [
+          ...prev,
+          { id: crypto.randomUUID(), role: 'assistant', content: confirmContent, timestamp: new Date() }
+        ]);
+
+        if (activeConversationId) {
+          await addMessage.mutateAsync({
+            conversationId: activeConversationId,
+            role: 'assistant',
+            content: confirmContent
+          });
+        }
+      }
+    } catch (err: any) {
+      console.error('Error executing action:', err);
+      toast.error(`Erro ao executar exclusão: ${err.message || 'Erro desconhecido'}`);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
+
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     streamChat(input.trim());
@@ -541,7 +614,7 @@ export function OperationalBrainChat() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {messages.map((msg) => (
+                    {messages.map((msg, index) => (
                       <div
                         key={msg.id}
                         className={cn(
@@ -569,7 +642,63 @@ export function OperationalBrainChat() {
                         >
                           {msg.role === 'assistant' ? (
                             <div className="prose prose-sm dark:prose-invert max-w-none">
-                              <ReactMarkdown>{msg.content || '...'}</ReactMarkdown>
+                              <ReactMarkdown>
+                                {msg.content
+                                  .replace(/\[REQUEST_DELETE: type=.+, id=.+, name=".+"\]/g, '')
+                                  .replace(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g, '$3')
+                                  .trim()}
+                              </ReactMarkdown>
+                              
+                              {!isLoading && msg.content.includes('[DELETE_SUGGESTION:') && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {Array.from(msg.content.matchAll(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g)).map((match, idx) => (
+                                    <Button
+                                      key={idx}
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 text-[10px] border-destructive/30 hover:bg-destructive/10 hover:text-destructive gap-1 px-2"
+                                      onClick={() => {
+                                        setPendingAction({
+                                          type: match[1].trim(),
+                                          id: match[2].trim(),
+                                          name: match[3].trim(),
+                                          messageIndex: index
+                                        });
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                      Apagar "{match[3].trim()}"
+                                    </Button>
+                                  ))}
+                                </div>
+                              )}
+
+                              {pendingAction?.messageIndex === index && (
+                                <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 space-y-2">
+                                  <p className="text-[11px] font-semibold text-destructive flex items-center gap-1.5">
+                                    <Trash2 className="h-3 w-3" />
+                                    Confirmar exclusão de "{pendingAction.name}"?
+                                  </p>
+                                  <div className="flex gap-2 justify-end">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => setPendingAction(null)}
+                                      className="h-7 px-2 text-[10px]"
+                                    >
+                                      Cancelar
+                                    </Button>
+                                    <Button 
+                                      variant="destructive" 
+                                      size="sm" 
+                                      onClick={handleConfirmAction}
+                                      className="h-7 px-2 text-[10px]"
+                                    >
+                                      Confirmar
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -577,6 +706,7 @@ export function OperationalBrainChat() {
                         </div>
                       </div>
                     ))}
+
                     {isLoading && (
                       <div className="flex justify-start">
                         <div className="bg-muted/50 border border-border/50 rounded-xl px-3 py-2 flex items-center gap-2">
