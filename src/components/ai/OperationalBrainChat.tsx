@@ -316,48 +316,36 @@ export function OperationalBrainChat() {
   };
 
 
-  if (!isOpen) {
-    return (
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 right-4 z-50 h-14 w-14 rounded-full shadow-lg gradient-primary glow-primary hover:scale-105 transition-transform md:bottom-6 md:right-6"
-        size="icon"
-      >
-        <Brain className="h-6 w-6" />
-      </Button>
-    );
-  }
-
   return (
     <div
       className={cn(
         "fixed z-50 bg-card/95 backdrop-blur-md border border-border/50 rounded-xl shadow-2xl transition-all duration-300 flex flex-col",
         isMinimized
           ? "bottom-20 right-4 w-64 h-14 md:bottom-6 md:right-6 md:w-72"
-          : "bottom-20 right-4 left-4 h-[70vh] md:bottom-6 md:right-6 md:left-auto md:w-[400px] md:h-[600px] md:max-h-[80vh]"
+          : "bottom-20 right-4 left-4 h-[70vh] md:bottom-6 md:right-6 md:left-auto md:w-[450px] md:h-[650px] md:max-h-[85vh]"
       )}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-border/50 shrink-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="p-0 h-auto hover:bg-transparent">
+              <Button variant="ghost" className="p-0 h-auto hover:bg-transparent overflow-hidden">
                 <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center shrink-0">
                   <Brain className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <div className="flex items-center gap-1 ml-2 text-left">
-                  <div>
-                    <h3 className="font-semibold text-sm leading-tight">
+                <div className="flex items-center gap-1 ml-2 text-left overflow-hidden">
+                  <div className="overflow-hidden">
+                    <h3 className="font-semibold text-sm leading-tight truncate">
                       {selectedAgent?.name || "Cérebro Operacional"}
                     </h3>
                     {!isMinimized && (
-                      <p className="text-[10px] text-muted-foreground leading-tight">
-                        {selectedAgent ? "Agente selecionado" : "Visão 360° do seu negócio"}
+                      <p className="text-[10px] text-muted-foreground leading-tight truncate">
+                        {activeConversationId ? "Conversa em andamento" : "Nova conversa"}
                       </p>
                     )}
                   </div>
-                  {!isMinimized && <ChevronDown className="h-3 w-3 text-muted-foreground" />}
+                  {!isMinimized && <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />}
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -371,10 +359,7 @@ export function OperationalBrainChat() {
                       key={agent.id}
                       onClick={() => {
                         setSelectedAgent(agent);
-                        if (messages.length > 0) {
-                          // Clear chat if switching agent to keep context clean
-                          setMessages([]);
-                        }
+                        startNewChat();
                       }}
                       className={cn(
                         "flex items-center gap-2",
@@ -398,21 +383,45 @@ export function OperationalBrainChat() {
           </DropdownMenu>
         </div>
         <div className="flex items-center gap-1">
-          {!isMinimized && messages.length > 0 && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={clearChat}
-              title="Limpar conversa"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+          {!isMinimized && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setShowHistory(!showHistory)}
+                title="Histórico de conversas"
+              >
+                <History className={cn("h-4 w-4", showHistory && "text-primary")} />
+              </Button>
+              {messages.length > 0 && !showHistory && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleDownloadHistory}
+                    title="Baixar conversa"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={startNewChat}
+                    title="Nova conversa"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </>
           )}
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-8 w-8"
             onClick={() => setIsMinimized(!isMinimized)}
           >
             {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
@@ -420,7 +429,7 @@ export function OperationalBrainChat() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-8 w-8"
             onClick={() => setIsOpen(false)}
           >
             <X className="h-4 w-4" />
@@ -430,125 +439,195 @@ export function OperationalBrainChat() {
 
       {!isMinimized && (
         <>
-          {/* Messages */}
-          <ScrollArea className="flex-1 p-3" ref={scrollRef}>
-            {messages.length === 0 ? (
-              <div className="space-y-4">
-                <div className="text-center py-6">
-                  {isAgentsLoading ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
-                      <p className="text-xs text-muted-foreground">Carregando agentes...</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                        <Sparkles className="h-8 w-8 text-primary" />
-                      </div>
-                      <h4 className="font-semibold mb-1">Olá! Sou {selectedAgent?.name || "seu Cérebro Operacional"} 🧠</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Posso analisar seus projetos, vendas, agenda e conteúdos para te dar insights personalizados.
-                      </p>
-                    </>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Comece com uma sugestão:
-                  </p>
-                  <div className="grid gap-2">
-                    {QUICK_PROMPTS.map((item, i) => (
-                      <button
-                        key={i}
-                        onClick={() => streamChat(item.prompt)}
-                        disabled={isLoading}
-                        className="text-left p-2.5 rounded-lg border border-border/50 hover:bg-accent/50 transition-colors text-sm disabled:opacity-50"
-                      >
-                        {item.label}
-                      </button>
-                    ))}
+          {showHistory ? (
+            /* History List */
+            <ScrollArea className="flex-1 p-3">
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                  Suas Conversas Recentes
+                </h4>
+                {isHistoryLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={cn(
-                      "flex items-start gap-2",
-                      msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                    )}
-                  >
-                    <div className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-1",
-                      msg.role === 'user' ? "bg-primary/20" : "bg-muted"
-                    )}>
-                      {msg.role === 'user' ? (
-                        <User className="h-3 w-3 text-primary" />
-                      ) : (
-                        <Bot className="h-3 w-3 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div
+                ) : conversations && conversations.length > 0 ? (
+                  conversations.map((conv) => (
+                    <div 
+                      key={conv.id}
                       className={cn(
-                        "max-w-[85%] rounded-xl px-3 py-2 text-sm",
-                        msg.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted/50 border border-border/50'
+                        "group flex items-center justify-between p-2.5 rounded-lg border transition-all cursor-pointer",
+                        activeConversationId === conv.id 
+                          ? "bg-primary/5 border-primary/30" 
+                          : "border-transparent hover:bg-accent/50 hover:border-border"
                       )}
+                      onClick={() => {
+                        setActiveConversationId(conv.id);
+                        setShowHistory(false);
+                      }}
                     >
-                      {msg.role === 'assistant' ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <ReactMarkdown>{msg.content || '...'}</ReactMarkdown>
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <MessageSquare className={cn("h-4 w-4 shrink-0", activeConversationId === conv.id ? "text-primary" : "text-muted-foreground")} />
+                        <div className="overflow-hidden">
+                          <p className="text-sm font-medium truncate">{conv.title || 'Conversa sem título'}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {format(new Date(conv.updated_at), "dd 'de' MMM, HH:mm", { locale: ptBR })}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteConversation(conv.id);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <History className="h-8 w-8 text-muted-foreground/20 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Nenhuma conversa encontrada.</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          ) : (
+            /* Main Chat Area */
+            <>
+              {/* Messages */}
+              <ScrollArea className="flex-1 p-3" ref={scrollRef}>
+                {messages.length === 0 ? (
+                  <div className="space-y-4">
+                    <div className="text-center py-6">
+                      {isAgentsLoading ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+                          <p className="text-xs text-muted-foreground">Carregando agentes...</p>
                         </div>
                       ) : (
-                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                        <>
+                          <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                            <Sparkles className="h-8 w-8 text-primary" />
+                          </div>
+                          <h4 className="font-semibold mb-1">Olá! Sou {selectedAgent?.name || "seu Cérebro Operacional"} 🧠</h4>
+                          <p className="text-sm text-muted-foreground px-4">
+                            Posso analisar seus projetos, vendas, agenda e conteúdos para te dar insights personalizados.
+                          </p>
+                        </>
                       )}
                     </div>
-                  </div>
-                ))}
-                {isLoading && messages[messages.length - 1]?.role === 'user' && (
-                  <div className="flex justify-start">
-                    <div className="bg-muted/50 border border-border/50 rounded-xl px-3 py-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Comece com uma sugestão:
+                      </p>
+                      <div className="grid gap-2">
+                        {QUICK_PROMPTS.map((item, i) => (
+                          <button
+                            key={i}
+                            onClick={() => streamChat(item.prompt)}
+                            disabled={isLoading}
+                            className="text-left p-2.5 rounded-lg border border-border/50 hover:bg-accent/50 transition-colors text-sm disabled:opacity-50"
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            )}
-          </ScrollArea>
-
-          {/* Input */}
-          <form onSubmit={handleSubmit} className="p-3 border-t border-border/50 shrink-0">
-            <div className="flex gap-2">
-              <Textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Pergunte sobre seus projetos, vendas, agenda..."
-                className="min-h-[44px] max-h-[100px] resize-none text-sm"
-                disabled={isLoading}
-                rows={1}
-              />
-              <Button
-                type="submit"
-                size="icon"
-                className="shrink-0 h-[44px] w-[44px]"
-                disabled={!input.trim() || isLoading}
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <div className="space-y-4">
+                    {messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={cn(
+                          "flex items-start gap-2",
+                          msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                        )}
+                      >
+                        <div className={cn(
+                          "w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-1",
+                          msg.role === 'user' ? "bg-primary/20" : "bg-muted"
+                        )}>
+                          {msg.role === 'user' ? (
+                            <User className="h-3 w-3 text-primary" />
+                          ) : (
+                            <Bot className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div
+                          className={cn(
+                            "max-w-[85%] rounded-xl px-3 py-2 text-sm",
+                            msg.role === 'user'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted/50 border border-border/50'
+                          )}
+                        >
+                          {msg.role === 'assistant' ? (
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown>{msg.content || '...'}</ReactMarkdown>
+                            </div>
+                          ) : (
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {isLoading && (
+                      <div className="flex justify-start">
+                        <div className="bg-muted/50 border border-border/50 rounded-xl px-3 py-2 flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Processando...</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
-              </Button>
-            </div>
-          </form>
+              </ScrollArea>
+
+              {/* Input Area */}
+              <div className="p-3 border-t border-border/50 shrink-0">
+                <form onSubmit={(e) => { e.preventDefault(); if (input.trim() && !isLoading) streamChat(input.trim()); }} className="flex gap-2">
+                  <Textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (input.trim() && !isLoading) streamChat(input.trim());
+                      }
+                    }}
+                    placeholder="Pergunte sobre seus projetos, vendas, agenda..."
+                    className="min-h-[44px] max-h-[100px] resize-none text-sm"
+                    disabled={isLoading}
+                    rows={1}
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className="shrink-0 h-[44px] w-[44px]"
+                    disabled={!input.trim() || isLoading}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </form>
+              </div>
+            </>
+          )}
         </>
       )}
+    </div>
+  );
+}
     </div>
   );
 }
