@@ -494,6 +494,7 @@ serve(async (req) => {
 3. PARA APAGAR: 
    - Analise o CONTEXTO OPERACIONAL acima e identifique o item correspondente.
    - SE ENCONTRAR: Use OBRIGATORIAMENTE este formato: "Encontrei este item: [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]. Deseja remover?"
+   - **IMPORTANTE**: O 'id' deve ser exatamente o UUID que aparece na tabela de contexto. NUNCA invente números como "789" ou "123". Se não vir o UUID, peça para o usuário listar o item primeiro.
    - SE NÃO ENCONTRAR: Informe que o item não consta no sistema e sugira listar os itens atuais.
    - NUNCA INVENTE NOMES OU IDs.
    - Tipos válidos: task, project, prospect, editorial_item, briefing, investment.
