@@ -308,6 +308,21 @@ function formatTeamSection(team: TeamSummary | null): string {
 ${(team.members || []).map((m: TeamMember) => `- ${m.name} (${m.role}): ${m.hours_available}h`).join("\n")}`;
 }
 
+function formatInvestmentsSection(investments: any | null): string {
+  if (!investments || !investments.items || investments.items.length === 0) return "";
+
+  let section = `### 💰 INVESTIMENTOS RECENTES
+| Item | Valor | Data |
+|------|-------|------|`;
+  
+  investments.items.slice(0, 10).forEach((inv: any) => {
+    section += `\n| ${inv.item_name} | R$ ${inv.amount.toLocaleString('pt-BR')} | ${inv.purchase_date} |`;
+  });
+
+  section += `\n\nTotal investido: **R$ ${investments.total_amount.toLocaleString('pt-BR')}**`;
+  return section;
+}
+
 // =====================================================
 // Token Management
 // =====================================================
