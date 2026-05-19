@@ -136,7 +136,7 @@ async function fetchOperationalContext(
 
 function formatAIContext(
   ctx: AI360Context | null,
-  priority: string[] = ["tasks", "projects", "sales_pipeline", "schedule", "editorial", "team"]
+  priority: string[] = ["tasks", "projects", "sales_pipeline", "schedule", "editorial", "team", "investments"]
 ): string {
   if (!ctx) {
     return "## ⚠️ Contexto Indisponível\nNão foi possível carregar os dados operacionais.";
@@ -149,6 +149,7 @@ function formatAIContext(
     schedule: () => formatScheduleSection(ctx.schedule),
     editorial: () => formatEditorialSection(ctx.editorial),
     team: () => formatTeamSection(ctx.team),
+    investments: () => formatInvestmentsSection(ctx.investments),
   };
 
   const formattedSections = priority
@@ -307,6 +308,21 @@ function formatTeamSection(team: TeamSummary | null): string {
 ${(team.members || []).map((m: TeamMember) => `- ${m.name} (${m.role}): ${m.hours_available}h`).join("\n")}`;
 }
 
+function formatInvestmentsSection(investments: any | null): string {
+  if (!investments || !investments.items || investments.items.length === 0) return "";
+
+  let section = `### 💰 INVESTIMENTOS RECENTES
+| Item | Valor | Data |
+|------|-------|------|`;
+  
+  investments.items.slice(0, 10).forEach((inv: any) => {
+    section += `\n| ${inv.item_name} | R$ ${inv.amount.toLocaleString('pt-BR')} | ${inv.purchase_date} |`;
+  });
+
+  section += `\n\nTotal investido: **R$ ${investments.total_amount.toLocaleString('pt-BR')}**`;
+  return section;
+}
+
 // =====================================================
 // Token Management
 // =====================================================
@@ -425,6 +441,7 @@ serve(async (req) => {
       "schedule",
       "editorial",
       "team",
+      "investments",
     ];
 
     // 4. Implement routing if enabled
@@ -471,10 +488,11 @@ serve(async (req) => {
 
     // 6. Build final prompt - Add safety instruction to ALL agents
     const globalInstructions = `\n\n## INSTRUÇÕES GLOBAIS DE OPERAÇÃO:
-1. PARA APAGAR: Quando o usuário quiser apagar algo (tarefa, projeto, prospect, etc), NÃO peça o ID. 
-   Analise o contexto fornecido e identifique os itens correspondentes.
-   Sugira os itens encontrados no formato: "Encontrei estes itens: [DELETE_SUGGESTION: type=TIPO, id=ID, name="NOME"]. Qual deles você deseja remover?"
-   Tipos válidos: task, project, prospect, editorial_item, briefing.
+1. PARA APAGAR: Quando o usuário quiser apagar algo (tarefa, projeto, prospect, investimento, etc), NUNCA peça o ID. 
+   Analise o CONTEXTO OPERACIONAL acima e identifique os itens correspondentes.
+   Se encontrar um item que combine com o que o usuário quer apagar, use OBRIGATORIAMENTE este formato: "Encontrei este item: [DELETE_SUGGESTION: type=TIPO, id=ID, name="NOME"]. Deseja remover?"
+   Tipos válidos para type: task, project, prospect, editorial_item, briefing, investment.
+   NUNCA exiba IDs longos (UUIDs) para o usuário.
 2. PARA ADICIONAR INVESTIMENTO: use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]
    Exemplo: [REQUEST_ADD_INVESTMENT: item_name="SSD 1TB iPhone", amount=500.00, category="Equipamentos", notes="Upgrade de armazenamento"]
 3. Seja proativo e execute as ações acima sempre que o usuário solicitar algo que se encaixe nelas.`;

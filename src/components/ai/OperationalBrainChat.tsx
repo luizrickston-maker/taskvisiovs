@@ -62,7 +62,15 @@ export function OperationalBrainChat() {
   const addMessage = useAddMessage();
   const deleteConversation = useDeleteConversation();
   
-  const { addCorporateInvestment, deleteTask, deleteProject, deleteProspect } = useAppStore();
+  const { 
+    addCorporateInvestment, 
+    deleteTask, 
+    deleteProject, 
+    deleteProspect, 
+    deleteCorporateInvestment,
+    deleteEditorialCalendarItem,
+    deleteScript
+  } = useAppStore();
 
   const activeAgents = agents?.filter(a => a.is_active) ?? [];
 
@@ -289,11 +297,11 @@ export function OperationalBrainChat() {
 
       switch (type.toLowerCase()) {
         case 'investment':
-          // For investment suggestions, the ID might be 'new' and we should have parsed details
-          // but if it's a simple delete/action, we handle it here.
-          // In the floating chat, investment creation was handled automatically on onSuccess.
-          // This switch handles the manual confirmation if needed.
-          toast.info('Processando ação de investimento...');
+        case 'investimento':
+          const { error: invError } = await supabase.from('corporate_investments').delete().eq('id', id);
+          if (invError) throw invError;
+          deleteCorporateInvestment(id);
+          success = true;
           break;
 
         case 'task':
@@ -317,6 +325,24 @@ export function OperationalBrainChat() {
           const { error: prospectError } = await supabase.from('prospects').delete().eq('id', id);
           if (prospectError) throw prospectError;
           deleteProspect(id);
+          success = true;
+          break;
+
+        case 'editorial_item':
+        case 'editorial':
+        case 'conteudo':
+          const { error: edError } = await supabase.from('editorial_calendar_items').delete().eq('id', id);
+          if (edError) throw edError;
+          deleteEditorialCalendarItem(id);
+          success = true;
+          break;
+
+        case 'briefing':
+        case 'roteiro':
+        case 'script':
+          const { error: scriptError } = await supabase.from('scripts').delete().eq('id', id);
+          if (scriptError) throw scriptError;
+          deleteScript(id);
           success = true;
           break;
 

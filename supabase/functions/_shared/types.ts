@@ -287,6 +287,21 @@ export interface TeamSummary {
   members: TeamMember[];
 }
 
+export interface CorporateInvestment {
+  id: string;
+  item_name: string;
+  amount: number;
+  category: string;
+  purchase_date: string;
+  notes: string | null;
+}
+
+export interface InvestmentsSummary {
+  total_amount: number;
+  count: number;
+  items: CorporateInvestment[];
+}
+
 // =====================================================
 // AI 360° Business Context
 // =====================================================
@@ -301,6 +316,7 @@ export interface AI360Context {
   schedule: ScheduleSummary;
   editorial: EditorialSummary;
   team: TeamSummary;
+  investments: InvestmentsSummary;
 }
 
 // =====================================================
