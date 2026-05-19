@@ -405,6 +405,30 @@ export const AI_MODEL_OPTIONS = [
     description: 'Novo modelo focado em raciocínio complexo',
     provider: 'openai'
   },
+  { 
+    value: 'google/gemini-3-flash-preview', 
+    label: 'Gemini 3 Flash', 
+    description: 'Nova geração ultra-rápida do Google (Preview)',
+    provider: 'google'
+  },
+  { 
+    value: 'google/gemini-3.1-pro-preview', 
+    label: 'Gemini 3.1 Pro', 
+    description: 'Máximo raciocínio e contexto do Google',
+    provider: 'google'
+  },
+  { 
+    value: 'openai/gpt-5', 
+    label: 'GPT-5 (Omni)', 
+    description: 'A nova fronteira de inteligência da OpenAI',
+    provider: 'openai'
+  },
+  { 
+    value: 'openai/gpt-5-mini', 
+    label: 'GPT-5 Mini', 
+    description: 'Extremamente rápido e inteligente para tarefas diárias',
+    provider: 'openai'
+  },
 
   // Anthropic Models
   { 

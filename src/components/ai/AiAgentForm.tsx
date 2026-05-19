@@ -88,25 +88,25 @@ export function AiAgentForm({
       setContextPriority(agent.context_priority ?? []);
       setApiKeyId(agent.api_key_id ?? null);
       setRoutingEnabled(agent.routing_enabled ?? false);
-      setModelSimple(agent.model_name_simple || 'google/gemini-1.5-flash');
-      setModelStandard(agent.model_name_standard || 'google/gemini-1.5-flash');
-      setModelComplex(agent.model_name_complex || 'google/gemini-1.5-pro');
+      setModelSimple(agent.model_name_simple || 'google/gemini-3-flash-preview');
+      setModelStandard(agent.model_name_standard || 'openai/gpt-5-mini');
+      setModelComplex(agent.model_name_complex || 'google/gemini-3.1-pro-preview');
       setApiKeySimple(agent.api_key_id_simple ?? null);
       setApiKeyStandard(agent.api_key_id_standard ?? null);
       setApiKeyComplex(agent.api_key_id_complex ?? null);
     } else {
       setName('');
       setDescription('');
-      setModelName('google/gemini-1.5-flash');
+      setModelName('google/gemini-3-flash-preview');
       setSystemPrompt(DEFAULT_SYSTEM_PROMPT);
       setTemperature(0.7);
       setMaxTokens(4096);
       setContextPriority([]);
       setApiKeyId(null);
       setRoutingEnabled(false);
-      setModelSimple('google/gemini-1.5-flash');
-      setModelStandard('google/gemini-1.5-flash');
-      setModelComplex('google/gemini-1.5-pro');
+      setModelSimple('google/gemini-3-flash-preview');
+      setModelStandard('openai/gpt-5-mini');
+      setModelComplex('google/gemini-3.1-pro-preview');
       setApiKeySimple(null);
       setApiKeyStandard(null);
       setApiKeyComplex(null);
@@ -158,7 +158,7 @@ export function AiAgentForm({
     if (!selectedApiKeyId || selectedApiKeyId === 'system') {
       // For system key, show a mix of top models
       return AI_MODEL_OPTIONS.filter(m => 
-        ['google/gemini-1.5-flash', 'openai/gpt-4o-mini', 'google/gemini-1.5-pro'].includes(m.value)
+        ['google/gemini-3-flash-preview', 'openai/gpt-5-mini', 'google/gemini-3.1-pro-preview'].includes(m.value)
       );
     }
     
