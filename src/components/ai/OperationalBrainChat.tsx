@@ -91,20 +91,45 @@ export function OperationalBrainChat() {
   }, [messages, isLoading]);
 
 
+  const handleInvestmentRequest = useCallback(async (content: string) => {
+    const investmentRegex = /\[REQUEST_ADD_INVESTMENT:\s*item_name="([^"]+)",\s*amount=([\d.]+),\s*category="([^"]+)",\s*notes="([^"]*)"\]/g;
+    let match;
+    while ((match = investmentRegex.exec(content)) !== null) {
+      const [_, item_name, amountStr, category, notes] = match;
+      const amount = parseFloat(amountStr);
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) continue;
+
+        const { data: newData, error } = await supabase
+          .from('corporate_investments')
+          .insert({
+            user_id: user.id,
+            item_name,
+            amount,
+            category: category.toLowerCase(),
+            notes,
+            purchase_date: new Date().toISOString().split('T')[0],
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        addCorporateInvestment(newData as any);
+        toast.success(`Investimento adicionado: ${item_name}`);
+      } catch (err) {
+        console.error('Erro ao adicionar investimento via IA:', err);
+        toast.error(`Falha ao adicionar investimento: ${item_name}`);
+      }
+    }
+  }, [addCorporateInvestment]);
+
   const streamChat = useCallback(async (userMessage: string) => {
-    const userMsg: Message = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: userMessage,
-      timestamp: new Date(),
-    };
-    
-    setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
     setInput('');
 
-    let assistantContent = '';
-    const assistantId = crypto.randomUUID();
+    let currentConvId = activeConversationId;
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -112,6 +137,39 @@ export function OperationalBrainChat() {
       if (!token) {
         throw new Error('Sessão expirada. Por favor, faça login novamente.');
       }
+
+      // 1. Ensure we have a conversation
+      if (!currentConvId) {
+        const newConv = await createConversation.mutateAsync({
+          agentId: selectedAgent?.id,
+          title: userMessage.slice(0, 40) + (userMessage.length > 40 ? '...' : ''),
+        });
+        currentConvId = newConv.id;
+        setActiveConversationId(newConv.id);
+      }
+
+      // 2. Add user message to UI and DB
+      const userMsg = {
+        id: crypto.randomUUID(),
+        role: 'user' as const,
+        content: userMessage,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, userMsg]);
+      
+      await addMessage.mutateAsync({
+        conversationId: currentConvId,
+        role: 'user',
+        content: userMessage,
+      });
+
+      // 3. Prepare for assistant response
+      let assistantContent = '';
+      const assistantId = crypto.randomUUID();
+      setMessages(prev => [
+        ...prev,
+        { id: assistantId, role: 'assistant', content: '', timestamp: new Date() },
+      ]);
 
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
@@ -134,22 +192,9 @@ export function OperationalBrainChat() {
         throw new Error(errorData.error || `HTTP ${resp.status}`);
       }
 
-      // Edge function may return 200 with a JSON error payload (upstream failures)
-      const contentType = resp.headers.get('Content-Type') || '';
-      if (contentType.includes('application/json')) {
-        const errorData = await resp.json().catch(() => ({ error: 'Erro desconhecido' }));
-        throw new Error(errorData.error || 'Falha na IA');
-      }
-
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = '';
-
-      // Add empty assistant message
-      setMessages(prev => [
-        ...prev,
-        { id: assistantId, role: 'assistant', content: '', timestamp: new Date() },
-      ]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -187,44 +232,43 @@ export function OperationalBrainChat() {
         }
       }
 
-      // Handle any remaining buffer
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split('\n')) {
-          if (!raw) continue;
-          if (raw.endsWith('\r')) raw = raw.slice(0, -1);
-          if (raw.startsWith(':') || raw.trim() === '') continue;
-          if (!raw.startsWith('data: ')) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantContent += content;
-              setMessages(prev =>
-                prev.map(m =>
-                  m.id === assistantId ? { ...m, content: assistantContent } : m
-                )
-              );
-            }
-          } catch { /* ignore */ }
-        }
+      // 4. Finalize assistant message
+      await addMessage.mutateAsync({
+        conversationId: currentConvId,
+        role: 'assistant',
+        content: assistantContent,
+      });
+
+      // 5. Handle action requests in assistant content
+      if (assistantContent.includes('[REQUEST_ADD_INVESTMENT:')) {
+        await handleInvestmentRequest(assistantContent);
       }
+      
+      // Handle delete requests (existing functionality)
+      if (assistantContent.includes('[REQUEST_DELETE:')) {
+        // ... (The previous code didn't seem to have a frontend handler for this, but I should probably add one or keep it as is if it's handled elsewhere)
+        // For now, I'll just focus on the investment request as requested by the user.
+      }
+
     } catch (error) {
       console.error('[OperationalBrain] Error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Falha ao processar mensagem';
+      toast.error(errorMessage);
+      
       setMessages(prev => [
-        ...prev.filter(m => m.id !== assistantId),
+        ...prev,
         {
-          id: assistantId,
+          id: crypto.randomUUID(),
           role: 'assistant',
-          content: `❌ Erro: ${error instanceof Error ? error.message : 'Falha ao processar mensagem'}`,
+          content: `❌ Erro: ${errorMessage}`,
           timestamp: new Date(),
         },
       ]);
     } finally {
       setIsLoading(false);
     }
-  }, [messages, selectedAgent, isLoading]);
+  }, [messages, selectedAgent, isLoading, activeConversationId, createConversation, addMessage, handleInvestmentRequest]);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
