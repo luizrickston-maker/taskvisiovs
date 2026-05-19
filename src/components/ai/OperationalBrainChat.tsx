@@ -614,7 +614,7 @@ export function OperationalBrainChat() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {messages.map((msg) => (
+                    {messages.map((msg, index) => (
                       <div
                         key={msg.id}
                         className={cn(
@@ -642,7 +642,63 @@ export function OperationalBrainChat() {
                         >
                           {msg.role === 'assistant' ? (
                             <div className="prose prose-sm dark:prose-invert max-w-none">
-                              <ReactMarkdown>{msg.content || '...'}</ReactMarkdown>
+                              <ReactMarkdown>
+                                {msg.content
+                                  .replace(/\[REQUEST_DELETE: type=.+, id=.+, name=".+"\]/g, '')
+                                  .replace(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g, '$3')
+                                  .trim()}
+                              </ReactMarkdown>
+                              
+                              {!isLoading && msg.content.includes('[DELETE_SUGGESTION:') && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {Array.from(msg.content.matchAll(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g)).map((match, idx) => (
+                                    <Button
+                                      key={idx}
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 text-[10px] border-destructive/30 hover:bg-destructive/10 hover:text-destructive gap-1 px-2"
+                                      onClick={() => {
+                                        setPendingAction({
+                                          type: match[1].trim(),
+                                          id: match[2].trim(),
+                                          name: match[3].trim(),
+                                          messageIndex: index
+                                        });
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                      Apagar "{match[3].trim()}"
+                                    </Button>
+                                  ))}
+                                </div>
+                              )}
+
+                              {pendingAction?.messageIndex === index && (
+                                <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 space-y-2">
+                                  <p className="text-[11px] font-semibold text-destructive flex items-center gap-1.5">
+                                    <Trash2 className="h-3 w-3" />
+                                    Confirmar exclusão de "{pendingAction.name}"?
+                                  </p>
+                                  <div className="flex gap-2 justify-end">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => setPendingAction(null)}
+                                      className="h-7 px-2 text-[10px]"
+                                    >
+                                      Cancelar
+                                    </Button>
+                                    <Button 
+                                      variant="destructive" 
+                                      size="sm" 
+                                      onClick={handleConfirmAction}
+                                      className="h-7 px-2 text-[10px]"
+                                    >
+                                      Confirmar
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -650,6 +706,7 @@ export function OperationalBrainChat() {
                         </div>
                       </div>
                     ))}
+
                     {isLoading && (
                       <div className="flex justify-start">
                         <div className="bg-muted/50 border border-border/50 rounded-xl px-3 py-2 flex items-center gap-2">
