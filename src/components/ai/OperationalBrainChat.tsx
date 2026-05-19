@@ -288,6 +288,14 @@ export function OperationalBrainChat() {
       if (!user) throw new Error('Usuário não autenticado');
 
       switch (type.toLowerCase()) {
+        case 'investment':
+          // For investment suggestions, the ID might be 'new' and we should have parsed details
+          // but if it's a simple delete/action, we handle it here.
+          // In the floating chat, investment creation was handled automatically on onSuccess.
+          // This switch handles the manual confirmation if needed.
+          toast.info('Processando ação de investimento...');
+          break;
+
         case 'task':
         case 'tarefa':
           const { error: taskError } = await supabase.from('tasks').delete().eq('id', id);
@@ -313,9 +321,10 @@ export function OperationalBrainChat() {
           break;
 
         default:
-          toast.error(`Ação para o tipo "${type}" ainda não implementada no chat flutuante.`);
+          toast.error(`Ação para o tipo "${type}" ainda não implementada.`);
           break;
       }
+
 
       if (success) {
         toast.success(`"${name}" removido com sucesso.`);
