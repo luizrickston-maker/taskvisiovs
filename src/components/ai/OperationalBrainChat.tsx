@@ -320,11 +320,21 @@ export function OperationalBrainChat() {
           success = true;
           break;
 
-        case 'prospect':
-        case 'oportunidade':
-          const { error: prospectError } = await supabase.from('prospects').delete().eq('id', id);
-          if (prospectError) throw prospectError;
-          deleteProspect(id);
+        case 'editorial_item':
+        case 'editorial':
+        case 'conteudo':
+          const { error: edError } = await supabase.from('editorial_calendar').delete().eq('id', id);
+          if (edError) throw edError;
+          deleteEditorialCalendarItem(id);
+          success = true;
+          break;
+
+        case 'briefing':
+        case 'roteiro':
+        case 'script':
+          const { error: scriptError } = await supabase.from('scripts').delete().eq('id', id);
+          if (scriptError) throw scriptError;
+          deleteScript(id);
           success = true;
           break;
 
