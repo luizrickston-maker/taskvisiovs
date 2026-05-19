@@ -568,6 +568,7 @@ interface MessageBubbleProps {
   onCancelAction?: () => void;
   isActionPending?: boolean;
   actionDetails?: { type: string; id: string; name: string };
+  onSuggestDelete?: (type: string, id: string, name: string) => void;
 }
 
 function MessageBubble({ 
@@ -576,8 +577,10 @@ function MessageBubble({
   onConfirmAction, 
   onCancelAction,
   isActionPending,
-  actionDetails
+  actionDetails,
+  onSuggestDelete
 }: MessageBubbleProps) {
+
   const isUser = message.role === 'user';
   const navigate = useNavigate();
 
