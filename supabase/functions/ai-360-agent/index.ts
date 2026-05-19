@@ -312,11 +312,11 @@ function formatInvestmentsSection(investments: any | null): string {
   if (!investments || !investments.items || investments.items.length === 0) return "";
 
   let section = `### 💰 INVESTIMENTOS RECENTES
-| Item | Valor | Data |
-|------|-------|------|`;
+| Item | Valor | Data | ID |
+|------|-------|------|----|`;
   
   investments.items.slice(0, 10).forEach((inv: any) => {
-    section += `\n| ${inv.item_name} | R$ ${inv.amount.toLocaleString('pt-BR')} | ${inv.purchase_date} |`;
+    section += `\n| ${inv.item_name} | R$ ${inv.amount.toLocaleString('pt-BR')} | ${inv.purchase_date} | ${inv.id} |`;
   });
 
   section += `\n\nTotal investido: **R$ ${investments.total_amount.toLocaleString('pt-BR')}**`;
