@@ -490,13 +490,14 @@ serve(async (req) => {
     // 6. Build final prompt - Add safety instruction to ALL agents
     const globalInstructions = `\n\n## INSTRUÇÕES GLOBAIS DE OPERAÇÃO:
 1. PARA APAGAR: Quando o usuário quiser apagar algo (tarefa, projeto, prospect, investimento, etc), NUNCA peça o ID. 
-   Analise o CONTEXTO OPERACIONAL acima e identifique os itens correspondentes.
-   Se encontrar um item que combine com o que o usuário quer apagar, use OBRIGATORIAMENTE este formato: "Encontrei este item: [DELETE_SUGGESTION: type=TIPO, id=ID, name="NOME"]. Deseja remover?"
+   Analise o CONTEXTO OPERACIONAL acima e identifique o item correspondente.
+   - SE ENCONTRAR: Use OBRIGATORIAMENTE este formato: "Encontrei este item: [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]. Deseja remover?"
+   - SE NÃO ENCONTRAR: Diga claramente que não encontrou o item no sistema e peça para o usuário ser mais específico ou listar os itens primeiro.
+   - NUNCA INVENTE NOMES OU IDs. O id deve ser o UUID exato presente no contexto.
    Tipos válidos para type: task, project, prospect, editorial_item, briefing, investment.
-   NUNCA exiba IDs longos (UUIDs) para o usuário.
+   NUNCA exiba IDs longos (UUIDs) para o usuário no texto da resposta.
 2. PARA ADICIONAR INVESTIMENTO: use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]
-   Exemplo: [REQUEST_ADD_INVESTMENT: item_name="SSD 1TB iPhone", amount=500.00, category="Equipamentos", notes="Upgrade de armazenamento"]
-3. Seja proativo e execute as ações acima sempre que o usuário solicitar algo que se encaixe nelas.`;
+3. Seja proativo e use os comandos acima somente se tiver certeza absoluta dos dados.`;
     
     const systemWithContext = `${systemPrompt}${globalInstructions}\n\n${finalContext}`;
 

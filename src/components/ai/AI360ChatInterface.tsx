@@ -300,11 +300,31 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
     const { type, id, name } = pendingAction;
     let success = false;
 
+    // UUID validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      console.error('ID inválido detectado:', id);
+      toast.error(`Erro: A IA forneceu um identificador inválido (${id}). Por favor, tente listar os itens novamente.`);
+      setPendingAction(null);
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
+      console.log(`Executando exclusão de ${type} com ID: ${id}`);
+
       switch (type.toLowerCase()) {
+        case 'investment':
+        case 'investimento':
+          const { error: invError } = await supabase.from('corporate_investments').delete().eq('id', id);
+          if (invError) throw invError;
+          const { deleteCorporateInvestment } = useAppStore.getState();
+          deleteCorporateInvestment(id);
+          success = true;
+          break;
+
         case 'task':
         case 'tarefa':
           const { error: taskError } = await supabase.from('tasks').delete().eq('id', id);
@@ -334,11 +354,14 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
 
         case 'editorial_item':
         case 'conteudo':
+        case 'editorial':
           await removeEditorialItem.mutateAsync(id);
           success = true;
           break;
 
         case 'briefing':
+        case 'roteiro':
+        case 'script':
           await deleteBriefing.mutateAsync(id);
           success = true;
           break;
@@ -589,6 +612,7 @@ function MessageBubble({
     return message.content
       .replace(/\[REQUEST_DELETE: type=.+, id=.+, name=".+"\]/g, '')
       .replace(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g, '$3')
+      .replace(/\| (.*?) \| R\$ (.*?) \| (.*?) \| (.*?) \|/g, '| $1 | R$ $2 | $3 |')
       .trim();
   }, [message.content]);
 
@@ -678,7 +702,7 @@ function MessageBubble({
 
               {!isUser && !isStreaming && message.content.includes('[DELETE_SUGGESTION:') && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {Array.from(message.content.matchAll(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g)).map((match, idx) => (
+                  {Array.from(message.content.matchAll(/\[DELETE_SUGGESTION: type=(.+?), id=(.+?), name="(.+?)"\]/g)).map((match, idx) => (
                     <Button
                       key={idx}
                       variant="outline"
