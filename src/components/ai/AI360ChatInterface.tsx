@@ -34,8 +34,10 @@ import { useRemoveEditorialCalendarItem } from '@/hooks/useEditorialCalendar';
 import { useBriefings } from '@/hooks/useBriefings';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import type { ChatMessage } from '@/types/ai';
+import type { ChatMessage, AIConversation, AIMessage } from '@/types/ai';
 import ReactMarkdown from 'react-markdown';
+import { useAIConversations, useAIMessages, useCreateConversation, useAddMessage, useDeleteConversation } from '@/hooks/useAiHistory';
+
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -83,12 +85,34 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
   const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>(propAgentId);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<{
     type: string;
     id: string;
     name: string;
     messageIndex: number;
+    amount?: number;
+    category?: string;
+    notes?: string;
   } | null>(null);
+
+  const { data: historyMessages } = useAIMessages(activeConversationId);
+  const createConversation = useCreateConversation();
+  const addMessage = useAddMessage();
+  const deleteConversation = useDeleteConversation();
+
+  // Load history when conversation changes
+  useEffect(() => {
+    if (activeConversationId && historyMessages) {
+      setMessages(historyMessages.map(m => ({
+        role: m.role as any,
+        content: m.content
+      })));
+    } else if (!activeConversationId) {
+      setMessages([]);
+    }
+  }, [activeConversationId, historyMessages]);
+
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -146,24 +170,44 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
     setInput('');
     setStreamingContent('');
 
-    const userMessage: ChatMessage = { role: 'user', content: messageContent };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    let currentConvId = activeConversationId;
+    
+    try {
+      // 1. Ensure we have a conversation
+      if (!currentConvId) {
+        const newConv = await createConversation.mutateAsync({
+          agentId: selectedAgentId,
+          title: messageContent.slice(0, 40) + (messageContent.length > 40 ? '...' : ''),
+        });
+        currentConvId = newConv.id;
+        setActiveConversationId(newConv.id);
+      }
 
-    // Create abort controller for this request
-    abortControllerRef.current = new AbortController();
+      const userMessage: ChatMessage = { role: 'user', content: messageContent };
+      const newMessages = [...messages, userMessage];
+      setMessages(newMessages);
 
-    askAgent(
-      {
-        messages: newMessages,
-        agentId: selectedAgentId,
-        signal: abortControllerRef.current.signal,
-        onChunk: (chunk) => {
-          setStreamingContent((prev) => prev + chunk);
+      // Save user message to DB
+      await addMessage.mutateAsync({
+        conversationId: currentConvId,
+        role: 'user',
+        content: messageContent,
+      });
+
+      // Create abort controller for this request
+      abortControllerRef.current = new AbortController();
+
+      askAgent(
+        {
+          messages: newMessages,
+          agentId: selectedAgentId,
+          signal: abortControllerRef.current.signal,
+          onChunk: (chunk) => {
+            setStreamingContent((prev) => prev + chunk);
+          },
         },
-      },
-      {
-        onSuccess: (fullContent) => {
+        {
+        onSuccess: async (fullContent) => {
           const newAssistantMessage: ChatMessage = { role: 'assistant', content: fullContent };
           setMessages((prev) => [
             ...prev,
@@ -171,24 +215,70 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
           ]);
           setStreamingContent('');
 
-          // Check for delete requests in the full content
+          // Save assistant message to DB
+          await addMessage.mutateAsync({
+            conversationId: currentConvId!,
+            role: 'assistant',
+            content: fullContent,
+          });
+
+          // Check for delete requests
           const deleteMatch = fullContent.match(/\[REQUEST_DELETE: type=(.+), id=(.+), name="(.+)"\]/);
           if (deleteMatch) {
             setPendingAction({
               type: deleteMatch[1].trim(),
               id: deleteMatch[2].trim(),
               name: deleteMatch[3].trim(),
-              messageIndex: messages.length + 1 // New message index
+              messageIndex: newMessages.length // Current message index
             });
           }
+
+          // Check for investment requests and handle AUTOMATICALLY
+          const investmentMatch = fullContent.match(/\[REQUEST_ADD_INVESTMENT:\s*item_name="([^"]+)",\s*amount=([\d.]+),\s*category="([^"]+)",\s*notes="([^"]*)"\]/);
+          if (investmentMatch) {
+            const [_, item_name, amountStr, category, notes] = investmentMatch;
+            const amount = parseFloat(amountStr);
+            
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                const { data: newData, error: invError } = await supabase
+                  .from('corporate_investments')
+                  .insert({
+                    user_id: user.id,
+                    item_name,
+                    amount,
+                    category: category.toLowerCase(),
+                    notes,
+                    purchase_date: new Date().toISOString().split('T')[0],
+                  })
+                  .select()
+                  .single();
+
+                if (!invError) {
+                  const { addCorporateInvestment } = useAppStore.getState();
+                  addCorporateInvestment(newData as any);
+                  toast.success(`Investimento adicionado: ${item_name}`);
+                }
+              }
+            } catch (err) {
+              console.error('Erro ao adicionar investimento via IA:', err);
+            }
+          }
         },
-        onError: (err) => {
-          setError(err.message);
-          setStreamingContent('');
-        },
-      }
-    );
-  }, [input, messages, selectedAgentId, isPending, askAgent]);
+
+          onError: (err) => {
+            setError(err.message);
+            setStreamingContent('');
+          },
+        }
+      );
+    } catch (err: any) {
+      setError(err.message);
+      toast.error('Erro ao iniciar conversa');
+    }
+  }, [input, messages, selectedAgentId, isPending, askAgent, activeConversationId, createConversation, addMessage]);
+
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -211,11 +301,15 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
     let success = false;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
       switch (type.toLowerCase()) {
         case 'task':
         case 'tarefa':
           const { error: taskError } = await supabase.from('tasks').delete().eq('id', id);
           if (taskError) throw taskError;
+          const { deleteTask } = useAppStore.getState();
           deleteTask(id);
           success = true;
           break;
@@ -224,6 +318,7 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
         case 'projeto':
           const { error: projectError } = await supabase.from('projects').delete().eq('id', id);
           if (projectError) throw projectError;
+          const { deleteProject } = useAppStore.getState();
           deleteProject(id);
           success = true;
           break;
@@ -232,6 +327,7 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
         case 'oportunidade':
           const { error: prospectError } = await supabase.from('prospects').delete().eq('id', id);
           if (prospectError) throw prospectError;
+          const { deleteProspect } = useAppStore.getState();
           deleteProspect(id);
           success = true;
           break;
@@ -248,24 +344,36 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
           break;
 
         default:
-          toast.error(`Exclusão para o tipo "${type}" ainda não implementada.`);
+          toast.error(`Ação para o tipo "${type}" ainda não implementada.`);
           break;
       }
 
       if (success) {
-        toast.success(`"${name}" foi excluído com sucesso.`);
+        toast.success(`"${name}" removido com sucesso.`);
         setPendingAction(null);
-        // Add a system message confirming completion
+        
+        const confirmContent = `✅ Confirmado! O item "${name}" foi removido com sucesso.`;
+        
         setMessages(prev => [
           ...prev,
-          { role: 'assistant', content: `✅ Confirmado! O item "${name}" foi excluído permanentemente.` }
+          { role: 'assistant', content: confirmContent }
         ]);
+
+        if (activeConversationId) {
+          await addMessage.mutateAsync({
+            conversationId: activeConversationId,
+            role: 'assistant',
+            content: confirmContent
+          });
+        }
       }
     } catch (err: any) {
       console.error('Error executing action:', err);
-      toast.error(`Erro ao excluir: ${err.message || 'Erro desconhecido'}`);
+      toast.error(`Erro ao executar exclusão: ${err.message || 'Erro desconhecido'}`);
     }
   };
+
+
 
   const handleCancelAction = () => {
     setPendingAction(null);

@@ -10,8 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAskPersonalAI360Agent } from '@/hooks/usePersonalAI360Agent';
 import { useAiAgents, useDefaultAiAgent } from '@/hooks/useAiAgents';
-import type { ChatMessage } from '@/types/ai';
+import type { ChatMessage, AIConversation, AIMessage } from '@/types/ai';
 import ReactMarkdown from 'react-markdown';
+import { useAIConversations, useAIMessages, useCreateConversation, useAddMessage, useDeleteConversation } from '@/hooks/useAiHistory';
+import { toast } from 'sonner';
+
 
 // Module link patterns for Personal context
 const MODULE_LINKS: Record<string, { path: string; label: string; color: string }> = {
@@ -66,6 +69,24 @@ export function AI360PersonalChatInterface({ agentId: initialAgentId }: AI360Per
   const [input, setInput] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+
+  const { data: historyMessages } = useAIMessages(activeConversationId);
+  const createConversation = useCreateConversation();
+  const addMessage = useAddMessage();
+
+  // Load history when conversation changes
+  useEffect(() => {
+    if (activeConversationId && historyMessages) {
+      setMessages(historyMessages.map(m => ({
+        role: m.role as any,
+        content: m.content
+      })));
+    } else if (!activeConversationId) {
+      setMessages([]);
+    }
+  }, [activeConversationId, historyMessages]);
+
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -101,37 +122,69 @@ export function AI360PersonalChatInterface({ agentId: initialAgentId }: AI360Per
     setInput('');
     setStreamingContent('');
 
-    const userMessage: ChatMessage = { role: 'user', content: messageContent };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    let currentConvId = activeConversationId;
 
-    // Create abort controller for this request
-    abortControllerRef.current = new AbortController();
-
-    askAgent(
-      {
-        messages: newMessages,
-        agentId: selectedAgentId,
-        signal: abortControllerRef.current.signal,
-        onChunk: (chunk) => {
-          setStreamingContent((prev) => prev + chunk);
-        },
-      },
-      {
-        onSuccess: (fullContent) => {
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: fullContent },
-          ]);
-          setStreamingContent('');
-        },
-        onError: (err) => {
-          setError(err.message);
-          setStreamingContent('');
-        },
+    try {
+      // 1. Ensure we have a conversation
+      if (!currentConvId) {
+        const newConv = await createConversation.mutateAsync({
+          agentId: selectedAgentId,
+          title: messageContent.slice(0, 40) + (messageContent.length > 40 ? '...' : ''),
+        });
+        currentConvId = newConv.id;
+        setActiveConversationId(newConv.id);
       }
-    );
-  }, [input, messages, isPending, askAgent, selectedAgentId]);
+
+      const userMessage: ChatMessage = { role: 'user', content: messageContent };
+      const newMessages = [...messages, userMessage];
+      setMessages(newMessages);
+
+      // Save user message to DB
+      await addMessage.mutateAsync({
+        conversationId: currentConvId,
+        role: 'user',
+        content: messageContent,
+      });
+
+      // Create abort controller for this request
+      abortControllerRef.current = new AbortController();
+
+      askAgent(
+        {
+          messages: newMessages,
+          agentId: selectedAgentId,
+          signal: abortControllerRef.current.signal,
+          onChunk: (chunk) => {
+            setStreamingContent((prev) => prev + chunk);
+          },
+        },
+        {
+          onSuccess: async (fullContent) => {
+            setMessages((prev) => [
+              ...prev,
+              { role: 'assistant', content: fullContent },
+            ]);
+            setStreamingContent('');
+
+            // Save assistant message to DB
+            await addMessage.mutateAsync({
+              conversationId: currentConvId!,
+              role: 'assistant',
+              content: fullContent,
+            });
+          },
+          onError: (err) => {
+            setError(err.message);
+            setStreamingContent('');
+          },
+        }
+      );
+    } catch (err: any) {
+      setError(err.message);
+      toast.error('Erro ao iniciar conversa');
+    }
+  }, [input, messages, isPending, askAgent, selectedAgentId, activeConversationId, createConversation, addMessage]);
+
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

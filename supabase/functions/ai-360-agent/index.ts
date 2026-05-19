@@ -470,11 +470,14 @@ serve(async (req) => {
     const finalContext = truncateContextToFit(systemPrompt, formattedContext, messages, maxTokens);
 
     // 6. Build final prompt - Add safety instruction to ALL agents
-    const safetyInstruction = `\n\n## INSTRUÇÃO DE SEGURANÇA GLOBAL:
-Se precisar apagar algo, use: [REQUEST_DELETE: type=TIPO, id=ID, name="NOME"]
-Tipos válidos: task, project, prospect, editorial_item, briefing.`;
+    const globalInstructions = `\n\n## INSTRUÇÕES GLOBAIS DE OPERAÇÃO:
+1. PARA APAGAR: use [REQUEST_DELETE: type=TIPO, id=ID, name="NOME"]
+   Tipos válidos: task, project, prospect, editorial_item, briefing.
+2. PARA ADICIONAR INVESTIMENTO: use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]
+   Exemplo: [REQUEST_ADD_INVESTMENT: item_name="SSD 1TB iPhone", amount=500.00, category="Equipamentos", notes="Upgrade de armazenamento"]
+3. Seja proativo e execute as ações acima sempre que o usuário solicitar algo que se encaixe nelas.`;
     
-    const systemWithContext = `${systemPrompt}${safetyInstruction}\n\n${finalContext}`;
+    const systemWithContext = `${systemPrompt}${globalInstructions}\n\n${finalContext}`;
 
     // 7. Determine API endpoint and key based on provider
     let apiKey: string;

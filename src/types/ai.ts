@@ -341,8 +341,29 @@ export interface ChatError {
   code?: 'RATE_LIMIT' | 'INSUFFICIENT_CREDITS' | 'AI_ERROR' | 'INTERNAL_ERROR';
 }
 
+// ============= Conversations & History =============
+
+export interface AIConversation {
+  id: string;
+  user_id: string;
+  agent_id: string | null;
+  title: string | null;
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AIMessage {
+  id: string;
+  conversation_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  created_at: string;
+}
+
 // =====================================================
 // Context Priority Options
+
 // =====================================================
 
 export const CONTEXT_PRIORITY_OPTIONS = [
