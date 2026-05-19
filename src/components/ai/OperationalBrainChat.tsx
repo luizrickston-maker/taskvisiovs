@@ -283,9 +283,38 @@ export function OperationalBrainChat() {
     }
   };
 
-  const clearChat = () => {
+  const startNewChat = () => {
+    setActiveConversationId(null);
     setMessages([]);
+    setShowHistory(false);
   };
+
+  const handleDownloadHistory = () => {
+    if (messages.length === 0) return;
+    
+    const content = messages.map(m => `[${m.role.toUpperCase()} - ${format(m.timestamp, 'dd/MM/yy HH:mm')}]\n${m.content}`).join('\n\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `historico-ia-${format(new Date(), 'yyyy-MM-dd-HHmm')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Histórico baixado com sucesso!');
+  };
+
+  const handleDeleteConversation = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja apagar este histórico?')) {
+      await deleteConversation.mutateAsync(id);
+      if (activeConversationId === id) {
+        startNewChat();
+      }
+      toast.success('Histórico removido');
+    }
+  };
+
 
   if (!isOpen) {
     return (
