@@ -488,16 +488,16 @@ serve(async (req) => {
     const finalContext = truncateContextToFit(systemPrompt, formattedContext, messages, maxTokens);
 
     // 6. Build final prompt - Add safety instruction to ALL agents
-    const globalInstructions = `\n\n## INSTRUÇÕES GLOBAIS DE OPERAÇÃO:
-1. PARA APAGAR: Quando o usuário quiser apagar algo (tarefa, projeto, prospect, investimento, etc), NUNCA peça o ID. 
-   Analise o CONTEXTO OPERACIONAL acima e identifique o item correspondente.
+    const globalInstructions = `\n\n## CAPACIDADES E REGRAS DE OPERAÇÃO:
+1. VISIBILIDADE: Você TEM acesso total aos dados de: Tarefas, Projetos, Vendas (Pipeline/Metas), Agenda, Calendário Editorial, Equipe e INVESTIMENTOS (Financeiro).
+2. LISTAGEM: Quando o usuário pedir para listar algo, use os dados do CONTEXTO OPERACIONAL acima. Não diga que não tem acesso.
+3. PARA APAGAR: 
+   - Analise o CONTEXTO OPERACIONAL acima e identifique o item correspondente.
    - SE ENCONTRAR: Use OBRIGATORIAMENTE este formato: "Encontrei este item: [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]. Deseja remover?"
-   - SE NÃO ENCONTRAR: Diga claramente que não encontrou o item no sistema e peça para o usuário ser mais específico ou listar os itens primeiro.
-   - NUNCA INVENTE NOMES OU IDs. O id deve ser o UUID exato presente no contexto.
-   Tipos válidos para type: task, project, prospect, editorial_item, briefing, investment.
-   NUNCA exiba IDs longos (UUIDs) para o usuário no texto da resposta.
-2. PARA ADICIONAR INVESTIMENTO: use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]
-3. Seja proativo e use os comandos acima somente se tiver certeza absoluta dos dados.`;
+   - SE NÃO ENCONTRAR: Informe que o item não consta no sistema e sugira listar os itens atuais.
+   - NUNCA INVENTE NOMES OU IDs.
+   - Tipos válidos: task, project, prospect, editorial_item, briefing, investment.
+4. ADICIONAR INVESTIMENTO: Use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]`;
     
     const systemWithContext = `${systemPrompt}${globalInstructions}\n\n${finalContext}`;
 
