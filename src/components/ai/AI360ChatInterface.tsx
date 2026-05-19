@@ -277,15 +277,38 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
   const handleConfirmAction = async () => {
     if (!pendingAction) return;
 
-    const { type, id, name } = pendingAction;
+    const { type, id, name, amount, category, notes } = pendingAction;
     let success = false;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
       switch (type.toLowerCase()) {
+        case 'investment':
+          const { data: invData, error: invError } = await supabase
+            .from('corporate_investments')
+            .insert({
+              user_id: user.id,
+              item_name: name,
+              amount: amount || 0,
+              category: (category || 'outro').toLowerCase(),
+              notes: notes,
+              purchase_date: new Date().toISOString().split('T')[0],
+            })
+            .select()
+            .single();
+          if (invError) throw invError;
+          const { addCorporateInvestment } = useAppStore.getState();
+          addCorporateInvestment(invData as any);
+          success = true;
+          break;
+
         case 'task':
         case 'tarefa':
           const { error: taskError } = await supabase.from('tasks').delete().eq('id', id);
           if (taskError) throw taskError;
+          const { deleteTask } = useAppStore.getState();
           deleteTask(id);
           success = true;
           break;
@@ -294,6 +317,7 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
         case 'projeto':
           const { error: projectError } = await supabase.from('projects').delete().eq('id', id);
           if (projectError) throw projectError;
+          const { deleteProject } = useAppStore.getState();
           deleteProject(id);
           success = true;
           break;
@@ -302,6 +326,7 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
         case 'oportunidade':
           const { error: prospectError } = await supabase.from('prospects').delete().eq('id', id);
           if (prospectError) throw prospectError;
+          const { deleteProspect } = useAppStore.getState();
           deleteProspect(id);
           success = true;
           break;
@@ -318,24 +343,35 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
           break;
 
         default:
-          toast.error(`Exclusão para o tipo "${type}" ainda não implementada.`);
+          toast.error(`Ação para o tipo "${type}" ainda não implementada.`);
           break;
       }
 
       if (success) {
-        toast.success(`"${name}" foi excluído com sucesso.`);
+        toast.success(`Ação concluída com sucesso.`);
         setPendingAction(null);
-        // Add a system message confirming completion
+        
+        const confirmContent = `✅ Confirmado! O item "${name}" foi ${type === 'investment' ? 'adicionado aos investimentos' : 'removido'} com sucesso.`;
+        
         setMessages(prev => [
           ...prev,
-          { role: 'assistant', content: `✅ Confirmado! O item "${name}" foi excluído permanentemente.` }
+          { role: 'assistant', content: confirmContent }
         ]);
+
+        if (activeConversationId) {
+          await addMessage.mutateAsync({
+            conversationId: activeConversationId,
+            role: 'assistant',
+            content: confirmContent
+          });
+        }
       }
     } catch (err: any) {
       console.error('Error executing action:', err);
-      toast.error(`Erro ao excluir: ${err.message || 'Erro desconhecido'}`);
+      toast.error(`Erro ao executar ação: ${err.message || 'Erro desconhecido'}`);
     }
   };
+
 
   const handleCancelAction = () => {
     setPendingAction(null);
