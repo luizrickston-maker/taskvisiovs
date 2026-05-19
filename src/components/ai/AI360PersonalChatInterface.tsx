@@ -122,37 +122,69 @@ export function AI360PersonalChatInterface({ agentId: initialAgentId }: AI360Per
     setInput('');
     setStreamingContent('');
 
-    const userMessage: ChatMessage = { role: 'user', content: messageContent };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    let currentConvId = activeConversationId;
 
-    // Create abort controller for this request
-    abortControllerRef.current = new AbortController();
-
-    askAgent(
-      {
-        messages: newMessages,
-        agentId: selectedAgentId,
-        signal: abortControllerRef.current.signal,
-        onChunk: (chunk) => {
-          setStreamingContent((prev) => prev + chunk);
-        },
-      },
-      {
-        onSuccess: (fullContent) => {
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: fullContent },
-          ]);
-          setStreamingContent('');
-        },
-        onError: (err) => {
-          setError(err.message);
-          setStreamingContent('');
-        },
+    try {
+      // 1. Ensure we have a conversation
+      if (!currentConvId) {
+        const newConv = await createConversation.mutateAsync({
+          agentId: selectedAgentId,
+          title: messageContent.slice(0, 40) + (messageContent.length > 40 ? '...' : ''),
+        });
+        currentConvId = newConv.id;
+        setActiveConversationId(newConv.id);
       }
-    );
-  }, [input, messages, isPending, askAgent, selectedAgentId]);
+
+      const userMessage: ChatMessage = { role: 'user', content: messageContent };
+      const newMessages = [...messages, userMessage];
+      setMessages(newMessages);
+
+      // Save user message to DB
+      await addMessage.mutateAsync({
+        conversationId: currentConvId,
+        role: 'user',
+        content: messageContent,
+      });
+
+      // Create abort controller for this request
+      abortControllerRef.current = new AbortController();
+
+      askAgent(
+        {
+          messages: newMessages,
+          agentId: selectedAgentId,
+          signal: abortControllerRef.current.signal,
+          onChunk: (chunk) => {
+            setStreamingContent((prev) => prev + chunk);
+          },
+        },
+        {
+          onSuccess: async (fullContent) => {
+            setMessages((prev) => [
+              ...prev,
+              { role: 'assistant', content: fullContent },
+            ]);
+            setStreamingContent('');
+
+            // Save assistant message to DB
+            await addMessage.mutateAsync({
+              conversationId: currentConvId!,
+              role: 'assistant',
+              content: fullContent,
+            });
+          },
+          onError: (err) => {
+            setError(err.message);
+            setStreamingContent('');
+          },
+        }
+      );
+    } catch (err: any) {
+      setError(err.message);
+      toast.error('Erro ao iniciar conversa');
+    }
+  }, [input, messages, isPending, askAgent, selectedAgentId, activeConversationId, createConversation, addMessage]);
+
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
