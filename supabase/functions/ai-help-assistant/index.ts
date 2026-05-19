@@ -105,7 +105,7 @@ async function fetchAgentConfig(
   const { data: agentData, error: agentError } = await query.single();
 
   // Default values
-  let modelName = "google/gemini-1.5-flash";
+  let modelName = "google/gemini-3-flash-preview";
   let temperature = 0.7;
   let maxTokens = 4096;
   let apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
@@ -138,8 +138,8 @@ async function fetchAgentConfig(
             case "openai":
               apiEndpoint = "https://api.openai.com/v1/chat/completions";
               if (modelName.startsWith("openai/")) modelName = modelName.replace("openai/", "");
-              if (modelName === "gpt-5-mini") modelName = "gpt-4o-mini";
-              if (modelName === "gpt-5") modelName = "gpt-4o";
+              if (modelName === "gpt-5-mini") modelName = "gpt-5-mini";
+              if (modelName === "gpt-5") modelName = "gpt-5";
               break;
             case "gemini":
             case "google":

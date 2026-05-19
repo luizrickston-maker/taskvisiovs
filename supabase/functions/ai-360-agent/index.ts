@@ -136,7 +136,7 @@ async function fetchOperationalContext(
 
 function formatAIContext(
   ctx: AI360Context | null,
-  priority: string[] = ["tasks", "projects", "sales_pipeline", "schedule", "editorial", "team", "investments"]
+  priority: string[] = ["investments", "tasks", "projects", "sales_pipeline", "schedule", "editorial", "team"]
 ): string {
   if (!ctx) {
     return "## ⚠️ Contexto Indisponível\nNão foi possível carregar os dados operacionais.";
@@ -464,15 +464,15 @@ serve(async (req) => {
       const isSimple = simplePatterns.some(p => lastMessage.includes(p)) && lastMessage.length < 100;
 
       if (isSimple) {
-        modelName = agent.model_name_simple || "google/gemini-1.5-flash";
+        modelName = agent.model_name_simple || "google/gemini-3-flash-preview";
         if (levelKeys?.simple) activeCustomKeyInfo = levelKeys.simple;
         console.log("[ai-360-agent] Routed to SIMPLE model:", modelName, "Custom Key:", !!levelKeys?.simple);
       } else if (isComplex) {
-        modelName = agent.model_name_complex || "google/gemini-1.5-pro";
+        modelName = agent.model_name_complex || "google/gemini-3.1-pro-preview";
         if (levelKeys?.complex) activeCustomKeyInfo = levelKeys.complex;
         console.log("[ai-360-agent] Routed to COMPLEX model:", modelName, "Custom Key:", !!levelKeys?.complex);
       } else {
-        modelName = agent.model_name_standard || agent.model_name || "google/gemini-1.5-flash";
+        modelName = agent.model_name_standard || agent.model_name || "openai/gpt-5-mini";
         if (levelKeys?.standard) activeCustomKeyInfo = levelKeys.standard;
         console.log("[ai-360-agent] Routed to STANDARD model:", modelName, "Custom Key:", !!levelKeys?.standard);
       }
@@ -494,6 +494,7 @@ serve(async (req) => {
 3. PARA APAGAR: 
    - Analise o CONTEXTO OPERACIONAL acima e identifique o item correspondente.
    - SE ENCONTRAR: Use OBRIGATORIAMENTE este formato: "Encontrei este item: [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]. Deseja remover?"
+   - **IMPORTANTE**: O 'id' deve ser exatamente o UUID que aparece na tabela de contexto. NUNCA invente números como "789" ou "123". Se não vir o UUID, peça para o usuário listar o item primeiro.
    - SE NÃO ENCONTRAR: Informe que o item não consta no sistema e sugira listar os itens atuais.
    - NUNCA INVENTE NOMES OU IDs.
    - Tipos válidos: task, project, prospect, editorial_item, briefing, investment.
@@ -523,8 +524,8 @@ serve(async (req) => {
           if (/^(gpt-|o1|o3|chatgpt)/i.test(rawModel)) {
             modelName = rawModel;
           } else {
-            console.warn(`[ai-360-agent] Model "${rawModel}" not compatible with OpenAI key. Falling back to gpt-4o-mini.`);
-            modelName = "gpt-4o-mini";
+            console.warn(`[ai-360-agent] Model "${rawModel}" not compatible with OpenAI key. Falling back to gpt-5-mini.`);
+            modelName = "gpt-5-mini";
           }
           break;
         case "gemini":
@@ -568,20 +569,20 @@ serve(async (req) => {
       apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
       apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
       
-      // Mapping for models supported by the current Lovable AI Gateway configuration
+      // Mapping for models supported by the current Lovable AI Gateway configuration (2026 Environment)
       const m = modelName.toLowerCase();
-      if (m.includes("gemini-1.5-flash") || m.includes("gemini-flash-1.5") || m.includes("gemini-flash")) {
-        modelName = "google/gemini-1.5-flash";
-      } else if (m.includes("gemini-1.5-pro") || m.includes("gemini-pro-1.5") || m.includes("gemini-pro")) {
-        modelName = "google/gemini-1.5-pro";
-      } else if (m.includes("gpt-4o-mini") || m.includes("gpt-3.5")) {
-        modelName = "openai/gpt-4o-mini";
-      } else if (m.includes("gpt-4") || m.includes("gpt-o1") || m.includes("gpt-o3")) {
-        modelName = "openai/gpt-4o";
+      if (m.includes("gemini-1.5-flash") || m.includes("gemini-3-flash") || m.includes("gemini-flash")) {
+        modelName = "google/gemini-3-flash-preview";
+      } else if (m.includes("gemini-1.5-pro") || m.includes("gemini-3.1-pro") || m.includes("gemini-pro")) {
+        modelName = "google/gemini-3.1-pro-preview";
+      } else if (m.includes("gpt-4o-mini") || m.includes("gpt-5-mini") || m.includes("gpt-3.5")) {
+        modelName = "openai/gpt-5-mini";
+      } else if (m.includes("gpt-4") || m.includes("gpt-o1") || m.includes("gpt-o3") || m.includes("gpt-5")) {
+        modelName = "openai/gpt-5";
       } else {
         // Fallback to a guaranteed supported model if it's unknown
-        console.warn(`[ai-360-agent] Unknown model "${modelName}" for Lovable Gateway. Falling back to google/gemini-2.5-flash.`);
-        modelName = "google/gemini-1.5-flash";
+        console.warn(`[ai-360-agent] Unknown model "${modelName}" for Lovable Gateway. Falling back to google/gemini-3-flash-preview.`);
+        modelName = "google/gemini-3-flash-preview";
       }
 
       if (!apiKey) {
