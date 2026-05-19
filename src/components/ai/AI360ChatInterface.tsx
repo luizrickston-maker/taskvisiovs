@@ -702,7 +702,7 @@ function MessageBubble({
 
               {!isUser && !isStreaming && message.content.includes('[DELETE_SUGGESTION:') && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {Array.from(message.content.matchAll(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g)).map((match, idx) => (
+                  {Array.from(message.content.matchAll(/\[DELETE_SUGGESTION: type=(.+?), id=(.+?), name="(.+?)"\]/g)).map((match, idx) => (
                     <Button
                       key={idx}
                       variant="outline"
