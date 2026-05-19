@@ -149,7 +149,7 @@ export default function AiAgentsManagerPage() {
           variant="ghost"
           size="sm"
           className="w-fit gap-1.5 -ml-2 text-muted-foreground hover:text-foreground"
-          onClick={() => navigate('/pj/cerebro-ia')}
+          onClick={() => navigate('/pj/cerebro-operacional')}
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar ao Cérebro Operacional
