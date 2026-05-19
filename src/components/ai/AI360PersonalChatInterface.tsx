@@ -10,8 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAskPersonalAI360Agent } from '@/hooks/usePersonalAI360Agent';
 import { useAiAgents, useDefaultAiAgent } from '@/hooks/useAiAgents';
-import type { ChatMessage } from '@/types/ai';
+import type { ChatMessage, AIConversation, AIMessage } from '@/types/ai';
 import ReactMarkdown from 'react-markdown';
+import { useAIConversations, useAIMessages, useCreateConversation, useAddMessage, useDeleteConversation } from '@/hooks/useAiHistory';
+import { toast } from 'sonner';
+
 
 // Module link patterns for Personal context
 const MODULE_LINKS: Record<string, { path: string; label: string; color: string }> = {
