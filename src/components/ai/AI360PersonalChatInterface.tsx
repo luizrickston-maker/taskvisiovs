@@ -69,6 +69,24 @@ export function AI360PersonalChatInterface({ agentId: initialAgentId }: AI360Per
   const [input, setInput] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+
+  const { data: historyMessages } = useAIMessages(activeConversationId);
+  const createConversation = useCreateConversation();
+  const addMessage = useAddMessage();
+
+  // Load history when conversation changes
+  useEffect(() => {
+    if (activeConversationId && historyMessages) {
+      setMessages(historyMessages.map(m => ({
+        role: m.role as any,
+        content: m.content
+      })));
+    } else if (!activeConversationId) {
+      setMessages([]);
+    }
+  }, [activeConversationId, historyMessages]);
+
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
