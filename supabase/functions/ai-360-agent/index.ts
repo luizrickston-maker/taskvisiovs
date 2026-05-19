@@ -492,7 +492,10 @@ serve(async (req) => {
    Analise o CONTEXTO OPERACIONAL acima e identifique os itens correspondentes.
    Se encontrar um item que combine com o que o usuário quer apagar, use OBRIGATORIAMENTE este formato: "Encontrei este item: [DELETE_SUGGESTION: type=TIPO, id=ID, name="NOME"]. Deseja remover?"
    Tipos válidos para type: task, project, prospect, editorial_item, briefing, investment.
-   NUNCA exiba IDs longos (UUIDs) para o usuário.`;
+   NUNCA exiba IDs longos (UUIDs) para o usuário.
+2. PARA ADICIONAR INVESTIMENTO: use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]
+   Exemplo: [REQUEST_ADD_INVESTMENT: item_name="SSD 1TB iPhone", amount=500.00, category="Equipamentos", notes="Upgrade de armazenamento"]
+3. Seja proativo e execute as ações acima sempre que o usuário solicitar algo que se encaixe nelas.`;
     
     const systemWithContext = `${systemPrompt}${globalInstructions}\n\n${finalContext}`;
 
