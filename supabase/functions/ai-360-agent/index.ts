@@ -568,20 +568,20 @@ serve(async (req) => {
       apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
       apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
       
-      // Mapping for models supported by the current Lovable AI Gateway configuration
+      // Mapping for models supported by the current Lovable AI Gateway configuration (2026 Environment)
       const m = modelName.toLowerCase();
-      if (m.includes("gemini-1.5-flash") || m.includes("gemini-flash-1.5") || m.includes("gemini-flash")) {
-        modelName = "google/gemini-1.5-flash";
-      } else if (m.includes("gemini-1.5-pro") || m.includes("gemini-pro-1.5") || m.includes("gemini-pro")) {
-        modelName = "google/gemini-1.5-pro";
-      } else if (m.includes("gpt-4o-mini") || m.includes("gpt-3.5")) {
-        modelName = "openai/gpt-4o-mini";
-      } else if (m.includes("gpt-4") || m.includes("gpt-o1") || m.includes("gpt-o3")) {
-        modelName = "openai/gpt-4o";
+      if (m.includes("gemini-1.5-flash") || m.includes("gemini-3-flash") || m.includes("gemini-flash")) {
+        modelName = "google/gemini-3-flash-preview";
+      } else if (m.includes("gemini-1.5-pro") || m.includes("gemini-3.1-pro") || m.includes("gemini-pro")) {
+        modelName = "google/gemini-3.1-pro-preview";
+      } else if (m.includes("gpt-4o-mini") || m.includes("gpt-5-mini") || m.includes("gpt-3.5")) {
+        modelName = "openai/gpt-5-mini";
+      } else if (m.includes("gpt-4") || m.includes("gpt-o1") || m.includes("gpt-o3") || m.includes("gpt-5")) {
+        modelName = "openai/gpt-5";
       } else {
         // Fallback to a guaranteed supported model if it's unknown
-        console.warn(`[ai-360-agent] Unknown model "${modelName}" for Lovable Gateway. Falling back to google/gemini-2.5-flash.`);
-        modelName = "google/gemini-1.5-flash";
+        console.warn(`[ai-360-agent] Unknown model "${modelName}" for Lovable Gateway. Falling back to google/gemini-3-flash-preview.`);
+        modelName = "google/gemini-3-flash-preview";
       }
 
       if (!apiKey) {

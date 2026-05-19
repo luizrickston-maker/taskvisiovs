@@ -462,7 +462,7 @@ serve(async (req) => {
     const { agent, customKeyInfo } = await fetchAgentConfig(supabase, userId, agent_id);
 
     const systemPrompt = agent?.system_prompt || DEFAULT_SYSTEM_PROMPT;
-    let modelName = agent?.model_name || "google/gemini-1.5-flash";
+    let modelName = agent?.model_name || "google/gemini-3-flash-preview";
     const temperature = agent?.temperature ?? 0.7;
     const maxTokens = agent?.max_tokens || 4096;
 
@@ -492,8 +492,8 @@ serve(async (req) => {
           if (modelName.startsWith("openai/")) {
             modelName = modelName.replace("openai/", "");
           }
-          if (modelName === "gpt-5-mini") modelName = "gpt-4o-mini";
-          if (modelName === "gpt-5") modelName = "gpt-4o";
+          if (modelName === "gpt-5-mini") modelName = "gpt-5-mini";
+          if (modelName === "gpt-5") modelName = "gpt-5";
           break;
         case "gemini":
         case "google":
