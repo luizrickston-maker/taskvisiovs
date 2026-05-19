@@ -428,13 +428,13 @@ export const AI_MODEL_OPTIONS = [
 
   // Google Models
   { 
-    value: 'google/gemini-pro-1.5', 
+    value: 'google/gemini-1.5-pro', 
     label: 'Gemini 1.5 Pro', 
     description: 'Modelo mais avançado do Google',
     provider: 'google'
   },
   { 
-    value: 'google/gemini-flash-1.5', 
+    value: 'google/gemini-1.5-flash', 
     label: 'Gemini 1.5 Flash', 
     description: 'Velocidade e eficiência excepcionais',
     provider: 'google'

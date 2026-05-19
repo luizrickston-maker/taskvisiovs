@@ -63,16 +63,16 @@ export function AiAgentForm({
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [modelName, setModelName] = useState('google/gemini-flash-1.5');
+  const [modelName, setModelName] = useState('google/gemini-1.5-flash');
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(4096);
   const [contextPriority, setContextPriority] = useState<string[]>([]);
   const [apiKeyId, setApiKeyId] = useState<string | null>(null);
   const [routingEnabled, setRoutingEnabled] = useState(false);
-  const [modelSimple, setModelSimple] = useState('google/gemini-flash-1.5');
-  const [modelStandard, setModelStandard] = useState('google/gemini-flash-1.5');
-  const [modelComplex, setModelComplex] = useState('google/gemini-pro-1.5');
+  const [modelSimple, setModelSimple] = useState('google/gemini-1.5-flash');
+  const [modelStandard, setModelStandard] = useState('google/gemini-1.5-flash');
+  const [modelComplex, setModelComplex] = useState('google/gemini-1.5-pro');
   const [apiKeySimple, setApiKeySimple] = useState<string | null>(null);
   const [apiKeyStandard, setApiKeyStandard] = useState<string | null>(null);
   const [apiKeyComplex, setApiKeyComplex] = useState<string | null>(null);
@@ -88,25 +88,25 @@ export function AiAgentForm({
       setContextPriority(agent.context_priority ?? []);
       setApiKeyId(agent.api_key_id ?? null);
       setRoutingEnabled(agent.routing_enabled ?? false);
-      setModelSimple(agent.model_name_simple || 'google/gemini-flash-1.5');
-      setModelStandard(agent.model_name_standard || 'google/gemini-flash-1.5');
-      setModelComplex(agent.model_name_complex || 'google/gemini-pro-1.5');
+      setModelSimple(agent.model_name_simple || 'google/gemini-1.5-flash');
+      setModelStandard(agent.model_name_standard || 'google/gemini-1.5-flash');
+      setModelComplex(agent.model_name_complex || 'google/gemini-1.5-pro');
       setApiKeySimple(agent.api_key_id_simple ?? null);
       setApiKeyStandard(agent.api_key_id_standard ?? null);
       setApiKeyComplex(agent.api_key_id_complex ?? null);
     } else {
       setName('');
       setDescription('');
-      setModelName('google/gemini-flash-1.5');
+      setModelName('google/gemini-1.5-flash');
       setSystemPrompt(DEFAULT_SYSTEM_PROMPT);
       setTemperature(0.7);
       setMaxTokens(4096);
       setContextPriority([]);
       setApiKeyId(null);
       setRoutingEnabled(false);
-      setModelSimple('google/gemini-flash-1.5');
-      setModelStandard('google/gemini-flash-1.5');
-      setModelComplex('google/gemini-pro-1.5');
+      setModelSimple('google/gemini-1.5-flash');
+      setModelStandard('google/gemini-1.5-flash');
+      setModelComplex('google/gemini-1.5-pro');
       setApiKeySimple(null);
       setApiKeyStandard(null);
       setApiKeyComplex(null);
@@ -158,7 +158,7 @@ export function AiAgentForm({
     if (!selectedApiKeyId || selectedApiKeyId === 'system') {
       // For system key, show a mix of top models
       return AI_MODEL_OPTIONS.filter(m => 
-        ['google/gemini-flash-1.5', 'openai/gpt-4o-mini', 'google/gemini-pro-1.5'].includes(m.value)
+        ['google/gemini-1.5-flash', 'openai/gpt-4o-mini', 'google/gemini-1.5-pro'].includes(m.value)
       );
     }
     
