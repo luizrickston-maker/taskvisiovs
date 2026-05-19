@@ -524,8 +524,8 @@ serve(async (req) => {
           if (/^(gpt-|o1|o3|chatgpt)/i.test(rawModel)) {
             modelName = rawModel;
           } else {
-            console.warn(`[ai-360-agent] Model "${rawModel}" not compatible with OpenAI key. Falling back to gpt-4o-mini.`);
-            modelName = "gpt-4o-mini";
+            console.warn(`[ai-360-agent] Model "${rawModel}" not compatible with OpenAI key. Falling back to gpt-5-mini.`);
+            modelName = "gpt-5-mini";
           }
           break;
         case "gemini":
