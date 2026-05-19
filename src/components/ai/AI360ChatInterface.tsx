@@ -170,49 +170,95 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
     setInput('');
     setStreamingContent('');
 
-    const userMessage: ChatMessage = { role: 'user', content: messageContent };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-
-    // Create abort controller for this request
-    abortControllerRef.current = new AbortController();
-
-    askAgent(
-      {
-        messages: newMessages,
-        agentId: selectedAgentId,
-        signal: abortControllerRef.current.signal,
-        onChunk: (chunk) => {
-          setStreamingContent((prev) => prev + chunk);
-        },
-      },
-      {
-        onSuccess: (fullContent) => {
-          const newAssistantMessage: ChatMessage = { role: 'assistant', content: fullContent };
-          setMessages((prev) => [
-            ...prev,
-            newAssistantMessage,
-          ]);
-          setStreamingContent('');
-
-          // Check for delete requests in the full content
-          const deleteMatch = fullContent.match(/\[REQUEST_DELETE: type=(.+), id=(.+), name="(.+)"\]/);
-          if (deleteMatch) {
-            setPendingAction({
-              type: deleteMatch[1].trim(),
-              id: deleteMatch[2].trim(),
-              name: deleteMatch[3].trim(),
-              messageIndex: messages.length + 1 // New message index
-            });
-          }
-        },
-        onError: (err) => {
-          setError(err.message);
-          setStreamingContent('');
-        },
+    let currentConvId = activeConversationId;
+    
+    try {
+      // 1. Ensure we have a conversation
+      if (!currentConvId) {
+        const newConv = await createConversation.mutateAsync({
+          agentId: selectedAgentId,
+          title: messageContent.slice(0, 40) + (messageContent.length > 40 ? '...' : ''),
+        });
+        currentConvId = newConv.id;
+        setActiveConversationId(newConv.id);
       }
-    );
-  }, [input, messages, selectedAgentId, isPending, askAgent]);
+
+      const userMessage: ChatMessage = { role: 'user', content: messageContent };
+      const newMessages = [...messages, userMessage];
+      setMessages(newMessages);
+
+      // Save user message to DB
+      await addMessage.mutateAsync({
+        conversationId: currentConvId,
+        role: 'user',
+        content: messageContent,
+      });
+
+      // Create abort controller for this request
+      abortControllerRef.current = new AbortController();
+
+      askAgent(
+        {
+          messages: newMessages,
+          agentId: selectedAgentId,
+          signal: abortControllerRef.current.signal,
+          onChunk: (chunk) => {
+            setStreamingContent((prev) => prev + chunk);
+          },
+        },
+        {
+          onSuccess: async (fullContent) => {
+            const newAssistantMessage: ChatMessage = { role: 'assistant', content: fullContent };
+            setMessages((prev) => [
+              ...prev,
+              newAssistantMessage,
+            ]);
+            setStreamingContent('');
+
+            // Save assistant message to DB
+            await addMessage.mutateAsync({
+              conversationId: currentConvId!,
+              role: 'assistant',
+              content: fullContent,
+            });
+
+            // Check for delete requests
+            const deleteMatch = fullContent.match(/\[REQUEST_DELETE: type=(.+), id=(.+), name="(.+)"\]/);
+            if (deleteMatch) {
+              setPendingAction({
+                type: deleteMatch[1].trim(),
+                id: deleteMatch[2].trim(),
+                name: deleteMatch[3].trim(),
+                messageIndex: newMessages.length // Current message index
+              });
+            }
+
+            // Check for investment requests
+            const investmentMatch = fullContent.match(/\[REQUEST_ADD_INVESTMENT:\s*item_name="([^"]+)",\s*amount=([\d.]+),\s*category="([^"]+)",\s*notes="([^"]*)"\]/);
+            if (investmentMatch) {
+              setPendingAction({
+                type: 'investment',
+                id: 'new',
+                name: investmentMatch[1],
+                amount: parseFloat(investmentMatch[2]),
+                category: investmentMatch[3],
+                notes: investmentMatch[4],
+                messageIndex: newMessages.length
+              });
+            }
+          },
+          onError: (err) => {
+            setError(err.message);
+            setStreamingContent('');
+          },
+        }
+      );
+    } catch (err: any) {
+      setError(err.message);
+      toast.error('Erro ao iniciar conversa');
+    }
+  }, [input, messages, selectedAgentId, isPending, askAgent, activeConversationId, createConversation, addMessage]);
+
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
