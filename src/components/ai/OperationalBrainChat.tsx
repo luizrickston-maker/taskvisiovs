@@ -680,8 +680,9 @@ export function OperationalBrainChat() {
                               <ReactMarkdown>
                                 {msg.content
                                   .replace(/\[REQUEST_DELETE:\s*type=.+?,\s*id=.+?,\s*name=".+?"\]/g, '')
-                                  .replace(/\[DELETE_SUGGESTION:\s*type=(.+?),\s*id=(.+?),\s*name="(.+?)"\]/g, '$3')
-                                  .trim()}
+                                    .replace(/\[DELETE_SUGGESTION:\s*type=(.+?),\s*id=(.+?),\s*name="(.+?)"\]/g, '$3')
+                                    .replace(/\| (.*?) \| R\$ (.*?) \| (.*?) \| (.*?) \|/g, '| $1 | R$ $2 | $3 |')
+                                    .trim()}
                               </ReactMarkdown>
                               
                               {!isLoading && msg.content.includes('[DELETE_SUGGESTION:') && (
