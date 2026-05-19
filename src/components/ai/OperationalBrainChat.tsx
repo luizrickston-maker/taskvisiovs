@@ -48,6 +48,12 @@ export function OperationalBrainChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    type: string;
+    id: string;
+    name: string;
+    messageIndex: number;
+  } | null>(null);
   
   const { data: agents, isLoading: isAgentsLoading } = useAiAgents();
   const { data: conversations, isLoading: isHistoryLoading } = useAIConversations();
@@ -56,7 +62,8 @@ export function OperationalBrainChat() {
   const addMessage = useAddMessage();
   const deleteConversation = useDeleteConversation();
   
-  const { addCorporateInvestment } = useAppStore();
+  const { addCorporateInvestment, deleteTask, deleteProject, deleteProspect } = useAppStore();
+
   const activeAgents = agents?.filter(a => a.is_active) ?? [];
 
   useEffect(() => {
