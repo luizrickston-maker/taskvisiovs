@@ -598,20 +598,15 @@ serve(async (req) => {
     console.log(`[ai-360-agent] Calling AI API with model: ${modelName}`);
     
     // Prepare request body
-    let requestBody: any = {
-      model: modelName,
-      temperature,
-      stream: true,
-    };
-
-    // Fix for O-series models and newer OpenAI requirements
     const isOpenAI = !activeCustomKeyInfo || activeCustomKeyInfo.provider.toLowerCase() === "openai";
     const isOSeries = isOpenAI && (modelName.startsWith("o1") || modelName.startsWith("o3") || modelName.includes("/o1") || modelName.includes("/o3"));
-    
-    if (isOSeries) {
-      // O-series models don't support max_tokens or temperature
-      delete requestBody.temperature;
-    }
+    const isGpt5Mini = modelName.includes("gpt-5-mini");
+
+    let requestBody: any = {
+      model: modelName,
+      temperature: (isOSeries || isGpt5Mini) ? undefined : temperature,
+      stream: true,
+    };
 
     const isAnthropic = activeCustomKeyInfo?.provider.toLowerCase() === "anthropic";
 
@@ -631,8 +626,9 @@ serve(async (req) => {
         })),
       ];
       
-      // Use max_completion_tokens for newer models if needed, or stick to max_tokens
-      if (isOSeries) {
+      // Use max_completion_tokens for newer models if needed
+      // Most 2026/latest models prefer max_completion_tokens or have strict max_tokens requirements
+      if (isOSeries || isGpt5Mini) {
         requestBody.max_completion_tokens = maxTokens;
       } else {
         requestBody.max_tokens = maxTokens;
