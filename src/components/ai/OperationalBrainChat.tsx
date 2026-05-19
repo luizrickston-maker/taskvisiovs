@@ -688,10 +688,10 @@ export function OperationalBrainChat() {
                           {msg.role === 'assistant' ? (
                             <div className="prose prose-sm dark:prose-invert max-w-none">
                               <ReactMarkdown>
-                                {msg.content
-                                  .replace(/\[REQUEST_DELETE:\s*type=.+?,\s*id=.+?,\s*name=".+?"\]/g, '')
+                                  {msg.content
+                                    .replace(/\[REQUEST_DELETE:\s*type=.+?,\s*id=.+?,\s*name=".+?"\]/g, '')
                                     .replace(/\[DELETE_SUGGESTION:\s*type=(.+?),\s*id=(.+?),\s*name="(.+?)"\]/g, '$3')
-                                    .replace(/\| (.*?) \| R\$ (.*?) \| (.*?) \| ([0-9a-fA-F-]{36}) \|/g, '| $1 | R$ $2 | $3 |')
+                                    .replace(/\| (.*?) \| R\$ (.*?) \| (.*?) \| (.*?) \|/g, '| $1 | R$ $2 | $3 |')
                                     .trim()}
                               </ReactMarkdown>
                               
