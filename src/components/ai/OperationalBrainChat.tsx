@@ -291,9 +291,20 @@ export function OperationalBrainChat() {
     const { type, id, name } = pendingAction;
     let success = false;
 
+    // UUID validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      console.error('ID inválido detectado:', id);
+      toast.error(`Erro: A IA forneceu um identificador inválido (${id}). Por favor, tente listar os itens novamente.`);
+      setPendingAction(null);
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
+
+      console.log(`Executando exclusão de ${type} com ID: ${id}`);
 
       switch (type.toLowerCase()) {
         case 'investment':
@@ -351,12 +362,11 @@ export function OperationalBrainChat() {
           break;
       }
 
-
       if (success) {
         toast.success(`"${name}" removido com sucesso.`);
         setPendingAction(null);
         
-        const confirmContent = `✅ Confirmado! O item "${name}" foi removido com sucesso.`;
+        const confirmContent = `✅ Confirmado! O item "${name}" foi removido com sucesso das suas operações.`;
         
         setMessages(prev => [
           ...prev,
