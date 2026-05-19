@@ -107,6 +107,10 @@ const App = () => {
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/" element={<Navigate to="/comercial" replace />} />
+              {/* Alias for cerebro-operacional to avoid 404s */}
+              <Route path="/pj/cerebro-ia" element={<Navigate to="/pj/cerebro-operacional" replace />} />
+              <Route path="/pj/clientes" element={<Navigate to="/comercial/clientes" replace />} />
+              <Route path="/pj/clientes/:id" element={<Navigate to="/comercial/clientes/:id" replace />} />
               {/* Short link redirect - public */}
               <Route path="/p/:code" element={
                 <Suspense fallback={<PageLoader />}>
