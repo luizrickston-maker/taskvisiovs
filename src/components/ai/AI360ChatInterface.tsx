@@ -675,6 +675,24 @@ function MessageBubble({
               >
                 {cleanContent}
               </ReactMarkdown>
+
+              {!isUser && !isStreaming && message.content.includes('[DELETE_SUGGESTION:') && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {Array.from(message.content.matchAll(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g)).map((match, idx) => (
+                    <Button
+                      key={idx}
+                      variant="outline"
+                      size="sm"
+                      className="h-8 border-destructive/30 hover:bg-destructive/10 hover:text-destructive gap-1.5"
+                      onClick={() => onSuggestDelete?.(match[1].trim(), match[2].trim(), match[3].trim())}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Apagar "{match[3].trim()}"
+                    </Button>
+                  ))}
+                </div>
+              )}
+
               
               {isActionPending && actionDetails && (
                 <div className="mt-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
