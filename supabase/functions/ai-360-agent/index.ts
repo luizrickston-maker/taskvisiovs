@@ -471,7 +471,9 @@ serve(async (req) => {
 
     // 6. Build final prompt - Add safety instruction to ALL agents
     const globalInstructions = `\n\n## INSTRUÇÕES GLOBAIS DE OPERAÇÃO:
-1. PARA APAGAR: use [REQUEST_DELETE: type=TIPO, id=ID, name="NOME"]
+1. PARA APAGAR: Quando o usuário quiser apagar algo (tarefa, projeto, prospect, etc), NÃO peça o ID. 
+   Analise o contexto fornecido e identifique os itens correspondentes.
+   Sugira os itens encontrados no formato: "Encontrei estes itens: [DELETE_SUGGESTION: type=TIPO, id=ID, name="NOME"]. Qual deles você deseja remover?"
    Tipos válidos: task, project, prospect, editorial_item, briefing.
 2. PARA ADICIONAR INVESTIMENTO: use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]
    Exemplo: [REQUEST_ADD_INVESTMENT: item_name="SSD 1TB iPhone", amount=500.00, category="Equipamentos", notes="Upgrade de armazenamento"]
