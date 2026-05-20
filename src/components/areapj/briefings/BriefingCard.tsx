@@ -37,7 +37,14 @@ export function BriefingCard({ briefing, onView, onSend, onDelete, onDuplicate }
     <Card className="glass-card group hover:shadow-xl transition-all duration-300 border-primary/10 overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <BriefingStatusBadge status={briefing.status} />
+          <div className="flex gap-2 items-center">
+            <BriefingStatusBadge status={briefing.status} />
+            {briefing.briefing_type === 'editing' && (
+              <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 gap-1 text-[10px]">
+                <Video className="w-3 h-3" /> Edição
+              </Badge>
+            )}
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
