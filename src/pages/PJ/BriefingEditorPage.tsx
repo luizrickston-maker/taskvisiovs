@@ -345,7 +345,23 @@ export default function BriefingEditorPage() {
         </CardContent>
       </Card>
 
-      <Accordion type="multiple" defaultValue={["b1", "b2", "b3"]} className="space-y-4">
+      <Accordion type="multiple" defaultValue={["b_edit", "b1", "b2", "b3"]} className="space-y-4">
+        {briefingType === 'editing' && (
+          <BriefingBlockWrapper 
+            value="b_edit" 
+            number={0} 
+            title="Instruções Técnicas de Edição"
+            description="Defina o estilo, ritmo e elementos visuais da edição"
+          >
+            <div className="bg-primary/5 -mx-6 -mt-6 p-6 mb-6 border-b border-primary/10">
+              <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                <Sparkles className="w-4 h-4" />
+                <span>Perfil de Edição Ativo</span>
+              </div>
+            </div>
+            <BriefingEditingBlock data={editingDetails} onChange={setEditingDetails} />
+          </BriefingBlockWrapper>
+        )}
         <BriefingBlockWrapper value="b1" number={1} title="Detalhes do Cliente e Projeto">
           <BriefingBlock1 data={block1} onChange={setBlock1} />
         </BriefingBlockWrapper>
