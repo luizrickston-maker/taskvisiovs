@@ -3140,6 +3140,149 @@ export type Database = {
           },
         ]
       }
+      video_editing_briefings: {
+        Row: {
+          assigned_to_user_id: string | null
+          b_roll_included: boolean | null
+          b_roll_usage: string | null
+          client_id: string
+          color_style_override: string | null
+          created_at: string | null
+          created_by_user_id: string
+          cta_final: string | null
+          custom_caption: string | null
+          delivery_deadline: string
+          delivery_drive_folder: string | null
+          external_filler_email: string | null
+          files_sent: string | null
+          final_file_naming: string | null
+          format_override: string | null
+          id: string
+          ignore_takes: string | null
+          magic_link_expires_at: string | null
+          magic_link_token: string | null
+          music_override: string | null
+          music_reference_video: string | null
+          notify_on_completion: boolean | null
+          objective: string | null
+          observations: string | null
+          opening_hook: string | null
+          preferred_take: string | null
+          project_task_id: string | null
+          specific_music: string | null
+          status: string | null
+          target_duration: string | null
+          title: string
+          typography_override: string | null
+          updated_at: string | null
+          use_client_profile: boolean | null
+          workspace_id: string
+        }
+        Insert: {
+          assigned_to_user_id?: string | null
+          b_roll_included?: boolean | null
+          b_roll_usage?: string | null
+          client_id: string
+          color_style_override?: string | null
+          created_at?: string | null
+          created_by_user_id: string
+          cta_final?: string | null
+          custom_caption?: string | null
+          delivery_deadline: string
+          delivery_drive_folder?: string | null
+          external_filler_email?: string | null
+          files_sent?: string | null
+          final_file_naming?: string | null
+          format_override?: string | null
+          id?: string
+          ignore_takes?: string | null
+          magic_link_expires_at?: string | null
+          magic_link_token?: string | null
+          music_override?: string | null
+          music_reference_video?: string | null
+          notify_on_completion?: boolean | null
+          objective?: string | null
+          observations?: string | null
+          opening_hook?: string | null
+          preferred_take?: string | null
+          project_task_id?: string | null
+          specific_music?: string | null
+          status?: string | null
+          target_duration?: string | null
+          title: string
+          typography_override?: string | null
+          updated_at?: string | null
+          use_client_profile?: boolean | null
+          workspace_id: string
+        }
+        Update: {
+          assigned_to_user_id?: string | null
+          b_roll_included?: boolean | null
+          b_roll_usage?: string | null
+          client_id?: string
+          color_style_override?: string | null
+          created_at?: string | null
+          created_by_user_id?: string
+          cta_final?: string | null
+          custom_caption?: string | null
+          delivery_deadline?: string
+          delivery_drive_folder?: string | null
+          external_filler_email?: string | null
+          files_sent?: string | null
+          final_file_naming?: string | null
+          format_override?: string | null
+          id?: string
+          ignore_takes?: string | null
+          magic_link_expires_at?: string | null
+          magic_link_token?: string | null
+          music_override?: string | null
+          music_reference_video?: string | null
+          notify_on_completion?: boolean | null
+          objective?: string | null
+          observations?: string | null
+          opening_hook?: string | null
+          preferred_take?: string | null
+          project_task_id?: string | null
+          specific_music?: string | null
+          status?: string | null
+          target_duration?: string | null
+          title?: string
+          typography_override?: string | null
+          updated_at?: string | null
+          use_client_profile?: boolean | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_editing_briefings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_editing_briefings_project_task_id_fkey"
+            columns: ["project_task_id"]
+            isOneToOne: false
+            referencedRelation: "corporate_pending_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_editing_briefings_project_task_id_fkey"
+            columns: ["project_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_editing_briefings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           created_at: string
