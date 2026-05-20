@@ -308,7 +308,9 @@ export default function BriefingEditorPage() {
                 <SelectValue placeholder="Selecione o cliente" />
               </SelectTrigger>
               <SelectContent>
-                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                {clients
+                  .filter(c => briefingType !== 'editing' || c.video_management_enabled)
+                  .map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
