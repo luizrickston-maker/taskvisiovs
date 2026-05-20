@@ -701,6 +701,69 @@ export type Database = {
           },
         ]
       }
+      client_video_settings: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          default_color_style: string | null
+          default_cta: string | null
+          default_drive_folder_link: string | null
+          default_file_naming: string | null
+          default_format: string | null
+          default_music_style: string | null
+          default_typography: string | null
+          id: string
+          updated_at: string | null
+          video_management_enabled: boolean | null
+          workspace_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          default_color_style?: string | null
+          default_cta?: string | null
+          default_drive_folder_link?: string | null
+          default_file_naming?: string | null
+          default_format?: string | null
+          default_music_style?: string | null
+          default_typography?: string | null
+          id?: string
+          updated_at?: string | null
+          video_management_enabled?: boolean | null
+          workspace_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          default_color_style?: string | null
+          default_cta?: string | null
+          default_drive_folder_link?: string | null
+          default_file_naming?: string | null
+          default_format?: string | null
+          default_music_style?: string | null
+          default_typography?: string | null
+          id?: string
+          updated_at?: string | null
+          video_management_enabled?: boolean | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_video_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_video_settings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           company_name: string | null
