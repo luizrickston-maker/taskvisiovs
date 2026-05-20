@@ -10,6 +10,7 @@ interface BriefingBlockWrapperProps {
   value: string;
   number: number;
   title: string;
+  description?: string;
   children: ReactNode;
   className?: string;
 }
@@ -18,6 +19,7 @@ export const BriefingBlockWrapper = ({
   value, 
   number, 
   title, 
+  description,
   children, 
   className 
 }: BriefingBlockWrapperProps) => {
