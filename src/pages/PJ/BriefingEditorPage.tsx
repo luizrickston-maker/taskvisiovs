@@ -30,7 +30,7 @@ import {
   Users
 } from "lucide-react";
 import { toast } from "sonner";
-import { BriefingStatus, BriefingWithDetails } from "@/types/briefing";
+import { BriefingStatus, BriefingWithDetails, BriefingType, EditingDetails } from "@/types/briefing";
 import { BriefingHeader } from "@/components/briefings/BriefingHeader";
 import { BriefingBlockWrapper } from "@/components/briefings/BriefingBlockWrapper";
 import { BriefingBlock1 } from "@/components/briefings/BriefingBlock1";
@@ -39,6 +39,9 @@ import { BriefingBlock3 } from "@/components/briefings/BriefingBlock3";
 import { BriefingBlock4 } from "@/components/briefings/BriefingBlock4";
 import { BriefingBlock5 } from "@/components/briefings/BriefingBlock5";
 import { BriefingBlock6 } from "@/components/briefings/BriefingBlock6";
+import { BriefingEditingBlock } from "@/components/briefings/BriefingEditingBlock";
+import { FileText, Video as VideoIcon, Sparkles } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function BriefingEditorPage() {
   const { id } = useParams();
