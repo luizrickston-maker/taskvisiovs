@@ -87,7 +87,7 @@ export default function BriefingEditorPage() {
         // Fetch clients
         const { data: clientsData } = await supabase
           .from('clients')
-          .select('id, name')
+          .select('id, name, default_editing_profile, video_management_enabled')
           .eq('workspace_id', memberData.workspace_id);
         if (clientsData) setClients(clientsData);
 
