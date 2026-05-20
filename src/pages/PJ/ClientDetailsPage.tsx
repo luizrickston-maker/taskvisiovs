@@ -32,6 +32,8 @@ interface Client {
   phone: string | null;
   notes: string | null;
   is_active: boolean;
+  video_management_enabled: boolean | null;
+  default_editing_profile: any;
   created_at: string;
   updated_at: string;
 }
