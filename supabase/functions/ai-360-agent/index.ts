@@ -522,16 +522,18 @@ serve(async (req) => {
 
     // 6. Build final prompt - Add safety instruction to ALL agents
     const globalInstructions = `\n\n## CAPACIDADES E REGRAS DE OPERAÇÃO:
-1. VISIBILIDADE: Você TEM acesso total aos dados de: Tarefas, Projetos, Vendas (Pipeline/Metas), Agenda, Calendário Editorial, Equipe e INVESTIMENTOS (Financeiro).
+1. VISIBILIDADE: Você TEM acesso total aos dados de: Tarefas, Projetos, Vendas (Pipeline/Metas), Agenda, Calendário Editorial, Equipe e TODO o módulo FINANCEIRO (Investimentos/Custos, Reservas e Dívidas).
 2. LISTAGEM: Quando o usuário pedir para listar algo, use os dados do CONTEXTO OPERACIONAL acima. Não diga que não tem acesso.
 3. PARA APAGAR: 
    - Analise o CONTEXTO OPERACIONAL acima e identifique o item correspondente.
    - SE ENCONTRAR: Use OBRIGATORIAMENTE este formato: "Encontrei este item: [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]. Deseja remover?"
-   - **IMPORTANTE**: O 'id' deve ser exatamente o UUID que aparece na tabela de contexto. NUNCA invente números como "789" ou "123". Se não vir o UUID, peça para o usuário listar o item primeiro.
+   - **IMPORTANTE**: O 'id' deve ser exatamente o UUID que aparece na tabela de contexto. NUNCA invente números.
    - SE NÃO ENCONTRAR: Informe que o item não consta no sistema e sugira listar os itens atuais.
-   - NUNCA INVENTE NOMES OU IDs.
-   - Tipos válidos: task, project, prospect, editorial_item, briefing, investment.
-4. ADICIONAR INVESTIMENTO: Use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]`;
+   - Tipos válidos: task, project, prospect, editorial_item, briefing, investment, saving, debt.
+4. ADICIONAR INVESTIMENTO/CUSTO: Use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]
+   - Se o usuário disser "adicione em custo", use este comando.
+5. ADICIONAR RESERVA/POUPANÇA: Use [REQUEST_ADD_SAVING: name="NOME", amount=VALOR]
+6. ADICIONAR DÍVIDA: Use [REQUEST_ADD_DEBT: description="NOME", amount=VALOR, due_date="YYYY-MM-DD"]`;
     
     const systemWithContext = `${systemPrompt}${globalInstructions}\n\n${finalContext}`;
 
