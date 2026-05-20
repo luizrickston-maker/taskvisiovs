@@ -125,6 +125,17 @@ export default function BriefingEditorPage() {
     }
   }, [briefing.data]);
 
+  // Auto-load client default editing profile
+  useEffect(() => {
+    if (isNew && briefingType === 'editing' && clientId) {
+      const selectedClient = clients.find(c => c.id === clientId);
+      if (selectedClient?.default_editing_profile) {
+        setEditingDetails(selectedClient.default_editing_profile as EditingDetails);
+        toast.info(`Perfil de edição do cliente ${selectedClient.name} carregado.`);
+      }
+    }
+  }, [clientId, briefingType, isNew, clients]);
+
   const handleSave = async (status: BriefingStatus = 'draft') => {
     if (!title) {
       toast.error("Por favor, informe o título do briefing.");
