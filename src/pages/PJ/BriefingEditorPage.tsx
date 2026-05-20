@@ -274,10 +274,29 @@ export default function BriefingEditorPage() {
           </div>
         </CardHeader>
         <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
+          <div className="space-y-2 lg:col-span-1">
+            <Label>Tipo de Briefing</Label>
+            <Tabs 
+              value={briefingType} 
+              onValueChange={(v) => setBriefingType(v as BriefingType)}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="creative" className="gap-2">
+                  <FileText className="w-4 h-4" />
+                  Criativo
+                </TabsTrigger>
+                <TabsTrigger value="editing" className="gap-2 text-primary">
+                  <VideoIcon className="w-4 h-4" />
+                  Edição
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
           <div className="space-y-2">
             <Label>Título do Briefing</Label>
             <Input 
-              placeholder="Ex: Conteúdo de Maio - Cliente X" 
+              placeholder={briefingType === 'editing' ? "Ex: Edição Video X - Cliente Y" : "Ex: Conteúdo de Maio - Cliente X"} 
               value={title} 
               onChange={(e) => setTitle(e.target.value)} 
             />
