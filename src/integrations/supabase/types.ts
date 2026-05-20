@@ -298,6 +298,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "briefing_notifications_briefing_id_fkey"
+            columns: ["briefing_id"]
+            isOneToOne: false
+            referencedRelation: "editorial_calendar_summary"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "briefing_notifications_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
@@ -337,6 +344,13 @@ export type Database = {
             columns: ["briefing_id"]
             isOneToOne: false
             referencedRelation: "briefings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "briefing_responses_briefing_id_fkey"
+            columns: ["briefing_id"]
+            isOneToOne: false
+            referencedRelation: "editorial_calendar_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -417,6 +431,13 @@ export type Database = {
             columns: ["briefing_id"]
             isOneToOne: false
             referencedRelation: "briefings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "briefing_video_items_briefing_id_fkey"
+            columns: ["briefing_id"]
+            isOneToOne: false
+            referencedRelation: "editorial_calendar_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -3207,6 +3228,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      editorial_calendar_summary: {
+        Row: {
+          deadline_status: string | null
+          id: string | null
+          is_overdue: boolean | null
+          platform: string | null
+          publish_date: string | null
+          status: string | null
+          title: string | null
+          user_id: string | null
+        }
+        Insert: {
+          deadline_status?: never
+          id?: string | null
+          is_overdue?: never
+          platform?: never
+          publish_date?: string | null
+          status?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          deadline_status?: never
+          id?: string | null
+          is_overdue?: never
+          platform?: never
+          publish_date?: string | null
+          status?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       pending_editorial_content: {
         Row: {
