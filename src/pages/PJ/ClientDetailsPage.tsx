@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { ClientInfoCard } from '@/components/clientes/ClientInfoCard';
 import { ClientPortalAccessCard } from '@/components/clientes/ClientPortalAccessCard';
+import { ClientVideoSettingsCard } from '@/components/clientes/ClientVideoSettingsCard';
 import { ClientContentCalendarPreview } from '@/components/clientes/ClientContentCalendarPreview';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
