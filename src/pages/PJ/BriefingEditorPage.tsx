@@ -106,6 +106,8 @@ export default function BriefingEditorPage() {
     if (briefing.data) {
       const data = briefing.data as BriefingWithDetails;
       setTitle(data.title);
+      setBriefingType(data.briefing_type || "creative");
+      setEditingDetails((data.editing_details as EditingDetails) || {});
       setClientId(data.client_id || "");
       setAssignedUserId(data.assigned_to_user_id || "");
       setExternalEmail(data.external_filler_email || "");
