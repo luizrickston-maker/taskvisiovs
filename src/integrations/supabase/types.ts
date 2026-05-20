@@ -445,9 +445,11 @@ export type Database = {
       briefings: {
         Row: {
           assigned_to_user_id: string | null
+          briefing_type: string | null
           client_id: string | null
           created_at: string | null
           created_by_user_id: string
+          editing_details: Json | null
           external_filler_email: string | null
           id: string
           magic_link_expires_at: string | null
@@ -460,9 +462,11 @@ export type Database = {
         }
         Insert: {
           assigned_to_user_id?: string | null
+          briefing_type?: string | null
           client_id?: string | null
           created_at?: string | null
           created_by_user_id: string
+          editing_details?: Json | null
           external_filler_email?: string | null
           id?: string
           magic_link_expires_at?: string | null
@@ -475,9 +479,11 @@ export type Database = {
         }
         Update: {
           assigned_to_user_id?: string | null
+          briefing_type?: string | null
           client_id?: string | null
           created_at?: string | null
           created_by_user_id?: string
+          editing_details?: Json | null
           external_filler_email?: string | null
           id?: string
           magic_link_expires_at?: string | null
@@ -699,6 +705,7 @@ export type Database = {
         Row: {
           company_name: string | null
           created_at: string
+          default_editing_profile: Json | null
           email: string | null
           id: string
           is_active: boolean
@@ -706,11 +713,13 @@ export type Database = {
           notes: string | null
           phone: string | null
           updated_at: string
+          video_management_enabled: boolean | null
           workspace_id: string
         }
         Insert: {
           company_name?: string | null
           created_at?: string
+          default_editing_profile?: Json | null
           email?: string | null
           id?: string
           is_active?: boolean
@@ -718,11 +727,13 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           updated_at?: string
+          video_management_enabled?: boolean | null
           workspace_id: string
         }
         Update: {
           company_name?: string | null
           created_at?: string
+          default_editing_profile?: Json | null
           email?: string | null
           id?: string
           is_active?: boolean
@@ -730,6 +741,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           updated_at?: string
+          video_management_enabled?: boolean | null
           workspace_id?: string
         }
         Relationships: [

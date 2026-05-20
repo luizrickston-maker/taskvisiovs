@@ -30,7 +30,7 @@ import {
   Users
 } from "lucide-react";
 import { toast } from "sonner";
-import { BriefingStatus, BriefingWithDetails } from "@/types/briefing";
+import { BriefingStatus, BriefingWithDetails, BriefingType, EditingDetails } from "@/types/briefing";
 import { BriefingHeader } from "@/components/briefings/BriefingHeader";
 import { BriefingBlockWrapper } from "@/components/briefings/BriefingBlockWrapper";
 import { BriefingBlock1 } from "@/components/briefings/BriefingBlock1";
@@ -39,6 +39,9 @@ import { BriefingBlock3 } from "@/components/briefings/BriefingBlock3";
 import { BriefingBlock4 } from "@/components/briefings/BriefingBlock4";
 import { BriefingBlock5 } from "@/components/briefings/BriefingBlock5";
 import { BriefingBlock6 } from "@/components/briefings/BriefingBlock6";
+import { BriefingEditingBlock } from "@/components/briefings/BriefingEditingBlock";
+import { FileText, Video as VideoIcon, Sparkles } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function BriefingEditorPage() {
   const { id } = useParams();
@@ -51,6 +54,7 @@ export default function BriefingEditorPage() {
   const generateMagicLink = useGenerateMagicLink();
   
   const [title, setTitle] = useState("");
+  const [briefingType, setBriefingType] = useState<BriefingType>("creative");
   const [clientId, setClientId] = useState<string>("");
   const [clients, setClients] = useState<any[]>([]);
   const [assignedUserId, setAssignedUserId] = useState<string>("");
@@ -64,6 +68,7 @@ export default function BriefingEditorPage() {
   const [block4, setBlock4] = useState<any>({});
   const [block5, setBlock5] = useState<any>({});
   const [block6, setBlock6] = useState<any>({});
+  const [editingDetails, setEditingDetails] = useState<EditingDetails>({});
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -82,7 +87,7 @@ export default function BriefingEditorPage() {
         // Fetch clients
         const { data: clientsData } = await supabase
           .from('clients')
-          .select('id, name')
+          .select('id, name, default_editing_profile, video_management_enabled')
           .eq('workspace_id', memberData.workspace_id);
         if (clientsData) setClients(clientsData);
 
@@ -101,6 +106,8 @@ export default function BriefingEditorPage() {
     if (briefing.data) {
       const data = briefing.data as BriefingWithDetails;
       setTitle(data.title);
+      setBriefingType(data.briefing_type || "creative");
+      setEditingDetails((data.editing_details as EditingDetails) || {});
       setClientId(data.client_id || "");
       setAssignedUserId(data.assigned_to_user_id || "");
       setExternalEmail(data.external_filler_email || "");
@@ -117,6 +124,17 @@ export default function BriefingEditorPage() {
       setVideoItems(data.video_items.sort((a, b) => a.item_index - b.item_index));
     }
   }, [briefing.data]);
+
+  // Auto-load client default editing profile
+  useEffect(() => {
+    if (isNew && briefingType === 'editing' && clientId) {
+      const selectedClient = clients.find(c => c.id === clientId);
+      if (selectedClient?.default_editing_profile) {
+        setEditingDetails(selectedClient.default_editing_profile as EditingDetails);
+        toast.info(`Perfil de edição do cliente ${selectedClient.name} carregado.`);
+      }
+    }
+  }, [clientId, briefingType, isNew, clients]);
 
   const handleSave = async (status: BriefingStatus = 'draft') => {
     if (!title) {
@@ -142,6 +160,8 @@ export default function BriefingEditorPage() {
           .from('briefings')
           .insert([{
             title,
+            briefing_type: briefingType,
+            editing_details: briefingType === 'editing' ? editingDetails : null,
             client_id: clientId && clientId !== "none" ? clientId : null,
             assigned_to_user_id: assignedUserId && assignedUserId !== "none" ? assignedUserId : null,
             external_filler_email: externalEmail || null,
@@ -160,6 +180,8 @@ export default function BriefingEditorPage() {
       } else {
         await updateBriefing.mutateAsync({
           title,
+          briefing_type: briefingType,
+          editing_details: briefingType === 'editing' ? editingDetails : null,
           client_id: clientId && clientId !== "none" ? clientId : null,
           assigned_to_user_id: assignedUserId && assignedUserId !== "none" ? assignedUserId : null,
           external_filler_email: externalEmail || null,
@@ -252,10 +274,29 @@ export default function BriefingEditorPage() {
           </div>
         </CardHeader>
         <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
+          <div className="space-y-2 lg:col-span-1">
+            <Label>Tipo de Briefing</Label>
+            <Tabs 
+              value={briefingType} 
+              onValueChange={(v) => setBriefingType(v as BriefingType)}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="creative" className="gap-2">
+                  <FileText className="w-4 h-4" />
+                  Criativo
+                </TabsTrigger>
+                <TabsTrigger value="editing" className="gap-2 text-primary">
+                  <VideoIcon className="w-4 h-4" />
+                  Edição
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
           <div className="space-y-2">
             <Label>Título do Briefing</Label>
             <Input 
-              placeholder="Ex: Conteúdo de Maio - Cliente X" 
+              placeholder={briefingType === 'editing' ? "Ex: Edição Video X - Cliente Y" : "Ex: Conteúdo de Maio - Cliente X"} 
               value={title} 
               onChange={(e) => setTitle(e.target.value)} 
             />
@@ -267,7 +308,9 @@ export default function BriefingEditorPage() {
                 <SelectValue placeholder="Selecione o cliente" />
               </SelectTrigger>
               <SelectContent>
-                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                {clients
+                  .filter(c => briefingType !== 'editing' || c.video_management_enabled)
+                  .map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -302,7 +345,23 @@ export default function BriefingEditorPage() {
         </CardContent>
       </Card>
 
-      <Accordion type="multiple" defaultValue={["b1", "b2", "b3"]} className="space-y-4">
+      <Accordion type="multiple" defaultValue={["b_edit", "b1", "b2", "b3"]} className="space-y-4">
+        {briefingType === 'editing' && (
+          <BriefingBlockWrapper 
+            value="b_edit" 
+            number={0} 
+            title="Instruções Técnicas de Edição"
+            description="Defina o estilo, ritmo e elementos visuais da edição"
+          >
+            <div className="bg-primary/5 -mx-6 -mt-6 p-6 mb-6 border-b border-primary/10">
+              <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                <Sparkles className="w-4 h-4" />
+                <span>Perfil de Edição Ativo</span>
+              </div>
+            </div>
+            <BriefingEditingBlock data={editingDetails} onChange={setEditingDetails} />
+          </BriefingBlockWrapper>
+        )}
         <BriefingBlockWrapper value="b1" number={1} title="Detalhes do Cliente e Projeto">
           <BriefingBlock1 data={block1} onChange={setBlock1} />
         </BriefingBlockWrapper>

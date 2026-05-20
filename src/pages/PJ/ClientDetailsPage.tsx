@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { ClientInfoCard } from '@/components/clientes/ClientInfoCard';
 import { ClientPortalAccessCard } from '@/components/clientes/ClientPortalAccessCard';
+import { ClientVideoSettingsCard } from '@/components/clientes/ClientVideoSettingsCard';
 import { ClientContentCalendarPreview } from '@/components/clientes/ClientContentCalendarPreview';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -31,6 +32,8 @@ interface Client {
   phone: string | null;
   notes: string | null;
   is_active: boolean;
+  video_management_enabled: boolean | null;
+  default_editing_profile: any;
   created_at: string;
   updated_at: string;
 }
@@ -289,7 +292,8 @@ export default function ClientDetailsPage() {
         </div>
 
         {/* Right: portal access */}
-        <div>
+        <div className="space-y-6">
+          <ClientVideoSettingsCard client={client} />
           <ClientPortalAccessCard
             clientId={client.id}
             clientName={client.name}

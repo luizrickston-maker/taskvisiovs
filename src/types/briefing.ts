@@ -1,6 +1,19 @@
 import { Json } from "@/integrations/supabase/types";
 
 export type BriefingStatus = 'draft' | 'pending_fill' | 'in_review' | 'approved' | 'archived';
+export type BriefingType = 'creative' | 'editing';
+
+export interface EditingDetails {
+  [key: string]: Json | undefined;
+  video_style?: string;
+  music_preference?: string;
+  pacing?: 'slow' | 'medium' | 'fast';
+  color_grading?: string;
+  transitions?: string[];
+  captions?: boolean;
+  graphics_elements?: string[];
+  special_instructions?: string;
+}
 
 export interface Briefing {
   id: string;
@@ -10,6 +23,8 @@ export interface Briefing {
   external_filler_email: string | null;
   title: string;
   status: BriefingStatus;
+  briefing_type: BriefingType;
+  editing_details: EditingDetails | null;
   template_id: string | null;
   review_notes: string | null;
   created_at: string;
@@ -18,6 +33,8 @@ export interface Briefing {
   client?: {
     name: string;
     company_name: string | null;
+    default_editing_profile: EditingDetails | null;
+    video_management_enabled: boolean;
   };
   assigned_to?: {
     full_name: string | null;
