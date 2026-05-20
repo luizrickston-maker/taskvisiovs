@@ -33,7 +33,10 @@ export const BriefingBlockWrapper = ({
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
             {number}
           </div>
-          <span className="font-semibold text-lg text-left">{title}</span>
+          <div className="flex flex-col items-start">
+            <span className="font-semibold text-lg text-left">{title}</span>
+            {description && <span className="text-xs text-muted-foreground font-normal">{description}</span>}
+          </div>
         </div>
       </AccordionTrigger>
       <AccordionContent className="pb-6 pt-2">
