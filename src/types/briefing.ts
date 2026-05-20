@@ -4,6 +4,7 @@ export type BriefingStatus = 'draft' | 'pending_fill' | 'in_review' | 'approved'
 export type BriefingType = 'creative' | 'editing';
 
 export interface EditingDetails {
+  [key: string]: Json | undefined;
   video_style?: string;
   music_preference?: string;
   pacing?: 'slow' | 'medium' | 'fast';
