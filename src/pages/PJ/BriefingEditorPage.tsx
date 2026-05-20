@@ -54,6 +54,7 @@ export default function BriefingEditorPage() {
   const generateMagicLink = useGenerateMagicLink();
   
   const [title, setTitle] = useState("");
+  const [briefingType, setBriefingType] = useState<BriefingType>("creative");
   const [clientId, setClientId] = useState<string>("");
   const [clients, setClients] = useState<any[]>([]);
   const [assignedUserId, setAssignedUserId] = useState<string>("");
@@ -67,6 +68,7 @@ export default function BriefingEditorPage() {
   const [block4, setBlock4] = useState<any>({});
   const [block5, setBlock5] = useState<any>({});
   const [block6, setBlock6] = useState<any>({});
+  const [editingDetails, setEditingDetails] = useState<EditingDetails>({});
 
   const [isSaving, setIsSaving] = useState(false);
 
