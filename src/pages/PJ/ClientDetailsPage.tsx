@@ -292,7 +292,8 @@ export default function ClientDetailsPage() {
         </div>
 
         {/* Right: portal access */}
-        <div>
+        <div className="space-y-6">
+          <ClientVideoSettingsCard client={client} />
           <ClientPortalAccessCard
             clientId={client.id}
             clientName={client.name}
