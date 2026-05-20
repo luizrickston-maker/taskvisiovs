@@ -136,7 +136,7 @@ async function fetchOperationalContext(
 
 function formatAIContext(
   ctx: AI360Context | null,
-  priority: string[] = ["investments", "tasks", "projects", "sales_pipeline", "schedule", "editorial", "team"]
+  priority: string[] = ["investments", "savings", "debts", "tasks", "projects", "sales_pipeline", "schedule", "editorial", "team"]
 ): string {
   if (!ctx) {
     return "## ⚠️ Contexto Indisponível\nNão foi possível carregar os dados operacionais.";
@@ -150,7 +150,10 @@ function formatAIContext(
     editorial: () => formatEditorialSection(ctx.editorial),
     team: () => formatTeamSection(ctx.team),
     investments: () => formatInvestmentsSection(ctx.investments),
+    savings: () => formatSavingsSection(ctx.savings),
+    debts: () => formatDebtsSection(ctx.debts),
   };
+
 
   const formattedSections = priority
     .filter((key) => sections[key])
@@ -311,18 +314,48 @@ ${(team.members || []).map((m: TeamMember) => `- ${m.name} (${m.role}): ${m.hour
 function formatInvestmentsSection(investments: any | null): string {
   if (!investments || !investments.items || investments.items.length === 0) return "";
 
-  let section = `### 💰 INVESTIMENTOS RECENTES (Use o UUID para ações)
-| Item | Valor | Data | UUID |
-|------|-------|------|------|`;
+  let section = `### 💰 CUSTOS E INVESTIMENTOS CORPORATIVOS (Use o UUID para ações)
+| Item | Valor | Data | Categoria | UUID |
+|------|-------|------|-----------|------|`;
   
-  investments.items.slice(0, 10).forEach((inv: any) => {
-    // We include the UUID in a specific column that the AI can read but we will hide in the frontend
-    section += `\n| ${inv.item_name} | R$ ${inv.amount.toLocaleString('pt-BR')} | ${inv.purchase_date} | ${inv.id} |`;
+  investments.items.slice(0, 15).forEach((inv: any) => {
+    section += `\n| ${inv.item_name} | R$ ${inv.amount.toLocaleString('pt-BR')} | ${inv.purchase_date} | ${inv.category || 'N/A'} | ${inv.id} |`;
   });
 
-  section += `\n\nTotal investido: **R$ ${investments.total_amount.toLocaleString('pt-BR')}**`;
+  section += `\n\nTotal em custos/investimentos: **R$ ${investments.total_amount.toLocaleString('pt-BR')}**`;
   return section;
 }
+
+function formatSavingsSection(savings: any | null): string {
+  if (!savings || !savings.items || savings.items.length === 0) return "";
+
+  let section = `### 🏦 RESERVAS E POUPANÇA
+| Item | Valor | UUID |
+|------|-------|------|`;
+  
+  savings.items.slice(0, 10).forEach((s: any) => {
+    section += `\n| ${s.name || 'Reserva'} | R$ ${s.amount.toLocaleString('pt-BR')} | ${s.id} |`;
+  });
+
+  section += `\n\nTotal em reservas: **R$ ${savings.total_amount.toLocaleString('pt-BR')}**`;
+  return section;
+}
+
+function formatDebtsSection(debts: any | null): string {
+  if (!debts || !debts.items || debts.items.length === 0) return "";
+
+  let section = `### 💸 DÍVIDAS E COMPROMISSOS
+| Descrição | Valor | Vencimento | UUID |
+|-----------|-------|------------|------|`;
+  
+  debts.items.slice(0, 10).forEach((d: any) => {
+    section += `\n| ${d.description} | R$ ${d.amount.toLocaleString('pt-BR')} | ${d.due_date || 'N/A'} | ${d.id} |`;
+  });
+
+  section += `\n\nTotal em dívidas: **R$ ${debts.total_amount.toLocaleString('pt-BR')}**`;
+  return section;
+}
+
 
 // =====================================================
 // Token Management
