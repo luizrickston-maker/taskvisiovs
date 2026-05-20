@@ -136,7 +136,7 @@ async function fetchOperationalContext(
 
 function formatAIContext(
   ctx: AI360Context | null,
-  priority: string[] = ["investments", "tasks", "projects", "sales_pipeline", "schedule", "editorial", "team"]
+  priority: string[] = ["investments", "savings", "debts", "tasks", "projects", "sales_pipeline", "schedule", "editorial", "team"]
 ): string {
   if (!ctx) {
     return "## ⚠️ Contexto Indisponível\nNão foi possível carregar os dados operacionais.";
@@ -150,7 +150,10 @@ function formatAIContext(
     editorial: () => formatEditorialSection(ctx.editorial),
     team: () => formatTeamSection(ctx.team),
     investments: () => formatInvestmentsSection(ctx.investments),
+    savings: () => formatSavingsSection(ctx.savings),
+    debts: () => formatDebtsSection(ctx.debts),
   };
+
 
   const formattedSections = priority
     .filter((key) => sections[key])
@@ -311,18 +314,48 @@ ${(team.members || []).map((m: TeamMember) => `- ${m.name} (${m.role}): ${m.hour
 function formatInvestmentsSection(investments: any | null): string {
   if (!investments || !investments.items || investments.items.length === 0) return "";
 
-  let section = `### 💰 INVESTIMENTOS RECENTES (Use o UUID para ações)
-| Item | Valor | Data | UUID |
-|------|-------|------|------|`;
+  let section = `### 💰 CUSTOS E INVESTIMENTOS CORPORATIVOS (Use o UUID para ações)
+| Item | Valor | Data | Categoria | UUID |
+|------|-------|------|-----------|------|`;
   
-  investments.items.slice(0, 10).forEach((inv: any) => {
-    // We include the UUID in a specific column that the AI can read but we will hide in the frontend
-    section += `\n| ${inv.item_name} | R$ ${inv.amount.toLocaleString('pt-BR')} | ${inv.purchase_date} | ${inv.id} |`;
+  investments.items.slice(0, 15).forEach((inv: any) => {
+    section += `\n| ${inv.item_name} | R$ ${inv.amount.toLocaleString('pt-BR')} | ${inv.purchase_date} | ${inv.category || 'N/A'} | ${inv.id} |`;
   });
 
-  section += `\n\nTotal investido: **R$ ${investments.total_amount.toLocaleString('pt-BR')}**`;
+  section += `\n\nTotal em custos/investimentos: **R$ ${investments.total_amount.toLocaleString('pt-BR')}**`;
   return section;
 }
+
+function formatSavingsSection(savings: any | null): string {
+  if (!savings || !savings.items || savings.items.length === 0) return "";
+
+  let section = `### 🏦 RESERVAS E POUPANÇA
+| Item | Valor | UUID |
+|------|-------|------|`;
+  
+  savings.items.slice(0, 10).forEach((s: any) => {
+    section += `\n| ${s.name || 'Reserva'} | R$ ${s.amount.toLocaleString('pt-BR')} | ${s.id} |`;
+  });
+
+  section += `\n\nTotal em reservas: **R$ ${savings.total_amount.toLocaleString('pt-BR')}**`;
+  return section;
+}
+
+function formatDebtsSection(debts: any | null): string {
+  if (!debts || !debts.items || debts.items.length === 0) return "";
+
+  let section = `### 💸 DÍVIDAS E COMPROMISSOS
+| Descrição | Valor | Vencimento | UUID |
+|-----------|-------|------------|------|`;
+  
+  debts.items.slice(0, 10).forEach((d: any) => {
+    section += `\n| ${d.description} | R$ ${d.amount.toLocaleString('pt-BR')} | ${d.due_date || 'N/A'} | ${d.id} |`;
+  });
+
+  section += `\n\nTotal em dívidas: **R$ ${debts.total_amount.toLocaleString('pt-BR')}**`;
+  return section;
+}
+
 
 // =====================================================
 // Token Management
@@ -489,16 +522,18 @@ serve(async (req) => {
 
     // 6. Build final prompt - Add safety instruction to ALL agents
     const globalInstructions = `\n\n## CAPACIDADES E REGRAS DE OPERAÇÃO:
-1. VISIBILIDADE: Você TEM acesso total aos dados de: Tarefas, Projetos, Vendas (Pipeline/Metas), Agenda, Calendário Editorial, Equipe e INVESTIMENTOS (Financeiro).
+1. VISIBILIDADE: Você TEM acesso total aos dados de: Tarefas, Projetos, Vendas (Pipeline/Metas), Agenda, Calendário Editorial, Equipe e TODO o módulo FINANCEIRO (Investimentos/Custos, Reservas e Dívidas).
 2. LISTAGEM: Quando o usuário pedir para listar algo, use os dados do CONTEXTO OPERACIONAL acima. Não diga que não tem acesso.
 3. PARA APAGAR: 
    - Analise o CONTEXTO OPERACIONAL acima e identifique o item correspondente.
    - SE ENCONTRAR: Use OBRIGATORIAMENTE este formato: "Encontrei este item: [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]. Deseja remover?"
-   - **IMPORTANTE**: O 'id' deve ser exatamente o UUID que aparece na tabela de contexto. NUNCA invente números como "789" ou "123". Se não vir o UUID, peça para o usuário listar o item primeiro.
+   - **IMPORTANTE**: O 'id' deve ser exatamente o UUID que aparece na tabela de contexto. NUNCA invente números.
    - SE NÃO ENCONTRAR: Informe que o item não consta no sistema e sugira listar os itens atuais.
-   - NUNCA INVENTE NOMES OU IDs.
-   - Tipos válidos: task, project, prospect, editorial_item, briefing, investment.
-4. ADICIONAR INVESTIMENTO: Use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]`;
+   - Tipos válidos: task, project, prospect, editorial_item, briefing, investment, saving, debt.
+4. ADICIONAR INVESTIMENTO/CUSTO: Use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]
+   - Se o usuário disser "adicione em custo", use este comando.
+5. ADICIONAR RESERVA/POUPANÇA: Use [REQUEST_ADD_SAVING: name="NOME", amount=VALOR]
+6. ADICIONAR DÍVIDA: Use [REQUEST_ADD_DEBT: description="NOME", amount=VALOR, due_date="YYYY-MM-DD"]`;
     
     const systemWithContext = `${systemPrompt}${globalInstructions}\n\n${finalContext}`;
 
