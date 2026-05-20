@@ -160,6 +160,8 @@ export default function BriefingEditorPage() {
           .from('briefings')
           .insert([{
             title,
+            briefing_type: briefingType,
+            editing_details: briefingType === 'editing' ? editingDetails : null,
             client_id: clientId && clientId !== "none" ? clientId : null,
             assigned_to_user_id: assignedUserId && assignedUserId !== "none" ? assignedUserId : null,
             external_filler_email: externalEmail || null,
@@ -178,6 +180,8 @@ export default function BriefingEditorPage() {
       } else {
         await updateBriefing.mutateAsync({
           title,
+          briefing_type: briefingType,
+          editing_details: briefingType === 'editing' ? editingDetails : null,
           client_id: clientId && clientId !== "none" ? clientId : null,
           assigned_to_user_id: assignedUserId && assignedUserId !== "none" ? assignedUserId : null,
           external_filler_email: externalEmail || null,
