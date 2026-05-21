@@ -77,12 +77,12 @@ export function CreateVideoBriefingButton({
         .from('briefings')
         .insert([{
           title: `Briefing: ${taskTitle}`,
-          briefing_type: 'editing',
           client_id: finalClientId,
           project_task_id: taskId,
           workspace_id: finalWorkspaceId as string,
           created_by_user_id: userData.user.id,
-          status: 'draft' as any
+          status: 'draft' as any,
+          briefing_type: 'editing' as any
         }])
         .select()
         .single();
