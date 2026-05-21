@@ -220,7 +220,7 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
             <CreateVideoBriefingButton 
               taskId={task.id}
               projectId={project.id}
-              clientId={(project as any).client_id}
+              clientId={(project as any).client_id || null}
               taskTitle={task.title}
               workspaceId={(project as any).workspace_id || ""} 
             />
