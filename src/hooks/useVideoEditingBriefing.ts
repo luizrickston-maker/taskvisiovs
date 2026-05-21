@@ -65,6 +65,7 @@ export const useCreateVideoEditingBriefing = () => {
 
   return useMutation({
     mutationFn: async (briefing: Partial<VideoEditingBriefing>) => {
+      // 1. Create the briefing
       const { data, error } = await supabase
         .from("video_editing_briefings")
         .insert(briefing as any)
@@ -72,10 +73,22 @@ export const useCreateVideoEditingBriefing = () => {
         .single();
 
       if (error) throw error;
+
+      // 2. Link to the project task if applicable
+      if (briefing.project_task_id) {
+        const { error: linkError } = await supabase
+          .from("project_tasks")
+          .update({ video_editing_briefing_id: data.id })
+          .eq("id", briefing.project_task_id);
+        
+        if (linkError) console.error("Error linking briefing to task:", linkError);
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["video-editing-briefings"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
       toast.success("Briefing de edição criado com sucesso!");
     },
     onError: (error: Error) => {
