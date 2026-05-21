@@ -43,20 +43,22 @@ export function CreateVideoBriefingButton({
       
       const { data: projectData } = await supabase
         .from('projects' as any)
-        .select('workspace_id, client_name' as any)
+        .select('*')
         .eq('id', projectId)
         .single();
       
-      if (!finalWorkspaceId && projectData) {
-        finalWorkspaceId = projectData.workspace_id;
+      const castProjectData = projectData as any;
+      
+      if (!finalWorkspaceId && castProjectData) {
+        finalWorkspaceId = castProjectData.workspace_id;
       }
 
-      if (!finalClientId) {
+      if (!finalClientId && castProjectData) {
         // Tentativa de achar o cliente pelo nome no projeto
         const { data: clientData } = await supabase
           .from('clients')
           .select('id')
-          .eq('name', projectData?.client_name)
+          .eq('name', castProjectData.client_name)
           .limit(1)
           .maybeSingle();
         
