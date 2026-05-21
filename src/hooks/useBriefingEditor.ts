@@ -161,8 +161,8 @@ export const useUpdateBriefingStatus = () => {
 export const useGenerateMagicLink = () => {
   return useMutation({
     mutationFn: async (briefingId: string) => {
-      const { data, error } = await supabase.functions.invoke('generate-briefing-magic-link', {
-        body: { briefing_id: briefingId }
+      const { data, error } = await supabase.functions.invoke('generate-video-briefing-magic-link', {
+        body: { video_editing_briefing_id: briefingId }
       });
       
       if (error) throw error;

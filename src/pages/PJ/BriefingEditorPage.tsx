@@ -129,10 +129,31 @@ export default function BriefingEditorPage() {
   useEffect(() => {
     if (isNew && briefingType === 'editing' && clientId) {
       const selectedClient = clients.find(c => c.id === clientId);
-      if (selectedClient?.default_editing_profile) {
-        setEditingDetails(selectedClient.default_editing_profile as EditingDetails);
-        toast.info(`Perfil de edição do cliente ${selectedClient.name} carregado.`);
-      }
+      
+      const fetchClientSettings = async () => {
+        const { data: videoSettings } = await supabase
+          .from('client_video_settings')
+          .select('*')
+          .eq('client_id', clientId)
+          .maybeSingle();
+
+        if (videoSettings && videoSettings.video_management_enabled) {
+          setEditingDetails((prev) => ({
+            ...prev,
+            video_style: videoSettings.default_music_style || "",
+            music_preference: videoSettings.default_music_style || "",
+            typography: videoSettings.default_typography || "",
+            color_style: videoSettings.default_color_style || "",
+            video_formats: videoSettings.default_format ? [videoSettings.default_format] : [],
+            default_cta: videoSettings.default_cta || "",
+            root_folder_link: videoSettings.default_drive_folder_link || "",
+            file_naming_pattern: videoSettings.default_file_naming || "",
+          }));
+          toast.info(`Perfil de edição do cliente ${selectedClient?.name} carregado.`);
+        }
+      };
+      
+      fetchClientSettings();
     }
   }, [clientId, briefingType, isNew, clients]);
 

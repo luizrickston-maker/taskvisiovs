@@ -13,6 +13,13 @@ export interface EditingDetails {
   captions?: boolean;
   graphics_elements?: string[];
   special_instructions?: string;
+  // Perfil de Edição Padrão fields
+  typography?: string;
+  color_style?: string;
+  video_formats?: string[];
+  default_cta?: string;
+  root_folder_link?: string;
+  file_naming_pattern?: string;
 }
 
 export interface Briefing {
@@ -29,11 +36,13 @@ export interface Briefing {
   review_notes: string | null;
   created_at: string;
   updated_at: string;
+  magic_link_token?: string | null;
+  magic_link_expires_at?: string | null;
   // Join fields
   client?: {
+    id: string;
     name: string;
     company_name: string | null;
-    default_editing_profile: EditingDetails | null;
     video_management_enabled: boolean;
   };
   assigned_to?: {
