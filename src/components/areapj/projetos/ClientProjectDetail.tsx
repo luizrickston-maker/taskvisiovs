@@ -222,7 +222,7 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
               projectId={project.id}
               clientId={(project as any).client_id || null}
               taskTitle={task.title}
-              workspaceId={(project as any).workspace_id} 
+              workspaceId={(project as any).workspace_id || null} 
             />
             
             <div className="flex gap-1">
