@@ -257,7 +257,8 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
               </Button>
             )}
           </div>
-        </CardContent>
+        </div>
+      </CardContent>
       </Card>
     );
   };
