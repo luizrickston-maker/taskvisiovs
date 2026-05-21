@@ -38,6 +38,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ClientTaskForm } from './ClientTaskForm';
+import { CreateVideoBriefingButton } from './CreateVideoBriefingButton';
 
 interface ClientProjectDetailProps {
   open: boolean;
@@ -214,9 +215,18 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
             </span>
           </div>
           
-          {/* Quick status buttons */}
-          <div className="flex gap-1 flex-wrap">
-            {task.status !== 'todo' && (
+          {/* Quick status and briefing buttons */}
+          <div className="flex gap-2 flex-wrap items-center">
+            <CreateVideoBriefingButton 
+              taskId={task.id}
+              projectId={project.id}
+              clientId={project.client_id}
+              taskTitle={task.title}
+              workspaceId={project.workspace_id}
+            />
+            
+            <div className="flex gap-1">
+              {task.status !== 'todo' && (
               <Button 
                 variant="ghost" 
                 size="sm" 
