@@ -31,9 +31,8 @@ export function CreateVideoBriefingButton({
 
   const handleSuccess = (id: string) => {
     setOpen(false);
-    // Redireciona para a página de visualização/edição completa se necessário
-    // Por enquanto, apenas fecha o modal já que o form lidou com a criação
-    // navigate(`/pj/video-briefings/${id}`); 
+    // Redireciona para a página de visualização
+    navigate(`/pj/projetos/tarefas/${taskId}/briefing`); 
   };
 
   return (
