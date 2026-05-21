@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import { 
   Video, 
   User, 
@@ -24,7 +25,13 @@ import {
   Film, 
   Save, 
   Loader2,
-  ChevronRight
+  Palette,
+  Type,
+  Music,
+  AlertCircle,
+  Send,
+  FolderOpen,
+  Check
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -34,7 +41,8 @@ import {
   VideoEditingBriefing, 
   useVideoEditingBriefing, 
   useCreateVideoEditingBriefing, 
-  useUpdateVideoEditingBriefing 
+  useUpdateVideoEditingBriefing,
+  useGenerateVideoBriefingMagicLink
 } from "@/hooks/useVideoEditingBriefing";
 
 interface VideoEditingBriefingFormProps {
@@ -59,6 +67,7 @@ export function VideoEditingBriefingForm({
   
   const createMutation = useCreateVideoEditingBriefing();
   const updateMutation = useUpdateVideoEditingBriefing();
+  const magicLinkMutation = useGenerateVideoBriefingMagicLink();
 
   const form = useForm<Partial<VideoEditingBriefing>>({
     defaultValues: {
@@ -71,19 +80,22 @@ export function VideoEditingBriefingForm({
       b_roll_included: false,
       b_roll_usage: "",
       status: "draft",
+      use_client_profile: true,
+      notify_on_completion: true,
     }
   });
 
   const { register, handleSubmit, setValue, watch, reset } = form;
   const bRollIncluded = watch("b_roll_included");
   const deliveryDeadline = watch("delivery_deadline");
+  const useClientProfile = watch("use_client_profile");
 
   // Pre-fill logic
   useEffect(() => {
     if (existingBriefing) {
       reset(existingBriefing);
     } else if (clientSettings && !briefingId) {
-      // Smart pre-filling from client settings for new briefings
+      setValue("use_client_profile", true);
       setValue("music_override", clientSettings.default_music_style);
       setValue("typography_override", clientSettings.default_typography);
       setValue("color_style_override", clientSettings.default_color_style);
@@ -94,20 +106,29 @@ export function VideoEditingBriefingForm({
     }
   }, [existingBriefing, clientSettings, reset, setValue, briefingId]);
 
-  const onSubmit = async (data: Partial<VideoEditingBriefing>) => {
+  const onSubmit = async (data: Partial<VideoEditingBriefing>, action: 'save' | 'send' = 'save') => {
     try {
+      let currentId = briefingId;
+      const status = action === 'send' ? 'pending' : (data.status || 'draft');
+      
       if (briefingId) {
-        await updateMutation.mutateAsync({ ...data, id: briefingId } as any);
-        onSuccess?.(briefingId);
+        await updateMutation.mutateAsync({ ...data, id: briefingId, status } as any);
       } else {
         const newBriefing = await createMutation.mutateAsync({
           ...data,
           client_id: clientId,
           project_task_id: taskId,
           workspace_id: workspaceId,
+          status,
         });
-        onSuccess?.(newBriefing.id);
+        currentId = newBriefing.id;
       }
+
+      if (action === 'send' && currentId) {
+        await magicLinkMutation.mutateAsync(currentId);
+      }
+
+      if (currentId) onSuccess?.(currentId);
     } catch (error) {
       console.error("Error saving briefing:", error);
     }
@@ -121,10 +142,10 @@ export function VideoEditingBriefingForm({
     );
   }
 
-  const isSaving = createMutation.isPending || updateMutation.isPending;
+  const isSaving = createMutation.isPending || updateMutation.isPending || magicLinkMutation.isPending;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <div className="space-y-6">
       {/* Header Info */}
       <Card className="border-primary/10 shadow-sm overflow-hidden">
         <div className="h-1.5 gradient-primary" />
@@ -182,6 +203,138 @@ export function VideoEditingBriefingForm({
           </div>
         </CardContent>
       </Card>
+
+      {/* Perfil do Cliente */}
+      <Card className="border-primary/10 shadow-sm bg-primary/5">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Palette className="w-5 h-5 text-primary" />
+              🎨 PERFIL DE EDIÇÃO
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="use_client_profile" className="text-sm cursor-pointer font-medium">
+                Seguir Perfil Padrão do Cliente
+              </Label>
+              <Switch 
+                id="use_client_profile" 
+                checked={useClientProfile}
+                onCheckedChange={(checked) => setValue("use_client_profile", checked)}
+              />
+            </div>
+          </div>
+          <CardDescription>
+            Defina se este vídeo deve seguir as diretrizes visuais padrão do cliente ou terá exceções.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Music className="w-4 h-4" /> Música diferente?
+              </Label>
+              <Input 
+                disabled={useClientProfile}
+                placeholder={useClientProfile ? clientSettings?.default_music_style || "Padrão" : "Descreva o estilo ou nome da música"}
+                {...register("music_override")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Type className="w-4 h-4" /> Tipografia diferente?
+              </Label>
+              <Input 
+                disabled={useClientProfile}
+                placeholder={useClientProfile ? clientSettings?.default_typography || "Padrão" : "Ex: Legendas dinâmicas estilo Alex Hormozi"}
+                {...register("typography_override")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Palette className="w-4 h-4" /> Cor/estilo diferente?
+              </Label>
+              <Input 
+                disabled={useClientProfile}
+                placeholder={useClientProfile ? clientSettings?.default_color_style || "Padrão" : "Ex: PB com detalhes em dourado"}
+                {...register("color_style_override")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Film className="w-4 h-4" /> Formato diferente?
+              </Label>
+              <Input 
+                disabled={useClientProfile}
+                placeholder={useClientProfile ? clientSettings?.default_format || "Vertical (9:16)" : "Ex: Horizontal (16:9) para YouTube"}
+                {...register("format_override")}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Conteúdo Específico */}
+      <Card className="border-primary/10 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Type className="w-5 h-5 text-primary" />
+            📝 TEXTO / LEGENDA ESPECIAL
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Texto de abertura (Hook/Gancho)</Label>
+            <Textarea 
+              placeholder="O que deve aparecer escrito nos primeiros segundos?"
+              className="min-h-[80px]"
+              {...register("opening_hook")}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">CTA Final Específico</Label>
+            <Input 
+              placeholder="Ex: Clique no link da bio para se inscrever"
+              {...register("cta_final")}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Legenda personalizada (se houver)</Label>
+            <Textarea 
+              placeholder="Caso precise de legendas específicas em momentos determinados"
+              className="min-h-[80px]"
+              {...register("custom_caption")}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Música Específica */}
+      {!useClientProfile && (
+        <Card className="border-primary/10 shadow-sm animate-in fade-in slide-in-from-top-2">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Music className="w-5 h-5 text-primary" />
+              🎵 DETALHES DA MÚSICA
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Música Específica (Nome/Link)</Label>
+              <Input 
+                placeholder="Ex: 'Midnight City' ou link do Artlist"
+                {...register("specific_music")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Referência de vídeo com a música</Label>
+              <Input 
+                placeholder="Ex: Link de um Reels com este áudio"
+                {...register("music_reference_video")}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Objetivo */}
       <Card className="border-primary/10 shadow-sm">
@@ -296,26 +449,84 @@ export function VideoEditingBriefingForm({
         </CardContent>
       </Card>
 
+      {/* Entrega e Observações */}
+      <Card className="border-primary/10 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <FolderOpen className="w-5 h-5 text-primary" />
+            📤 ENTREGA E OBSERVAÇÕES
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Pasta de Entrega (Drive)</Label>
+              <Input 
+                placeholder="Link da pasta onde o editor deve subir"
+                {...register("delivery_drive_folder")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Nomenclatura do arquivo final</Label>
+              <Input 
+                placeholder="Ex: [NOME_CLIENTE] - Reels - 01"
+                {...register("final_file_naming")}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-1.5">
+              <AlertCircle className="w-4 h-4 text-amber-500" /> ⚠️ OBSERVAÇÕES / ATENÇÃO
+            </Label>
+            <Textarea 
+              placeholder="Algum detalhe crucial que o editor não pode esquecer?"
+              className="min-h-[80px]"
+              {...register("observations")}
+            />
+          </div>
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox 
+              id="notify_on_completion" 
+              {...register("notify_on_completion")}
+            />
+            <Label htmlFor="notify_on_completion" className="text-sm font-medium cursor-pointer">
+              Me avisar quando o editor concluir a edição
+            </Label>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancelar
           </Button>
         )}
         <Button 
-          type="submit" 
+          type="button"
+          variant="outline"
           disabled={isSaving}
-          className="gradient-primary glow-primary font-bold min-w-[150px]"
+          onClick={handleSubmit((data) => onSubmit(data, 'save'))}
+          className="font-semibold"
+        >
+          <Save className="w-4 h-4 mr-2" />
+          Salvar Rascunho
+        </Button>
+        <Button 
+          type="button"
+          disabled={isSaving}
+          onClick={handleSubmit((data) => onSubmit(data, 'send'))}
+          className="gradient-primary glow-primary font-bold min-w-[200px]"
         >
           {isSaving ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           ) : (
-            <Save className="w-4 h-4 mr-2" />
+            <Send className="w-4 h-4 mr-2" />
           )}
-          {briefingId ? "Salvar Alterações" : "Criar Briefing"}
+          Enviar para Editor
         </Button>
       </div>
-    </form>
+    </div>
   );
 }
