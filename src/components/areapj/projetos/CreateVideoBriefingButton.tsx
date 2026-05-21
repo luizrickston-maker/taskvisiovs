@@ -82,7 +82,7 @@ export function CreateVideoBriefingButton({
           project_task_id: taskId,
           workspace_id: finalWorkspaceId as string,
           created_by_user_id: userData.user.id,
-          status: 'draft'
+          status: 'draft' as any
         }])
         .select()
         .single();
