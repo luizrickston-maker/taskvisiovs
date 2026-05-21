@@ -83,7 +83,7 @@ export function CreateVideoBriefingButton({
           created_by_user_id: userData.user.id,
           status: 'draft' as any,
           briefing_type: 'editing' as any
-        }])
+        } as any])
         .select()
         .single();
 
