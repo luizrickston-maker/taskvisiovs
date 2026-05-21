@@ -2131,6 +2131,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          video_editing_briefing_id: string | null
           workspace_id: string | null
         }
         Insert: {
@@ -2149,6 +2150,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          video_editing_briefing_id?: string | null
           workspace_id?: string | null
         }
         Update: {
@@ -2167,6 +2169,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          video_editing_briefing_id?: string | null
           workspace_id?: string | null
         }
         Relationships: [
@@ -2196,6 +2199,13 @@ export type Database = {
             columns: ["source_process_step_id"]
             isOneToOne: false
             referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_video_editing_briefing_id_fkey"
+            columns: ["video_editing_briefing_id"]
+            isOneToOne: false
+            referencedRelation: "video_editing_briefings"
             referencedColumns: ["id"]
           },
           {
