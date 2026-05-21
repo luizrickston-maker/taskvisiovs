@@ -99,7 +99,7 @@ export default function VideoBriefingViewPage() {
     try {
       const updateData: any = { status: newStatus };
       if (observations) {
-        updateData.observations = (briefing.observations || "") + "\n\n--- Mensagem do Editor ---\n" + observations;
+        updateData.observations = (briefing.observations || "") + "\n\n--- Mensagem do Editor ---\n" + (observations || "");
       }
 
       await updateMutation.mutateAsync({ ...updateData, id: briefing.id });
