@@ -111,3 +111,22 @@ export const useUpdateVideoEditingBriefing = () => {
     },
   });
 };
+
+export const useGenerateVideoBriefingMagicLink = () => {
+  return useMutation({
+    mutationFn: async (briefingId: string) => {
+      const { data, error } = await supabase.functions.invoke("generate-video-briefing-magic-link", {
+        body: { video_editing_briefing_id: briefingId },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Magic link gerado com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao gerar magic link: ${error.message}`);
+    },
+  });
+};
