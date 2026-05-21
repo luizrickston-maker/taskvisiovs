@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, CheckCircle2, Clock, ListTodo, Trash2, Pen, Filter } from 'lucide-react';
+import { Plus, CheckCircle2, Clock, ListTodo, Trash2, Pen, Filter, Video } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import ProjectTaskForm from './ProjectTaskForm';
+import { useNavigate } from 'react-router-dom';
 import type { ProjectTask, ProjectTaskStatus } from '@/types/database';
 
 const priorityConfig: Record<number, { label: string; color: string; bg: string }> = {
@@ -27,6 +28,7 @@ const statusConfig: Record<ProjectTaskStatus, { label: string; icon: typeof List
 
 export default function ProjectTasksSection() {
   const { projectTasks, projects, deleteProjectTask, updateProjectTask } = useAppStore();
+  const navigate = useNavigate();
   const [formOpen, setFormOpen] = useState(false);
   const [editTask, setEditTask] = useState<ProjectTask | null>(null);
   const [filterProject, setFilterProject] = useState<string>('all');
@@ -200,6 +202,15 @@ export default function ProjectTasksSection() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+                      onClick={() => navigate(`/pj/projetos/tarefas/${task.id}/briefing`)}
+                      title="Briefing de Vídeo"
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

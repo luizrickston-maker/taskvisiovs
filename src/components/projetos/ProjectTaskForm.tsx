@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Video } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +34,7 @@ const priorityOptions = [
 
 export default function ProjectTaskForm({ open, onOpenChange, editTask }: ProjectTaskFormProps) {
   const { projects, addProjectTask, updateProjectTask } = useAppStore();
+  const navigate = useNavigate();
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -198,18 +201,31 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
             </div>
           </div>
 
-          <div className="flex gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" className="flex-1" disabled={loading || !title.trim()}>
-              {editTask ? 'Salvar' : 'Criar'}
-            </Button>
+          <div className="flex flex-col gap-2 pt-2">
+            {editTask && (
+              <Button 
+                type="button" 
+                variant="secondary" 
+                className="w-full gap-2"
+                onClick={() => navigate(`/pj/projetos/tarefas/${editTask.id}/briefing`)}
+              >
+                <Video className="w-4 h-4" />
+                Gerenciar Briefing de Vídeo
+              </Button>
+            )}
+            <div className="flex gap-2 w-full">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" className="flex-1" disabled={loading || !title.trim()}>
+                {editTask ? 'Salvar' : 'Criar'}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

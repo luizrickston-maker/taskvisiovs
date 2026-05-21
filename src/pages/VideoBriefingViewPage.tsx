@@ -59,19 +59,29 @@ export default function VideoBriefingViewPage() {
           .select('*');
 
         if (token) {
-          query = query.eq('magic_link_token', token).gt('magic_link_expires_at', new Date().toISOString());
+          query = query.eq('magic_link_token', token);
+          // Only check expiry if token is present
+          const { data: tokenData, error: tokenError } = await query.maybeSingle();
+          if (tokenError) throw tokenError;
+          if (!tokenData) throw new Error("Briefing não encontrado");
+          
+          if (tokenData.magic_link_expires_at && new Date(tokenData.magic_link_expires_at) < new Date()) {
+            throw new Error("Link de acesso expirado");
+          }
+          setBriefing(tokenData as VideoEditingBriefing);
         } else if (taskId) {
           query = query.eq('project_task_id', taskId);
+          const { data, error } = await query.maybeSingle();
+          if (error) throw error;
+          if (!data) {
+             // If no briefing exists for this task, we might want to redirect to create one
+             // or show a specific UI. For now, let's keep the not found error.
+             throw new Error("Nenhum briefing vinculado a esta tarefa");
+          }
+          setBriefing(data as VideoEditingBriefing);
         } else {
           throw new Error("Acesso não autorizado");
         }
-
-        const { data, error } = await query.maybeSingle();
-
-        if (error) throw error;
-        if (!data) throw new Error("Briefing não encontrado ou link expirado");
-
-        setBriefing(data as VideoEditingBriefing);
       } catch (err: any) {
         console.error("Error fetching briefing:", err);
         toast.error(err.message);
@@ -89,7 +99,7 @@ export default function VideoBriefingViewPage() {
     try {
       const updateData: any = { status: newStatus };
       if (observations) {
-        updateData.observations = (briefing.observations || "") + "\n\n--- Mensagem do Editor ---\n" + observations;
+        updateData.observations = (briefing.observations || "") + "\n\n--- Mensagem do Editor ---\n" + (observations || "");
       }
 
       await updateMutation.mutateAsync({ ...updateData, id: briefing.id });
