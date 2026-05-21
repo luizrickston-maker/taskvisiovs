@@ -220,9 +220,9 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
             <CreateVideoBriefingButton 
               taskId={task.id}
               projectId={project.id}
-              clientId={project.client_id}
+              clientId={null}
               taskTitle={task.title}
-              workspaceId={project.workspace_id}
+              workspaceId={""} // Will handle workspace context inside the component
             />
             
             <div className="flex gap-1">

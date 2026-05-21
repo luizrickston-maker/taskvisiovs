@@ -37,17 +37,30 @@ export function CreateVideoBriefingButton({
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Usuário não autenticado");
 
-      // Se não tiver clientId, precisamos buscar do projeto ou pedir
+      // Se não tiver clientId, precisamos buscar do projeto
       let finalClientId = clientId;
+      let finalWorkspaceId = workspaceId;
       
+      const { data: projectData } = await supabase
+        .from('projects')
+        .select('workspace_id, client_name')
+        .eq('id', projectId)
+        .single();
+      
+      if (!finalWorkspaceId && projectData) {
+        finalWorkspaceId = projectData.workspace_id;
+      }
+
       if (!finalClientId) {
-        const { data: projectData } = await supabase
-          .from('projects')
-          .select('client_id')
-          .eq('id', projectId)
-          .single();
+        // Tentativa de achar o cliente pelo nome no projeto
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('name', projectData?.client_name)
+          .limit(1)
+          .maybeSingle();
         
-        finalClientId = projectData?.client_id;
+        finalClientId = clientData?.id;
       }
 
       if (!finalClientId) {
@@ -65,7 +78,7 @@ export function CreateVideoBriefingButton({
           briefing_type: 'editing',
           client_id: finalClientId,
           project_task_id: taskId,
-          workspace_id: workspaceId,
+          workspace_id: finalWorkspaceId!,
           created_by_user_id: userData.user.id,
           status: 'draft'
         }])
