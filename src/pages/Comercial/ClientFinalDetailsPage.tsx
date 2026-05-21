@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { ArrowLeft, Edit2, Trash2, UserCheck, UserX, History, Video } from 'lucide-react';
 import {
@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientVideoSettings } from "@/components/clientes/ClientVideoSettings";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 interface Client {
   id: string;
