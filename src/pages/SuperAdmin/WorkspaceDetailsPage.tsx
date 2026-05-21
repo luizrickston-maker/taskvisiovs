@@ -17,6 +17,22 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from '@/components/ui/input';
+import {
   Table,
   TableBody,
   TableCell,
@@ -38,6 +54,7 @@ import {
   CheckCircle,
   XCircle,
   RefreshCw,
+  Edit
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -77,6 +94,8 @@ export default function WorkspaceDetailsPage() {
   const queryClient = useQueryClient();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSuspend, setConfirmSuspend] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editWorkspace, setEditWorkspace] = useState({ name: '', plan: '' });
 
   const { data: workspace, isLoading: loadingWs } = useQuery({
     queryKey: ['super-admin-workspace', id],
@@ -90,6 +109,9 @@ export default function WorkspaceDetailsPage() {
       return data as Workspace;
     },
     enabled: !!id,
+    onSuccess: (data) => {
+      setEditWorkspace({ name: data.name, plan: data.plan });
+    }
   });
 
   const { data: members = [], isLoading: loadingMembers } = useQuery({
@@ -134,6 +156,26 @@ export default function WorkspaceDetailsPage() {
       setConfirmSuspend(false);
     },
     onError: () => toast.error('Erro ao atualizar status'),
+  });
+
+  const updateWorkspaceMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('workspaces')
+        .update({ 
+          name: editWorkspace.name, 
+          plan: editWorkspace.plan 
+        })
+        .eq('id', id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin-workspace', id] });
+      queryClient.invalidateQueries({ queryKey: ['super-admin-workspaces'] });
+      toast.success('Workspace atualizado com sucesso!');
+      setIsEditModalOpen(false);
+    },
+    onError: () => toast.error('Erro ao atualizar workspace'),
   });
 
   const deleteMutation = useMutation({
@@ -187,6 +229,15 @@ export default function WorkspaceDetailsPage() {
 
         {!loadingWs && workspace && (
           <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setIsEditModalOpen(true)}
+            >
+              <Edit className="w-4 h-4" />
+              Editar
+            </Button>
             {workspace.status === 'active' ? (
               <Button
                 variant="outline"
@@ -422,6 +473,53 @@ export default function WorkspaceDetailsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Workspace</DialogTitle>
+            <DialogDescription>
+              Altere as informações básicas do workspace.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="edit-name" className="text-sm font-medium">Nome do Workspace</label>
+              <Input
+                id="edit-name"
+                value={editWorkspace.name}
+                onChange={(e) => setEditWorkspace({ ...editWorkspace, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="edit-plan" className="text-sm font-medium">Plano</label>
+              <Select 
+                value={editWorkspace.plan} 
+                onValueChange={(v) => setEditWorkspace({ ...editWorkspace, plan: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o plano" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="pro">Pro</SelectItem>
+                  <SelectItem value="enterprise">Enterprise</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
+            <Button 
+              onClick={() => updateWorkspaceMutation.mutate()}
+              disabled={!editWorkspace.name || updateWorkspaceMutation.isPending}
+            >
+              {updateWorkspaceMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
