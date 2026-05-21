@@ -42,8 +42,8 @@ export function CreateVideoBriefingButton({
       let finalWorkspaceId = workspaceId;
       
       const { data: projectData } = await supabase
-        .from('projects')
-        .select('workspace_id, client_name')
+        .from('projects' as any)
+        .select('workspace_id, client_name' as any)
         .eq('id', projectId)
         .single();
       
