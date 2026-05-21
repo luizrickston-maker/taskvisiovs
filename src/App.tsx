@@ -120,6 +120,7 @@ const App = () => {
               } />
               <Route path="/briefing/fill" element={<BriefingFillPage />} />
               <Route path="/video-briefing/fill" element={<VideoBriefingViewPage />} />
+              <Route path="/pj/projetos/tarefas/:taskId/briefing" element={<VideoBriefingViewPage />} />
               {/* Client Portal - isolated from main app */}
               <Route path="/portal" element={
                 <ClientPortalRoute>
