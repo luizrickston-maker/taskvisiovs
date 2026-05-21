@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import { 
   Video, 
   User, 
@@ -24,7 +25,14 @@ import {
   Film, 
   Save, 
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Palette,
+  Type,
+  Music,
+  AlertCircle,
+  Send,
+  Link,
+  FolderOpen
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -34,7 +42,8 @@ import {
   VideoEditingBriefing, 
   useVideoEditingBriefing, 
   useCreateVideoEditingBriefing, 
-  useUpdateVideoEditingBriefing 
+  useUpdateVideoEditingBriefing,
+  useGenerateVideoBriefingMagicLink
 } from "@/hooks/useVideoEditingBriefing";
 
 interface VideoEditingBriefingFormProps {
