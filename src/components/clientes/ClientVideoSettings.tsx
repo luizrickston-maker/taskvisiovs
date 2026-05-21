@@ -34,17 +34,17 @@ export function ClientVideoSettings({ clientId }: ClientVideoSettingsProps) {
         
         if (data) {
           setSettings(data);
-          setEnabled(data.video_management_enabled);
+          setEnabled(data.video_management_enabled ?? false);
         } else {
           // Default empty settings
           setSettings({
-            music_style: "",
-            typography: "",
-            color_style: "",
-            video_formats: ["9:16"],
+            default_music_style: "",
+            default_typography: "",
+            default_color_style: "",
+            default_format: "9:16 (Reels)",
             default_cta: "",
-            root_folder_link: "",
-            file_naming_pattern: "",
+            default_drive_folder_link: "",
+            default_file_naming: "",
           });
         }
       } catch (err: any) {
@@ -133,40 +133,39 @@ export function ClientVideoSettings({ clientId }: ClientVideoSettingsProps) {
               <Label className="flex items-center gap-2"><Music className="w-4 h-4 text-muted-foreground" /> Estilo Musical</Label>
               <Input 
                 placeholder="Ex: Upbeat, Lofi, Corporativo" 
-                value={settings.music_style || ""} 
-                onChange={e => updateField('music_style', e.target.value)}
+                value={settings.default_music_style || ""} 
+                onChange={e => updateField('default_music_style', e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-2"><Type className="w-4 h-4 text-muted-foreground" /> Tipografia</Label>
               <Input 
                 placeholder="Ex: Montserrat Bold" 
-                value={settings.typography || ""} 
-                onChange={e => updateField('typography', e.target.value)}
+                value={settings.default_typography || ""} 
+                onChange={e => updateField('default_typography', e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-2"><Palette className="w-4 h-4 text-muted-foreground" /> Identidade Visual</Label>
               <Input 
                 placeholder="Ex: Cores quentes, Saturado" 
-                value={settings.color_style || ""} 
-                onChange={e => updateField('color_style', e.target.value)}
+                value={settings.default_color_style || ""} 
+                onChange={e => updateField('default_color_style', e.target.value)}
               />
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 mt-8">
             <div className="space-y-4">
-              <Label className="flex items-center gap-2 text-primary font-bold"><Layout className="w-4 h-4" /> Formatos de Entrega</Label>
+              <Label className="flex items-center gap-2 text-primary font-bold"><Layout className="w-4 h-4" /> Formato de Entrega Padrão</Label>
               <div className="grid grid-cols-2 gap-3 bg-muted/30 p-4 rounded-xl border">
                 {['9:16 (Reels)', '16:9 (YouTube)', '1:1 (Feed)', '4:5 (Instagram)'].map(format => (
                   <div key={format} className="flex items-center space-x-2">
                     <Checkbox 
                       id={`format-${format}`} 
-                      checked={settings.video_formats?.includes(format)}
+                      checked={settings.default_format === format}
                       onCheckedChange={(checked) => {
-                        const current = settings.video_formats || [];
-                        updateField('video_formats', checked ? [...current, format] : current.filter((f: string) => f !== format));
+                        if (checked) updateField('default_format', format);
                       }}
                     />
                     <Label htmlFor={`format-${format}`} className="text-sm cursor-pointer font-normal">{format}</Label>
@@ -191,16 +190,16 @@ export function ClientVideoSettings({ clientId }: ClientVideoSettingsProps) {
               <Label className="flex items-center gap-2"><FolderOpen className="w-4 h-4 text-muted-foreground" /> Link Pasta Raiz</Label>
               <Input 
                 placeholder="Link do Drive, Dropbox, etc." 
-                value={settings.root_folder_link || ""} 
-                onChange={e => updateField('root_folder_link', e.target.value)}
+                value={settings.default_drive_folder_link || ""} 
+                onChange={e => updateField('default_drive_folder_link', e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-2"><FileEdit className="w-4 h-4 text-muted-foreground" /> Padrão Nomenclatura</Label>
               <Input 
                 placeholder="Ex: [DATA]_[CLIENTE]_[TEMA]" 
-                value={settings.file_naming_pattern || ""} 
-                onChange={e => updateField('file_naming_pattern', e.target.value)}
+                value={settings.default_file_naming || ""} 
+                onChange={e => updateField('default_file_naming', e.target.value)}
               />
             </div>
           </div>

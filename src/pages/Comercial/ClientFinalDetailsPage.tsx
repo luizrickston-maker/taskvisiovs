@@ -2,9 +2,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/skeleton';
 import { toast } from 'sonner';
-import { ArrowLeft, Edit2, Trash2, UserCheck, UserX } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, UserCheck, UserX, History, Video } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -21,6 +21,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ClientVideoSettings } from "@/components/clientes/ClientVideoSettings";
 
 interface Client {
   id: string;
@@ -278,25 +280,51 @@ export default function ClientFinalDetailsPage() {
         </div>
       </div>
 
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: main info + calendar + contents */}
-        <div className="lg:col-span-2 space-y-6">
-          <ClientInfoCard client={client} />
-          <ClientContentCalendarPreview workspaceId={client.workspace_id} clientId={client.id} />
-          <ClientContentsCard clientId={client.id} workspaceId={client.workspace_id} />
-        </div>
+      {/* Tabs */}
+      <Tabs defaultValue="info" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:w-[600px]">
+          <TabsTrigger value="info">Informações</TabsTrigger>
+          <TabsTrigger value="video" className="gap-2">
+            <Video className="w-4 h-4" /> Módulo de Vídeo
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="w-4 h-4" /> Histórico
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Right: portal access */}
-        <div>
-          <ClientPortalAccessCard
-            clientId={client.id}
-            clientName={client.name}
-            clientEmail={client.email}
-            workspaceId={client.workspace_id}
-          />
-        </div>
-      </div>
+        <TabsContent value="info" className="mt-6 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <ClientInfoCard client={client} />
+              <ClientContentCalendarPreview workspaceId={client.workspace_id} clientId={client.id} />
+              <ClientContentsCard clientId={client.id} workspaceId={client.workspace_id} />
+            </div>
+            <div>
+              <ClientPortalAccessCard
+                clientId={client.id}
+                clientName={client.name}
+                clientEmail={client.email}
+                workspaceId={client.workspace_id}
+              />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="video" className="mt-6">
+          <ClientVideoSettings clientId={id!} />
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Histórico de Interações</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-center py-8 italic">Nenhuma interação registrada recentemente.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Dialog */}
       {editOpen && (
