@@ -80,7 +80,7 @@ export function CreateVideoBriefingButton({
           briefing_type: 'editing',
           client_id: finalClientId,
           project_task_id: taskId,
-          workspace_id: finalWorkspaceId!,
+          workspace_id: finalWorkspaceId as string,
           created_by_user_id: userData.user.id,
           status: 'draft'
         }])
