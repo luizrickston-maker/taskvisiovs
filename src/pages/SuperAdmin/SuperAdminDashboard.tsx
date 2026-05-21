@@ -10,10 +10,29 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Shield, Users, Building2, Search, RefreshCw,
-  CheckCircle, XCircle, Calendar, Crown, UserCheck, ArrowLeft
+  CheckCircle, XCircle, Calendar, Crown, UserCheck, ArrowLeft,
+  Plus
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface Workspace {
   id: string;
@@ -55,7 +74,10 @@ function StatCard({ icon: Icon, label, value, color }: {
 
 export default function SuperAdminDashboard() {
   const [search, setSearch] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newWorkspace, setNewWorkspace] = useState({ name: '', plan: 'free' });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: workspaces = [], isLoading: loadingWorkspaces, refetch } = useQuery({
     queryKey: ['super-admin-workspaces'],
@@ -93,6 +115,37 @@ export default function SuperAdminDashboard() {
 
   const isLoading = loadingWorkspaces || loadingMembers || loadingClients;
 
+  const createWorkspaceMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { data, error } = await supabase
+        .from('workspaces')
+        .insert([{ 
+          name: newWorkspace.name, 
+          plan: newWorkspace.plan,
+          status: 'active',
+          owner_user_id: user.id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin-workspaces'] });
+      toast.success("Workspace criado com sucesso!");
+      setIsCreateModalOpen(false);
+      setNewWorkspace({ name: '', plan: 'free' });
+    },
+    onError: (error) => {
+      console.error("Erro ao criar workspace:", error);
+      toast.error("Erro ao criar workspace");
+    }
+  });
+
   const filteredWorkspaces = workspaces.filter(ws =>
     ws.name.toLowerCase().includes(search.toLowerCase()) ||
     ws.plan.toLowerCase().includes(search.toLowerCase())
@@ -124,6 +177,58 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-2 gradient-primary">
+                <Plus className="w-4 h-4" />
+                Novo Workspace
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Criar Novo Workspace</DialogTitle>
+                <DialogDescription>
+                  Adicione um novo workspace ao sistema. O proprietário será você.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <label htmlFor="name" className="text-sm font-medium">Nome do Workspace</label>
+                  <Input
+                    id="name"
+                    placeholder="Ex: Empresa ABC"
+                    value={newWorkspace.name}
+                    onChange={(e) => setNewWorkspace({ ...newWorkspace, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="plan" className="text-sm font-medium">Plano</label>
+                  <Select 
+                    value={newWorkspace.plan} 
+                    onValueChange={(v) => setNewWorkspace({ ...newWorkspace, plan: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o plano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="pro">Pro</SelectItem>
+                      <SelectItem value="enterprise">Enterprise</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancelar</Button>
+                <Button 
+                  onClick={() => createWorkspaceMutation.mutate()}
+                  disabled={!newWorkspace.name || createWorkspaceMutation.isPending}
+                >
+                  {createWorkspaceMutation.isPending ? "Criando..." : "Criar Workspace"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Button variant="outline" size="sm" onClick={() => navigate('/caixa')} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
             Voltar ao App
