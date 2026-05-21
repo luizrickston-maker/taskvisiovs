@@ -17,7 +17,7 @@ interface CreateVideoBriefingButtonProps {
   projectId: string;
   clientId?: string | null;
   taskTitle: string;
-  workspaceId: string;
+  workspaceId?: string | null;
 }
 
 export function CreateVideoBriefingButton({ 
