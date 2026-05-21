@@ -1,22 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ClientVideoSettings } from "@/types/video";
 
-export interface ClientVideoSettings {
-  id?: string;
-  client_id: string;
-  workspace_id: string;
-  video_management_enabled: boolean;
-  default_music_style: string | null;
-  default_typography: string | null;
-  default_color_style: string | null;
-  default_format: string | null;
-  default_cta: string | null;
-  default_drive_folder_link: string | null;
-  default_file_naming: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
+export type { ClientVideoSettings };
 
 export const useClientVideoSettings = (clientId: string) => {
   return useQuery({
