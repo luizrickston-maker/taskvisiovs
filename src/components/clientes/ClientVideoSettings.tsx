@@ -9,56 +9,35 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Loader2, Save, Sparkles, Music, Type, Palette, Layout, FolderOpen, FileEdit } from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useClientVideoSettings, useUpdateClientVideoSettings, ClientVideoSettings as ClientVideoSettingsType } from "@/hooks/useClientVideoSettings";
 
 interface ClientVideoSettingsProps {
   clientId: string;
 }
 
 export function ClientVideoSettings({ clientId }: ClientVideoSettingsProps) {
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [settings, setSettings] = useState<any>(null);
+  const { data: existingSettings, isLoading: loading } = useClientVideoSettings(clientId);
+  const updateMutation = useUpdateClientVideoSettings();
+  
+  const [settings, setSettings] = useState<Partial<ClientVideoSettingsType>>({
+    default_music_style: "",
+    default_typography: "",
+    default_color_style: "",
+    default_format: "9:16 (Reels)",
+    default_cta: "",
+    default_drive_folder_link: "",
+    default_file_naming: "",
+  });
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('client_video_settings')
-          .select('*')
-          .eq('client_id', clientId)
-          .maybeSingle();
-
-        if (error) throw error;
-        
-        if (data) {
-          setSettings(data);
-          setEnabled(data.video_management_enabled ?? false);
-        } else {
-          // Default empty settings
-          setSettings({
-            default_music_style: "",
-            default_typography: "",
-            default_color_style: "",
-            default_format: "9:16 (Reels)",
-            default_cta: "",
-            default_drive_folder_link: "",
-            default_file_naming: "",
-          });
-        }
-      } catch (err: any) {
-        toast.error("Erro ao carregar configurações de vídeo: " + err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (clientId) fetchSettings();
-  }, [clientId]);
+    if (existingSettings) {
+      setSettings(existingSettings);
+      setEnabled(existingSettings.video_management_enabled ?? false);
+    }
+  }, [existingSettings]);
 
   const handleSave = async () => {
-    setSaving(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Usuário não autenticado");
@@ -72,24 +51,16 @@ export function ClientVideoSettings({ clientId }: ClientVideoSettingsProps) {
 
       if (!memberData) throw new Error("Workspace não encontrado");
 
-      const payload = {
+      const payload: ClientVideoSettingsType = {
         ...settings,
         client_id: clientId,
         workspace_id: memberData.workspace_id,
         video_management_enabled: enabled,
-        updated_at: new Date().toISOString()
-      };
+      } as ClientVideoSettingsType;
 
-      const { error } = await supabase
-        .from('client_video_settings')
-        .upsert(payload, { onConflict: 'client_id' });
-
-      if (error) throw error;
-      toast.success("Perfil de edição padrão atualizado!");
+      await updateMutation.mutateAsync(payload);
     } catch (err: any) {
       toast.error("Erro ao salvar: " + err.message);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -206,8 +177,8 @@ export function ClientVideoSettings({ clientId }: ClientVideoSettingsProps) {
         </div>
 
         <div className="pt-4 border-t flex justify-end">
-          <Button onClick={handleSave} disabled={saving} className="gradient-primary glow-primary px-8 font-bold">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+          <Button onClick={handleSave} disabled={updateMutation.isPending} className="gradient-primary glow-primary px-8 font-bold">
+            {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
             Salvar Perfil Padrão
           </Button>
         </div>
