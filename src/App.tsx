@@ -19,6 +19,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 import BriefingFillPage from "@/pages/BriefingFillPage";
 import VideoBriefingViewPage from "@/pages/VideoBriefingViewPage";
+import VideoBriefingViewPage from "@/pages/VideoBriefingViewPage";
 
 // Componentes core que serão carregados com prioridade (mas ainda lazy para não travar o main thread)
 const CaixaDashboard = lazy(() => import(/* vitePrefetch: true */ "@/pages/CaixaDashboard"));
