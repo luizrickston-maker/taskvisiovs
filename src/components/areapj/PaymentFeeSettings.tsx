@@ -57,16 +57,20 @@ export function PaymentFeeSettings() {
   };
 
   const handleInstallmentRangeChange = (method: PaymentMethod, range: string, value: number) => {
-    setLocalSettings(prev => ({
-      ...prev,
-      [method]: {
-        ...prev[method],
-        installment_ranges: {
-          ...(prev[method]?.installment_ranges || {}),
-          [range]: value
+    setLocalSettings(prev => {
+      const methodSettings = prev[method] || {};
+      const currentRanges = (methodSettings.installment_ranges as Record<string, number>) || {};
+      return {
+        ...prev,
+        [method]: {
+          ...methodSettings,
+          installment_ranges: {
+            ...currentRanges,
+            [range]: value
+          }
         }
-      }
-    }));
+      };
+    });
   };
 
   const handleSave = async () => {
