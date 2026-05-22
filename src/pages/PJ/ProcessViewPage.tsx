@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { nodeTypes, type ProcessNodeData } from '@/components/areapj/processos/ProcessNode';
 import { useProcess, type ProcessStep } from '@/hooks/useProcessEditor';
+import { ProcessConnection } from '@/types/business';
 import { DelegateProcessDialog } from '@/components/areapj/processos/DelegateProcessDialog';
 
 // Convert DB steps to React Flow nodes (read-only)
@@ -57,7 +58,7 @@ function stepsToNodes(steps: ProcessStep[]): Node[] {
   }));
 }
 
-function connectionsToEdges(conns: any[]): Edge[] {
+function connectionsToEdges(conns: ProcessConnection[]): Edge[] {
   return conns.map((c) => ({
     id: c.id,
     source: c.source_step_id,

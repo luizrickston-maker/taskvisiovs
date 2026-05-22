@@ -51,7 +51,16 @@ import { BriefingBlock3 } from "@/components/briefings/BriefingBlock3";
 import { BriefingBlock4 } from "@/components/briefings/BriefingBlock4";
 import { BriefingBlock5 } from "@/components/briefings/BriefingBlock5";
 import { BriefingBlock6 } from "@/components/briefings/BriefingBlock6";
-import { BriefingWithDetails } from "@/types/briefing";
+import { 
+  BriefingWithDetails, 
+  BriefingVideoItem,
+  BriefingResponseBlock1,
+  BriefingResponseBlock2,
+  BriefingResponseBlock4,
+  BriefingResponseBlock5,
+  BriefingResponseBlock6
+} from "@/types/briefing";
+import { Project } from "@/types/database";
 
 export default function BriefingReviewPage() {
   const { id } = useParams();
@@ -64,23 +73,23 @@ export default function BriefingReviewPage() {
   const [rejectNotes, setRejectNotes] = useState("");
   const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isProcessingTasks, setIsProcessingTasks] = useState(false);
 
   // Form states (read-only data)
-  const [block1, setBlock1] = useState<any>({});
-  const [block2, setBlock2] = useState<any>({});
-  const [videoItems, setVideoItems] = useState<any[]>([]);
-  const [block4, setBlock4] = useState<any>({});
-  const [block5, setBlock5] = useState<any>({});
-  const [block6, setBlock6] = useState<any>({});
+  const [block1, setBlock1] = useState<Partial<BriefingResponseBlock1>>({});
+  const [block2, setBlock2] = useState<Partial<BriefingResponseBlock2>>({});
+  const [videoItems, setVideoItems] = useState<BriefingVideoItem[]>([]);
+  const [block4, setBlock4] = useState<Partial<BriefingResponseBlock4>>({});
+  const [block5, setBlock5] = useState<Partial<BriefingResponseBlock5>>({});
+  const [block6, setBlock6] = useState<Partial<BriefingResponseBlock6>>({});
 
   useEffect(() => {
     if (briefing.data) {
       const data = briefing.data as BriefingWithDetails;
       
       data.responses.forEach((resp) => {
-        const blockData = resp.response_data;
+        const blockData = resp.response_data as any;
         if (resp.block_name === 'identificacao') setBlock1(blockData);
         if (resp.block_name === 'estrutura') setBlock2(blockData);
         if (resp.block_name === 'referencias') setBlock4(blockData);
@@ -95,7 +104,7 @@ export default function BriefingReviewPage() {
           .from('projects')
           .select('id, project')
           .eq('workspace_id', data.workspace_id);
-        if (projectsData) setProjects(projectsData);
+        if (projectsData) setProjects(projectsData as Project[]);
       };
       fetchProjects();
     }
@@ -153,7 +162,7 @@ export default function BriefingReviewPage() {
         return;
       }
 
-      const taskPromises = videoItems.map((item: any) => {
+      const taskPromises = videoItems.map((item: BriefingVideoItem) => {
         return supabase
           .from('project_tasks')
           .insert([{

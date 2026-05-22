@@ -1,497 +1,538 @@
-export type CategoryType = 'income' | 'expense' | 'debt';
-export type IncomeType = 'fixed' | 'recurring' | 'variable';
-export type DebtType = 'fixed' | 'installment' | 'variable' | 'weekly';
-export type TaskType = 'inbox' | 'today';
-export type TimeBlockType = 'cash' | 'client' | 'project';
-export type ProjectStatus = 'todo' | 'progress' | 'blocked' | 'done';
-export type ScriptPlatform = 'youtube' | 'youtube_shorts' | 'tiktok' | 'tiktok_ads' | 'instagram_reels' | 'instagram_post' | 'instagram_boost' | 'facebook_ads';
-export type ScriptStatus = 'draft' | 'scheduled' | 'published';
-export type GoalType = 'financial' | 'savings' | 'custom';
-export type ProjectTaskStatus = 'todo' | 'in_progress' | 'done';
-export type ProspectStatus = 'novo' | 'em_negociacao' | 'proposta_enviada' | 'fechado' | 'perdido';
-export type SalesGoalType = 'faturamento_mensal' | 'vendas_fechadas' | 'novos_clientes';
+import { Json } from "../integrations/supabase/types";
 
-// Área PJ Types
-export type InvestmentCategory = 'equipamento' | 'software' | 'mobilia' | 'marketing' | 'outro';
-export type ContractType = 'pj' | 'clt' | 'freelancer';
-export type PlanTier = 'bronze' | 'silver' | 'gold';
-export type PlanType = 'recorrente' | 'pontual';
-
-// Corporate Costs Types
-export type CorporateCostType = 'recorrente' | 'fixo' | 'pontual';
-export type CostFrequency = 'diario' | 'semanal' | 'mensal' | 'anual';
-
-export interface CorporateCostCategory {
-  id: string;
-  user_id: string;
-  name: string;
-  color: string;
-  icon?: string;
-  created_at: string;
-}
-
-export interface CorporateCost {
-  id: string;
-  user_id: string;
-  name: string;
-  category_id?: string;
-  amount: number;
-  cost_type: CorporateCostType;
-  frequency?: CostFrequency;
-  start_date?: string;
-  end_date?: string;
-  is_active: boolean;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// Document Types
-export interface DocumentType {
-  id: string;
-  user_id: string;
-  name: string;
-  color: string;
-  created_at: string;
-}
-
-export interface ProspectDocument {
-  id: string;
-  user_id: string;
-  prospect_id: string;
-  document_type_id?: string;
-  file_path: string;
-  file_name: string;
-  file_size?: number;
-  mime_type?: string;
-  notes?: string;
-  created_at: string;
-}
-
-export interface Category {
-  id: string;
-  user_id: string;
-  name: string;
-  type: CategoryType;
-  color: string;
-  icon?: string;
-  is_default: boolean;
-  created_at: string;
-}
-
-export interface UserIncomeCategory {
-  id: string;
-  user_id: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface UserDebtCategory {
-  id: string;
-  user_id: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Income {
-  id: string;
-  user_id: string;
-  source: string;
-  amount: number;
-  date: string;
-  category_id?: string;
-  user_category_id?: string;
-  income_type: IncomeType;
-  variable_min_amount?: number;
-  variable_max_amount?: number;
-  created_at: string;
-}
-
-export interface Expense {
-  id: string;
-  user_id: string;
-  description: string;
-  amount: number;
-  date: string;
-  category_id?: string;
-  created_at: string;
-}
-
-export interface Debt {
-  id: string;
-  user_id: string;
-  name: string;
-  amount: number;
-  due_date: string;
-  paid: boolean;
-  type: DebtType;
-  category_id?: string;
-  user_category_id?: string;
-  installment_current?: number;
-  installment_total?: number;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Saving {
-  id: string;
-  user_id: string;
-  amount: number;
-  description: string;
-  date: string;
-  created_at: string;
-}
-
-export interface Goal {
-  id: string;
-  user_id: string;
-  name: string;
-  type: GoalType;
-  amount: number;
-  deadline: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Task {
-  id: string;
-  user_id: string;
-  title: string;
-  completed: boolean;
-  type: TaskType;
-  scheduled_date?: string;
-  created_at: string;
-  completed_at?: string;
-}
-
-export interface TimeBlock {
-  id: string;
-  user_id: string;
-  title: string;
-  start_time: string;
-  end_time: string;
-  date: string;
-  type: TimeBlockType | string;
-  completed: boolean;
-  color?: string;
-  created_at: string;
-}
-
-export interface CustomTimeBlockType {
-  id: string;
-  user_id: string;
-  name: string;
-  color: string;
-  created_at: string;
-}
-
-export interface ProjectCategory {
-  id: string;
-  user_id: string;
-  name: string;
-  description?: string;
-  color: string;
-  created_at: string;
-}
+export type ProjectStatus = string;
+export type ProjectTaskStatus = string;
 
 export interface Project {
-  id: string;
-  user_id: string;
-  task: string;
-  project: string;
-  project_category_id?: string;
-  priority: number;
-  status: ProjectStatus;
-  estimated_time?: string;
-  // Corporate project fields
-  client_name?: string;
-  company_name?: string;
-  deadline?: string;
-  is_corporate: boolean;
-  prospect_id?: string;
+  client_name: string | null;
+  company_name: string | null;
   created_at: string;
+  deadline: string | null;
+  estimated_time: string | null;
+  id: string;
+  is_corporate: boolean | null;
+  priority: number;
+  project: string;
+  project_category_id: string | null;
+  prospect_id: string | null;
+  status: string;
+  task: string;
   updated_at: string;
+  user_id: string;
+  workspace_id: string | null;
 }
 
 export interface ProjectTask {
+  actual_hours: number | null;
+  completed_at: string | null;
+  created_at: string;
+  deadline: string | null;
+  deadline_days: number | null;
+  description: string | null;
+  estimated_hours: number | null;
   id: string;
-  user_id: string;
-  project_id: string | null;
-  title: string;
-  description?: string;
   priority: number;
-  status: ProjectTaskStatus;
-  // Task management fields
-  deadline?: string;
-  deadline_days?: number;
-  estimated_hours: number;
-  actual_hours: number;
-  completed_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface SalesGoal {
-  id: string;
-  user_id: string;
-  goal_type: SalesGoalType;
-  target_amount: number;
-  current_amount: number;
-  start_date: string;
-  end_date: string;
-  project_id?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export type PaymentType = 'recorrente' | 'pontual';
-
-export interface Prospect {
-  id: string;
-  user_id: string;
-  client_name: string;
-  company_name?: string;
-  prospection_date: string;
-  status: ProspectStatus;
-  project_id?: string;
-  plan_id?: string;
-  project_type?: string;
-  estimated_value: number;
-  notes?: string;
-  payment_type?: PaymentType;
-  contract_duration?: number;
-  payment_installments?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payment_methods?: any; // JSONB field - can be PaymentMethodEntry[] at runtime
-  total_fees?: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Script {
-  id: string;
-  user_id: string;
+  project_id: string | null;
+  source_process_step_id: string | null;
+  status: string;
   title: string;
-  content: string;
-  platform: ScriptPlatform;
-  scheduled_date: string;
-  status: ScriptStatus;
-  project_id?: string;
+  updated_at: string;
+  user_id: string;
+  video_editing_briefing_id: string | null;
+  workspace_id: string | null;
+}
+
+export interface ProjectCategory {
+  color: string;
   created_at: string;
+  description: string | null;
+  id: string;
+  name: string;
+  user_id: string;
+  workspace_id: string | null;
+}
+
+export interface Workspace {
+  created_at: string;
+  id: string;
+  name: string;
+  owner_user_id: string;
+  plan: string;
+  status: string;
   updated_at: string;
 }
 
-export interface UserPreference {
-  id: string;
-  user_id: string;
-  app_name: string;
-  business_app_name?: string;
-  default_available_hours: number;
+export interface Client {
+  company_name: string | null;
   created_at: string;
+  default_editing_profile: Json | null;
+  email: string | null;
+  id: string;
+  is_active: boolean;
+  name: string;
+  notes: string | null;
+  phone: string | null;
   updated_at: string;
+  video_management_enabled: boolean | null;
+  workspace_id: string;
 }
 
-// Área PJ Interfaces
-export interface CorporatePricing {
+export interface CorporateCost {
+  amount: number;
+  category_id: string | null;
+  cost_type: string;
+  created_at: string | null;
+  end_date: string | null;
+  frequency: string | null;
   id: string;
+  is_active: boolean | null;
+  name: string;
+  notes: string | null;
+  start_date: string | null;
+  updated_at: string | null;
   user_id: string;
-  item_name: string;
-  cost: number;
-  tax_rate: number;
-  margin_percent: number;
-  final_price: number;
-  profit: number;
-  real_margin: number;
-  charged_price?: number;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
+  workspace_id: string | null;
+}
+
+export interface CorporateCostCategory {
+  color: string | null;
+  created_at: string | null;
+  icon: string | null;
+  id: string;
+  name: string;
+  user_id: string;
+  workspace_id: string | null;
 }
 
 export interface CorporateInvestment {
-  id: string;
-  user_id: string;
-  item_name: string;
-  category: InvestmentCategory;
   amount: number;
+  category: string;
+  created_at: string;
+  id: string;
+  item_name: string;
+  monthly_depreciation: number | null;
+  notes: string | null;
   purchase_date: string;
-  useful_life_months?: number;
-  monthly_depreciation?: number;
-  notes?: string;
-  created_at: string;
   updated_at: string;
-}
-
-export interface CorporateTeamMember {
-  id: string;
+  useful_life_months: number | null;
   user_id: string;
-  name: string;
-  role: string;
-  contract_type: ContractType;
-  cost: number;
-  payment_day: number;
-  hours_available: number;
-  clt_benefits: number;
-  notes?: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  workspace_id: string | null;
 }
 
-// Service Plans Interfaces
+export interface PaymentFeeSetting {
+  created_at: string | null;
+  discount_percent: number | null;
+  fee_fixed: number | null;
+  fee_percent: number | null;
+  id: string;
+  installment_ranges: Json | null;
+  is_active: boolean | null;
+  method: string;
+  receiving_days: number | null;
+  updated_at: string | null;
+  user_id: string;
+  workspace_id: string | null;
+}
+
 export interface ServicePlan {
-  id: string;
-  user_id: string;
-  name: string;
-  description?: string;
-  tier: PlanTier;
-  plan_type: PlanType;
   base_cost: number;
+  created_at: string;
+  description: string | null;
   final_price: number;
+  id: string;
+  is_active: boolean;
+  monthly_limit: string | null;
+  name: string;
+  notes: string | null;
+  plan_type: string;
   profit: number;
   profit_margin: number;
-  monthly_limit?: string;
-  is_active: boolean;
-  notes?: string;
-  created_at: string;
+  tier: string;
   updated_at: string;
+  user_id: string;
+  workspace_id: string | null;
 }
 
 export interface ServicePlanItem {
+  created_at: string;
+  custom_price: number | null;
   id: string;
-  user_id: string;
   plan_id: string;
   pricing_id: string;
   quantity: number;
-  custom_price?: number;
-  created_at: string;
+  user_id: string;
+  workspace_id: string | null;
 }
 
-// Payment Fee Settings
-export type PaymentMethod = 'credito' | 'debito' | 'pix' | 'dinheiro' | 'boleto';
-
-export interface PaymentFeeSetting {
-  id: string;
-  user_id: string;
-  method: PaymentMethod;
-  fee_percent: number;
-  fee_fixed: number;
-  discount_percent: number;
-  installment_ranges?: Record<string, number>; // {"1": 2.99, "2-6": 3.49}
-  receiving_days: number;
-  is_active: boolean;
+export interface CorporatePricing {
+  charged_price: number | null;
+  cost: number;
   created_at: string;
+  final_price: number;
+  id: string;
+  item_name: string;
+  margin_percent: number;
+  notes: string | null;
+  profit: number;
+  real_margin: number;
+  tax_rate: number;
   updated_at: string;
-}
-
-export interface PaymentMethodEntry {
-  method: PaymentMethod;
-  value: number;
-  installments?: number;
-  fee?: number;
-}
-
-// Editorial Calendar Types
-export type ContentStatus = 'idea' | 'draft' | 'review' | 'approved' | 'published';
-export type ContentPlatform = 'instagram' | 'tiktok' | 'linkedin' | 'blog' | 'youtube';
-export type ContentTypeEnum = 'post' | 'reel' | 'story' | 'article' | 'video';
-
-export interface EditorialCalendarItem {
-  id: string;
   user_id: string;
-  project_id?: string;
-  title: string;
-  description?: string;
+  workspace_id: string | null;
+}
+
+export interface CorporateTeamMember {
+  clt_benefits: number | null;
+  contract_type: string;
+  cost: number;
+  created_at: string;
+  hours_available: number | null;
+  id: string;
+  is_active: boolean;
+  name: string;
+  notes: string | null;
+  payment_day: number;
+  role: string;
+  updated_at: string;
+  user_id: string;
+  workspace_id: string | null;
+}
+
+export interface Debt {
+  amount: number;
+  category_id: string | null;
+  created_at: string;
   due_date: string;
-  status: ContentStatus;
-  platform: ContentPlatform;
-  content_type: ContentTypeEnum;
-  assigned_to?: string;
-  moodboard_refs?: unknown[];
-  ai_suggestions?: Record<string, unknown>;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface EditorialComment {
   id: string;
-  item_id: string;
-  user_id: string;
-  comment_text: string;
-  created_at: string;
-}
-
-// Purchase Planning Types
-export type PurchasePlanPriority = 'low' | 'medium' | 'high';
-export type PurchasePlanStatus = 'planning' | 'in_progress' | 'completed';
-
-// Catalog Types
-export interface Service {
-  id: string;
-  user_id: string;
+  installment_current: number | null;
+  installment_total: number | null;
   name: string;
-  description?: string;
-  base_cost: number;
-  expected_duration_hours?: number;
-  is_active: boolean;
-  created_at: string;
+  notes: string | null;
+  paid: boolean;
+  type: string;
   updated_at: string;
+  user_category_id: string | null;
+  user_id: string;
 }
 
-export interface ServicePricingDetail {
-  id: string;
-  service_id: string;
-  pricing_model_id: string;
-  base_price?: number;
-  hourly_rate?: number;
-  min_hours?: number;
-  max_hours?: number;
+export interface Expense {
+  amount: number;
+  category_id: string | null;
   created_at: string;
-  updated_at: string;
-}
-
-export interface PurchasePlan {
+  date: string;
+  description: string;
   id: string;
   user_id: string;
+}
+
+export interface Income {
+  amount: number;
+  category_id: string | null;
+  created_at: string;
+  date: string;
+  id: string;
+  income_type: string;
+  source: string;
+  user_category_id: string | null;
+  user_id: string;
+  variable_max_amount: number | null;
+  variable_min_amount: number | null;
+}
+
+export interface Prospect {
+  client_name: string;
+  company_name: string | null;
+  contract_duration: number | null;
+  created_at: string;
+  estimated_value: number;
+  id: string;
+  notes: string | null;
+  payment_installments: number | null;
+  payment_methods: Json | null;
+  payment_type: string | null;
+  plan_id: string | null;
+  project_id: string | null;
+  project_type: string | null;
+  prospection_date: string;
+  status: string;
+  total_fees: number | null;
+  updated_at: string;
+  user_id: string;
+  workspace_id: string | null;
+}
+
+export interface ProspectDocument {
+  created_at: string;
+  document_type_id: string | null;
+  file_name: string;
+  file_path: string;
+  file_size: number | null;
+  id: string;
+  mime_type: string | null;
+  notes: string | null;
+  prospect_id: string;
+  user_id: string;
+  workspace_id: string | null;
+}
+
+export interface DocumentType {
+  color: string | null;
+  created_at: string;
+  id: string;
   name: string;
-  description?: string;
+  user_id: string;
+  workspace_id: string | null;
+}
+
+export interface SalesGoal {
+  created_at: string;
+  current_amount: number;
+  end_date: string;
+  goal_type: string;
+  id: string;
+  project_id: string | null;
+  start_date: string;
   target_amount: number;
-  saved_amount: number;
-  deadline?: string;
-  priority: PurchasePlanPriority;
-  category?: string;
-  status: PurchasePlanStatus;
-  image_url?: string;
-  created_at: string;
+  updated_at: string;
+  user_id: string;
+  workspace_id: string | null;
 }
 
-// Catalog Types - Products
-export interface Product {
+export interface Script {
+  content: string;
+  created_at: string;
+  id: string;
+  platform: string;
+  project_id: string | null;
+  scheduled_date: string;
+  status: string;
+  title: string;
+  updated_at: string;
+  user_id: string;
+  workspace_id: string | null;
+}
+
+export interface UserIncomeCategory {
+  created_at: string;
+  description: string | null;
+  id: string;
+  name: string;
+  updated_at: string;
+  user_id: string;
+}
+
+export interface UserDebtCategory {
+  created_at: string;
+  description: string | null;
+  id: string;
+  name: string;
+  updated_at: string;
+  user_id: string;
+}
+
+export interface Category {
+  color: string;
+  created_at: string;
+  icon: string | null;
+  id: string;
+  is_default: boolean;
+  name: string;
+  type: string;
+  user_id: string;
+}
+
+export interface Savings {
+  amount: number;
+  created_at: string;
+  date: string;
+  description: string;
   id: string;
   user_id: string;
+}
+
+export type Saving = Savings;
+export interface PurchasePlan {
+  category: string | null;
+  created_at: string | null;
+  deadline: string | null;
+  description: string | null;
+  id: string;
+  image_url: string | null;
   name: string;
-  description?: string;
-  sku?: string;
-  cost_price: number;
-  image_url?: string;
-  is_active: boolean;
+  priority: string | null;
+  saved_amount: number | null;
+  status: string | null;
+  target_amount: number;
+  user_id: string;
+}
+
+export interface UserPreference {
+  app_name: string;
+  business_app_name: string | null;
   created_at: string;
+  default_available_hours: number;
+  id: string;
   updated_at: string;
+  user_id: string;
+}
+
+export interface ToolCategory {
+  color: string;
+  created_at: string;
+  id: string;
+  name: string;
+  user_id: string;
+}
+
+export interface UserTool {
+  category_id: string | null;
+  created_at: string;
+  id: string;
+  name: string;
+  url: string;
+  user_id: string;
+  workspace_id: string | null;
+}
+
+export interface Discount {
+  created_at: string | null;
+  end_date: string | null;
+  id: string;
+  is_active: boolean | null;
+  name: string;
+  start_date: string | null;
+  type: string;
+  updated_at: string | null;
+  user_id: string;
+  value: number;
+}
+
+export interface Tax {
+  created_at: string | null;
+  id: string;
+  is_active: boolean | null;
+  name: string;
+  rate: number;
+  updated_at: string | null;
+  user_id: string;
+}
+
+export interface Goal {
+  amount: number;
+  created_at: string;
+  deadline: string;
+  id: string;
+  name: string;
+  type: string;
+  updated_at: string;
+  user_id: string;
+}
+
+export interface Task {
+  actual_hours: number | null;
+  completed_at: string | null;
+  created_at: string;
+  deadline: string | null;
+  deadline_days: number | null;
+  description: string | null;
+  estimated_hours: number | null;
+  id: string;
+  priority: number;
+  project_id: string | null;
+  source_process_step_id: string | null;
+  status: string;
+  title: string;
+  updated_at: string;
+  user_id: string;
+  video_editing_briefing_id: string | null;
+  workspace_id: string | null;
+}
+
+export interface TimeBlock {
+  color: string | null;
+  completed: boolean;
+  created_at: string;
+  date: string;
+  end_time: string;
+  id: string;
+  start_time: string;
+  title: string;
+  type: string;
+  user_id: string;
+}
+
+export interface CustomTimeBlockType {
+  color: string | null;
+  created_at: string | null;
+  id: string;
+  name: string;
+  user_id: string;
+}
+
+export interface Product {
+  cost_price: number | null;
+  created_at: string | null;
+  description: string | null;
+  id: string;
+  image_url: string | null;
+  is_active: boolean | null;
+  name: string;
+  sku: string | null;
+  updated_at: string | null;
+  user_id: string;
 }
 
 export interface ProductPricingDetail {
+  base_price: number | null;
+  created_at: string | null;
   id: string;
-  product_id: string;
+  max_units: number | null;
+  min_units: number | null;
   pricing_model_id: string;
-  base_price?: number;
-  min_units?: number;
-  max_units?: number;
-  unit_name?: string;
-  created_at: string;
-  updated_at: string;
+  product_id: string;
+  unit_name: string | null;
+  updated_at: string | null;
 }
+
+export interface Service {
+  base_cost: number | null;
+  created_at: string | null;
+  description: string | null;
+  expected_duration_hours: number | null;
+  id: string;
+  is_active: boolean | null;
+  name: string;
+  updated_at: string | null;
+  user_id: string;
+  workspace_id: string | null;
+}
+
+export interface ServicePricingDetail {
+  base_price: number | null;
+  created_at: string | null;
+  hourly_rate: number | null;
+  id: string;
+  max_hours: number | null;
+  min_hours: number | null;
+  pricing_model_id: string;
+  service_id: string;
+  updated_at: string | null;
+}
+
+export type CorporateCostType = string;
+export type CostFrequency = string;
+export type InvestmentCategory = string;
+export type PaymentMethod = string;
+export type PlanTier = string;
+export type PlanType = string;
+export type ContractType = string;
+export type PaymentType = string;
+export type ProspectStatus = string;
+export type SalesGoalType = string;
+export type ScriptPlatform = string;
+export type ScriptStatus = string;
+export type PaymentMethodEntry = { method: string; value: number; fee?: number; installments?: number };
+export type DebtType = string;
+export type IncomeType = string;
+export type PurchasePlanPriority = string;
+export type PurchasePlanStatus = string;

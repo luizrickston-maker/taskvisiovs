@@ -39,7 +39,7 @@ export const BriefingBlock3 = ({ items, onChange, readOnly = false }: BriefingBl
     onChange(newItems);
   };
 
-  const updateItem = (index: number, field: keyof BriefingVideoItem, value: any) => {
+  const updateItem = (index: number, field: keyof BriefingVideoItem, value: string | number | null) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     onChange(newItems);

@@ -11,7 +11,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
-import { BriefingWithDetails } from "@/types/briefing";
+
 import { BriefingBlockWrapper } from "@/components/briefings/BriefingBlockWrapper";
 import { BriefingBlock1 } from "@/components/briefings/BriefingBlock1";
 import { BriefingBlock2 } from "@/components/briefings/BriefingBlock2";
@@ -19,6 +19,16 @@ import { BriefingBlock3 } from "@/components/briefings/BriefingBlock3";
 import { BriefingBlock4 } from "@/components/briefings/BriefingBlock4";
 import { BriefingBlock5 } from "@/components/briefings/BriefingBlock5";
 import { BriefingBlock6 } from "@/components/briefings/BriefingBlock6";
+
+import { 
+  BriefingWithDetails,
+  BriefingResponseBlock1,
+  BriefingResponseBlock2,
+  BriefingResponseBlock4,
+  BriefingResponseBlock5,
+  BriefingResponseBlock6,
+  BriefingVideoItem
+} from "@/types/briefing";
 
 export default function BriefingFillPage() {
   const [searchParams] = useSearchParams();
@@ -31,12 +41,12 @@ export default function BriefingFillPage() {
   const [briefing, setBriefing] = useState<BriefingWithDetails | null>(null);
 
   // Form States
-  const [block1, setBlock1] = useState<any>({});
-  const [block2, setBlock2] = useState<any>({});
-  const [videoItems, setVideoItems] = useState<any[]>([]);
-  const [block4, setBlock4] = useState<any>({});
-  const [block5, setBlock5] = useState<any>({});
-  const [block6, setBlock6] = useState<any>({});
+  const [block1, setBlock1] = useState<Partial<BriefingResponseBlock1>>({});
+  const [block2, setBlock2] = useState<Partial<BriefingResponseBlock2>>({});
+  const [videoItems, setVideoItems] = useState<BriefingVideoItem[]>([]);
+  const [block4, setBlock4] = useState<Partial<BriefingResponseBlock4>>({});
+  const [block5, setBlock5] = useState<Partial<BriefingResponseBlock5>>({});
+  const [block6, setBlock6] = useState<Partial<BriefingResponseBlock6>>({});
 
   useEffect(() => {
     const fetchBriefing = async () => {
@@ -67,7 +77,7 @@ export default function BriefingFillPage() {
         
         // Map data
         briefingData.responses.forEach((resp) => {
-          const blockData = resp.response_data;
+          const blockData = resp.response_data as any;
           if (resp.block_name === 'identificacao') setBlock1(blockData);
           if (resp.block_name === 'estrutura') setBlock2(blockData);
           if (resp.block_name === 'referencias') setBlock4(blockData);
@@ -75,8 +85,9 @@ export default function BriefingFillPage() {
           if (resp.block_name === 'prazos') setBlock6(blockData);
         });
         setVideoItems(briefingData.video_items.sort((a, b) => a.item_index - b.item_index));
-      } catch (err: any) {
-        toast.error(err.message);
+      } catch (err: unknown) {
+        const error = err as Error;
+        toast.error(error.message);
       } finally {
         setLoading(false);
       }
@@ -121,7 +132,7 @@ export default function BriefingFillPage() {
       await supabase.from('briefing_video_items').delete().eq('briefing_id', briefing.id);
       if (videoItems.length > 0) {
         await supabase.from('briefing_video_items').insert(
-          videoItems.map((v, i) => ({ ...v, briefing_id: briefing.id, item_index: i + 1 }))
+          videoItems.map((v, i) => ({ ...v, briefing_id: (briefing as BriefingWithDetails).id, item_index: i + 1 }))
         );
       }
     } catch (err) {
@@ -152,8 +163,9 @@ export default function BriefingFillPage() {
       
       toast.success("Briefing enviado com sucesso!");
       setBriefing({ ...briefing, status: 'in_review' });
-    } catch (err: any) {
-      toast.error("Erro ao enviar: " + err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error("Erro ao enviar: " + error.message);
     } finally {
       setSubmitting(false);
     }

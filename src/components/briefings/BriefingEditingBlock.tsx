@@ -11,7 +11,7 @@ interface BriefingEditingBlockProps {
 }
 
 export function BriefingEditingBlock({ data, onChange }: BriefingEditingBlockProps) {
-  const updateField = (field: keyof EditingDetails, value: any) => {
+  const updateField = (field: keyof EditingDetails, value: string | string[] | boolean | undefined) => {
     onChange({ ...data, [field]: value });
   };
 

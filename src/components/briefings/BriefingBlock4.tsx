@@ -11,7 +11,7 @@ interface BriefingBlock4Props {
 }
 
 export const BriefingBlock4 = ({ data, onChange, readOnly = false }: BriefingBlock4Props) => {
-  const handleChange = (field: keyof BriefingResponseBlock4, value: any) => {
+  const handleChange = (field: keyof BriefingResponseBlock4, value: string | string[] | boolean) => {
     onChange({ ...data, [field]: value });
   };
 
