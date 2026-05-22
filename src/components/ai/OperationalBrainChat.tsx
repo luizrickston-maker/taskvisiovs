@@ -826,7 +826,6 @@ export function OperationalBrainChat() {
           )}
         </div>
       )}
-      )}
     </>
   );
 }
