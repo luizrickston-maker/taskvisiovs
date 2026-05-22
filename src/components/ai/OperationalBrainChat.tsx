@@ -438,11 +438,20 @@ export function OperationalBrainChat() {
     <div
       className={cn(
         "fixed z-50 bg-card/95 backdrop-blur-md border border-border/50 rounded-xl shadow-2xl transition-all duration-300 flex flex-col",
+        !isOpen ? "bottom-20 right-4 w-12 h-12 md:bottom-6 md:right-6 md:w-14 md:h-14 items-center justify-center p-0 rounded-full cursor-pointer hover:scale-110 active:scale-95" :
         isMinimized
           ? "bottom-20 right-4 w-64 h-14 md:bottom-6 md:right-6 md:w-72"
           : "bottom-20 right-4 left-4 h-[70vh] md:bottom-6 md:right-6 md:left-auto md:w-[450px] md:h-[650px] md:max-h-[85vh]"
       )}
+      onClick={() => !isOpen && setIsOpen(true)}
     >
+      {!isOpen && (
+        <div className="w-full h-full gradient-primary rounded-full flex items-center justify-center text-primary-foreground shadow-lg">
+          <Brain className="h-6 w-6 md:h-7 md:w-7" />
+        </div>
+      )}
+      {isOpen && (
+        <>
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-border/50 shrink-0">
         <div className="flex items-center gap-2 overflow-hidden">
@@ -548,7 +557,10 @@ export function OperationalBrainChat() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => setIsOpen(false)}
+            onClick={() => {
+              setIsOpen(false);
+              startNewChat();
+            }}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -799,6 +811,8 @@ export function OperationalBrainChat() {
               </div>
             </>
           )}
+        </>
+      )}
         </>
       )}
     </div>
