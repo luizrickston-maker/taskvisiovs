@@ -254,7 +254,7 @@ export default function BriefingFillPage() {
           </BriefingBlockWrapper>
 
           <BriefingBlockWrapper value="b3" number={3} title="Planejamento dos Vídeos (Temas)">
-            <BriefingBlock3 items={videoItems} onChange={setVideoItems} />
+            <BriefingBlock3 items={videoItems} onChange={(items) => setVideoItems(items as BriefingVideoItem[])} />
           </BriefingBlockWrapper>
 
           <BriefingBlockWrapper value="b4" number={4} title="Referências e Identidade Visual">

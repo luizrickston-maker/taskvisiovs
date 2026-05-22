@@ -446,6 +446,9 @@ export interface Task {
   user_id: string;
   video_editing_briefing_id: string | null;
   workspace_id: string | null;
+  completed: boolean;
+  type: string;
+  scheduled_date: string | null;
 }
 
 export interface TimeBlock {
