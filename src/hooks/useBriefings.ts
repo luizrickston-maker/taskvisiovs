@@ -20,9 +20,10 @@ export const useBriefings = (workspaceId?: string) => {
             client:clients(name, company_name)
           `)
           .eq('workspace_id', workspaceId)
-          .order('created_at', { ascending: false }),
+          .order('created_at', { ascending: false }) as any,
         "Erro ao carregar briefings"
       );
+
       
       return (data || []) as any as Briefing[];
     },
