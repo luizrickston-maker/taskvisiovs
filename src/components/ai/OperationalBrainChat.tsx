@@ -830,6 +830,3 @@ export function OperationalBrainChat() {
     </>
   );
 }
-
-
-
