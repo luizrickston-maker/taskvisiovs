@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, CheckCircle2, Clock, ListTodo, Trash2, Pen, Filter, Video } from 'lucide-react';
+import { Plus, CheckCircle2, Clock, ListTodo, Trash2, Pen, Filter, Video, Calendar as CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -190,6 +190,12 @@ export default function ProjectTasksSection() {
                       {project && (
                         <Badge variant="outline" className="text-xs">
                           {project.project}
+                        </Badge>
+                      )}
+                      {task.deadline && (
+                        <Badge variant="outline" className="text-[10px] gap-1 py-0 h-5">
+                          <CalendarIcon className="w-3 h-3" />
+                          {format(parseISO(task.deadline), "dd/MM", { locale: ptBR })}
                         </Badge>
                       )}
                     </div>
