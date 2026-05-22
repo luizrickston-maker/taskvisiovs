@@ -100,7 +100,7 @@ export function ClientProjectForm({ open, onOpenChange, project, prospectData }:
 
     const validation = projectSchema.safeParse(formData);
     if (!validation.success) {
-      toast.error(validation.error.errors[0].message);
+      toast.error((validation.error as any).errors[0].message);
       return;
     }
 

@@ -96,7 +96,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
 
     const validation = taskSchema.safeParse(formData);
     if (!validation.success) {
-      toast.error(validation.error.errors[0].message);
+      toast.error((validation.error as any).errors[0].message);
       return;
     }
 
