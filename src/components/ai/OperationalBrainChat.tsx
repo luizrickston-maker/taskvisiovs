@@ -582,6 +582,7 @@ export function OperationalBrainChat() {
       </div>
 
       {!isMinimized && (
+        <>
           {showHistory ? (
             /* History List */
             <ScrollArea className="flex-1 p-3">
@@ -640,7 +641,6 @@ export function OperationalBrainChat() {
             </ScrollArea>
           ) : (
             /* Main Chat Area */
-            <>
             <>
               <ScrollArea className="flex-1 p-3" ref={scrollRef}>
                 {messages.length === 0 ? (
@@ -823,8 +823,10 @@ export function OperationalBrainChat() {
                 </form>
               </div>
             </>
-            </>
           )}
         </div>
       )}
+      )}
+    </>
+  );
 }
