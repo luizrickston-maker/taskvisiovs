@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -97,7 +97,7 @@ export default function WorkspaceDetailsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editWorkspace, setEditWorkspace] = useState({ name: '', plan: '' });
 
-  const { data: workspace, isLoading: loadingWs } = useQuery({
+  const { data: workspace, isLoading: loadingWs } = useQuery<Workspace>({
     queryKey: ['super-admin-workspace', id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -109,10 +109,13 @@ export default function WorkspaceDetailsPage() {
       return data as Workspace;
     },
     enabled: !!id,
-    onSuccess: (data) => {
-      setEditWorkspace({ name: data.name, plan: data.plan });
-    }
   });
+
+  useEffect(() => {
+    if (workspace) {
+      setEditWorkspace({ name: workspace.name, plan: workspace.plan });
+    }
+  }, [workspace]);
 
   const { data: members = [], isLoading: loadingMembers } = useQuery({
     queryKey: ['super-admin-ws-members', id],
