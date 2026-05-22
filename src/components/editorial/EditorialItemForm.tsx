@@ -45,7 +45,7 @@ const formSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   description: z.string().optional(),
   content_link: z.string().url('URL inválida').optional().or(z.literal('')),
-  due_date: z.date({ required_error: 'Data é obrigatória' }),
+  due_date: z.date().refine((val) => val !== null, { message: "Data é obrigatória" }),
   platform: z.enum(['instagram', 'tiktok', 'linkedin', 'blog', 'youtube']),
   content_type: z.enum(['post', 'reel', 'story', 'article', 'video']),
   status: z.enum(['idea', 'draft', 'review', 'approved', 'published']),
