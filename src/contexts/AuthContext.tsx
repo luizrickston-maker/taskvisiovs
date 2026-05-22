@@ -35,7 +35,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useAuthRefreshCoordinator();
 
   useEffect(() => {
-    // Flag para evitar múltiplas chamadas iniciais
     let initialized = false;
 
     const {
@@ -47,20 +46,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session?.user?.email ?? "no-session"
       );
 
-      // Tratamento de SIGNED_OUT inesperado (comum em Safari/iPad após 429)
+      // Tratamento de SIGNED_OUT inesperado (comum em Safari/iPad/Mobile)
       if (event === "SIGNED_OUT" && !manualSignOutRef.current) {
         if (signedOutRecoveryInFlightRef.current) return;
 
+        console.warn("[Auth] SIGNED_OUT detectado. Verificando persistência da sessão...");
         signedOutRecoveryInFlightRef.current = true;
-        setLoading(true);
-
-        // Espera um pouco para o Supabase/Rede estabilizar
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        
+        // Pequeno delay para permitir que o armazenamento local (localStorage/indexedDB) sincronize
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const { data: { session: recovered } } = await supabase.auth.getSession();
         
         if (recovered) {
-          console.warn("[Auth] Sessão recuperada após SIGNED_OUT falso");
+          console.warn("[Auth] Sessão persistente recuperada. Ignorando evento SIGNED_OUT falso.");
           setSession(recovered);
           setUser(recovered.user);
           setLoading(false);
@@ -68,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         
-        console.error("[Auth] Logout confirmado");
+        console.error("[Auth] Sessão realmente encerrada.");
         setSession(null);
         setUser(null);
         resetStore();
@@ -81,9 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session.user);
         
-        // Force business mode for specific user
         if (session.user?.email === 'chapadadigitalbr@gmail.com') {
-          console.log("[Auth] Forcing business mode for user");
           setMode('business');
         }
       } else if (event === "SIGNED_OUT") {
@@ -95,25 +92,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Carga inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!initialized) {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Force business mode for specific user on initial load
-        if (session?.user?.email === 'chapadadigitalbr@gmail.com') {
-          console.log("[Auth] Forcing business mode on initialization");
-          setMode('business');
+    // Carga inicial com retry para dispositivos móveis lentos
+    const initSession = async (retries = 2) => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!initialized) {
+          if (session) {
+            setSession(session);
+            setUser(session.user);
+            if (session.user?.email === 'chapadadigitalbr@gmail.com') {
+              setMode('business');
+            }
+          }
+          setLoading(false);
+          initialized = true;
         }
-        
-        setLoading(false);
-        initialized = true;
+      } catch (err) {
+        if (retries > 0) {
+          console.warn(`[Auth] Erro na inicialização, tentando novamente... (${retries})`);
+          setTimeout(() => initSession(retries - 1), 1000);
+        } else {
+          setLoading(false);
+        }
       }
-    });
+    };
+
+    initSession();
 
     return () => subscription.unsubscribe();
-  }, [resetStore]);
+  }, [resetStore, setMode]);
 
   const signUp: AuthContextValue["signUp"] = async (email, password) => {
     const redirectUrl = `${window.location.origin}/auth/callback`;

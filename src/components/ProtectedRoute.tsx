@@ -29,16 +29,19 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [authLoading]);
 
-  if (!authContext || authLoading || isInitialCheck) {
+  if (!authContext || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-muted-foreground text-sm">Inicializando...</p>
+          <p className="text-muted-foreground text-sm">Verificando acesso...</p>
         </div>
       </div>
     );
   }
+
+  // Removemos o timer isInitialCheck que causava delay visual artificial e possível race condition
+
 
   const { user } = authContext;
 
