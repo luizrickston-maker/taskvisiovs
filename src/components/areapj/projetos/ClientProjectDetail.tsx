@@ -39,6 +39,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ClientTaskForm } from './ClientTaskForm';
 import { CreateVideoBriefingButton } from './CreateVideoBriefingButton';
+import ProjectCalendar from '@/components/projetos/ProjectCalendar';
 
 interface ClientProjectDetailProps {
   open: boolean;
@@ -356,11 +357,12 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
             </div>
             
             <Tabs defaultValue="all" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="all">Todas ({tasks.length})</TabsTrigger>
                 <TabsTrigger value="todo">A Fazer ({todoTasks.length})</TabsTrigger>
                 <TabsTrigger value="progress">Andamento ({inProgressTasks.length})</TabsTrigger>
                 <TabsTrigger value="done">Concluídas ({doneTasks.length})</TabsTrigger>
+                <TabsTrigger value="calendar">Calendário</TabsTrigger>
               </TabsList>
               
               <TabsContent value="all" className="space-y-2 mt-4">
@@ -401,6 +403,15 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
                 ) : (
                   doneTasks.map(renderTaskCard)
                 )}
+              </TabsContent>
+              <TabsContent value="calendar" className="mt-4">
+                <ProjectCalendar 
+                  tasks={tasks} 
+                  onTaskClick={(task) => {
+                    setEditingTask(task);
+                    setTaskFormOpen(true);
+                  }}
+                />
               </TabsContent>
             </Tabs>
           </div>

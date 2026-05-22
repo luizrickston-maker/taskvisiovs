@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Video } from 'lucide-react';
+import { Video, Calendar as CalendarIcon, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -41,6 +46,7 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
   const [projectId, setProjectId] = useState<string>('');
   const [priority, setPriority] = useState('3');
   const [status, setStatus] = useState<ProjectTaskStatus>('todo');
+  const [deadline, setDeadline] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -50,6 +56,7 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
       setProjectId(editTask.project_id || '');
       setPriority(String(editTask.priority));
       setStatus(editTask.status);
+      setDeadline(editTask.deadline || '');
     } else {
       resetForm();
     }
@@ -61,6 +68,7 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
     setProjectId('');
     setPriority('3');
     setStatus('todo');
+    setDeadline('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,6 +88,7 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
       project_id: projectId || null,
       priority: Number(priority),
       status,
+      deadline: deadline || null,
     };
 
     if (editTask) {
@@ -199,6 +208,48 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Prazo</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !deadline && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {deadline ? (
+                    format(parseISO(deadline), "dd 'de' MMMM, yyyy", { locale: ptBR })
+                  ) : (
+                    "Selecione uma data"
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={deadline ? parseISO(deadline) : undefined}
+                  onSelect={(date) => setDeadline(date ? format(date, 'yyyy-MM-dd') : '')}
+                  locale={ptBR}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            {deadline && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setDeadline('')}
+                className="h-8 px-2 text-xs text-muted-foreground"
+              >
+                <X className="w-3 h-3 mr-1" />
+                Limpar prazo
+              </Button>
+            )}
           </div>
 
           <div className="flex flex-col gap-2 pt-2">
