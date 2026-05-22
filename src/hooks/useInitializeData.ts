@@ -36,7 +36,10 @@ export function useInitializeData(userId: string | undefined) {
         supabase.from('expenses').select('*').order('date', { ascending: false }).limit(50),
         supabase.from('goals').select('*').order('deadline', { ascending: true }),
         supabase.from('user_preferences').select('*').maybeSingle(),
-      ]);
+      ]).catch(err => {
+        console.error("Erro crítico ao carregar dados iniciais:", err);
+        return [ {data: null}, {data: null}, {data: null}, {data: null}, {data: null} ];
+      });
 
       if (categoriesRes.data) store.setCategories(categoriesRes.data as Category[]);
       if (incomesRes.data) store.setIncomes(incomesRes.data as Income[]);
