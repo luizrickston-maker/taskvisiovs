@@ -463,12 +463,8 @@ export function OperationalBrainChat() {
               : "bottom-20 right-4 left-4 h-[70vh] md:bottom-6 md:right-6 md:left-auto md:w-[450px] md:h-[650px] md:max-h-[85vh]"
           )}
         >
-          {/* Header */}
           <div className="flex items-center justify-between p-3 border-b border-border/50 shrink-0">
             <div className="flex items-center gap-2 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-border/50 shrink-0">
-        <div className="flex items-center gap-2 overflow-hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="p-0 h-auto hover:bg-transparent overflow-hidden">
