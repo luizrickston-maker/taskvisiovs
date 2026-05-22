@@ -16,7 +16,7 @@ interface ClientVideoSettingsCardProps {
   client: {
     id: string;
     video_management_enabled: boolean | null;
-    default_editing_profile: any;
+    default_editing_profile: EditingDetails;
   };
 }
 
@@ -46,7 +46,7 @@ export function ClientVideoSettingsCard({ client }: ClientVideoSettingsCardProps
       queryClient.invalidateQueries({ queryKey: ['client', client.id] });
       toast.success('Configurações de vídeo atualizadas!');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Erro ao salvar: ' + error.message);
     },
   });
@@ -58,7 +58,7 @@ export function ClientVideoSettingsCard({ client }: ClientVideoSettingsCardProps
     });
   };
 
-  const updateProfile = (field: keyof EditingDetails, value: any) => {
+  const updateProfile = (field: keyof EditingDetails, value: string | string[] | boolean | undefined) => {
     setProfile(prev => ({ ...prev, [field]: value }));
   };
 

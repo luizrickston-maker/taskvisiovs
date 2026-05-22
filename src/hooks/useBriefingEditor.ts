@@ -64,7 +64,7 @@ export const useBriefingEditor = (briefingId?: string) => {
   });
 
   const updateResponse = useMutation({
-    mutationFn: async ({ block_name, response_data, briefingId: idOverride }: { block_name: string, response_data: any, briefingId?: string }) => {
+    mutationFn: async ({ block_name, response_data, briefingId: idOverride }: { block_name: string, response_data: Json, briefingId?: string }) => {
       const targetId = idOverride || briefingId;
       if (!targetId) throw new Error("ID do briefing é necessário para salvar respostas");
       
@@ -101,7 +101,7 @@ export const useBriefingEditor = (briefingId?: string) => {
       // Step 2: Insert new items
       if (items.length > 0) {
         const itemsToInsert = items.map((item, index) => {
-          const { id, created_at, updated_at, briefing_id: bId, ...rest } = item as any;
+          const { id, created_at, updated_at, briefing_id: bId, ...rest } = item as BriefingVideoItem;
           return {
             ...rest,
             briefing_id: targetId,

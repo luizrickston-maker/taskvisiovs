@@ -34,7 +34,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { VideoEditingBriefing, useVideoEditingBriefing, useUpdateVideoEditingBriefing } from "@/hooks/useVideoEditingBriefing";
+import { VideoEditingBriefing, useVideoEditingBriefing, useUpdateVideoEditingBriefing, VideoBriefingStatus } from "@/hooks/useVideoEditingBriefing";
 
 export default function VideoBriefingViewPage() {
   const [searchParams] = useSearchParams();
@@ -82,9 +82,10 @@ export default function VideoBriefingViewPage() {
         } else {
           throw new Error("Acesso não autorizado");
         }
-      } catch (err: any) {
-        console.error("Error fetching briefing:", err);
-        toast.error(err.message);
+      } catch (err: unknown) {
+        const error = err as Error;
+        console.error("Error fetching briefing:", error);
+        toast.error(error.message);
       } finally {
         setLoading(false);
       }
@@ -93,11 +94,11 @@ export default function VideoBriefingViewPage() {
     fetchBriefing();
   }, [token, taskId]);
 
-  const handleUpdateStatus = async (newStatus: string, observations?: string) => {
+  const handleUpdateStatus = async (newStatus: VideoBriefingStatus, observations?: string) => {
     if (!briefing?.id) return;
     setSubmitting(true);
     try {
-      const updateData: any = { status: newStatus };
+      const updateData: Partial<VideoEditingBriefing> = { status: newStatus };
       if (observations) {
         updateData.observations = (briefing.observations || "") + "\n\n--- Mensagem do Editor ---\n" + (observations || "");
       }
@@ -107,8 +108,9 @@ export default function VideoBriefingViewPage() {
       toast.success(`Status atualizado para ${newStatus}`);
       setShowRevisionForm(false);
       setRevisionMessage("");
-    } catch (err: any) {
-      toast.error("Erro ao atualizar status: " + err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error("Erro ao atualizar status: " + error.message);
     } finally {
       setSubmitting(false);
     }
