@@ -27,7 +27,6 @@ const quickIncomeSchema = z.object({
 
 type QuickIncomeValues = z.infer<typeof quickIncomeSchema>;
 
-import type { Income } from "@/types/database";
 
 export function QuickIncomeForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,12 +72,12 @@ export function QuickIncomeForm() {
       income_type: "fixed",
     };
 
-    const data = await handleSupabaseError(
+    const data = await handleSupabaseError<any>(
       supabase
         .from("incomes")
         .insert(newIncome as any)
         .select()
-        .single(),
+        .single() as any,
       "Erro ao adicionar entrada"
     );
 
@@ -92,8 +91,8 @@ export function QuickIncomeForm() {
   };
 
   const handleDelete = async (id: string) => {
-    const success = await handleSupabaseError(
-      supabase.from('incomes').delete().eq('id', id),
+    const success = await handleSupabaseError<any>(
+      supabase.from('incomes').delete().eq('id', id) as any,
       'Erro ao remover entrada'
     );
 
