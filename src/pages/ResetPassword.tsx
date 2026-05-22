@@ -43,7 +43,7 @@ export default function ResetPassword() {
       passwordSchema.parse(password);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
+        toast.error((error as any).errors[0].message);
       }
       return;
     }

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Plus, TrendingUp, Trash2 } from "lucide-react";
 import { format, isToday, parseISO } from "date-fns";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,75 +14,87 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/currency";
+import { handleSupabaseError } from "@/lib/error-handler";
 import type { Income } from "@/types/database";
 
+const quickIncomeSchema = z.object({
+  source: z.string().min(1, "Fonte é obrigatória").max(100, "Fonte muito longa"),
+  amount: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    message: "Valor deve ser maior que zero",
+  }),
+  categoryId: z.string().optional(),
+});
+
+type QuickIncomeValues = z.infer<typeof quickIncomeSchema>;
+
 export function QuickIncomeForm() {
-  const [source, setSource] = useState("");
-  const [amount, setAmount] = useState("");
-  const [categoryId, setCategoryId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors }
+  } = useForm<QuickIncomeValues>({
+    resolver: zodResolver(quickIncomeSchema),
+    defaultValues: {
+      source: "",
+      amount: "",
+      categoryId: "",
+    }
+  });
+
+  const categoryId = watch("categoryId");
   const { user } = useAuthContext();
   const { incomes = [], categories = [], addIncome, deleteIncome } = useAppStore();
 
   const incomeCategories = categories.filter((c) => c.type === "income");
   const todayIncomes = incomes.filter((i) => isToday(parseISO(i.date)));
-
   const todayTotal = todayIncomes.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (values: QuickIncomeValues) => {
     if (!user) return;
-
-    const trimmedSource = source.trim();
-    if (!trimmedSource) {
-      toast.error("Fonte é obrigatória");
-      return;
-    }
-
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      toast.error("Valor inválido");
-      return;
-    }
 
     setIsSubmitting(true);
 
     const newIncome = {
       user_id: user.id,
-      source: trimmedSource,
-      amount: numAmount,
+      source: values.source.trim(),
+      amount: parseFloat(values.amount),
       date: format(new Date(), "yyyy-MM-dd"),
-      category_id: categoryId || null,
+      category_id: values.categoryId || null,
       income_type: "fixed",
     };
 
-    const { data, error } = await supabase
-      .from("incomes")
-      .insert(newIncome as any)
-      .select()
-      .single();
+    const data = await handleSupabaseError<any>(
+      supabase
+        .from("incomes")
+        .insert(newIncome as any)
+        .select()
+        .single() as any,
+      "Erro ao adicionar entrada"
+    );
 
     setIsSubmitting(false);
 
-    if (error) {
-      toast.error("Erro ao adicionar entrada");
-    } else {
+    if (data) {
       addIncome(data as Income);
-      setSource("");
-      setAmount("");
-      setCategoryId("");
+      reset();
       toast.success("Entrada adicionada!");
     }
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('incomes').delete().eq('id', id);
+    const success = await handleSupabaseError<any>(
+      supabase.from('incomes').delete().eq('id', id) as any,
+      'Erro ao remover entrada'
+    );
 
-    if (error) {
-      toast.error('Erro ao remover entrada');
-    } else {
+    if (success !== null) {
       deleteIncome(id);
+      toast.success("Entrada removida");
     }
   };
 
@@ -100,46 +115,58 @@ export function QuickIncomeForm() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <form onSubmit={handleSubmit} className="flex gap-2" aria-label="Adicionar entrada rápida">
-          <Input
-            placeholder="Fonte"
-            value={source}
-            onChange={(e) => setSource(e.target.value)}
-            className="flex-1"
-            aria-label="Fonte da entrada"
-          />
-          <Input
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="Valor"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-24"
-            aria-label="Valor da entrada"
-          />
-          <Select value={categoryId} onValueChange={setCategoryId}>
-            <SelectTrigger className="w-32" aria-label="Selecionar categoria">
-              <SelectValue placeholder="Categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              {incomeCategories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: cat.color }}
-                      aria-hidden="true"
-                    />
-                    {cat.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button type="submit" size="icon" disabled={isSubmitting} aria-label="Adicionar entrada">
-            <Plus className="w-4 h-4" aria-hidden="true" />
-          </Button>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2" aria-label="Adicionar entrada rápida">
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Input
+                placeholder="Fonte"
+                {...register("source")}
+                className={errors.source ? "border-destructive" : ""}
+                aria-label="Fonte da entrada"
+              />
+            </div>
+            <div className="w-24">
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Valor"
+                {...register("amount")}
+                className={errors.amount ? "border-destructive" : ""}
+                aria-label="Valor da entrada"
+              />
+            </div>
+            <Select 
+              value={categoryId} 
+              onValueChange={(val) => setValue("categoryId", val)}
+            >
+              <SelectTrigger className="w-32" aria-label="Selecionar categoria">
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {incomeCategories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: cat.color }}
+                        aria-hidden="true"
+                      />
+                      {cat.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button type="submit" size="icon" disabled={isSubmitting} aria-label="Adicionar entrada">
+              <Plus className="w-4 h-4" aria-hidden="true" />
+            </Button>
+          </div>
+          {(errors.source || errors.amount) && (
+            <p className="text-[10px] text-destructive font-medium px-1">
+              {errors.source?.message || errors.amount?.message}
+            </p>
+          )}
         </form>
 
         <ScrollArea className="h-[180px]">
