@@ -1,7 +1,7 @@
 import { Json } from "./supabase/types";
 
-export type ProjectStatus = 'todo' | 'progress' | 'blocked' | 'done' | 'in_progress' | 'completed';
-export type ProjectTaskStatus = 'todo' | 'progress' | 'blocked' | 'done' | 'in_progress' | 'completed';
+export type ProjectStatus = "todo" | "progress" | "blocked" | "done" | "in_progress" | "completed";
+export type ProjectTaskStatus = "todo" | "progress" | "blocked" | "done" | "in_progress" | "completed";
 
 export interface Project {
   client_name: string | null;
@@ -416,16 +416,16 @@ export interface Tax {
   user_id: string;
 }
 
-export type CorporateCostType = "fixed" | "variable";
-export type CostFrequency = "monthly" | "yearly" | "once";
-export type InvestmentCategory = "equipment" | "software" | "marketing" | "other";
-export type PaymentMethod = "credit_card" | "bank_transfer" | "pix" | "cash";
-export type PlanTier = "basic" | "pro" | "enterprise";
-export type PlanType = "subscription" | "one_time";
-export type ContractType = "clt" | "pj" | "freelance";
-export type PaymentType = "unique" | "recurring";
-export type ProspectStatus = "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "closed_won" | "closed_lost";
-export type SalesGoalType = "revenue" | "units" | "clients";
-export type ScriptPlatform = "youtube" | "instagram" | "tiktok" | "other";
-export type ScriptStatus = "draft" | "writing" | "review" | "approved" | "filmed" | "editing" | "published";
-export type PaymentMethodEntry = { method: PaymentMethod; value: number };
+export type CorporateCostType = "recorrente" | "fixo" | "pontual";
+export type CostFrequency = "mensal" | "semanal" | "anual" | "diario" | "pontual";
+export type InvestmentCategory = "equipamento" | "mobilia" | "outro" | "software" | "marketing";
+export type PaymentMethod = "credito" | "debito" | "dinheiro" | "boleto" | "pix";
+export type PlanTier = "bronze" | "silver" | "gold" | "diamond" | "pro" | "enterprise";
+export type PlanType = "recorrente" | "pontual";
+export type ContractType = "clt" | "pj" | "freelancer" | "freelance";
+export type PaymentType = "recorrente" | "pontual";
+export type ProspectStatus = "novo" | "em_negociacao" | "proposta_enviada" | "fechado" | "perdido";
+export type SalesGoalType = "faturamento" | "unidades" | "clientes";
+export type ScriptPlatform = "youtube" | "instagram" | "tiktok" | "outros" | "other";
+export type ScriptStatus = "rascunho" | "escrevendo" | "revisao" | "aprovado" | "gravado" | "editando" | "publicado";
+export type PaymentMethodEntry = { method: PaymentMethod; value: number; fee?: number };
