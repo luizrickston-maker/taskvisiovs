@@ -69,7 +69,7 @@ export function useCreateProcessStep() {
       description?: string;
       estimated_time?: string;
       responsible_role?: string;
-      support_links?: any;
+      support_links?: { label: string; url: string; icon?: string }[] | null;
     }) => {
       const { data, error } = await supabase.from('process_steps').insert(step).select().single();
       if (error) throw error;
