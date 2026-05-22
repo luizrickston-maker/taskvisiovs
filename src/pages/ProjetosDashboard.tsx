@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, ListTodo, Loader2, Ban, CheckCircle2, FolderKanban, LayoutGrid, ClipboardList } from 'lucide-react';
+import { Plus, ListTodo, Loader2, Ban, CheckCircle2, FolderKanban, LayoutGrid, ClipboardList, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,9 @@ import KanbanColumn from '@/components/projetos/KanbanColumn';
 import ProjectForm from '@/components/projetos/ProjectForm';
 import CategoryManager from '@/components/projetos/CategoryManager';
 import ProjectTasksSection from '@/components/projetos/ProjectTasksSection';
-import type { Project, ProjectStatus } from '@/types/database';
+import ProjectCalendar from '@/components/projetos/ProjectCalendar';
+import ProjectTaskForm from '@/components/projetos/ProjectTaskForm';
+import type { Project, ProjectStatus, ProjectTask } from '@/types/database';
 
 const columns: { status: ProjectStatus; title: string; icon: typeof ListTodo; color: string }[] = [
   { status: 'todo', title: 'A Fazer', icon: ListTodo, color: 'text-primary' },
@@ -22,10 +24,12 @@ const columns: { status: ProjectStatus; title: string; icon: typeof ListTodo; co
 ];
 
 export default function ProjetosDashboard() {
-  const { projects, projectCategories, updateProject, deleteProject } = useAppStore();
+  const { projects, projectCategories, projectTasks, updateProject, deleteProject } = useAppStore();
   const [formOpen, setFormOpen] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [editTask, setEditTask] = useState<ProjectTask | null>(null);
 
   // KPIs
   const kpis = useMemo(() => {
@@ -210,7 +214,7 @@ export default function ProjetosDashboard() {
 
       {/* Tabs for Kanban and Tasks */}
       <Tabs defaultValue="kanban" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-3 max-w-md">
           <TabsTrigger value="kanban" className="gap-2">
             <LayoutGrid className="w-4 h-4" />
             Quadro Kanban
@@ -218,6 +222,10 @@ export default function ProjetosDashboard() {
           <TabsTrigger value="tasks" className="gap-2">
             <ClipboardList className="w-4 h-4" />
             Tarefas
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="gap-2">
+            <CalendarIcon className="w-4 h-4" />
+            Calendário
           </TabsTrigger>
         </TabsList>
 
@@ -244,6 +252,20 @@ export default function ProjetosDashboard() {
         <TabsContent value="tasks">
           <ProjectTasksSection />
         </TabsContent>
+
+        <TabsContent value="calendar">
+          <Card className="glass-card">
+            <CardContent className="p-4">
+              <ProjectCalendar 
+                tasks={projectTasks} 
+                onTaskClick={(task) => {
+                  setEditTask(task);
+                  setTaskFormOpen(true);
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Project Form Dialog */}
@@ -251,6 +273,13 @@ export default function ProjetosDashboard() {
         open={formOpen}
         onOpenChange={handleFormClose}
         editProject={editProject}
+      />
+
+      {/* Task Form Dialog for Calendar */}
+      <ProjectTaskForm
+        open={taskFormOpen}
+        onOpenChange={setTaskFormOpen}
+        editTask={editTask}
       />
     </div>
   );
