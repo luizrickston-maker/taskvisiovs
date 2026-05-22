@@ -1,7 +1,7 @@
 import { Json } from "./supabase/types";
 
-export type ProjectStatus = "todo" | "progress" | "blocked" | "done";
-export type ProjectTaskStatus = "todo" | "progress" | "blocked" | "done";
+export type ProjectStatus = 'todo' | 'progress' | 'blocked' | 'done' | 'in_progress' | 'completed';
+export type ProjectTaskStatus = 'todo' | 'progress' | 'blocked' | 'done' | 'in_progress' | 'completed';
 
 export interface Project {
   client_name: string | null;
