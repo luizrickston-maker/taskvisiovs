@@ -27,7 +27,6 @@ const quickIncomeSchema = z.object({
 
 type QuickIncomeValues = z.infer<typeof quickIncomeSchema>;
 
-
 export function QuickIncomeForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -48,14 +47,11 @@ export function QuickIncomeForm() {
   });
 
   const categoryId = watch("categoryId");
-
-  
   const { user } = useAuthContext();
   const { incomes = [], categories = [], addIncome, deleteIncome } = useAppStore();
 
   const incomeCategories = categories.filter((c) => c.type === "income");
   const todayIncomes = incomes.filter((i) => isToday(parseISO(i.date)));
-
   const todayTotal = todayIncomes.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
 
   const onSubmit = async (values: QuickIncomeValues) => {
@@ -101,7 +97,6 @@ export function QuickIncomeForm() {
       toast.success("Entrada removida");
     }
   };
-
 
   const getCategoryColor = (categoryId?: string) => {
     const category = categories.find((c) => c.id === categoryId);
@@ -173,7 +168,6 @@ export function QuickIncomeForm() {
             </p>
           )}
         </form>
-
 
         <ScrollArea className="h-[180px]">
           {todayIncomes.length === 0 ? (
