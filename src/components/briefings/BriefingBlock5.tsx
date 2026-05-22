@@ -19,7 +19,7 @@ const PLATFORMS = [
 ];
 
 export const BriefingBlock5 = ({ data, onChange, readOnly = false }: BriefingBlock5Props) => {
-  const handleChange = (field: keyof BriefingResponseBlock5, value: any) => {
+  const handleChange = (field: keyof BriefingResponseBlock5, value: string | string[] | boolean) => {
     onChange({ ...data, [field]: value });
   };
 
