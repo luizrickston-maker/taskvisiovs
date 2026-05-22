@@ -113,7 +113,7 @@ export function validateForm<T>(
   if (result.success) {
     return { success: true, data: result.data };
   }
-  return { success: false, error: result.error.errors[0]?.message || 'Dados inválidos' };
+  return { success: false, error: (result.error as any).errors[0]?.message || 'Dados inválidos' };
 }
 
 // Quick validation for single field
