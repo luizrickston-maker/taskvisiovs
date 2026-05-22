@@ -436,34 +436,35 @@ export function OperationalBrainChat() {
 
 
   return (
-    <div
-      className={cn(
-        "fixed z-50 bg-card/95 backdrop-blur-md border border-border/50 rounded-xl shadow-2xl transition-all duration-300 flex flex-col",
-        !isOpen ? "bottom-20 right-4 w-12 h-12 md:bottom-6 md:right-6 md:w-14 md:h-14 items-center justify-center p-0 rounded-full cursor-pointer hover:scale-110 active:scale-95" :
-        isMinimized
-          ? "bottom-20 right-4 w-64 h-14 md:bottom-6 md:right-6 md:w-72"
-          : "bottom-20 right-4 left-4 h-[70vh] md:bottom-6 md:right-6 md:left-auto md:w-[450px] md:h-[650px] md:max-h-[85vh]"
+    <>
+      {/* Floating Trigger Icon - Only visible when NOT open */}
+      {!isOpen && (
+        <button
+          className="fixed z-50 bottom-20 right-4 w-12 h-12 md:bottom-6 md:right-6 md:w-14 md:h-14 rounded-full gradient-primary flex items-center justify-center text-primary-foreground shadow-lg hover:scale-110 active:scale-95 transition-all duration-300"
+          onClick={() => {
+            if (shouldResetOnOpen) {
+              startNewChat();
+              setShouldResetOnOpen(false);
+            }
+            setIsOpen(true);
+          }}
+        >
+          <Brain className="h-6 w-6 md:h-7 md:w-7" />
+        </button>
       )}
-    onClick={(e) => {
-      if (!isOpen) {
-        if (shouldResetOnOpen) {
-          startNewChat();
-          setShouldResetOnOpen(false);
-        }
-        setIsOpen(true);
-      }
-    }}
-  >
-    {!isOpen && (
-      <div className="w-full h-full gradient-primary rounded-full flex items-center justify-center text-primary-foreground shadow-lg">
-        <Brain className="h-6 w-6 md:h-7 md:w-7" />
-      </div>
-    )}
-    {isOpen && (
-      <>
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-border/50 shrink-0">
-        <div className="flex items-center gap-2 overflow-hidden">
+
+      {/* Main Chat Interface - Only visible when open */}
+      {isOpen && (
+        <div
+          className={cn(
+            "fixed z-50 bg-card/95 backdrop-blur-md border border-border/50 rounded-xl shadow-2xl transition-all duration-300 flex flex-col overflow-hidden",
+            isMinimized
+              ? "bottom-20 right-4 w-64 h-14 md:bottom-6 md:right-6 md:w-72"
+              : "bottom-20 right-4 left-4 h-[70vh] md:bottom-6 md:right-6 md:left-auto md:w-[450px] md:h-[650px] md:max-h-[85vh]"
+          )}
+        >
+          <div className="flex items-center justify-between p-3 border-b border-border/50 shrink-0">
+            <div className="flex items-center gap-2 overflow-hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="p-0 h-auto hover:bg-transparent overflow-hidden">
@@ -641,7 +642,6 @@ export function OperationalBrainChat() {
           ) : (
             /* Main Chat Area */
             <>
-              {/* Messages */}
               <ScrollArea className="flex-1 p-3" ref={scrollRef}>
                 {messages.length === 0 ? (
                   <div className="space-y-4">
@@ -824,11 +824,8 @@ export function OperationalBrainChat() {
               </div>
             </>
           )}
-        </>
+        </div>
       )}
-        </>
-      )}
-    </div>
+    </>
   );
 }
-
