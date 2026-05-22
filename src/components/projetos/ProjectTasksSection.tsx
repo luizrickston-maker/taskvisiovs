@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Plus, CheckCircle2, Clock, ListTodo, Trash2, Pen, Filter, Video, Calendar as CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
