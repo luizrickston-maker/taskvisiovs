@@ -1,7 +1,7 @@
 import { Json } from "./supabase/types";
 
-export type ProjectStatus = "todo" | "in_progress" | "done" | "blocked" | "completed" | "progress";
-export type ProjectTaskStatus = "todo" | "in_progress" | "done" | "blocked" | "completed" | "progress";
+export type ProjectStatus = string;
+export type ProjectTaskStatus = string;
 
 export interface Project {
   client_name: string | null;
@@ -416,20 +416,20 @@ export interface Tax {
   user_id: string;
 }
 
-export type CorporateCostType = "recorrente" | "fixo" | "pontual";
-export type CostFrequency = "mensal" | "semanal" | "anual" | "diario" | "pontual";
-export type InvestmentCategory = "equipamento" | "mobilia" | "outro" | "software" | "marketing" | "equipment";
-export type PaymentMethod = "credito" | "debito" | "dinheiro" | "boleto" | "pix" | "bank_transfer" | "cash" | "credit_card";
-export type PlanTier = "bronze" | "silver" | "gold" | "diamond" | "pro" | "enterprise";
-export type PlanType = "recorrente" | "pontual" | "subscription" | "one_time";
-export type ContractType = "clt" | "pj" | "freelancer" | "freelance";
-export type PaymentType = "recorrente" | "pontual" | "unique" | "recurring";
-export type ProspectStatus = "novo" | "em_negociacao" | "proposta_enviada" | "fechado" | "perdido" | "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "closed_won" | "closed_lost";
-export type SalesGoalType = "faturamento_mensal" | "vendas_fechadas" | "novos_clientes" | "revenue" | "units" | "clients";
-export type ScriptPlatform = "youtube_shorts" | "tiktok_ads" | "instagram_reels" | "instagram_post" | "instagram_boost" | "facebook_ads" | "outros" | "other" | "youtube" | "instagram" | "tiktok";
-export type ScriptStatus = "draft" | "rascunho" | "escrevendo" | "revisao" | "aprovado" | "gravado" | "editando" | "publicado" | "writing" | "review" | "filmed" | "published";
-export type PaymentMethodEntry = { method: PaymentMethod; value: number; fee?: number; installments?: number };
-export type DebtType = "fixo" | "variavel" | "parcelado";
-export type IncomeType = "fixo" | "variavel";
-export type PurchasePlanPriority = "baixa" | "media" | "alta" | "urgente";
-export type PurchasePlanStatus = "planejado" | "em_andamento" | "concluido" | "cancelado";
+export type CorporateCostType = string;
+export type CostFrequency = string;
+export type InvestmentCategory = string;
+export type PaymentMethod = string;
+export type PlanTier = string;
+export type PlanType = string;
+export type ContractType = string;
+export type PaymentType = string;
+export type ProspectStatus = string;
+export type SalesGoalType = string;
+export type ScriptPlatform = string;
+export type ScriptStatus = string;
+export type PaymentMethodEntry = { method: string; value: number; fee?: number; installments?: number };
+export type DebtType = string;
+export type IncomeType = string;
+export type PurchasePlanPriority = string;
+export type PurchasePlanStatus = string;
