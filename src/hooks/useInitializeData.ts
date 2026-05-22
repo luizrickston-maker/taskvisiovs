@@ -31,12 +31,15 @@ export function useInitializeData(userId: string | undefined) {
       const [
         categoriesRes, incomesRes, expensesRes, goalsRes, preferencesRes
       ] = await Promise.all([
-        supabase.from('categories').select('*').order('created_at', { ascending: true }).abortSignal(AbortSignal.timeout(8000)),
-        supabase.from('incomes').select('*').order('date', { ascending: false }).limit(50).abortSignal(AbortSignal.timeout(8000)),
-        supabase.from('expenses').select('*').order('date', { ascending: false }).limit(50).abortSignal(AbortSignal.timeout(8000)),
-        supabase.from('goals').select('*').order('deadline', { ascending: true }).abortSignal(AbortSignal.timeout(8000)),
-        supabase.from('user_preferences').select('*').maybeSingle().abortSignal(AbortSignal.timeout(8000)),
-      ]);
+        supabase.from('categories').select('*').order('created_at', { ascending: true }),
+        supabase.from('incomes').select('*').order('date', { ascending: false }).limit(50),
+        supabase.from('expenses').select('*').order('date', { ascending: false }).limit(50),
+        supabase.from('goals').select('*').order('deadline', { ascending: true }),
+        supabase.from('user_preferences').select('*').maybeSingle(),
+      ]).catch(err => {
+        console.error("Erro crítico ao carregar dados iniciais:", err);
+        return [ {data: null}, {data: null}, {data: null}, {data: null}, {data: null} ];
+      });
 
       if (categoriesRes.data) store.setCategories(categoriesRes.data as Category[]);
       if (incomesRes.data) store.setIncomes(incomesRes.data as Income[]);
