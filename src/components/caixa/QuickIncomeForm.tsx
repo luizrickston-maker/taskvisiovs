@@ -1,28 +1,28 @@
-import { useState } from 'react';
-import { Plus, TrendingUp, Trash2 } from 'lucide-react';
-import { format, isToday, parseISO } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAppStore } from '@/stores/useAppStore';
-import { useAuthContext } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { formatCurrency } from '@/lib/currency';
-import type { Income } from '@/types/database';
+import { useState } from "react";
+import { Plus, TrendingUp, Trash2 } from "lucide-react";
+import { format, isToday, parseISO } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAppStore } from "@/stores/useAppStore";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
+import type { Income } from "@/types/database";
 
 export function QuickIncomeForm() {
-  const [source, setSource] = useState('');
-  const [amount, setAmount] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [source, setSource] = useState("");
+  const [amount, setAmount] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { user } = useAuthContext();
   const { incomes = [], categories = [], addIncome, deleteIncome } = useAppStore();
 
-  const incomeCategories = categories.filter((c) => c.type === 'income');
+  const incomeCategories = categories.filter((c) => c.type === "income");
   const todayIncomes = incomes.filter((i) => isToday(parseISO(i.date)));
 
   const todayTotal = todayIncomes.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
@@ -31,55 +31,45 @@ export function QuickIncomeForm() {
     e.preventDefault();
     if (!user) return;
 
-    // Validate source
     const trimmedSource = source.trim();
     if (!trimmedSource) {
-      toast.error('Fonte é obrigatória');
-      return;
-    }
-    if (trimmedSource.length > 200) {
-      toast.error('Fonte muito longa (máx. 200 caracteres)');
+      toast.error("Fonte é obrigatória");
       return;
     }
 
-    // Validate amount
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
-      toast.error('Valor inválido');
-      return;
-    }
-    if (numAmount > 999999999.99) {
-      toast.error('Valor muito alto');
+      toast.error("Valor inválido");
       return;
     }
 
     setIsSubmitting(true);
 
-    const newIncome: Omit<Income, 'id' | 'created_at'> = {
+    const newIncome = {
       user_id: user.id,
       source: trimmedSource,
       amount: numAmount,
-      date: format(new Date(), 'yyyy-MM-dd'),
-      category_id: categoryId || undefined,
-      income_type: 'fixed',
+      date: format(new Date(), "yyyy-MM-dd"),
+      category_id: categoryId || null,
+      income_type: "fixed",
     };
 
     const { data, error } = await supabase
-      .from('incomes')
-      .insert(newIncome)
+      .from("incomes")
+      .insert(newIncome as any)
       .select()
       .single();
 
     setIsSubmitting(false);
 
     if (error) {
-      toast.error('Erro ao adicionar entrada');
+      toast.error("Erro ao adicionar entrada");
     } else {
       addIncome(data as Income);
-      setSource('');
-      setAmount('');
-      setCategoryId('');
-      toast.success('Entrada adicionada!');
+      setSource("");
+      setAmount("");
+      setCategoryId("");
+      toast.success("Entrada adicionada!");
     }
   };
 
