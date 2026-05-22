@@ -1,7 +1,7 @@
 import { Json } from "./supabase/types";
 
-export type ProjectStatus = "todo" | "progress" | "blocked" | "done" | "in_progress" | "completed";
-export type ProjectTaskStatus = "todo" | "progress" | "blocked" | "done" | "in_progress" | "completed";
+export type ProjectStatus = "todo" | "in_progress" | "done" | "blocked" | "completed" | "progress";
+export type ProjectTaskStatus = "todo" | "in_progress" | "done" | "blocked" | "completed" | "progress";
 
 export interface Project {
   client_name: string | null;
@@ -418,14 +418,18 @@ export interface Tax {
 
 export type CorporateCostType = "recorrente" | "fixo" | "pontual";
 export type CostFrequency = "mensal" | "semanal" | "anual" | "diario" | "pontual";
-export type InvestmentCategory = "equipamento" | "mobilia" | "outro" | "software" | "marketing";
-export type PaymentMethod = "credito" | "debito" | "dinheiro" | "boleto" | "pix";
+export type InvestmentCategory = "equipamento" | "mobilia" | "outro" | "software" | "marketing" | "equipment";
+export type PaymentMethod = "credito" | "debito" | "dinheiro" | "boleto" | "pix" | "bank_transfer" | "cash" | "credit_card";
 export type PlanTier = "bronze" | "silver" | "gold" | "diamond" | "pro" | "enterprise";
-export type PlanType = "recorrente" | "pontual";
+export type PlanType = "recorrente" | "pontual" | "subscription" | "one_time";
 export type ContractType = "clt" | "pj" | "freelancer" | "freelance";
-export type PaymentType = "recorrente" | "pontual";
-export type ProspectStatus = "novo" | "em_negociacao" | "proposta_enviada" | "fechado" | "perdido";
-export type SalesGoalType = "faturamento" | "unidades" | "clientes";
-export type ScriptPlatform = "youtube" | "instagram" | "tiktok" | "outros" | "other";
-export type ScriptStatus = "rascunho" | "escrevendo" | "revisao" | "aprovado" | "gravado" | "editando" | "publicado";
-export type PaymentMethodEntry = { method: PaymentMethod; value: number; fee?: number };
+export type PaymentType = "recorrente" | "pontual" | "unique" | "recurring";
+export type ProspectStatus = "novo" | "em_negociacao" | "proposta_enviada" | "fechado" | "perdido" | "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "closed_won" | "closed_lost";
+export type SalesGoalType = "faturamento_mensal" | "vendas_fechadas" | "novos_clientes" | "revenue" | "units" | "clients";
+export type ScriptPlatform = "youtube_shorts" | "tiktok_ads" | "instagram_reels" | "instagram_post" | "instagram_boost" | "facebook_ads" | "outros" | "other" | "youtube" | "instagram" | "tiktok";
+export type ScriptStatus = "draft" | "rascunho" | "escrevendo" | "revisao" | "aprovado" | "gravado" | "editando" | "publicado" | "writing" | "review" | "filmed" | "published";
+export type PaymentMethodEntry = { method: PaymentMethod; value: number; fee?: number; installments?: number };
+export type DebtType = "fixo" | "variavel" | "parcelado";
+export type IncomeType = "fixo" | "variavel";
+export type PurchasePlanPriority = "baixa" | "media" | "alta" | "urgente";
+export type PurchasePlanStatus = "planejado" | "em_andamento" | "concluido" | "cancelado";
