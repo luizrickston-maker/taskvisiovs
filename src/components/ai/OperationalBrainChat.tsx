@@ -42,6 +42,7 @@ const QUICK_PROMPTS = [
 export function OperationalBrainChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [shouldResetOnOpen, setShouldResetOnOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
@@ -443,15 +444,23 @@ export function OperationalBrainChat() {
           ? "bottom-20 right-4 w-64 h-14 md:bottom-6 md:right-6 md:w-72"
           : "bottom-20 right-4 left-4 h-[70vh] md:bottom-6 md:right-6 md:left-auto md:w-[450px] md:h-[650px] md:max-h-[85vh]"
       )}
-      onClick={() => !isOpen && setIsOpen(true)}
-    >
-      {!isOpen && (
-        <div className="w-full h-full gradient-primary rounded-full flex items-center justify-center text-primary-foreground shadow-lg">
-          <Brain className="h-6 w-6 md:h-7 md:w-7" />
-        </div>
-      )}
-      {isOpen && (
-        <>
+    onClick={(e) => {
+      if (!isOpen) {
+        if (shouldResetOnOpen) {
+          startNewChat();
+          setShouldResetOnOpen(false);
+        }
+        setIsOpen(true);
+      }
+    }}
+  >
+    {!isOpen && (
+      <div className="w-full h-full gradient-primary rounded-full flex items-center justify-center text-primary-foreground shadow-lg">
+        <Brain className="h-6 w-6 md:h-7 md:w-7" />
+      </div>
+    )}
+    {isOpen && (
+      <>
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-border/50 shrink-0">
         <div className="flex items-center gap-2 overflow-hidden">
@@ -549,7 +558,10 @@ export function OperationalBrainChat() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => setIsMinimized(!isMinimized)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMinimized(!isMinimized);
+            }}
           >
             {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
           </Button>
@@ -557,9 +569,10 @@ export function OperationalBrainChat() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setIsOpen(false);
-              startNewChat();
+              setShouldResetOnOpen(true);
             }}
           >
             <X className="h-4 w-4" />
