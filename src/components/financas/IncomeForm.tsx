@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { CurrencyInput, parseBRLToNumber, numberToBRL } from '@/components/ui/currency-input';
-import { CategoryForm } from '@/components/finances/CategoryForm';
+import { CategoryForm } from './CategoryForm';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useUserIncomeCategories, useDeleteUserIncomeCategory } from '@/hooks/useFinanceCategories';
