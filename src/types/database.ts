@@ -1,4 +1,4 @@
-import { Json } from "./supabase/types";
+import { Json } from "../integrations/supabase/types";
 
 export type ProjectStatus = string;
 export type ProjectTaskStatus = string;
@@ -350,6 +350,7 @@ export interface Savings {
   user_id: string;
 }
 
+export type Saving = Savings;
 export interface PurchasePlan {
   category: string | null;
   created_at: string | null;
@@ -414,6 +415,108 @@ export interface Tax {
   rate: number;
   updated_at: string | null;
   user_id: string;
+}
+
+export interface Goal {
+  amount: number;
+  created_at: string;
+  deadline: string;
+  id: string;
+  name: string;
+  type: string;
+  updated_at: string;
+  user_id: string;
+}
+
+export interface Task {
+  actual_hours: number | null;
+  completed_at: string | null;
+  created_at: string;
+  deadline: string | null;
+  deadline_days: number | null;
+  description: string | null;
+  estimated_hours: number | null;
+  id: string;
+  priority: number;
+  project_id: string | null;
+  source_process_step_id: string | null;
+  status: string;
+  title: string;
+  updated_at: string;
+  user_id: string;
+  video_editing_briefing_id: string | null;
+  workspace_id: string | null;
+}
+
+export interface TimeBlock {
+  color: string | null;
+  completed: boolean;
+  created_at: string;
+  date: string;
+  end_time: string;
+  id: string;
+  start_time: string;
+  title: string;
+  type: string;
+  user_id: string;
+}
+
+export interface CustomTimeBlockType {
+  color: string | null;
+  created_at: string | null;
+  id: string;
+  name: string;
+  user_id: string;
+}
+
+export interface Product {
+  cost_price: number | null;
+  created_at: string | null;
+  description: string | null;
+  id: string;
+  image_url: string | null;
+  is_active: boolean | null;
+  name: string;
+  sku: string | null;
+  updated_at: string | null;
+  user_id: string;
+}
+
+export interface ProductPricingDetail {
+  base_price: number | null;
+  created_at: string | null;
+  id: string;
+  max_units: number | null;
+  min_units: number | null;
+  pricing_model_id: string;
+  product_id: string;
+  unit_name: string | null;
+  updated_at: string | null;
+}
+
+export interface Service {
+  base_cost: number | null;
+  created_at: string | null;
+  description: string | null;
+  expected_duration_hours: number | null;
+  id: string;
+  is_active: boolean | null;
+  name: string;
+  updated_at: string | null;
+  user_id: string;
+  workspace_id: string | null;
+}
+
+export interface ServicePricingDetail {
+  base_price: number | null;
+  created_at: string | null;
+  hourly_rate: number | null;
+  id: string;
+  max_hours: number | null;
+  min_hours: number | null;
+  pricing_model_id: string;
+  service_id: string;
+  updated_at: string | null;
 }
 
 export type CorporateCostType = string;
