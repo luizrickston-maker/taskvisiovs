@@ -823,13 +823,13 @@ export function OperationalBrainChat() {
                   </Button>
                 </form>
               </div>
-            </>
-          )}
-        </div>
-      )}
-    </>
-  );
-}
+              </>
+            )}
+          </div>
+        )}
+      </>
+    );
+  }
 
 
 
