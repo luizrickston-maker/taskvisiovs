@@ -11,7 +11,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
-import { BriefingWithDetails } from "@/types/briefing";
+
 import { BriefingBlockWrapper } from "@/components/briefings/BriefingBlockWrapper";
 import { BriefingBlock1 } from "@/components/briefings/BriefingBlock1";
 import { BriefingBlock2 } from "@/components/briefings/BriefingBlock2";
