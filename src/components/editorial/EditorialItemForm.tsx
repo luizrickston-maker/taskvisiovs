@@ -43,14 +43,15 @@ import { toast } from 'sonner';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
-  description: z.string().optional().default(''),
-  content_link: z.string().url('URL inválida').optional().or(z.literal('')).default(''),
-  due_date: z.date({ errorMap: (issue, ctx) => ({ message: issue.code === 'invalid_type' ? 'Data é obrigatória' : ctx.defaultError }) }),
+  description: z.string().optional(),
+  content_link: z.string().url('URL inválida').optional().or(z.literal('')),
+  due_date: z.date({ required_error: 'Data é obrigatória' }),
   platform: z.enum(['instagram', 'tiktok', 'linkedin', 'blog', 'youtube']),
   content_type: z.enum(['post', 'reel', 'story', 'article', 'video']),
   status: z.enum(['idea', 'draft', 'review', 'approved', 'published']).default('idea'),
-  assigned_to: z.string().optional().default(''),
+  assigned_to: z.string().optional(),
 });
+
 
 
 type FormData = z.infer<typeof formSchema>;
