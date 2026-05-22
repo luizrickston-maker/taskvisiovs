@@ -104,7 +104,7 @@ export default function BriefingReviewPage() {
           .from('projects')
           .select('id, project')
           .eq('workspace_id', data.workspace_id);
-        if (projectsData) setProjects(projectsData);
+        if (projectsData) setProjects(projectsData as Project[]);
       };
       fetchProjects();
     }

@@ -1,3 +1,5 @@
+import { Json } from "@/integrations/supabase/types";
+
 export type CategoryType = 'income' | 'expense' | 'debt';
 export type IncomeType = 'fixed' | 'recurring' | 'variable';
 export type DebtType = 'fixed' | 'installment' | 'variable' | 'weekly';
@@ -201,19 +203,11 @@ export interface ProjectCategory {
 
 export interface Project {
   id: string;
-  user_id: string;
-  task: string;
+  workspace_id: string;
   project: string;
-  project_category_id?: string;
-  priority: number;
-  status: ProjectStatus;
-  estimated_time?: string;
-  // Corporate project fields
-  client_name?: string;
-  company_name?: string;
-  deadline?: string;
-  is_corporate: boolean;
-  prospect_id?: string;
+  description: string | null;
+  status: string | null;
+  client_id: string | null;
   created_at: string;
   updated_at: string;
 }
