@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(
-        "[Auth] onAuthStateChange:",
+        "[Auth] onAuthStateChange event:",
         event,
         session?.user?.email ?? "no-session"
       );
@@ -53,25 +53,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.warn("[Auth] SIGNED_OUT detectado. Verificando persistência da sessão...");
         signedOutRecoveryInFlightRef.current = true;
         
-        // Pequeno delay para permitir que o armazenamento local (localStorage/indexedDB) sincronize
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1500));
 
         const { data: { session: recovered } } = await supabase.auth.getSession();
         
         if (recovered) {
-          console.warn("[Auth] Sessão persistente recuperada. Ignorando evento SIGNED_OUT falso.");
+          console.warn("[Auth] Sessão recuperada com sucesso após SIGNED_OUT falso.");
           setSession(recovered);
           setUser(recovered.user);
           setLoading(false);
+          initialized = true;
           signedOutRecoveryInFlightRef.current = false;
           return;
         }
         
-        console.error("[Auth] Sessão realmente encerrada.");
+        console.error("[Auth] Sessão realmente expirada ou inválida.");
         setSession(null);
         setUser(null);
         resetStore();
         setLoading(false);
+        initialized = true;
         signedOutRecoveryInFlightRef.current = false;
         return;
       }
@@ -79,6 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session) {
         setSession(session);
         setUser(session.user);
+        setLoading(false);
+        initialized = true;
         
         if (session.user?.email === 'chapadadigitalbr@gmail.com') {
           setMode('business');
@@ -87,9 +90,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(null);
         setUser(null);
         resetStore();
+        setLoading(false);
+        initialized = true;
+      } else if (event === "INITIAL_SESSION" && !session && !initialized) {
+        // Ignoramos INITIAL_SESSION nula se ainda não terminamos o initSession()
+        // O initSession() cuidará de setar loading(false) após as retentativas
+        console.log("[Auth] INITIAL_SESSION nula ignorada - aguardando initSession");
       }
-      
-      setLoading(false);
     });
 
     // Carga inicial robusta para Safari/iPad/Dispositivos Móveis
