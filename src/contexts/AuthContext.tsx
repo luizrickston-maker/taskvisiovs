@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(
-        "[Auth] onAuthStateChange:",
+        "[Auth] onAuthStateChange event:",
         event,
         session?.user?.email ?? "no-session"
       );
@@ -53,25 +53,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.warn("[Auth] SIGNED_OUT detectado. Verificando persistência da sessão...");
         signedOutRecoveryInFlightRef.current = true;
         
-        // Pequeno delay para permitir que o armazenamento local (localStorage/indexedDB) sincronize
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1500));
 
         const { data: { session: recovered } } = await supabase.auth.getSession();
         
         if (recovered) {
-          console.warn("[Auth] Sessão persistente recuperada. Ignorando evento SIGNED_OUT falso.");
+          console.warn("[Auth] Sessão recuperada com sucesso após SIGNED_OUT falso.");
           setSession(recovered);
           setUser(recovered.user);
           setLoading(false);
+          initialized = true;
           signedOutRecoveryInFlightRef.current = false;
           return;
         }
         
-        console.error("[Auth] Sessão realmente encerrada.");
+        console.error("[Auth] Sessão realmente expirada ou inválida.");
         setSession(null);
         setUser(null);
         resetStore();
         setLoading(false);
+        initialized = true;
         signedOutRecoveryInFlightRef.current = false;
         return;
       }
@@ -79,6 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session) {
         setSession(session);
         setUser(session.user);
+        setLoading(false);
+        initialized = true;
         
         if (session.user?.email === 'chapadadigitalbr@gmail.com') {
           setMode('business');
@@ -87,32 +90,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(null);
         setUser(null);
         resetStore();
+        setLoading(false);
+        initialized = true;
+      } else if (event === "INITIAL_SESSION" && !session && !initialized) {
+        // Ignoramos INITIAL_SESSION nula se ainda não terminamos o initSession()
+        // O initSession() cuidará de setar loading(false) após as retentativas
+        console.log("[Auth] INITIAL_SESSION nula ignorada - aguardando initSession");
       }
-      
-      setLoading(false);
     });
 
-    // Carga inicial com retry para dispositivos móveis lentos
-    const initSession = async (retries = 2) => {
+    // Carga inicial robusta para Safari/iPad/Dispositivos Móveis
+    const initSession = async (retries = 3) => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
         if (!initialized) {
-          if (session) {
-            setSession(session);
-            setUser(session.user);
-            if (session.user?.email === 'chapadadigitalbr@gmail.com') {
+          if (currentSession) {
+            console.log("[Auth] Sessão inicial encontrada");
+            setSession(currentSession);
+            setUser(currentSession.user);
+            if (currentSession.user?.email === 'chapadadigitalbr@gmail.com') {
               setMode('business');
             }
+            setLoading(false);
+            initialized = true;
+          } else if (retries > 0) {
+            // No Safari/iPad, o localStorage pode não estar pronto no primeiro tick
+            console.warn(`[Auth] Nenhuma sessão encontrada, tentando novamente em 500ms... (${retries} restantes)`);
+            setTimeout(() => initSession(retries - 1), 500);
+          } else {
+            console.log("[Auth] Nenhuma sessão persistente encontrada após retentativas");
+            setLoading(false);
+            initialized = true;
           }
-          setLoading(false);
-          initialized = true;
         }
       } catch (err) {
         if (retries > 0) {
-          console.warn(`[Auth] Erro na inicialização, tentando novamente... (${retries})`);
+          console.error("[Auth] Erro ao carregar sessão inicial, tentando novamente...", err);
           setTimeout(() => initSession(retries - 1), 1000);
         } else {
           setLoading(false);
+          initialized = true;
         }
       }
     };

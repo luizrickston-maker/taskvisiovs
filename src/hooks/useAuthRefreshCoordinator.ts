@@ -263,8 +263,9 @@ export function useAuthRefreshCoordinator() {
       }
     });
 
-    // Já desativado no createClient, mas garantimos aqui também.
-    supabase.auth.stopAutoRefresh();
+    // O Supabase agora gerencia o autoRefresh nativamente para maior confiabilidade no iPad.
+    // O coordenador ainda atua como uma camada extra de segurança para sincronização entre abas.
+    // supabase.auth.stopAutoRefresh();
 
     if (ensureLeadership()) {
       writeLeaderHeartbeat();
