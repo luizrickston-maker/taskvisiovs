@@ -92,27 +92,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Carga inicial com retry para dispositivos móveis lentos
-    const initSession = async (retries = 2) => {
+    // Carga inicial robusta para Safari/iPad/Dispositivos Móveis
+    const initSession = async (retries = 3) => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
         if (!initialized) {
-          if (session) {
-            setSession(session);
-            setUser(session.user);
-            if (session.user?.email === 'chapadadigitalbr@gmail.com') {
+          if (currentSession) {
+            console.log("[Auth] Sessão inicial encontrada");
+            setSession(currentSession);
+            setUser(currentSession.user);
+            if (currentSession.user?.email === 'chapadadigitalbr@gmail.com') {
               setMode('business');
             }
+            setLoading(false);
+            initialized = true;
+          } else if (retries > 0) {
+            // No Safari/iPad, o localStorage pode não estar pronto no primeiro tick
+            console.warn(`[Auth] Nenhuma sessão encontrada, tentando novamente em 500ms... (${retries} restantes)`);
+            setTimeout(() => initSession(retries - 1), 500);
+          } else {
+            console.log("[Auth] Nenhuma sessão persistente encontrada após retentativas");
+            setLoading(false);
+            initialized = true;
           }
-          setLoading(false);
-          initialized = true;
         }
       } catch (err) {
         if (retries > 0) {
-          console.warn(`[Auth] Erro na inicialização, tentando novamente... (${retries})`);
+          console.error("[Auth] Erro ao carregar sessão inicial, tentando novamente...", err);
           setTimeout(() => initSession(retries - 1), 1000);
         } else {
           setLoading(false);
+          initialized = true;
         }
       }
     };
