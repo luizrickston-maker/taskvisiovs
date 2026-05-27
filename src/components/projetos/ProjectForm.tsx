@@ -23,13 +23,14 @@ const statusOptions: { value: ProjectStatus; label: string }[] = [
 ];
 
 export default function ProjectForm({ open, onOpenChange, editProject }: ProjectFormProps) {
-  const { projectCategories, addProject, updateProject } = useAppStore();
+  const { projectCategories, addProject, updateProject, corporateTeam } = useAppStore();
   
   const [project, setProject] = useState('');
   const [categoryId, setCategoryId] = useState<string>('');
   const [priority, setPriority] = useState('3');
   const [status, setStatus] = useState<ProjectStatus>('todo');
   const [estimatedTime, setEstimatedTime] = useState('');
+  const [assignedTo, setAssignedTo] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
       setPriority(String(editProject.priority));
       setStatus(editProject.status);
       setEstimatedTime(editProject.estimated_time || '');
+      setAssignedTo(editProject.assigned_to || 'none');
     } else {
       resetForm();
     }
@@ -50,6 +52,7 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
     setPriority('3');
     setStatus('todo');
     setEstimatedTime('');
+    setAssignedTo('none');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,6 +88,7 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
       priority: Number(priority),
       status,
       estimated_time: estimatedTime?.trim() || null,
+      assigned_to: assignedTo === 'none' ? null : assignedTo,
     };
 
     if (editProject) {
@@ -212,6 +216,31 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
                 onChange={(e) => setEstimatedTime(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Atribuir a Colaborador</Label>
+            <Select 
+              value={assignedTo || "none"} 
+              onValueChange={setAssignedTo}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um colaborador..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Ninguém (Apenas eu)</SelectItem>
+                {corporateTeam
+                  .filter(m => m.is_active && m.member_user_id)
+                  .map((member) => (
+                    <SelectItem key={member.member_user_id} value={member.member_user_id!}>
+                      {member.name} ({member.role})
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">
+              Apenas colaboradores com acesso ao portal aparecem aqui.
+            </p>
           </div>
 
           <div className="flex gap-2 pt-2">
