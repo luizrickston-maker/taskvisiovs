@@ -27,6 +27,7 @@ import type { Project, ProjectStatus } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useAppStore } from '@/stores/useAppStore';
+import { User } from 'lucide-react';
 import { toast } from 'sonner';
 
 const projectSchema = z.object({
@@ -36,6 +37,7 @@ const projectSchema = z.object({
   deadline: z.string().optional(),
   priority: z.number().min(1).max(5),
   status: z.enum(['todo', 'progress', 'blocked', 'done']),
+  assigned_to: z.string().uuid().nullable().optional(),
 });
 
 interface ClientProjectFormProps {
@@ -51,7 +53,8 @@ interface ClientProjectFormProps {
 
 export function ClientProjectForm({ open, onOpenChange, project, prospectData }: ClientProjectFormProps) {
   const { user } = useAuthContext();
-  const { addProject, updateProject } = useAppStore();
+  const { addProject, updateProject, corporateTeam } = useAppStore();
+  const collaborators = corporateTeam.filter(m => m.member_user_id);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -61,6 +64,7 @@ export function ClientProjectForm({ open, onOpenChange, project, prospectData }:
     deadline: '',
     priority: 3,
     status: 'todo' as ProjectStatus,
+    assigned_to: '' as string,
   });
 
   useEffect(() => {
@@ -72,6 +76,7 @@ export function ClientProjectForm({ open, onOpenChange, project, prospectData }:
         deadline: project.deadline || '',
         priority: project.priority,
         status: project.status,
+        assigned_to: project.assigned_to || '',
       });
     } else if (prospectData) {
       setFormData({
@@ -81,6 +86,7 @@ export function ClientProjectForm({ open, onOpenChange, project, prospectData }:
         deadline: '',
         priority: 3,
         status: 'todo',
+        assigned_to: '',
       });
     } else {
       setFormData({
@@ -90,6 +96,7 @@ export function ClientProjectForm({ open, onOpenChange, project, prospectData }:
         deadline: '',
         priority: 3,
         status: 'todo',
+        assigned_to: '',
       });
     }
   }, [project, prospectData, open]);
@@ -116,6 +123,7 @@ export function ClientProjectForm({ open, onOpenChange, project, prospectData }:
         deadline: formData.deadline || null,
         priority: formData.priority,
         status: formData.status,
+        assigned_to: formData.assigned_to || null,
         is_corporate: true,
         prospect_id: prospectData?.prospect_id || project?.prospect_id || null,
       };
@@ -267,6 +275,32 @@ export function ClientProjectForm({ open, onOpenChange, project, prospectData }:
                 <SelectItem value="done">Concluído</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="assigned_to">Responsável pelo Projeto</Label>
+            <Select
+              value={formData.assigned_to}
+              onValueChange={(v) => setFormData(prev => ({ ...prev, assigned_to: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um colaborador (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum (Somente eu)</SelectItem>
+                {collaborators.map((member) => (
+                  <SelectItem key={member.id} value={member.member_user_id!}>
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      {member.name} ({member.role})
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">
+              O colaborador poderá visualizar e atualizar o status deste projeto em seu portal.
+            </p>
           </div>
           
           <div className="flex justify-end gap-2 pt-4">
