@@ -63,7 +63,7 @@ export function TeamManager() {
               password: data.password,
               name: data.name,
               role: data.role,
-              workspace_id: user.id,
+              workspace_id: user.id, // Fallback handled in edge function but explicitly passed
               cost: data.cost,
               contract_type: data.contract_type,
               payment_day: data.payment_day,

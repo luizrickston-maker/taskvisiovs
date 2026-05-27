@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
             .from('corporate_team')
             .upsert({
               user_id: callingUser.id,
-              workspace_id,
+              workspace_id: workspace_id || callingUser.id,
               name,
               role,
               member_user_id: existingUser.id,
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       .from('corporate_team')
       .insert({
         user_id: callingUser.id,
-        workspace_id,
+        workspace_id: workspace_id || callingUser.id,
         name,
         role,
         member_user_id: userId,
