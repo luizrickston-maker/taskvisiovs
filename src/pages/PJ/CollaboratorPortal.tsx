@@ -27,6 +27,11 @@ export default function CollaboratorPortal() {
     return assignedTasks.filter(t => t.status !== 'done');
   }, [assignedTasks]);
 
+  const todayTasks = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return pendingTasks.filter(t => t.deadline === today);
+  }, [pendingTasks]);
+
   const handleStatusUpdate = async (type: 'project' | 'task', id: string, currentStatus: string) => {
     setUpdating(id);
     const newStatus = currentStatus === 'done' ? 'todo' : 'done';
@@ -109,6 +114,36 @@ export default function CollaboratorPortal() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Tarefas do Dia */}
+        {todayTasks.length > 0 && (
+          <section className="lg:col-span-2 space-y-4">
+            <h2 className="text-xl font-bold font-display flex items-center gap-2 text-primary">
+              <Clock className="w-5 h-5" /> Para Fazer Hoje
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {todayTasks.map(task => (
+                <Card key={task.id} className="border-primary/20 bg-primary/5">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={() => handleStatusUpdate('task', task.id, task.status)}
+                      disabled={updating === task.id}
+                    >
+                      <Circle className="w-6 h-6 text-primary" />
+                    </Button>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold">{task.title}</h3>
+                      <p className="text-xs text-muted-foreground line-clamp-1">{task.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Tarefas */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
