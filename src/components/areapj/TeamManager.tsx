@@ -28,13 +28,23 @@ export function TeamManager() {
       .reduce((sum, m) => sum + m.cost, 0);
   }, [activeMembers]);
 
-  const handleSave = async (data: Partial<CorporateTeamMember>) => {
+  const handleSave = async (data: Partial<CorporateTeamMember> & { email?: string; password?: string }) => {
     if (!user) return;
 
     if (editingMember) {
       const { error } = await supabase
         .from('corporate_team')
-        .update(data)
+        .update({
+          name: data.name,
+          role: data.role,
+          contract_type: data.contract_type,
+          cost: data.cost,
+          payment_day: data.payment_day,
+          hours_available: data.hours_available,
+          clt_benefits: data.clt_benefits,
+          notes: data.notes,
+          is_active: data.is_active,
+        })
         .eq('id', editingMember.id);
 
       if (error) {
@@ -44,26 +54,55 @@ export function TeamManager() {
         toast.success('Colaborador atualizado!');
       }
     } else {
-      const { data: newData, error } = await supabase
-        .from('corporate_team')
-        .insert({
-          user_id: user.id,
-          name: data.name || '',
-          role: data.role || '',
-          contract_type: data.contract_type || 'pj',
-          cost: data.cost || 0,
-          payment_day: data.payment_day || 5,
-          notes: data.notes,
-          is_active: data.is_active ?? true,
-        })
-        .select()
-        .single();
+      // Se houver email e senha, criar via Edge Function
+      if (data.email && data.password) {
+        try {
+          const { data: edgeData, error: edgeError } = await supabase.functions.invoke('create-collaborator', {
+            body: {
+              email: data.email,
+              password: data.password,
+              name: data.name,
+              role: data.role,
+              workspace_id: user.id, // Usando user.id como workspace_id temporário se não houver um workspaceStore
+              cost: data.cost,
+              contract_type: data.contract_type,
+              payment_day: data.payment_day,
+              notes: data.notes
+            }
+          });
 
-      if (error) {
-        toast.error('Erro ao adicionar colaborador');
+          if (edgeError) throw edgeError;
+          
+          toast.success('Colaborador criado com acesso ao portal!');
+          // Recarregar dados para pegar o novo membro
+          window.location.reload(); 
+        } catch (error: any) {
+          console.error(error);
+          toast.error(`Erro ao criar colaborador: ${error.message}`);
+        }
       } else {
-        addCorporateTeamMember(newData as CorporateTeamMember);
-        toast.success('Colaborador adicionado!');
+        // Criação normal sem login
+        const { data: newData, error } = await supabase
+          .from('corporate_team')
+          .insert({
+            user_id: user.id,
+            name: data.name || '',
+            role: data.role || '',
+            contract_type: data.contract_type || 'pj',
+            cost: data.cost || 0,
+            payment_day: data.payment_day || 5,
+            notes: data.notes,
+            is_active: data.is_active ?? true,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          toast.error('Erro ao adicionar colaborador');
+        } else {
+          addCorporateTeamMember(newData as CorporateTeamMember);
+          toast.success('Colaborador adicionado!');
+        }
       }
     }
 

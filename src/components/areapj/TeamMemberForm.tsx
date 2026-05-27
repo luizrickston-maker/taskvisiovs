@@ -14,7 +14,7 @@ import type { CorporateTeamMember, ContractType } from '@/types/database';
 interface TeamMemberFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: Partial<CorporateTeamMember>) => void;
+  onSave: (data: Partial<CorporateTeamMember> & { email?: string; password?: string }) => void;
   member?: CorporateTeamMember | null;
 }
 
@@ -34,6 +34,8 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
   const [cltBenefits, setCltBenefits] = useState('');
   const [notes, setNotes] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -57,6 +59,8 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
       setCltBenefits('');
       setNotes('');
       setIsActive(true);
+      setEmail('');
+      setPassword('');
     }
   }, [member, open]);
 
@@ -100,6 +104,8 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
       clt_benefits: parseFloat(cltBenefits) || 0,
       notes: notes.trim() || undefined,
       is_active: isActive,
+      email: email.trim() || undefined,
+      password: password.trim() || undefined,
     });
     
     setSaving(false);
@@ -136,6 +142,35 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
               />
             </div>
           </div>
+
+          {!member && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail para Acesso (Opcional)</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha para Acesso</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                {email && !password && (
+                  <p className="text-[10px] text-destructive">Senha obrigatória se informar e-mail</p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Tipo de Contrato</Label>
