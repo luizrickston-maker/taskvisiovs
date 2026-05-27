@@ -2,7 +2,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Edit2, Trash2, MoreHorizontal, UserCheck, UserX } from 'lucide-react';
+import { Edit2, Trash2, MoreHorizontal, UserCheck, UserX, Copy, Link as LinkIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import type { CorporateTeamMember, ContractType } from '@/types/database';
 import {
@@ -36,7 +37,13 @@ function getInitials(name: string): string {
 }
 
 export function TeamMemberCard({ member, onEdit, onDelete, onToggleActive }: TeamMemberCardProps) {
-  const contractConfig = contractTypeConfig[member.contract_type];
+  const contractConfig = contractTypeConfig[member.contract_type as ContractType];
+
+  const copyPortalLink = () => {
+    const link = `${window.location.origin}/auth`;
+    navigator.clipboard.writeText(link);
+    toast.success('Link do portal copiado!');
+  };
 
   return (
     <Card className={`p-4 ${!member.is_active ? 'opacity-60' : ''}`}>
@@ -79,6 +86,13 @@ export function TeamMemberCard({ member, onEdit, onDelete, onToggleActive }: Tea
                 </>
               )}
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {member.member_user_id && (
+              <DropdownMenuItem onClick={copyPortalLink}>
+                <LinkIcon className="w-4 h-4 mr-2" />
+                Copiar Link do Portal
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={() => onDelete(member.id)}
