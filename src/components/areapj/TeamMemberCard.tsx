@@ -40,9 +40,9 @@ export function TeamMemberCard({ member, onEdit, onDelete, onToggleActive }: Tea
   const contractConfig = contractTypeConfig[member.contract_type as ContractType];
 
   const copyPortalLink = () => {
-    const link = `${window.location.origin}/auth`;
+    const link = `${window.location.origin}/colaborador`;
     navigator.clipboard.writeText(link);
-    toast.success('Link do portal copiado!');
+    toast.success('Link do portal copiado! Compartilhe com o colaborador junto com o e-mail e senha cadastrados.');
   };
 
   return (
