@@ -38,7 +38,7 @@ const priorityOptions = [
 ];
 
 export default function ProjectTaskForm({ open, onOpenChange, editTask }: ProjectTaskFormProps) {
-  const { projects, addProjectTask, updateProjectTask } = useAppStore();
+  const { projects, addProjectTask, updateProjectTask, corporateTeam } = useAppStore();
   const navigate = useNavigate();
   
   const [title, setTitle] = useState('');
@@ -47,6 +47,7 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
   const [priority, setPriority] = useState('3');
   const [status, setStatus] = useState<ProjectTaskStatus>('todo');
   const [deadline, setDeadline] = useState<string>('');
+  const [assignedTo, setAssignedTo] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
       setPriority(String(editTask.priority));
       setStatus(editTask.status);
       setDeadline(editTask.deadline || '');
+      setAssignedTo(editTask.assigned_to || 'none');
     } else {
       resetForm();
     }
@@ -69,6 +71,7 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
     setPriority('3');
     setStatus('todo');
     setDeadline('');
+    setAssignedTo('none');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,6 +92,7 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
       priority: Number(priority),
       status,
       deadline: deadline || null,
+      assigned_to: assignedTo === 'none' ? null : assignedTo,
     };
 
     if (editTask) {
@@ -250,6 +254,28 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
                 Limpar prazo
               </Button>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Atribuir a Colaborador</Label>
+            <Select 
+              value={assignedTo || "none"} 
+              onValueChange={setAssignedTo}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um colaborador..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Ninguém (Apenas eu)</SelectItem>
+                {corporateTeam
+                  .filter(m => m.is_active && m.member_user_id)
+                  .map((member) => (
+                    <SelectItem key={member.member_user_id} value={member.member_user_id!}>
+                      {member.name} ({member.role})
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex flex-col gap-2 pt-2">
