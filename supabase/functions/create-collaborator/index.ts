@@ -23,6 +23,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { data: { user: callingUser }, error: callingUserError } = await supabaseAdmin.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (callingUserError || !callingUser) {
+      return new Response(JSON.stringify({ error: 'Usuário não autenticado' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { email, password, name, role, workspace_id, cost, contract_type, payment_day, notes } = await req.json();
 
     if (!email || !password || !name || !workspace_id) {
@@ -52,6 +62,7 @@ Deno.serve(async (req) => {
           const { data: teamData, error: teamError } = await supabaseAdmin
             .from('corporate_team')
             .upsert({
+              user_id: callingUser.id,
               workspace_id,
               name,
               role,
@@ -89,6 +100,7 @@ Deno.serve(async (req) => {
     const { data: teamData, error: teamError } = await supabaseAdmin
       .from('corporate_team')
       .insert({
+        user_id: callingUser.id,
         workspace_id,
         name,
         role,
