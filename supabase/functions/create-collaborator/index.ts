@@ -33,7 +33,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, name, role, workspace_id, cost, contract_type, payment_day, notes } = await req.json();
+    const { 
+      email, 
+      password, 
+      name, 
+      role, 
+      workspace_id, 
+      cost, 
+      contract_type, 
+      payment_day, 
+      hours_available,
+      clt_benefits,
+      notes 
+    } = await req.json();
 
     if (!email || !password || !name || !workspace_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios ausentes' }), {
@@ -70,6 +82,8 @@ Deno.serve(async (req) => {
               cost: cost || 0,
               contract_type: contract_type || 'pj',
               payment_day: payment_day || 5,
+              hours_available: hours_available || 160,
+              clt_benefits: clt_benefits || 0,
               notes,
               is_active: true
             }, { onConflict: 'member_user_id' })
@@ -82,7 +96,7 @@ Deno.serve(async (req) => {
           await supabaseAdmin.from('user_roles').upsert({
             user_id: existingUser.id,
             role: 'collaborator'
-          }, { onConflict: 'user_id' });
+          }, { onConflict: 'user_id, role' });
 
           return new Response(JSON.stringify({ success: true, user_id: existingUser.id, team_id: teamData.id }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -108,6 +122,8 @@ Deno.serve(async (req) => {
         cost: cost || 0,
         contract_type: contract_type || 'pj',
         payment_day: payment_day || 5,
+        hours_available: hours_available || 160,
+        clt_benefits: clt_benefits || 0,
         notes,
         is_active: true
       })
@@ -117,10 +133,10 @@ Deno.serve(async (req) => {
     if (teamError) throw teamError;
 
     // 3. Atribuir papel de colaborador
-    await supabaseAdmin.from('user_roles').insert({
+    await supabaseAdmin.from('user_roles').upsert({
       user_id: userId,
       role: 'collaborator'
-    });
+    }, { onConflict: 'user_id, role' });
 
     return new Response(JSON.stringify({ success: true, user_id: userId, team_id: teamData.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
