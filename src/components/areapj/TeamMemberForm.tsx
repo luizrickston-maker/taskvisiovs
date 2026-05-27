@@ -164,6 +164,7 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
                   placeholder="Mínimo 6 caracteres"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required={!!email}
                 />
                 {email && !password && (
                   <p className="text-[10px] text-destructive">Senha obrigatória se informar e-mail</p>
