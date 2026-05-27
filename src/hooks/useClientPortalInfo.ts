@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuthContextSafe } from '@/contexts/AuthContext';
 
 export interface ClientPortalInfo {
   client_id: string;
@@ -12,7 +12,8 @@ export interface ClientPortalInfo {
 }
 
 export function useClientPortalInfo() {
-  const { user } = useAuthContext();
+  const auth = useAuthContextSafe();
+  const user = auth?.user;
 
   return useQuery({
     queryKey: ['client-portal-info', user?.id],
@@ -30,7 +31,8 @@ export function useClientPortalInfo() {
  * Check if the current user is ONLY a client portal user (not a workspace member).
  */
 export function useIsClientPortalUser() {
-  const { user } = useAuthContext();
+  const auth = useAuthContextSafe();
+  const user = auth?.user;
 
   return useQuery({
     queryKey: ['is-client-portal-user', user?.id],
