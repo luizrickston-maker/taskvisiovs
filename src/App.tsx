@@ -57,6 +57,7 @@ const FerramentasPage = lazy(() => import("@/pages/FerramentasPage"));
 const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdmin/SuperAdminDashboard"));
 const WorkspaceDetailsPage = lazy(() => import("@/pages/SuperAdmin/WorkspaceDetailsPage"));
 const PortalDashboard = lazy(() => import("@/pages/ClientPortal/PortalDashboard"));
+const CollaboratorPortal = lazy(() => import("@/pages/PJ/CollaboratorPortal"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -309,6 +310,13 @@ const App = () => {
                 <Route path="/config" element={
                   <Suspense fallback={<PageLoader />}>
                     <ConfigPage />
+                  </Suspense>
+                } />
+                
+                {/* Collaborator Portal Route */}
+                <Route path="/colaborador" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <CollaboratorPortal />
                   </Suspense>
                 } />
               </Route>
