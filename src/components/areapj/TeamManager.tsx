@@ -75,9 +75,19 @@ export function TeamManager() {
 
           if (edgeError) throw edgeError;
           
-          toast.success('Colaborador criado com acesso ao portal!');
+          toast.success('Colaborador criado com acesso ao portal!', {
+            description: `Link do portal: ${window.location.origin}/colaborador`,
+            action: {
+              label: 'Copiar Link',
+              onClick: () => {
+                navigator.clipboard.writeText(`${window.location.origin}/colaborador`);
+                toast.success('Link copiado!');
+              }
+            }
+          });
           // Recarregar dados para pegar o novo membro
-          window.location.reload(); 
+          setTimeout(() => window.location.reload(), 2000); 
+
         } catch (error: any) {
           console.error(error);
           toast.error(`Erro ao criar colaborador: ${error.message}`);

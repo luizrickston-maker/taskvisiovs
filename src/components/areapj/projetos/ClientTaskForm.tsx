@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Loader2, X } from 'lucide-react';
+import { CalendarIcon, Loader2, X, User } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -36,6 +36,7 @@ const taskSchema = z.object({
   deadline: z.string().optional(),
   priority: z.number().min(1).max(5),
   status: z.enum(['todo', 'in_progress', 'done']),
+  assigned_to: z.string().uuid().nullable().optional(),
   estimated_hours: z.number().min(0).max(9999),
   actual_hours: z.number().min(0).max(9999),
 });
@@ -49,7 +50,8 @@ interface ClientTaskFormProps {
 
 export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTaskFormProps) {
   const { user } = useAuthContext();
-  const { addProjectTask, updateProjectTask } = useAppStore();
+  const { addProjectTask, updateProjectTask, corporateTeam } = useAppStore();
+  const collaborators = corporateTeam.filter(m => m.member_user_id);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
@@ -60,6 +62,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
     deadline_days: null as number | null,
     priority: 3,
     status: 'todo' as ProjectTaskStatus,
+    assigned_to: '' as string,
     estimated_hours: 0,
     actual_hours: 0,
   });
@@ -73,6 +76,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
         deadline_days: task.deadline_days ?? null,
         priority: task.priority,
         status: task.status,
+        assigned_to: task.assigned_to || '',
         estimated_hours: task.estimated_hours || 0,
         actual_hours: task.actual_hours || 0,
       });
@@ -84,6 +88,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
         deadline_days: null,
         priority: 3,
         status: 'todo',
+        assigned_to: '',
         estimated_hours: 0,
         actual_hours: 0,
       });
@@ -112,6 +117,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
         deadline_days: formData.deadline_days,
         priority: formData.priority,
         status: formData.status,
+        assigned_to: formData.assigned_to === 'none' ? null : (formData.assigned_to || null),
         estimated_hours: formData.estimated_hours,
         actual_hours: formData.actual_hours,
         completed_at: formData.status === 'done' ? new Date().toISOString() : null,
@@ -356,6 +362,29 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
                   <SelectItem value="todo">A Fazer</SelectItem>
                   <SelectItem value="in_progress">Em Andamento</SelectItem>
                   <SelectItem value="done">Concluída</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="assigned_to">Atribuir a Colaborador</Label>
+              <Select
+                value={formData.assigned_to}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, assigned_to: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um colaborador (opcional)" />
+                </SelectTrigger>
+                <SelectContent className="z-[200]">
+                  <SelectItem value="none">Nenhum (Somente eu)</SelectItem>
+                  {collaborators.map((member) => (
+                    <SelectItem key={member.id} value={member.member_user_id!}>
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        {member.name} ({member.role})
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
