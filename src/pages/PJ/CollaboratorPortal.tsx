@@ -117,44 +117,59 @@ export default function CollaboratorPortal() {
             </h2>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-6">
             {assignedTasks.length === 0 ? (
               <p className="text-sm text-muted-foreground bg-muted/30 p-8 rounded-xl text-center">
                 Nenhuma tarefa atribuída a você no momento.
               </p>
             ) : (
-              assignedTasks.map(task => (
-                <Card key={task.id} className={task.status === 'done' ? 'opacity-60' : ''}>
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0"
-                      onClick={() => handleStatusUpdate('task', task.id, task.status)}
-                      disabled={updating === task.id}
-                    >
-                      {task.status === 'done' ? (
-                        <CheckCircle2 className="w-6 h-6 text-green-500" />
-                      ) : (
-                        <Circle className="w-6 h-6 text-muted-foreground" />
-                      )}
-                    </Button>
-                    <div className="flex-1 min-w-0">
-                      <h3 className={task.status === 'done' ? 'line-through font-medium' : 'font-medium'}>
-                        {task.title}
-                      </h3>
-                      <div className="flex items-center gap-3 mt-1">
-                        {task.deadline && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {format(new Date(task.deadline), "dd MMM", { locale: ptBR })}
-                          </span>
-                        )}
-                        <Badge variant="outline" className="text-[10px]">P{task.priority}</Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              // Agrupar tarefas por projeto
+              Object.entries(
+                assignedTasks.reduce((acc, task) => {
+                  const projectName = projects.find(p => p.id === task.project_id)?.project || 'Sem Projeto';
+                  if (!acc[projectName]) acc[projectName] = [];
+                  acc[projectName].push(task);
+                  return acc;
+                }, {} as Record<string, typeof assignedTasks>)
+              ).map(([projectName, tasks]) => (
+                <div key={projectName} className="space-y-2">
+                  <h3 className="text-sm font-semibold text-muted-foreground px-1">{projectName}</h3>
+                  <div className="space-y-2">
+                    {tasks.map(task => (
+                      <Card key={task.id} className={task.status === 'done' ? 'opacity-60 border-green-500/20' : ''}>
+                        <CardContent className="p-4 flex items-center gap-4">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="shrink-0"
+                            onClick={() => handleStatusUpdate('task', task.id, task.status)}
+                            disabled={updating === task.id}
+                          >
+                            {task.status === 'done' ? (
+                              <CheckCircle2 className="w-6 h-6 text-green-500" />
+                            ) : (
+                              <Circle className="w-6 h-6 text-muted-foreground" />
+                            )}
+                          </Button>
+                          <div className="flex-1 min-w-0">
+                            <h3 className={task.status === 'done' ? 'line-through font-medium' : 'font-medium'}>
+                              {task.title}
+                            </h3>
+                            <div className="flex items-center gap-3 mt-1">
+                              {task.deadline && (
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {format(new Date(task.deadline), "dd MMM", { locale: ptBR })}
+                                </span>
+                              )}
+                              <Badge variant="outline" className="text-[10px]">P{task.priority}</Badge>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
               ))
             )}
           </div>
