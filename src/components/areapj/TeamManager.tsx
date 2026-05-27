@@ -63,10 +63,12 @@ export function TeamManager() {
               password: data.password,
               name: data.name,
               role: data.role,
-              workspace_id: user.id, // Usando user.id como workspace_id temporário se não houver um workspaceStore
+              workspace_id: user.id,
               cost: data.cost,
               contract_type: data.contract_type,
               payment_day: data.payment_day,
+              hours_available: data.hours_available,
+              clt_benefits: data.clt_benefits,
               notes: data.notes
             }
           });
