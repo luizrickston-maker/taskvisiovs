@@ -123,7 +123,7 @@ export function ClientProjectForm({ open, onOpenChange, project, prospectData }:
         deadline: formData.deadline || null,
         priority: formData.priority,
         status: formData.status,
-        assigned_to: formData.assigned_to || null,
+        assigned_to: formData.assigned_to === 'none' ? null : (formData.assigned_to || null),
         is_corporate: true,
         prospect_id: prospectData?.prospect_id || project?.prospect_id || null,
       };
