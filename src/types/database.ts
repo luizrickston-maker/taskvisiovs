@@ -20,6 +20,7 @@ export interface Project {
   updated_at: string;
   user_id: string;
   workspace_id: string | null;
+  assigned_to?: string | null;
 }
 
 export interface ProjectTask {
@@ -40,6 +41,7 @@ export interface ProjectTask {
   user_id: string;
   video_editing_briefing_id: string | null;
   workspace_id: string | null;
+  assigned_to?: string | null;
 }
 
 export interface ProjectCategory {
@@ -196,6 +198,7 @@ export interface CorporateTeamMember {
   updated_at: string;
   user_id: string;
   workspace_id: string | null;
+  member_user_id?: string | null;
 }
 
 export interface Debt {
