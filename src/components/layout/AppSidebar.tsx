@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays, Wrench, Shield, ChevronDown, Workflow } from 'lucide-react';
+import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays, Wrench, Shield, ChevronDown, Workflow, Layout } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -88,7 +88,7 @@ export function AppSidebar() {
   const [expandedItems, setExpandedItems] = useState<string[]>(['Comercial']);
 
   // Get nav items based on current mode and role
-  const navItems = userRole === 'collaborator' 
+  const navItems = (userRole as string) === 'collaborator' 
     ? collaboratorNavItems 
     : (mode === 'personal' ? personalNavItems : businessNavItems);
 
