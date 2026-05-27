@@ -20,6 +20,7 @@ import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface NavItem {
   title: string;
@@ -64,6 +65,11 @@ const businessNavItems: NavItem[] = [
   { title: 'Ferramentas', url: '/ferramentas', icon: Wrench },
 ];
 
+const collaboratorNavItems: NavItem[] = [
+  { title: 'Meu Painel', url: '/colaborador', icon: Layout },
+  { title: 'IA Assistente', url: '/assistente-pessoal', icon: Brain },
+];
+
 const settingsItem = { title: 'Config', url: '/config', icon: Settings };
 
 export function AppSidebar() {
@@ -76,12 +82,15 @@ export function AppSidebar() {
   const { mode } = useAppContext();
   const collapsed = state === 'collapsed';
   const { isSuperAdmin } = useSuperAdmin();
+  const { data: userRole } = useUserRole();
 
   // Track which parent items are expanded
   const [expandedItems, setExpandedItems] = useState<string[]>(['Comercial']);
 
-  // Get nav items based on current mode
-  const navItems = mode === 'personal' ? personalNavItems : businessNavItems;
+  // Get nav items based on current mode and role
+  const navItems = userRole === 'collaborator' 
+    ? collaboratorNavItems 
+    : (mode === 'personal' ? personalNavItems : businessNavItems);
 
   const handleSignOut = async () => {
     if (signOut) {
