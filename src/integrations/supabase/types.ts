@@ -1042,6 +1042,7 @@ export type Database = {
           hours_available: number | null
           id: string
           is_active: boolean
+          member_user_id: string | null
           name: string
           notes: string | null
           payment_day: number
@@ -1058,6 +1059,7 @@ export type Database = {
           hours_available?: number | null
           id?: string
           is_active?: boolean
+          member_user_id?: string | null
           name: string
           notes?: string | null
           payment_day?: number
@@ -1074,6 +1076,7 @@ export type Database = {
           hours_available?: number | null
           id?: string
           is_active?: boolean
+          member_user_id?: string | null
           name?: string
           notes?: string | null
           payment_day?: number
@@ -2117,6 +2120,7 @@ export type Database = {
       project_tasks: {
         Row: {
           actual_hours: number | null
+          assigned_to: string | null
           completed_at: string | null
           created_at: string
           deadline: string | null
@@ -2136,6 +2140,7 @@ export type Database = {
         }
         Insert: {
           actual_hours?: number | null
+          assigned_to?: string | null
           completed_at?: string | null
           created_at?: string
           deadline?: string | null
@@ -2155,6 +2160,7 @@ export type Database = {
         }
         Update: {
           actual_hours?: number | null
+          assigned_to?: string | null
           completed_at?: string | null
           created_at?: string
           deadline?: string | null
@@ -2219,6 +2225,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          assigned_to: string | null
           client_name: string | null
           company_name: string | null
           created_at: string
@@ -2237,6 +2244,7 @@ export type Database = {
           workspace_id: string | null
         }
         Insert: {
+          assigned_to?: string | null
           client_name?: string | null
           company_name?: string | null
           created_at?: string
@@ -2255,6 +2263,7 @@ export type Database = {
           workspace_id?: string | null
         }
         Update: {
+          assigned_to?: string | null
           client_name?: string | null
           company_name?: string | null
           created_at?: string
