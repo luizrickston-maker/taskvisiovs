@@ -19,6 +19,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 import BriefingFillPage from "@/pages/BriefingFillPage";
 import VideoBriefingViewPage from "@/pages/VideoBriefingViewPage";
+import { RootRedirect } from "@/components/auth/RootRedirect";
 
 // Componentes core que serão carregados com prioridade (mas ainda lazy para não travar o main thread)
 const CaixaDashboard = lazy(() => import(/* vitePrefetch: true */ "@/pages/CaixaDashboard"));
@@ -108,7 +109,7 @@ const App = () => {
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/" element={<Navigate to="/comercial" replace />} />
+              <Route path="/" element={<RootRedirect />} />
               {/* Alias for cerebro-operacional to avoid 404s */}
               <Route path="/pj/cerebro-ia" element={<Navigate to="/pj/cerebro-operacional" replace />} />
               <Route path="/pj/clientes" element={<Navigate to="/comercial/clientes" replace />} />

@@ -35,7 +35,7 @@ export default function Auth() {
   const { user, resetPassword } = authContext;
 
   if (user) {
-    return <Navigate to="/caixa" replace />;
+    return <Navigate to="/" replace />;
   }
 
   const handleResetPassword = async (e: React.FormEvent) => {
