@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.ai-help-personal]
 verify_jwt = false
+
+[functions.create-collaborator]
+verify_jwt = false

@@ -89,8 +89,9 @@ export function TeamManager() {
           setTimeout(() => window.location.reload(), 2000); 
 
         } catch (error: any) {
-          console.error(error);
-          toast.error(`Erro ao criar colaborador: ${error.message}`);
+          console.error('Error creating collaborator:', error);
+          const errorMsg = error.context?.error || error.message || 'Erro desconhecido';
+          toast.error(`Erro ao criar colaborador: ${errorMsg}`);
         }
       } else {
         // Criação normal sem login
