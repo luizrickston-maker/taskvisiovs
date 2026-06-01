@@ -47,8 +47,25 @@ Deno.serve(async (req) => {
       notes 
     } = await req.json();
 
-    if (!email || !password || !name || !workspace_id) {
-      return new Response(JSON.stringify({ error: 'Campos obrigatórios ausentes' }), {
+    if (!email || !password || !name) {
+      return new Response(JSON.stringify({ error: 'Campos obrigatórios ausentes: email, password e name são obrigatórios' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Resolver workspace_id se não fornecido
+    let resolvedWorkspaceId = workspace_id;
+    if (!resolvedWorkspaceId) {
+      const { data: ownerWs } = await supabaseAdmin
+        .from('workspaces')
+        .select('id')
+        .eq('owner_user_id', callingUser.id)
+        .maybeSingle();
+      resolvedWorkspaceId = ownerWs?.id || null;
+    }
+
+    if (!resolvedWorkspaceId) {
+      return new Response(JSON.stringify({ error: 'Workspace não encontrado para o usuário' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
