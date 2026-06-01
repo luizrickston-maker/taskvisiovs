@@ -111,10 +111,12 @@ Deno.serve(async (req) => {
           if (teamError) throw teamError;
 
           // Garantir papel de colaborador
-          await supabaseAdmin.from('user_roles').upsert({
+          const { error: roleError } = await supabaseAdmin.from('user_roles').upsert({
             user_id: existingUser.id,
             role: 'collaborator'
           }, { onConflict: 'user_id, role' });
+
+          if (roleError) console.error('Erro ao atribuir papel:', roleError);
 
           return new Response(JSON.stringify({ success: true, user_id: existingUser.id, team_id: teamData.id }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -169,10 +171,12 @@ Deno.serve(async (req) => {
     if (teamError) throw teamError;
 
     // 3. Atribuir papel de colaborador
-    await supabaseAdmin.from('user_roles').upsert({
+    const { error: roleError } = await supabaseAdmin.from('user_roles').upsert({
       user_id: userId,
       role: 'collaborator'
     }, { onConflict: 'user_id, role' });
+
+    if (roleError) console.error('Erro ao atribuir papel:', roleError);
 
     return new Response(JSON.stringify({ success: true, user_id: userId, team_id: teamData.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
