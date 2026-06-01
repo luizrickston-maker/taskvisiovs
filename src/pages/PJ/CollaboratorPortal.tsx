@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useAppStore } from '@/stores/useAppStore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -6,8 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   CheckCircle2, Circle, Clock, Layout, ListTodo, LogOut, RefreshCcw, 
-  PlayCircle, Loader2, Video, Hourglass, CheckCircle, MoreHorizontal,
-  Paperclip, FileUp, Download, Trash2, ExternalLink
+  PlayCircle, Loader2, Video, Hourglass, CheckCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -15,113 +14,13 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { TaskAttachments } from '@/components/projetos/TaskAttachments';
 
 export default function CollaboratorPortal() {
   const { user } = useAuthContext();
   const navigate = useNavigate();
   const { projects, projectTasks, updateProject, updateProjectTask } = useAppStore();
   const [updating, setUpdating] = useState<string | null>(null);
-  const [attachments, setAttachments] = useState<Record<string, any[]>>({});
-  const [loadingAttachments, setLoadingAttachments] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (user) {
-      fetchAttachments();
-    }
-  }, [user]);
-
-  const fetchAttachments = async () => {
-    const { data, error } = await supabase
-      .from('project_task_attachments')
-      .select('*');
-    
-    if (error) {
-      console.error('Error fetching attachments:', error);
-      return;
-    }
-
-    const grouped = data.reduce((acc: any, curr: any) => {
-      if (!acc[curr.project_task_id]) acc[curr.project_task_id] = [];
-      acc[curr.project_task_id].push(curr);
-      return acc;
-    }, {});
-    setAttachments(grouped);
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, taskId: string) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    setLoadingAttachments(taskId);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${taskId}/${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('task-attachments')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('task-attachments')
-        .getPublicUrl(filePath);
-
-      const { error: dbError } = await supabase
-        .from('project_task_attachments')
-        .insert({
-          project_task_id: taskId,
-          user_id: user.id,
-          file_name: file.name,
-          file_url: publicUrl,
-          file_type: file.type,
-          file_size: file.size
-        });
-
-      if (dbError) throw dbError;
-
-      toast.success('Arquivo anexado com sucesso!');
-      fetchAttachments();
-    } catch (error: any) {
-      toast.error('Erro ao anexar arquivo: ' + error.message);
-    } finally {
-      setLoadingAttachments(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const deleteAttachment = async (attachmentId: string) => {
-    try {
-      const { error } = await supabase
-        .from('project_task_attachments')
-        .delete()
-        .eq('id', attachmentId);
-
-      if (error) throw error;
-      toast.success('Anexo removido');
-      fetchAttachments();
-    } catch (error: any) {
-      toast.error('Erro ao remover anexo');
-    }
-  };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/auth');
@@ -307,7 +206,6 @@ export default function CollaboratorPortal() {
               </p>
             ) : (
               assignedTasks.map(task => {
-                const taskAttachments = attachments[task.id] || [];
                 const projectName = projects.find(p => p.id === task.project_id)?.project || 'Sem Projeto';
                 
                 return (
@@ -326,56 +224,7 @@ export default function CollaboratorPortal() {
                             {task.title}
                           </h3>
                         </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-white">
-                              <MoreHorizontal className="w-5 h-5" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {
-                              setSelectedTaskId(task.id);
-                              fileInputRef.current?.click();
-                            }}>
-                              <Paperclip className="w-4 h-4 mr-2" /> Anexar Arquivo
-                            </DropdownMenuItem>
-                            {taskAttachments.length > 0 && (
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                    <ListTodo className="w-4 h-4 mr-2" /> Ver Anexos ({taskAttachments.length})
-                                  </DropdownMenuItem>
-                                </DialogTrigger>
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle>Anexos da Tarefa</DialogTitle>
-                                    <DialogDescription>
-                                      Arquivos compartilhados para esta tarefa.
-                                    </DialogDescription>
-                                  </DialogHeader>
-                                  <div className="space-y-2 max-h-[300px] overflow-y-auto pt-4">
-                                    {taskAttachments.map(att => (
-                                      <div key={att.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 border">
-                                        <div className="flex items-center gap-2 overflow-hidden">
-                                          <Paperclip className="w-4 h-4 shrink-0 text-primary" />
-                                          <span className="text-sm truncate font-medium">{att.file_name}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => window.open(att.file_url, '_blank')}>
-                                            <ExternalLink className="w-4 h-4" />
-                                          </Button>
-                                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteAttachment(att.id)}>
-                                            <Trash2 className="w-4 h-4" />
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <TaskAttachments taskId={task.id} />
                       </div>
 
                       <p className="text-sm text-gray-400 font-medium uppercase line-clamp-2">
@@ -395,12 +244,6 @@ export default function CollaboratorPortal() {
                           <Clock className="w-4 h-4" />
                           <span>{task.actual_hours || 0}h / {task.estimated_hours || 0}h</span>
                         </div>
-                        {taskAttachments.length > 0 && (
-                          <div className="flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">
-                            <Paperclip className="w-3 h-3" />
-                            {taskAttachments.length}
-                          </div>
-                        )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1a1a2e]">
@@ -444,10 +287,6 @@ export default function CollaboratorPortal() {
                           <CheckCircle className="w-4 h-4" />
                           Concluir
                         </Button>
-
-                        {loadingAttachments === task.id && (
-                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -455,13 +294,6 @@ export default function CollaboratorPortal() {
               })
             )}
           </div>
-          
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            onChange={(e) => selectedTaskId && handleFileUpload(e, selectedTaskId)}
-          />
         </section>
 
         {/* Projetos */}
