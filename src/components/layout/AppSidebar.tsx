@@ -120,7 +120,7 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <span className="font-display font-semibold text-lg text-foreground truncate">
-              {appName}
+              {displayAppName}
             </span>
           )}
         </div>
