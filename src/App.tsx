@@ -318,6 +318,12 @@ const App = () => {
                   </Suspense>
                 } />
                 
+                <Route path="/colaborador" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <CollaboratorPortal />
+                  </Suspense>
+                } />
+                
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
