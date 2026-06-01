@@ -28,11 +28,28 @@ export default function CollaboratorPortal() {
   }, [projects, user]);
 
   const assignedTasks = useMemo(() => {
-    return projectTasks.filter(t => t.assigned_to === user?.id);
-  }, [projectTasks, user]);
+    // 1. Tarefas atribuídas diretamente ao colaborador
+    const directTasks = projectTasks.filter(t => t.assigned_to === user?.id);
+    
+    // 2. Tarefas de projetos atribuídos ao colaborador
+    const projectIds = assignedProjects.map(p => p.id);
+    const tasksFromProjects = projectTasks.filter(t => 
+      projectIds.includes(t.project_id) && t.assigned_to !== user?.id
+    );
+
+    // Combinar (evitando duplicatas se uma tarefa for atribuída e o projeto também)
+    const combined = [...directTasks];
+    tasksFromProjects.forEach(t => {
+      if (!combined.some(existing => existing.id === t.id)) {
+        combined.push(t);
+      }
+    });
+
+    return combined;
+  }, [projectTasks, assignedProjects, user]);
 
   const pendingTasks = useMemo(() => {
-    return assignedTasks.filter(t => t.status !== 'done');
+    return assignedTasks.filter(t => t.status !== 'done' && t.status !== 'completed');
   }, [assignedTasks]);
 
   const todayTasks = useMemo(() => {
@@ -40,9 +57,8 @@ export default function CollaboratorPortal() {
     return pendingTasks.filter(t => t.deadline === today);
   }, [pendingTasks]);
 
-  const handleStatusUpdate = async (type: 'project' | 'task', id: string, currentStatus: string) => {
+  const handleStatusUpdate = async (type: 'project' | 'task', id: string, newStatus: string) => {
     setUpdating(id);
-    const newStatus = currentStatus === 'done' ? 'todo' : 'done';
     
     try {
       const table = type === 'project' ? 'projects' : 'project_tasks';
