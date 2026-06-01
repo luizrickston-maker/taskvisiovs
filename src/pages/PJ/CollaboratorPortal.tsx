@@ -6,13 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   CheckCircle2, Circle, Clock, Layout, ListTodo, LogOut, RefreshCcw, 
-  PlayCircle, Loader2, Video, Hourglass, CheckCircle
+  PlayCircle, Loader2, Video, Hourglass, CheckCircle, Sun, Moon
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { TaskAttachments } from '@/components/projetos/TaskAttachments';
 
