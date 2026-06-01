@@ -75,12 +75,14 @@ export function TeamManager() {
 
           if (edgeError) throw edgeError;
           
+          const portalLink = "https://taskvisionpro.lovable.app/colaborador";
+          
           toast.success('Colaborador criado com acesso ao portal!', {
-            description: `Link do portal: ${window.location.origin}/colaborador`,
+            description: `Link do portal: ${portalLink}`,
             action: {
               label: 'Copiar Link',
               onClick: () => {
-                navigator.clipboard.writeText(`${window.location.origin}/colaborador`);
+                navigator.clipboard.writeText(portalLink);
                 toast.success('Link copiado!');
               }
             }

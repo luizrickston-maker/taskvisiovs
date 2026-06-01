@@ -110,6 +110,15 @@ const App = () => {
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/" element={<RootRedirect />} />
+              <Route path="/colaborador" element={
+                <ProtectedRoute>
+                  <AppBootstrap>
+                    <Suspense fallback={<PageLoader />}>
+                      <CollaboratorPortal />
+                    </Suspense>
+                  </AppBootstrap>
+                </ProtectedRoute>
+              } />
               {/* Alias for cerebro-operacional to avoid 404s */}
               <Route path="/pj/cerebro-ia" element={<Navigate to="/pj/cerebro-operacional" replace />} />
               <Route path="/pj/clientes" element={<Navigate to="/comercial/clientes" replace />} />
@@ -133,16 +142,7 @@ const App = () => {
                   </Suspense>
                 </ClientPortalRoute>
               } />
-              {/* Collaborator Portal - also isolated from main app layout */}
-              <Route path="/colaborador" element={
-                <ProtectedRoute>
-                  <AppBootstrap>
-                    <Suspense fallback={<PageLoader />}>
-                      <CollaboratorPortal />
-                    </Suspense>
-                  </AppBootstrap>
-                </ProtectedRoute>
-              } />
+              {/* Collaborator Portal is now at top level */}
               {/* Super Admin - outside AppLayout */}
               <Route path="/super-admin" element={
                 <SuperAdminRoute>
