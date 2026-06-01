@@ -114,6 +114,8 @@ const App = () => {
               <Route path="/pj/cerebro-ia" element={<Navigate to="/pj/cerebro-operacional" replace />} />
               <Route path="/pj/clientes" element={<Navigate to="/comercial/clientes" replace />} />
               <Route path="/pj/clientes/:id" element={<Navigate to="/comercial/clientes/:id" replace />} />
+              <Route path="/colaboradores" element={<Navigate to="/colaborador" replace />} />
+              <Route path="/collaborator" element={<Navigate to="/colaborador" replace />} />
               {/* Short link redirect - public */}
               <Route path="/p/:code" element={
                 <Suspense fallback={<PageLoader />}>
@@ -130,6 +132,16 @@ const App = () => {
                     <PortalDashboard />
                   </Suspense>
                 </ClientPortalRoute>
+              } />
+              {/* Collaborator Portal - also isolated from main app layout */}
+              <Route path="/colaborador" element={
+                <ProtectedRoute>
+                  <AppBootstrap>
+                    <Suspense fallback={<PageLoader />}>
+                      <CollaboratorPortal />
+                    </Suspense>
+                  </AppBootstrap>
+                </ProtectedRoute>
               } />
               {/* Super Admin - outside AppLayout */}
               <Route path="/super-admin" element={
@@ -314,12 +326,6 @@ const App = () => {
                   </Suspense>
                 } />
                 
-                {/* Collaborator Portal Route */}
-                <Route path="/colaborador" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <CollaboratorPortal />
-                  </Suspense>
-                } />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
