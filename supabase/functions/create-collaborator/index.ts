@@ -87,30 +87,12 @@ Deno.serve(async (req) => {
         if (existingUser) {
           await supabaseAdmin.auth.admin.updateUserById(existingUser.id, { password });
           
-          // Tentar encontrar um workspace válido para o usuário se o fornecido for inválido
-          let finalWorkspaceId = workspace_id;
-          const { data: workspaceData } = await supabaseAdmin
-            .from('workspaces')
-            .select('id')
-            .eq('id', workspace_id)
-            .single();
-
-          if (!workspaceData) {
-            const { data: ownerWorkspace } = await supabaseAdmin
-              .from('workspaces')
-              .select('id')
-              .eq('owner_user_id', callingUser.id)
-              .maybeSingle();
-            
-            finalWorkspaceId = ownerWorkspace?.id || null;
-          }
-
           // Vincular ao corporate_team
           const { data: teamData, error: teamError } = await supabaseAdmin
             .from('corporate_team')
             .upsert({
               user_id: callingUser.id,
-              workspace_id: finalWorkspaceId,
+              workspace_id: resolvedWorkspaceId,
               name,
               role,
               member_user_id: existingUser.id,
