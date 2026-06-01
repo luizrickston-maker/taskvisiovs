@@ -20,8 +20,10 @@ import { TaskAttachments } from '@/components/projetos/TaskAttachments';
 export default function CollaboratorPortal() {
   const { user } = useAuthContext();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const { projects, projectTasks, updateProject, updateProjectTask, addProject, addProjectTask, deleteProject, deleteProjectTask } = useAppStore();
   const [updating, setUpdating] = useState<string | null>(null);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/auth');
