@@ -4,20 +4,23 @@ import { useAppStore } from '@/stores/useAppStore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Circle, Clock, Layout, ListTodo, LogOut, RefreshCcw, PlayCircle, Loader2 } from 'lucide-react';
+import { 
+  CheckCircle2, Circle, Clock, Layout, ListTodo, LogOut, RefreshCcw, 
+  PlayCircle, Loader2, Video, Hourglass, CheckCircle
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { TaskAttachments } from '@/components/projetos/TaskAttachments';
 
 export default function CollaboratorPortal() {
   const { user } = useAuthContext();
   const navigate = useNavigate();
   const { projects, projectTasks, updateProject, updateProjectTask } = useAppStore();
   const [updating, setUpdating] = useState<string | null>(null);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/auth');
@@ -189,90 +192,106 @@ export default function CollaboratorPortal() {
         )}
 
         {/* Tarefas */}
-        <section className="space-y-4">
+        <section className="space-y-4 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold font-display flex items-center gap-2">
               <ListTodo className="w-5 h-5" /> Minhas Tarefas
             </h2>
           </div>
 
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {assignedTasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground bg-muted/30 p-8 rounded-xl text-center">
+              <p className="text-sm text-muted-foreground bg-muted/30 p-8 rounded-xl text-center md:col-span-2">
                 Nenhuma tarefa atribuída a você no momento.
               </p>
             ) : (
-              // Agrupar tarefas por projeto
-              Object.entries(
-                assignedTasks.reduce((acc, task) => {
-                  const projectName = projects.find(p => p.id === task.project_id)?.project || 'Sem Projeto';
-                  if (!acc[projectName]) acc[projectName] = [];
-                  acc[projectName].push(task);
-                  return acc;
-                }, {} as Record<string, typeof assignedTasks>)
-              ).map(([projectName, tasks]) => (
-                <div key={projectName} className="space-y-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground px-1">{projectName}</h3>
-                  <div className="space-y-2">
-                    {tasks.map(task => (
-                      <Card key={task.id} className={task.status === 'done' ? 'opacity-60 border-green-500/20' : task.status === 'in_progress' ? 'border-amber-500/30 bg-amber-500/5' : ''}>
-                        <CardContent className="p-4 flex items-center gap-4">
-                          <div className="flex items-center gap-2 shrink-0">
-                            {updating === task.id ? (
-                              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                            ) : task.status === 'done' ? (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleStatusUpdate('task', task.id, 'todo')}
-                              >
-                                <CheckCircle2 className="w-6 h-6 text-green-500" />
-                              </Button>
-                            ) : task.status === 'in_progress' ? (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-amber-500 hover:text-amber-600"
-                                onClick={() => handleStatusUpdate('task', task.id, 'done')}
-                              >
-                                <PlayCircle className="w-6 h-6 animate-pulse" />
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-muted-foreground hover:text-amber-500"
-                                onClick={() => handleStatusUpdate('task', task.id, 'in_progress')}
-                              >
-                                <Circle className="w-6 h-6" />
-                              </Button>
-                            )}
+              assignedTasks.map(task => {
+                const projectName = projects.find(p => p.id === task.project_id)?.project || 'Sem Projeto';
+                
+                return (
+                  <Card 
+                    key={task.id} 
+                    className={cn(
+                      "bg-[#0a0a1a] border-[#1a1a2e] text-white transition-all hover:border-primary/50",
+                      task.status === 'done' && "opacity-75"
+                    )}
+                  >
+                    <CardContent className="p-5 space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1 flex-1">
+                          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">{projectName}</p>
+                          <h3 className="text-lg font-black uppercase tracking-tight leading-tight">
+                            {task.title}
+                          </h3>
+                        </div>
+                        <TaskAttachments taskId={task.id} />
+                      </div>
+
+                      <p className="text-sm text-gray-400 font-medium uppercase line-clamp-2">
+                        {task.description}
+                      </p>
+
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <div className={cn(
+                            "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white",
+                            task.priority <= 2 ? "bg-orange-600" : "bg-blue-600"
+                          )}>
+                            P{task.priority}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h3 className={task.status === 'done' ? 'line-through font-medium' : 'font-medium'}>
-                                {task.title}
-                              </h3>
-                              {task.status === 'in_progress' && (
-                                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200">Andamento</Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3 mt-1">
-                              {task.deadline && (
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {format(new Date(task.deadline), "dd MMM", { locale: ptBR })}
-                                </span>
-                              )}
-                              <Badge variant="outline" className="text-[10px]">P{task.priority}</Badge>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              ))
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-bold">
+                          <Clock className="w-4 h-4" />
+                          <span>{task.actual_hours || 0}h / {task.estimated_hours || 0}h</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1a1a2e]">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="bg-blue-900/40 text-blue-400 border-blue-800/50 hover:bg-blue-900/60 font-bold h-9 gap-2"
+                          onClick={() => navigate(`/pj/projetos/tarefas/${task.id}/briefing`)}
+                        >
+                          <Video className="w-4 h-4" /> Briefing de Edição
+                        </Button>
+
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className={cn(
+                            "font-bold h-9 gap-2 transition-all",
+                            task.status === 'in_progress' 
+                              ? "bg-amber-600/20 text-amber-500 border-amber-600/50 hover:bg-amber-600/30" 
+                              : "bg-[#1a1a2e] text-muted-foreground border-transparent hover:bg-muted"
+                          )}
+                          onClick={() => handleStatusUpdate('task', task.id, 'in_progress')}
+                          disabled={updating === task.id || task.status === 'in_progress'}
+                        >
+                          <Hourglass className={cn("w-4 h-4", task.status === 'in_progress' && "animate-spin")} />
+                          Em Andamento
+                        </Button>
+
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className={cn(
+                            "font-bold h-9 gap-2 transition-all",
+                            task.status === 'done'
+                              ? "bg-green-600/20 text-green-500 border-green-600/50"
+                              : "bg-[#1a1a2e] text-muted-foreground border-transparent hover:bg-muted"
+                          )}
+                          onClick={() => handleStatusUpdate('task', task.id, 'done')}
+                          disabled={updating === task.id || task.status === 'done'}
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          Concluir
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
         </section>

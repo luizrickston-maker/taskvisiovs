@@ -2117,6 +2117,54 @@ export type Database = {
           },
         ]
       }
+      project_task_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          project_task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          project_task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          project_task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_task_attachments_project_task_id_fkey"
+            columns: ["project_task_id"]
+            isOneToOne: false
+            referencedRelation: "corporate_pending_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_task_attachments_project_task_id_fkey"
+            columns: ["project_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_tasks: {
         Row: {
           actual_hours: number | null

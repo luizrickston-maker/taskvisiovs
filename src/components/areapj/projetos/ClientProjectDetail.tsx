@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   ArrowLeft, Plus, Calendar, Clock, Building2, User, 
-  CheckCircle2, Circle, Hourglass, Trash2, Edit2, AlertTriangle, MoreHorizontal, CalendarDays
+  CheckCircle2, Circle, Hourglass, Trash2, Edit2, AlertTriangle, MoreHorizontal, CalendarDays, Paperclip
 } from 'lucide-react';
 import { format, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -40,6 +40,7 @@ import { cn } from '@/lib/utils';
 import { ClientTaskForm } from './ClientTaskForm';
 import { CreateVideoBriefingButton } from './CreateVideoBriefingButton';
 import ProjectCalendar from '@/components/projetos/ProjectCalendar';
+import { TaskAttachments } from '@/components/projetos/TaskAttachments';
 
 interface ClientProjectDetailProps {
   open: boolean;
@@ -214,6 +215,7 @@ export function ClientProjectDetail({ open, onOpenChange, project, onEdit }: Cli
               <Clock className="w-3 h-3" />
               {task.actual_hours || 0}h / {task.estimated_hours || 0}h
             </span>
+            <TaskAttachments taskId={task.id} />
           </div>
           
           {/* Quick status and briefing buttons */}
