@@ -47,8 +47,25 @@ Deno.serve(async (req) => {
       notes 
     } = await req.json();
 
-    if (!email || !password || !name || !workspace_id) {
-      return new Response(JSON.stringify({ error: 'Campos obrigatórios ausentes' }), {
+    if (!email || !password || !name) {
+      return new Response(JSON.stringify({ error: 'Campos obrigatórios ausentes: email, password e name são obrigatórios' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Resolver workspace_id se não fornecido
+    let resolvedWorkspaceId = workspace_id;
+    if (!resolvedWorkspaceId) {
+      const { data: ownerWs } = await supabaseAdmin
+        .from('workspaces')
+        .select('id')
+        .eq('owner_user_id', callingUser.id)
+        .maybeSingle();
+      resolvedWorkspaceId = ownerWs?.id || null;
+    }
+
+    if (!resolvedWorkspaceId) {
+      return new Response(JSON.stringify({ error: 'Workspace não encontrado para o usuário' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -70,30 +87,12 @@ Deno.serve(async (req) => {
         if (existingUser) {
           await supabaseAdmin.auth.admin.updateUserById(existingUser.id, { password });
           
-          // Tentar encontrar um workspace válido para o usuário se o fornecido for inválido
-          let finalWorkspaceId = workspace_id;
-          const { data: workspaceData } = await supabaseAdmin
-            .from('workspaces')
-            .select('id')
-            .eq('id', workspace_id)
-            .single();
-
-          if (!workspaceData) {
-            const { data: ownerWorkspace } = await supabaseAdmin
-              .from('workspaces')
-              .select('id')
-              .eq('owner_user_id', callingUser.id)
-              .maybeSingle();
-            
-            finalWorkspaceId = ownerWorkspace?.id || null;
-          }
-
           // Vincular ao corporate_team
           const { data: teamData, error: teamError } = await supabaseAdmin
             .from('corporate_team')
             .upsert({
               user_id: callingUser.id,
-              workspace_id: finalWorkspaceId,
+              workspace_id: resolvedWorkspaceId,
               name,
               role,
               member_user_id: existingUser.id,
@@ -131,29 +130,11 @@ Deno.serve(async (req) => {
     const userId = userData.user.id;
 
     // 2. Adicionar ao corporate_team
-    // Tentar encontrar um workspace válido para o usuário se o fornecido for inválido
-    let finalWorkspaceId = workspace_id;
-    const { data: workspaceCheck } = await supabaseAdmin
-      .from('workspaces')
-      .select('id')
-      .eq('id', workspace_id)
-      .single();
-
-    if (!workspaceCheck) {
-      const { data: ownerWorkspace } = await supabaseAdmin
-        .from('workspaces')
-        .select('id')
-        .eq('owner_user_id', callingUser.id)
-        .maybeSingle();
-      
-      finalWorkspaceId = ownerWorkspace?.id || null;
-    }
-
     const { data: teamData, error: teamError } = await supabaseAdmin
       .from('corporate_team')
       .insert({
         user_id: callingUser.id,
-        workspace_id: finalWorkspaceId,
+        workspace_id: resolvedWorkspaceId,
         name,
         role,
         member_user_id: userId,
