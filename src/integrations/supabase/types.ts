@@ -3963,6 +3963,13 @@ export type Database = {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
       }
+      resolve_short_link: {
+        Args: { _code: string }
+        Returns: {
+          expires_at: string
+          target_url: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user" | "super_admin" | "collaborator"
