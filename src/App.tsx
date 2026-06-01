@@ -110,15 +110,7 @@ const App = () => {
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/" element={<RootRedirect />} />
-              <Route path="/colaborador" element={
-                <ProtectedRoute>
-                  <AppBootstrap>
-                    <Suspense fallback={<PageLoader />}>
-                      <CollaboratorPortal />
-                    </Suspense>
-                  </AppBootstrap>
-                </ProtectedRoute>
-              } />
+              {/* Removed individual top-level /colaborador route to use AppLayout instead */}
               {/* Alias for cerebro-operacional to avoid 404s */}
               <Route path="/pj/cerebro-ia" element={<Navigate to="/pj/cerebro-operacional" replace />} />
               <Route path="/pj/clientes" element={<Navigate to="/comercial/clientes" replace />} />
@@ -323,6 +315,12 @@ const App = () => {
                 <Route path="/config" element={
                   <Suspense fallback={<PageLoader />}>
                     <ConfigPage />
+                  </Suspense>
+                } />
+                
+                <Route path="/colaborador" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <CollaboratorPortal />
                   </Suspense>
                 } />
                 
