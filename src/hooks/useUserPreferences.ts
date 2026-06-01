@@ -56,7 +56,7 @@ export function useUserPreferences() {
   // Get current app name based on mode
   const getAppName = () => {
     if (mode === 'business') {
-      return userPreferences?.business_app_name || 'Minha Empresa';
+      return userPreferences?.business_app_name || 'Chapada Digital';
     }
     return userPreferences?.app_name || 'Flow Control';
   };
@@ -111,7 +111,7 @@ export function useUserPreferences() {
   return {
     appName: getAppName(),
     personalAppName: userPreferences?.app_name || 'Flow Control',
-    businessAppName: userPreferences?.business_app_name || 'Minha Empresa',
+    businessAppName: userPreferences?.business_app_name || 'Chapada Digital',
     defaultAvailableHours: userPreferences?.default_available_hours || 160,
     theme: getTheme(),
     setTheme,

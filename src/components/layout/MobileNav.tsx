@@ -1,8 +1,9 @@
-import { Wallet, TrendingUp, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Package, Users, User, Building2, Brain, CalendarDays, Wrench, ShoppingBag, FileText, Workflow } from 'lucide-react';
+import { Wallet, TrendingUp, FolderKanban, MoreHorizontal, Pen, Calendar, Settings, LogOut, Briefcase, Package, Users, User, Building2, Brain, CalendarDays, Wrench, ShoppingBag, FileText, Workflow, Layout } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { useAppContext } from '@/hooks/useAppContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,9 +52,22 @@ export function MobileNav() {
   const authContext = useAuthContextSafe();
   const signOut = authContext?.signOut;
   const { mode, setMode } = useAppContext();
+  const { data: userRole } = useUserRole();
   
-  const mainNavItems = mode === 'personal' ? personalMainNavItems : businessMainNavItems;
-  const moreNavItems = mode === 'personal' ? personalMoreNavItems : businessMoreNavItems;
+  const isCollaborator = userRole === 'collaborator';
+
+  const collaboratorNavItems = [
+    { title: 'Meu Painel', url: '/colaborador', icon: Layout },
+    { title: 'Config', url: '/config', icon: Settings },
+  ];
+
+  const mainNavItems = isCollaborator 
+    ? [collaboratorNavItems[0]]
+    : (mode === 'personal' ? personalMainNavItems : businessMainNavItems);
+    
+  const moreNavItems = isCollaborator
+    ? [collaboratorNavItems[1]]
+    : (mode === 'personal' ? personalMoreNavItems : businessMoreNavItems);
   
   const isMoreActive = moreNavItems.some(item => location.pathname === item.url);
 
@@ -110,23 +124,27 @@ export function MobileNav() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-background border-border mb-2">
             {/* Context Switcher */}
-            <DropdownMenuItem 
-              onClick={handleSwitchMode}
-              className="flex items-center gap-3 w-full cursor-pointer bg-muted/50"
-            >
-              {mode === 'personal' ? (
-                <>
-                  <Building2 className="w-4 h-4" />
-                  <span>Modo Empresarial</span>
-                </>
-              ) : (
-                <>
-                  <User className="w-4 h-4" />
-                  <span>Modo Pessoal</span>
-                </>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            {!isCollaborator && (
+              <>
+                <DropdownMenuItem 
+                  onClick={handleSwitchMode}
+                  className="flex items-center gap-3 w-full cursor-pointer bg-muted/50"
+                >
+                  {mode === 'personal' ? (
+                    <>
+                      <Building2 className="w-4 h-4" />
+                      <span>Modo Empresarial</span>
+                    </>
+                  ) : (
+                    <>
+                      <User className="w-4 h-4" />
+                      <span>Modo Pessoal</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             
             {moreNavItems.map((item) => {
               const isActive = location.pathname === item.url;
