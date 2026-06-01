@@ -87,12 +87,9 @@ export default function CollaboratorPortal() {
     <div className="p-4 md:p-6 space-y-8 max-w-5xl mx-auto">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold font-display">Meu Painel de Trabalho</h1>
+          <h1 className="text-2xl font-bold font-display text-foreground">Meu Painel de Trabalho</h1>
           <p className="text-muted-foreground">Bem-vindo! Veja suas pendências e progresso abaixo.</p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleLogout} className="w-fit">
-          <LogOut className="w-4 h-4 mr-2" /> Sair
-        </Button>
       </header>
 
       {/* Resumo */}
