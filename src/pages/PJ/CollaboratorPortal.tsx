@@ -19,12 +19,42 @@ import { TaskAttachments } from '@/components/projetos/TaskAttachments';
 export default function CollaboratorPortal() {
   const { user } = useAuthContext();
   const navigate = useNavigate();
-  const { projects, projectTasks, updateProject, updateProjectTask } = useAppStore();
+  const { projects, projectTasks, updateProject, updateProjectTask, addProject, addProjectTask, deleteProject, deleteProjectTask } = useAppStore();
   const [updating, setUpdating] = useState<string | null>(null);
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/auth');
   };
+
+  // Realtime sync — collaborator receives live updates for tasks/projects
+  // visible via RLS (assigned_to = me OR project.assigned_to = me)
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`collab-sync-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'project_tasks' }, (payload: any) => {
+        const { eventType, new: n, old: o } = payload;
+        if (eventType === 'INSERT') {
+          if (!useAppStore.getState().projectTasks.some(t => t.id === n.id)) addProjectTask(n);
+        } else if (eventType === 'UPDATE') {
+          updateProjectTask(n.id, n);
+        } else if (eventType === 'DELETE') {
+          deleteProjectTask(o.id);
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, (payload: any) => {
+        const { eventType, new: n, old: o } = payload;
+        if (eventType === 'INSERT') {
+          if (!useAppStore.getState().projects.some(p => p.id === n.id)) addProject(n);
+        } else if (eventType === 'UPDATE') {
+          updateProject(n.id, n);
+        } else if (eventType === 'DELETE') {
+          deleteProject(o.id);
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, addProject, addProjectTask, updateProject, updateProjectTask, deleteProject, deleteProjectTask]);
 
   const assignedProjects = useMemo(() => {
     return projects.filter(p => p.assigned_to === user?.id);
