@@ -131,6 +131,16 @@ const App = () => {
                   </Suspense>
                 </ClientPortalRoute>
               } />
+              {/* Collaborator Portal - also isolated from main app layout */}
+              <Route path="/colaborador" element={
+                <ProtectedRoute>
+                  <AppBootstrap>
+                    <Suspense fallback={<PageLoader />}>
+                      <CollaboratorPortal />
+                    </Suspense>
+                  </AppBootstrap>
+                </ProtectedRoute>
+              } />
               {/* Super Admin - outside AppLayout */}
               <Route path="/super-admin" element={
                 <SuperAdminRoute>
@@ -314,12 +324,6 @@ const App = () => {
                   </Suspense>
                 } />
                 
-                {/* Collaborator Portal Route */}
-                <Route path="/colaborador" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <CollaboratorPortal />
-                  </Suspense>
-                } />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
