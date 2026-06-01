@@ -114,6 +114,8 @@ const App = () => {
               <Route path="/pj/cerebro-ia" element={<Navigate to="/pj/cerebro-operacional" replace />} />
               <Route path="/pj/clientes" element={<Navigate to="/comercial/clientes" replace />} />
               <Route path="/pj/clientes/:id" element={<Navigate to="/comercial/clientes/:id" replace />} />
+              <Route path="/colaboradores" element={<Navigate to="/colaborador" replace />} />
+              <Route path="/collaborator" element={<Navigate to="/colaborador" replace />} />
               {/* Short link redirect - public */}
               <Route path="/p/:code" element={
                 <Suspense fallback={<PageLoader />}>
