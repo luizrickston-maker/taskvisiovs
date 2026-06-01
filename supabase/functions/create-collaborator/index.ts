@@ -118,6 +118,13 @@ Deno.serve(async (req) => {
 
           if (roleError) console.error('Erro ao atribuir papel:', roleError);
 
+          // Garantir acesso ao workspace
+          await supabaseAdmin.from('workspace_members').upsert({
+            workspace_id: resolvedWorkspaceId,
+            user_id: existingUser.id,
+            role: 'member'
+          }, { onConflict: 'workspace_id, user_id' });
+
           return new Response(JSON.stringify({ success: true, user_id: existingUser.id, team_id: teamData.id }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
@@ -159,6 +166,13 @@ Deno.serve(async (req) => {
     }, { onConflict: 'user_id, role' });
 
     if (roleError) console.error('Erro ao atribuir papel:', roleError);
+
+    // 4. Garantir acesso ao workspace
+    await supabaseAdmin.from('workspace_members').upsert({
+      workspace_id: resolvedWorkspaceId,
+      user_id: userId,
+      role: 'member'
+    }, { onConflict: 'workspace_id, user_id' });
 
     return new Response(JSON.stringify({ success: true, user_id: userId, team_id: teamData.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
