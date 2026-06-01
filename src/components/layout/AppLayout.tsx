@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { MobileNav } from './MobileNav';
@@ -10,14 +10,12 @@ import { useBriefingNotifications } from '@/hooks/useBriefingNotifications';
 
 export function AppLayout() {
   useBriefingNotifications();
-  // Hooks chamados de forma canônica
+  const location = useLocation();
   const preferences = useUserPreferences();
-
-  // Status realtime vem do bootstrap (com fallback seguro)
   const { status: realtimeStatus } = useRealtimeContextSafe();
-
-  // Fallback seguro para appName
   const appName = preferences?.appName ?? 'Meu App';
+
+  const isCollaboratorMode = location.pathname.startsWith('/colaborador');
 
   return (
     <SidebarProvider>
@@ -46,8 +44,8 @@ export function AppLayout() {
         {/* Mobile Bottom Nav */}
         <MobileNav />
 
-        {/* AI Assistant */}
-        <OperationalBrainChat />
+        {/* AI Assistant - Hidden for collaborators */}
+        {!isCollaboratorMode && <OperationalBrainChat />}
       </div>
     </SidebarProvider>
   );

@@ -76,6 +76,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { appName } = useUserPreferences();
+  const displayAppName = appName === 'Meu App' ? 'Chapada Digital' : appName;
   const authContext = useAuthContextSafe();
   const signOut = authContext?.signOut;
   const { mode } = useAppContext();
@@ -119,7 +120,7 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <span className="font-display font-semibold text-lg text-foreground truncate">
-              {appName}
+              {displayAppName}
             </span>
           )}
         </div>
