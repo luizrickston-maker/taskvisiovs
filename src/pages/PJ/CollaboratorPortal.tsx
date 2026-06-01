@@ -4,16 +4,23 @@ import { useAppStore } from '@/stores/useAppStore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Circle, Clock, Layout, ListTodo, RefreshCcw } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Layout, ListTodo, LogOut, RefreshCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 export default function CollaboratorPortal() {
   const { user } = useAuthContext();
+  const navigate = useNavigate();
   const { projects, projectTasks, updateProject, updateProjectTask } = useAppStore();
   const [updating, setUpdating] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
+  };
 
   const assignedProjects = useMemo(() => {
     return projects.filter(p => p.assigned_to === user?.id);
@@ -61,9 +68,14 @@ export default function CollaboratorPortal() {
 
   return (
     <div className="p-4 md:p-6 space-y-8 max-w-5xl mx-auto">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-bold font-display">Meu Painel de Trabalho</h1>
-        <p className="text-muted-foreground">Bem-vindo! Veja suas pendências e progresso abaixo.</p>
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold font-display">Meu Painel de Trabalho</h1>
+          <p className="text-muted-foreground">Bem-vindo! Veja suas pendências e progresso abaixo.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleLogout} className="w-fit">
+          <LogOut className="w-4 h-4 mr-2" /> Sair
+        </Button>
       </header>
 
       {/* Resumo */}
