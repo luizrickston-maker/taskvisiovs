@@ -80,7 +80,8 @@ Deno.serve(async (req) => {
 
     if (userError) {
       // Se o usuário já existir, tentamos atualizar a senha
-      if (userError.message.includes('already registered')) {
+      const msg = (userError.message || '').toLowerCase();
+      if (msg.includes('already') || msg.includes('exist') || (userError as any).code === 'email_exists') {
         const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
         const existingUser = existingUsers.users.find(u => u.email === email);
         
