@@ -180,7 +180,11 @@ Deno.serve(async (req) => {
 
   } catch (err) {
     console.error('create-collaborator erro:', err);
-    return new Response(JSON.stringify({ error: err.message || 'Erro interno' }), {
+    return new Response(JSON.stringify({ 
+      error: err.message || 'Erro interno',
+      details: err.stack,
+      stack: err.stack
+    }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
