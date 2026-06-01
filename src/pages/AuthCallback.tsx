@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
  */
 async function getRedirectDestination(userId: string): Promise<string> {
   const { data: workspaceId } = await supabase.rpc('get_my_workspace_id');
-  if (workspaceId) return '/caixa';
+  if (workspaceId) return '/';
 
   const { data: clientUser } = await supabase
     .from('client_users')
@@ -21,7 +21,7 @@ async function getRedirectDestination(userId: string): Promise<string> {
     .eq('is_active', true)
     .maybeSingle();
 
-  return clientUser ? '/portal' : '/caixa';
+  return clientUser ? '/portal' : '/';
 }
 
 // SECURITY: Sanitize error messages from URL to prevent reflected XSS
@@ -95,7 +95,7 @@ export default function AuthCallback() {
           setMessage('Conta verificada com sucesso!');
 
           const { data: { session } } = await supabase.auth.getSession();
-          const dest = session ? await getRedirectDestination(session.user.id) : '/caixa';
+          const dest = session ? await getRedirectDestination(session.user.id) : '/';
           setTimeout(() => navigate(dest, { replace: true }), 1500);
           return;
         }
