@@ -14,7 +14,6 @@ export function RootRedirect() {
   }
 
   if (role === "collaborator") {
-    console.log('[RootRedirect] Redirecting to collaborator portal');
     return <Navigate to="/colaborador" replace />;
   }
 
