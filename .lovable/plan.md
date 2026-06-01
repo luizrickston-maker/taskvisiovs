@@ -1,26 +1,24 @@
-I will optimize the application performance by implementing the following improvements:
+Implementar a funcionalidade de análise de progresso dos colaboradores no menu \"Time\". Isso incluirá uma nova visão detalhada para cada colaborador, permitindo ao gestor visualizar atividades, conclusão, pendências, andamentos e tarefas a fazer.
 
-### 1. Route Optimization
-*   Update `src/App.tsx` to use `prefetch` patterns for core routes.
-*   Optimize `Suspense` fallbacks to be more lightweight.
+### Alterações Propostas
 
-### 2. Data Loading Optimization
-*   Refactor `src/hooks/useInitializeData.ts` to:
-    *   Prioritize only the absolute minimum data needed for the current route.
-    *   Implement smarter caching using `localStorage` for semi-static data (like categories).
-    *   Parallelize secondary data loading more aggressively.
-*   Optimize `src/hooks/useRealtimeSync.ts` to use a single channel with multiple listeners (already mostly done, but can be refined).
+#### 1. Componentes de UI
+- Criar `src/components/areapj/team/TeamMemberStats.tsx`: Componente para exibir KPIs de progresso (Tarefas concluídas, pendentes, etc.).
+- Criar `src/components/areapj/team/TeamMemberProgressDetails.tsx`: Componente principal de detalhes que será exibido ao clicar em um colaborador.
+- Criar `src/components/areapj/team/CollaboratorTasksList.tsx`: Lista de tarefas filtrada por colaborador com abas de status (Pendente, Em Andamento, Concluído).
 
-### 3. Component Performance
-*   Implement `React.memo` on heavy list components (Tasks, Projects).
-*   Add virtualization for long lists if detected.
-*   Optimize image loading using modern formats and lazy attributes.
+#### 2. Atualização no TeamManager
+- Modificar `src/components/areapj/TeamManager.tsx` para permitir a seleção de um colaborador e alternar entre a lista geral e a visão de detalhes do progresso.
 
-### 4. Bundle Size
-*   Identify and extract large dependencies into separate chunks.
-*   Clean up unused imports and consolidate utility functions.
+#### 3. Integração de Dados
+- Utilizar o `useAppStore` para acessar `projectTasks` e `projects`.
+- Implementar filtragem em tempo real das tarefas vinculadas ao `member_user_id` ou ao ID do membro da equipe (mapeando tarefas atribuídas).
 
-### Technical Details:
-- **Prioritized Loading**: Only fetch data for the active dashboard immediately.
-- **Cache Strategy**: Use `stale-while-revalidate` pattern for the global store.
-- **Vite Tuning**: Adjust build options for better chunking.
+#### 4. Navegação e UX
+- Adicionar um botão \"Ver Progresso\" ou clique no card em `TeamMemberCard.tsx` para abrir a visão detalhada.
+- Garantir que a transição seja suave e mantenha o contexto do gestor.
+
+### Detalhes Técnicos
+- **Filtragem**: As tarefas serão filtradas comparando `task.assigned_to` com `member.id`.
+- **Status**: As tarefas serão categorizadas com base no campo `status` (`pending`, `in_progress`, `completed`).
+- **Realtime**: Aproveitar a infraestrutura de realtime já existente para atualizar o progresso instantaneamente quando o colaborador mudar o status de uma tarefa no portal dele.

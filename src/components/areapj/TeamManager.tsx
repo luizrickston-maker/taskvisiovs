@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { TeamMemberForm } from './TeamMemberForm';
 import { TeamMemberCard } from './TeamMemberCard';
+import { TeamMemberProgressDetails } from './team/TeamMemberProgressDetails';
 import type { CorporateTeamMember } from '@/types/database';
 
 export function TeamManager() {
@@ -17,6 +18,7 @@ export function TeamManager() {
   
   const [formOpen, setFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<CorporateTeamMember | null>(null);
+  const [selectedMemberProgress, setSelectedMemberProgress] = useState<CorporateTeamMember | null>(null);
 
   const activeMembers = useMemo(() => {
     return corporateTeam.filter(m => m.is_active);
@@ -158,6 +160,15 @@ export function TeamManager() {
     }
   };
 
+  if (selectedMemberProgress) {
+    return (
+      <TeamMemberProgressDetails 
+        member={selectedMemberProgress} 
+        onBack={() => setSelectedMemberProgress(null)} 
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* KPIs */}
@@ -216,6 +227,7 @@ export function TeamManager() {
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onToggleActive={handleToggleActive}
+                  onViewProgress={(member) => setSelectedMemberProgress(member)}
                 />
               ))}
             </div>

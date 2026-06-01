@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Edit2, Trash2, MoreHorizontal, UserCheck, UserX, Copy, Link as LinkIcon } from 'lucide-react';
+import { Edit2, Trash2, MoreHorizontal, UserCheck, UserX, Copy, Link as LinkIcon, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import type { CorporateTeamMember, ContractType } from '@/types/database';
@@ -19,6 +19,7 @@ interface TeamMemberCardProps {
   onEdit: (member: CorporateTeamMember) => void;
   onDelete: (id: string) => void;
   onToggleActive: (member: CorporateTeamMember) => void;
+  onViewProgress?: (member: CorporateTeamMember) => void;
 }
 
 const contractTypeConfig: Record<ContractType, { label: string; color: string }> = {
@@ -36,7 +37,7 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
-export function TeamMemberCard({ member, onEdit, onDelete, onToggleActive }: TeamMemberCardProps) {
+export function TeamMemberCard({ member, onEdit, onDelete, onToggleActive, onViewProgress }: TeamMemberCardProps) {
   const contractConfig = contractTypeConfig[member.contract_type as ContractType];
 
   const copyPortalLink = () => {
@@ -69,6 +70,10 @@ export function TeamMemberCard({ member, onEdit, onDelete, onToggleActive }: Tea
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-background border-border">
+            <DropdownMenuItem onClick={() => onViewProgress?.(member)}>
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Ver Progresso
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onEdit(member)}>
               <Edit2 className="w-4 h-4 mr-2" />
               Editar
