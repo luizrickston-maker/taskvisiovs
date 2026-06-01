@@ -64,7 +64,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Business-only users redirect to commercial if they try to access personal routes
   const personalRoutes = ['/caixa', '/meu-dia', '/financas', '/planejamento', '/projetos', '/conteudos', '/roteiros', '/assistente-pessoal'];
-  if (user.email === 'chapadadigitalbr@gmail.com' && personalRoutes.some(route => location.pathname.startsWith(route))) {
+  if (user.email === 'chapadadigitalbr@gmail.com' && location.pathname === '/') {
     return <Navigate to="/comercial" replace />;
   }
 

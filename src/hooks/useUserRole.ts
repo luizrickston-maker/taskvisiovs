@@ -13,15 +13,22 @@ export function useUserRole() {
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .eq("user_id", user.id);
 
       if (error) {
         console.error("Error fetching user role:", error);
         return "user";
       }
 
-      return data?.role || "user";
+      if (!data || data.length === 0) return "user";
+
+      // Prioridade: super_admin > admin > collaborator > user
+      const roles = data.map(r => r.role);
+      if (roles.includes("super_admin")) return "super_admin";
+      if (roles.includes("admin")) return "admin";
+      if (roles.includes("collaborator")) return "collaborator";
+      
+      return roles[0] || "user";
     },
     enabled: !!user,
   });
