@@ -1,15 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useAppStore } from '@/stores/useAppStore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Circle, Clock, Layout, ListTodo, LogOut, RefreshCcw } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Layout, ListTodo, LogOut, RefreshCcw, PlayCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 export default function CollaboratorPortal() {
   const { user } = useAuthContext();
@@ -136,17 +137,35 @@ export default function CollaboratorPortal() {
               {todayTasks.map(task => (
                 <Card key={task.id} className="border-primary/20 bg-primary/5">
                   <CardContent className="p-4 flex items-center gap-4">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0"
-                      onClick={() => handleStatusUpdate('task', task.id, task.status)}
-                      disabled={updating === task.id}
-                    >
-                      <Circle className="w-6 h-6 text-primary" />
-                    </Button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {task.status === 'in_progress' ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-amber-500 hover:text-amber-600 hover:bg-amber-100"
+                          onClick={() => handleStatusUpdate('task', task.id, 'done')}
+                          disabled={updating === task.id}
+                        >
+                          <PlayCircle className="w-6 h-6 animate-pulse" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleStatusUpdate('task', task.id, 'in_progress')}
+                          disabled={updating === task.id || task.status === 'done'}
+                        >
+                          <Circle className="w-6 h-6 text-primary" />
+                        </Button>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold">{task.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold">{task.title}</h3>
+                        {task.status === 'in_progress' && (
+                          <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200">Em Andamento</Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground line-clamp-1">{task.description}</p>
                     </div>
                   </CardContent>
@@ -183,25 +202,48 @@ export default function CollaboratorPortal() {
                   <h3 className="text-sm font-semibold text-muted-foreground px-1">{projectName}</h3>
                   <div className="space-y-2">
                     {tasks.map(task => (
-                      <Card key={task.id} className={task.status === 'done' ? 'opacity-60 border-green-500/20' : ''}>
+                      <Card key={task.id} className={task.status === 'done' ? 'opacity-60 border-green-500/20' : task.status === 'in_progress' ? 'border-amber-500/30 bg-amber-500/5' : ''}>
                         <CardContent className="p-4 flex items-center gap-4">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="shrink-0"
-                            onClick={() => handleStatusUpdate('task', task.id, task.status)}
-                            disabled={updating === task.id}
-                          >
-                            {task.status === 'done' ? (
-                              <CheckCircle2 className="w-6 h-6 text-green-500" />
+                          <div className="flex items-center gap-2 shrink-0">
+                            {updating === task.id ? (
+                              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                            ) : task.status === 'done' ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleStatusUpdate('task', task.id, 'todo')}
+                              >
+                                <CheckCircle2 className="w-6 h-6 text-green-500" />
+                              </Button>
+                            ) : task.status === 'in_progress' ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-amber-500 hover:text-amber-600"
+                                onClick={() => handleStatusUpdate('task', task.id, 'done')}
+                              >
+                                <PlayCircle className="w-6 h-6 animate-pulse" />
+                              </Button>
                             ) : (
-                              <Circle className="w-6 h-6 text-muted-foreground" />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:text-amber-500"
+                                onClick={() => handleStatusUpdate('task', task.id, 'in_progress')}
+                              >
+                                <Circle className="w-6 h-6" />
+                              </Button>
                             )}
-                          </Button>
+                          </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className={task.status === 'done' ? 'line-through font-medium' : 'font-medium'}>
-                              {task.title}
-                            </h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className={task.status === 'done' ? 'line-through font-medium' : 'font-medium'}>
+                                {task.title}
+                              </h3>
+                              {task.status === 'in_progress' && (
+                                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200">Andamento</Badge>
+                              )}
+                            </div>
                             <div className="flex items-center gap-3 mt-1">
                               {task.deadline && (
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -235,12 +277,12 @@ export default function CollaboratorPortal() {
               </p>
             ) : (
               assignedProjects.map(project => (
-                <Card key={project.id}>
+                <Card key={project.id} className={project.status === 'done' ? 'opacity-60 border-green-500/20' : project.status === 'in_progress' ? 'border-amber-500/30 bg-amber-500/5' : ''}>
                   <CardHeader className="p-4">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{project.project}</CardTitle>
-                      <Badge variant={project.status === 'done' ? 'secondary' : 'default'}>
-                        {project.status === 'done' ? 'Concluído' : 'Em Andamento'}
+                      <Badge variant={project.status === 'done' ? 'secondary' : project.status === 'in_progress' ? 'default' : 'outline'} className={project.status === 'in_progress' ? 'bg-amber-500 text-white border-none' : ''}>
+                        {project.status === 'done' ? 'Concluído' : project.status === 'in_progress' ? 'Em Andamento' : 'A Fazer'}
                       </Badge>
                     </div>
                     {project.client_name && (
@@ -252,15 +294,28 @@ export default function CollaboratorPortal() {
                       <span>Progresso do Projeto</span>
                       <span>{project.status === 'done' ? '100%' : 'Em desenvolvimento'}</span>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      className="w-full gap-2"
-                      onClick={() => handleStatusUpdate('project', project.id, project.status)}
-                      disabled={updating === project.id}
-                    >
-                      <RefreshCcw className={`w-4 h-4 ${updating === project.id ? 'animate-spin' : ''}`} />
-                      {project.status === 'done' ? 'Reabrir Projeto' : 'Marcar Projeto como Concluído'}
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className={cn("gap-2", project.status === 'in_progress' && "bg-amber-500/10 border-amber-500 text-amber-700")}
+                        onClick={() => handleStatusUpdate('project', project.id, project.status === 'in_progress' ? 'todo' : 'in_progress')}
+                        disabled={updating === project.id || project.status === 'done'}
+                      >
+                        <PlayCircle className={cn("w-4 h-4", project.status === 'in_progress' && "animate-pulse")} />
+                        {project.status === 'in_progress' ? 'Em Andamento' : 'Iniciar'}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="gap-2 hover:bg-green-500 hover:text-white"
+                        onClick={() => handleStatusUpdate('project', project.id, project.status === 'done' ? 'todo' : 'done')}
+                        disabled={updating === project.id}
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        {project.status === 'done' ? 'Reabrir' : 'Concluir'}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))
