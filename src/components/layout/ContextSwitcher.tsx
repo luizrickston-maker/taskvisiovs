@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext, type AppContextMode } from '@/hooks/useAppContext';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,9 +24,10 @@ export function ContextSwitcher({ collapsed = false }: ContextSwitcherProps) {
   const { mode, setMode } = useAppContext();
   const auth = useAuthContextSafe();
   const navigate = useNavigate();
+  const { data: userRole } = useUserRole();
   
-  // Hide switcher for specific user
-  if (auth?.user?.email === 'chapadadigitalbr@gmail.com') {
+  // Hide switcher for specific user or collaborators
+  if (auth?.user?.email === 'chapadadigitalbr@gmail.com' || userRole === 'collaborator') {
     return null;
   }
   const current = contexts.find(c => c.value === mode) || contexts[0];

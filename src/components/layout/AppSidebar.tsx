@@ -67,7 +67,6 @@ const businessNavItems: NavItem[] = [
 
 const collaboratorNavItems: NavItem[] = [
   { title: 'Meu Painel', url: '/colaborador', icon: Layout },
-  { title: 'IA Assistente', url: '/assistente-pessoal', icon: Brain },
 ];
 
 const settingsItem = { title: 'Config', url: '/config', icon: Settings };
