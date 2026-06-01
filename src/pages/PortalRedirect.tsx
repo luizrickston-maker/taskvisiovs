@@ -15,22 +15,16 @@ export default function PortalRedirect() {
 
     (async () => {
       const { data, error: fetchError } = await supabase
-        .from('portal_short_links')
-        .select('target_url, expires_at')
-        .eq('code', code)
-        .maybeSingle();
+        .rpc('resolve_short_link', { _code: code });
 
-      if (fetchError || !data) {
-        setError('Link não encontrado ou inválido.');
+      const row = Array.isArray(data) ? data[0] : data;
+
+      if (fetchError || !row) {
+        setError('Link não encontrado, expirado ou inválido.');
         return;
       }
 
-      if (new Date(data.expires_at) < new Date()) {
-        setError('Este link expirou. Solicite um novo acesso ao seu gestor.');
-        return;
-      }
-
-      window.location.href = data.target_url;
+      window.location.href = row.target_url;
     })();
   }, [code]);
 
