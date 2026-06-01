@@ -53,7 +53,7 @@ export function FuturisticLoginCard({ onShowReset, onShowEmailSent }: Props) {
       }
     } else {
       toast.success('Login realizado com sucesso!');
-      window.location.replace('/caixa');
+      window.location.replace('/');
     }
   };
 
