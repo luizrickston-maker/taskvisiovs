@@ -110,7 +110,18 @@ export function TeamMemberCard({ member, onEdit, onDelete, onToggleActive, onVie
         </DropdownMenu>
       </div>
 
-      <div className="space-y-2 text-sm">
+      <div className="space-y-3 text-sm">
+        <Button 
+          variant="secondary" 
+          size="sm" 
+          className="w-full justify-start gap-2 h-9 bg-primary/5 hover:bg-primary/10 text-primary border-none mb-2"
+          onClick={() => onViewProgress?.(member)}
+        >
+          <BarChart3 className="w-4 h-4" />
+          Analisar Atividades
+        </Button>
+
+        <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Contrato:</span>
           <Badge variant="outline" className={contractConfig.color}>
@@ -135,6 +146,7 @@ export function TeamMemberCard({ member, onEdit, onDelete, onToggleActive, onVie
             Inativo
           </Badge>
         )}
+        </div>
       </div>
     </Card>
   );
