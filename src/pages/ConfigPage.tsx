@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Settings, Moon, Sun, Monitor, Check, User, Building2, Clock } from 'lucide-react';
+import { Settings, Moon, Sun, Check, User, Building2, Clock } from 'lucide-react';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,9 @@ export default function ConfigPage() {
     updateBusinessAppName,
     updateDefaultAvailableHours,
   } = useUserPreferences();
+  
+  const { data: userRole } = useUserRole();
+  const isCollaborator = userRole === 'collaborator';
   
   const [newPersonalName, setNewPersonalName] = useState(personalAppName);
   const [newBusinessName, setNewBusinessName] = useState(businessAppName);
@@ -65,49 +69,53 @@ export default function ConfigPage() {
           <CardDescription>Personalize seu aplicativo</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Personal App Name */}
-          <div className="space-y-2">
-            <Label htmlFor="personalAppName" className="flex items-center gap-2">
-              <User className="w-4 h-4 text-muted-foreground" />
-              Nome do Contexto Pessoal
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                id="personalAppName"
-                value={newPersonalName}
-                onChange={(e) => setNewPersonalName(e.target.value)}
-                placeholder="Ex: Luiz Rickston"
-              />
-              <Button onClick={handleSavePersonalName} disabled={isSavingPersonal}>
-                <Check className="w-4 h-4" />
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Este nome aparece quando você está no modo pessoal.
-            </p>
-          </div>
+          {/* Personal App Name - Only visible for managers */}
+          {!isCollaborator && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="personalAppName" className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  Nome do Contexto Pessoal
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="personalAppName"
+                    value={newPersonalName}
+                    onChange={(e) => setNewPersonalName(e.target.value)}
+                    placeholder="Ex: Luiz Rickston"
+                  />
+                  <Button onClick={handleSavePersonalName} disabled={isSavingPersonal}>
+                    <Check className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Este nome aparece quando você está no modo pessoal.
+                </p>
+              </div>
 
-          {/* Business App Name */}
-          <div className="space-y-2">
-            <Label htmlFor="businessAppName" className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-muted-foreground" />
-              Nome do Contexto Empresarial
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                id="businessAppName"
-                value={newBusinessName}
-                onChange={(e) => setNewBusinessName(e.target.value)}
-                placeholder="Ex: Chapada Digital"
-              />
-              <Button onClick={handleSaveBusinessName} disabled={isSavingBusiness}>
-                <Check className="w-4 h-4" />
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Este nome aparece quando você está no modo empresarial.
-            </p>
-          </div>
+              {/* Business App Name */}
+              <div className="space-y-2">
+                <Label htmlFor="businessAppName" className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-muted-foreground" />
+                  Nome do Contexto Empresarial
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="businessAppName"
+                    value={newBusinessName}
+                    onChange={(e) => setNewBusinessName(e.target.value)}
+                    placeholder="Ex: Chapada Digital"
+                  />
+                  <Button onClick={handleSaveBusinessName} disabled={isSavingBusiness}>
+                    <Check className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Este nome aparece quando você está no modo empresarial.
+                </p>
+              </div>
+            </>
+          )}
 
           {/* Default Available Hours */}
           <div className="space-y-2">
@@ -153,14 +161,6 @@ export default function ConfigPage() {
               >
                 <Moon className="w-4 h-4 mr-2" />
                 Escuro
-              </Button>
-              <Button
-                variant={theme === 'system' ? 'default' : 'outline'}
-                onClick={() => setTheme('system')}
-                className="flex-1"
-              >
-                <Monitor className="w-4 h-4 mr-2" />
-                Sistema
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
