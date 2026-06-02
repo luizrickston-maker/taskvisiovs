@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   CheckCircle2, Circle, Clock, Layout, ListTodo, LogOut, RefreshCcw, 
-  PlayCircle, Loader2, Video, Hourglass, CheckCircle, Sun, Moon
+  PlayCircle, Loader2, Video, Hourglass, CheckCircle, Sun, Moon,
+  FileText
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,6 +17,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { TaskAttachments } from '@/components/projetos/TaskAttachments';
+import { BriefingModal } from '@/components/pj/briefing/BriefingModal';
+import { VideoEditingBriefing } from '@/types/video';
 
 export default function CollaboratorPortal() {
   const { user } = useAuthContext();
@@ -23,6 +26,8 @@ export default function CollaboratorPortal() {
   const { theme, setTheme } = useTheme();
   const { projects, projectTasks, updateProject, updateProjectTask, addProject, addProjectTask, deleteProject, deleteProjectTask } = useAppStore();
   const [updating, setUpdating] = useState<string | null>(null);
+  const [selectedBriefing, setSelectedBriefing] = useState<VideoEditingBriefing | null>(null);
+  const [isBriefingModalOpen, setIsBriefingModalOpen] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -119,8 +124,35 @@ export default function CollaboratorPortal() {
     }
   };
 
+  const handleOpenBriefing = async (taskId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('video_editing_briefings')
+        .select('*')
+        .eq('project_task_id', taskId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) {
+        toast.error('Nenhum briefing encontrado para esta tarefa.');
+        return;
+      }
+
+      setSelectedBriefing(data as VideoEditingBriefing);
+      setIsBriefingModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching briefing:', error);
+      toast.error('Erro ao carregar briefing.');
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-8 max-w-7xl mx-auto min-h-screen bg-background text-foreground transition-colors duration-300">
+      <BriefingModal 
+        briefing={selectedBriefing} 
+        isOpen={isBriefingModalOpen} 
+        onClose={() => setIsBriefingModalOpen(false)} 
+      />
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 border-border">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold font-display text-foreground">Meu Painel</h1>
@@ -257,9 +289,9 @@ export default function CollaboratorPortal() {
                           variant="secondary"
                           size="sm"
                           className="bg-blue-600/10 text-blue-400 border border-blue-600/20 hover:bg-blue-600/20 font-black text-[10px] uppercase tracking-wider h-10 px-4 rounded-lg flex items-center gap-2"
-                          onClick={() => navigate(`/pj/projetos/tarefas/${task.id}/briefing`)}
+                          onClick={() => handleOpenBriefing(task.id)}
                         >
-                          <Video className="w-4 h-4" /> Briefing de Edição
+                          <FileText className="w-4 h-4" /> Briefing de Edição
                         </Button>
 
                         <Button
