@@ -1,9 +1,18 @@
+import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useAppContext } from "@/hooks/useAppContext";
 import { Loader2 } from "lucide-react";
 
 export function RootRedirect() {
   const { data: role, isLoading } = useUserRole();
+  const { setMode } = useAppContext();
+
+  useEffect(() => {
+    if (role === "collaborator") {
+      setMode("business");
+    }
+  }, [role, setMode]);
 
   if (isLoading) {
     return (
