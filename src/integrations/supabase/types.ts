@@ -3932,12 +3932,14 @@ export type Database = {
         Args: { _email: string; _full_name?: string; _user_id: string }
         Returns: string
       }
+      get_briefing_by_token: { Args: { _token: string }; Returns: Json }
       get_client_portal_info: { Args: never; Returns: Json }
       get_my_client_id: { Args: { _workspace_id: string }; Returns: string }
       get_my_workspace_id: { Args: never; Returns: string }
       get_personal_360_summary: { Args: { p_user_id: string }; Returns: Json }
       get_user_360_summary: { Args: { p_user_id: string }; Returns: Json }
       get_user_workspace_id: { Args: never; Returns: string }
+      get_video_briefing_by_token: { Args: { _token: string }; Returns: Json }
       get_workspace_id_for_user: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -3969,6 +3971,19 @@ export type Database = {
           expires_at: string
           target_url: string
         }[]
+      }
+      save_briefing_by_token: {
+        Args: {
+          _responses?: Json
+          _submit?: boolean
+          _token: string
+          _video_items?: Json
+        }
+        Returns: boolean
+      }
+      update_video_briefing_by_token: {
+        Args: { _observations?: string; _status: string; _token: string }
+        Returns: boolean
       }
     }
     Enums: {

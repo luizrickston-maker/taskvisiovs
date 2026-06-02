@@ -51,30 +51,33 @@ export default function BriefingFillPage() {
   useEffect(() => {
     const fetchBriefing = async () => {
       try {
-        let query = supabase
-          .from('briefings')
-          .select(`
-            *,
-            responses:briefing_responses(*),
-            video_items:briefing_video_items(*),
-            client:clients(name)
-          `);
+        let briefingData: BriefingWithDetails | null = null;
 
         if (token && token !== 'none') {
-          query = query.eq('magic_link_token', token).gt('magic_link_expires_at', new Date().toISOString());
+          // External access: validated via SECURITY DEFINER RPC that checks the token value
+          const { data, error } = await supabase.rpc('get_briefing_by_token', { _token: token });
+          if (error) throw error;
+          if (!data) throw new Error("Link inválido ou expirado");
+          briefingData = data as any as BriefingWithDetails;
         } else if (routeId && routeId !== 'none') {
-          query = query.eq('id', routeId);
+          const { data, error } = await supabase
+            .from('briefings')
+            .select(`
+              *,
+              responses:briefing_responses(*),
+              video_items:briefing_video_items(*),
+              client:clients(name)
+            `)
+            .eq('id', routeId)
+            .maybeSingle();
+          if (error || !data) throw new Error("Briefing não encontrado");
+          briefingData = data as any as BriefingWithDetails;
         } else {
           throw new Error("Acesso não autorizado");
         }
 
-        const { data, error } = await query.maybeSingle();
-
-        if (error || !data) throw new Error("Link inválido ou expirado");
-
-        const briefingData = data as any as BriefingWithDetails;
         setBriefing(briefingData);
-        
+
         // Map data
         briefingData.responses.forEach((resp) => {
           const blockData = resp.response_data as any;
@@ -84,7 +87,7 @@ export default function BriefingFillPage() {
           if (resp.block_name === 'distribuicao') setBlock5(blockData);
           if (resp.block_name === 'prazos') setBlock6(blockData);
         });
-        setVideoItems(briefingData.video_items.sort((a, b) => a.item_index - b.item_index));
+        setVideoItems((briefingData.video_items || []).sort((a, b) => a.item_index - b.item_index));
       } catch (err: unknown) {
         const error = err as Error;
         toast.error(error.message);
@@ -103,36 +106,52 @@ export default function BriefingFillPage() {
     return Math.round(((filledBlocks + videoFilled) / 6) * 100);
   };
 
+  const buildResponsesPayload = () => {
+    const blocks = [
+      { name: 'identificacao', data: block1 },
+      { name: 'estrutura', data: block2 },
+      { name: 'referencias', data: block4 },
+      { name: 'distribuicao', data: block5 },
+      { name: 'prazos', data: block6 },
+    ];
+    return blocks
+      .filter(b => Object.keys(b.data || {}).length > 0)
+      .map(b => ({ block_name: b.name, response_data: b.data }));
+  };
+
   const handleAutoSave = async () => {
     if (!briefing?.id || briefing.status === 'in_review') return;
-    
-    try {
-      const blocks = [
-        { name: 'identificacao', data: block1 },
-        { name: 'estrutura', data: block2 },
-        { name: 'referencias', data: block4 },
-        { name: 'distribuicao', data: block5 },
-        { name: 'prazos', data: block6 }
-      ];
 
-      for (const block of blocks) {
-        if (Object.keys(block.data || {}).length > 0) {
-          await supabase
-            .from('briefing_responses')
-            .upsert({ 
-              briefing_id: briefing.id, 
-              block_name: block.name, 
-              response_data: block.data,
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'briefing_id, block_name' });
-        }
+    try {
+      const responsesPayload = buildResponsesPayload();
+
+      if (token && token !== 'none') {
+        // External access via RPC (token validated server-side)
+        await supabase.rpc('save_briefing_by_token', {
+          _token: token,
+          _responses: responsesPayload as any,
+          _video_items: videoItems as any,
+          _submit: false,
+        });
+        return;
       }
 
-      // Sync video items
+      // Authenticated path
+      for (const block of responsesPayload) {
+        await supabase
+          .from('briefing_responses')
+          .upsert({
+            briefing_id: briefing.id,
+            block_name: block.block_name,
+            response_data: block.response_data,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'briefing_id, block_name' });
+      }
+
       await supabase.from('briefing_video_items').delete().eq('briefing_id', briefing.id);
       if (videoItems.length > 0) {
         await supabase.from('briefing_video_items').insert(
-          videoItems.map((v, i) => ({ ...v, briefing_id: (briefing as BriefingWithDetails).id, item_index: i + 1 }))
+          videoItems.map((v, i) => ({ ...v, briefing_id: briefing.id, item_index: i + 1 }))
         );
       }
     } catch (err) {
@@ -152,15 +171,23 @@ export default function BriefingFillPage() {
     if (!briefing?.id) return;
     setSubmitting(true);
     try {
-      await handleAutoSave();
-      
-      const { error } = await supabase
-        .from('briefings')
-        .update({ status: 'in_review', updated_at: new Date().toISOString() })
-        .eq('id', briefing.id);
+      if (token && token !== 'none') {
+        const { error } = await supabase.rpc('save_briefing_by_token', {
+          _token: token,
+          _responses: buildResponsesPayload() as any,
+          _video_items: videoItems as any,
+          _submit: true,
+        });
+        if (error) throw error;
+      } else {
+        await handleAutoSave();
+        const { error } = await supabase
+          .from('briefings')
+          .update({ status: 'in_review', updated_at: new Date().toISOString() })
+          .eq('id', briefing.id);
+        if (error) throw error;
+      }
 
-      if (error) throw error;
-      
       toast.success("Briefing enviado com sucesso!");
       setBriefing({ ...briefing, status: 'in_review' });
     } catch (err: unknown) {

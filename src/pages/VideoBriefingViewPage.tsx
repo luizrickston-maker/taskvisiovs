@@ -54,30 +54,21 @@ export default function VideoBriefingViewPage() {
     const fetchBriefing = async () => {
       try {
         setLoading(true);
-        let query = supabase
-          .from('video_editing_briefings')
-          .select('*');
 
         if (token) {
-          query = query.eq('magic_link_token', token);
-          // Only check expiry if token is present
-          const { data: tokenData, error: tokenError } = await query.maybeSingle();
-          if (tokenError) throw tokenError;
-          if (!tokenData) throw new Error("Briefing não encontrado");
-          
-          if (tokenData.magic_link_expires_at && new Date(tokenData.magic_link_expires_at) < new Date()) {
-            throw new Error("Link de acesso expirado");
-          }
-          setBriefing(tokenData as VideoEditingBriefing);
-        } else if (taskId) {
-          query = query.eq('project_task_id', taskId);
-          const { data, error } = await query.maybeSingle();
+          // External access via SECURITY DEFINER RPC that validates the token value
+          const { data, error } = await supabase.rpc('get_video_briefing_by_token', { _token: token });
           if (error) throw error;
-          if (!data) {
-             // If no briefing exists for this task, we might want to redirect to create one
-             // or show a specific UI. For now, let's keep the not found error.
-             throw new Error("Nenhum briefing vinculado a esta tarefa");
-          }
+          if (!data) throw new Error("Link de acesso inválido ou expirado");
+          setBriefing(data as unknown as VideoEditingBriefing);
+        } else if (taskId) {
+          const { data, error } = await supabase
+            .from('video_editing_briefings')
+            .select('*')
+            .eq('project_task_id', taskId)
+            .maybeSingle();
+          if (error) throw error;
+          if (!data) throw new Error("Nenhum briefing vinculado a esta tarefa");
           setBriefing(data as VideoEditingBriefing);
         } else {
           throw new Error("Acesso não autorizado");
@@ -98,13 +89,26 @@ export default function VideoBriefingViewPage() {
     if (!briefing?.id) return;
     setSubmitting(true);
     try {
-      const updateData: Partial<VideoEditingBriefing> = { status: newStatus };
-      if (observations) {
-        updateData.observations = (briefing.observations || "") + "\n\n--- Mensagem do Editor ---\n" + (observations || "");
+      const mergedObservations = observations
+        ? (briefing.observations || "") + "\n\n--- Mensagem do Editor ---\n" + observations
+        : briefing.observations;
+
+      if (token) {
+        // External access via RPC (token validated server-side)
+        const { error } = await supabase.rpc('update_video_briefing_by_token', {
+          _token: token,
+          _status: newStatus,
+          _observations: observations ? mergedObservations : null,
+        });
+        if (error) throw error;
+        setBriefing({ ...briefing, status: newStatus, observations: mergedObservations });
+      } else {
+        const updateData: Partial<VideoEditingBriefing> = { status: newStatus };
+        if (observations) updateData.observations = mergedObservations;
+        await updateMutation.mutateAsync({ ...updateData, id: briefing.id });
+        setBriefing({ ...briefing, ...updateData });
       }
 
-      await updateMutation.mutateAsync({ ...updateData, id: briefing.id });
-      setBriefing({ ...briefing, ...updateData });
       toast.success(`Status atualizado para ${newStatus}`);
       setShowRevisionForm(false);
       setRevisionMessage("");
