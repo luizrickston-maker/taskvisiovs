@@ -1,0 +1,644 @@
+%PDF-1.3
+%ºß¬à
+3 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 4393
+>>
+stream
+0.5670000000000001 w
+0 G
+BT
+/F2 22 Tf
+25.2999999999999972 TL
+0 g
+42.5196850393700814 785.1970866141732586 Td
+(Arquitetura Detalhada do Aplicativo) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 742.6774015748030706 Td
+(Este documento descreve minuciosamente a arquitetura do aplicativo, abrangendo frontend, backend,) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 725.6695275590550409 Td
+(lógica de acesso e conexões.) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0 g
+42.5196850393700814 697.3230708661417339 Td
+(1. Tecnologias e Linguagens) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 668.9766141732283131 Td
+(• Frontend: React 18 com TypeScript \(TSX\).) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 640.6301574803148924 Td
+(• Build Tool: Vite para carregamento rápido e HMR.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 612.2837007874015853 Td
+(• Estilização: Tailwind CSS para design responsivo e moderno.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 583.9372440944881646 Td
+(• Backend: Supabase \(PostgreSQL\) como BaaS \(Backend as a Service\).) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 555.5907874015747439 Td
+(• Gerenciamento de Estado: Zustand para estado global e React Context para autenticação.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 527.2443307086614368 Td
+(• Comunicação de Dados: TanStack Query \(React Query\) para sincronização e cache de dados.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 498.8978740157479592 Td
+(• Ícones: Lucide React.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 470.5514173228345953 Td
+(• Animações: Framer Motion e Tailwind Animate.) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0 g
+42.5196850393700814 442.2049606299212314 Td
+(2. Arquitetura Frontend) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 413.8585039370078107 Td
+(O frontend é organizado de forma modular para facilitar a manutenção e escalabilidade.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 385.5120472440944468 Td
+(• src/components: Contém componentes reutilizáveis, organizados por domínio \(caixa, clientes,) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 368.5041732283464171 Td
+(comercial, etc.\).) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 340.1577165354329964 Td
+(• src/pages: Define as rotas do aplicativo, separando contextos Pessoal, PJ \(Comercial\) e Portais.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 311.8112598425195756 Td
+(• src/hooks: Hooks customizados para lógica compartilhada e abstração de chamadas ao Supabase.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 283.4648031496062686 Td
+(• src/contexts: Contextos React como AuthContext para gerenciar a sessão do usuário.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 255.1183464566928478 Td
+(• src/stores: Zustand stores como useAppStore para estado volátil da aplicação.) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0 g
+42.5196850393700814 226.7718897637794271 Td
+(3. Lógica de Login e Acesso) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 198.4254330708660063 Td
+(O sistema de autenticação é robusto e baseado em Supabase Auth.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 170.0789763779526993 Td
+(• Auth.tsx: Gerencia o login via email/senha e solicitações de recuperação de senha.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 141.7325196850392786 Td
+(• ProtectedRoute.tsx: Intercepta rotas protegidas, verifica o JWT e redireciona usuários não) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 124.7246456692912489 Td
+(autenticados.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 96.3781889763778281 Td
+(• Context Switcher: Permite ao usuário alternar entre o modo 'Pessoal' e 'Empresarial' \(PJ\).) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 68.0317322834645211 Td
+(• Níveis de Acesso: Admin \(acesso total\), Colaborador \(painel simplificado\), Cliente \(portal de) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 51.0238582677164914 Td
+(briefing/entrega\), Super Admin \(gestão de workspaces\).) Tj
+ET
+endstream
+endobj
+5 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 6 0 R
+>>
+endobj
+6 0 obj
+<<
+/Length 4411
+>>
+stream
+0.5670000000000001 w
+0 G
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0 g
+42.5196850393700814 785.1970866141732586 Td
+(4. Arquitetura Backend \(Supabase\)) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 756.8506299212598378 Td
+(O banco de dados PostgreSQL é o coração do sistema, com segurança aplicada via Row Level Security) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 739.8427559055118081 Td
+(\(RLS\).) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 711.4962992125983874 Td
+(• Tabelas Principais: projects, briefings, clients, tasks, finances \(incomes/expenses\), ai_agents.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 683.1498425196850803 Td
+(• Row Level Security \(RLS\): Garante que usuários vejam apenas dados de seu próprio workspace ou) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 666.1419685039369369 Td
+(atribuídos a eles.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 637.7955118110235162 Td
+(• Edge Functions \(Deno\): Processamento server-side para tarefas pesadas como IA \(ai-360-agent\),) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 620.7876377952754865 Td
+(convites de usuários e geração de links mágicos.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 592.4411811023621794 Td
+(• Triggers e RPCs: Automações no banco de dados para manter a integridade e facilitar chamadas) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 575.4333070866141497 Td
+(complexas do frontend.) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0 g
+42.5196850393700814 547.086850393700729 Td
+(5. Módulos e Funcionalidades \(Botões e Ações\)) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 518.7403937007873083 Td
+(Cada módulo possui botões de ação consistentes.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 490.3939370078739444 Td
+(• Módulo Comercial: Botão 'Novo Cliente' \(abre formulário de cadastro\), 'Gerar Link' \(cria token de) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 473.3860629921259147 Td
+(acesso externo\).) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 445.0396062992125508 Td
+(• Módulo de Projetos: Botão 'Criar Projeto', 'Adicionar Tarefa', 'Anexar Arquivo'.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 416.69314960629913 Td
+(• Módulo Financeiro: Botão 'Nova Receita/Despesa', 'Filtros de Data', 'Exportar Relatório'.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 388.3466929133857661 Td
+(• Módulo IA: Botões de 'Chat', 'Gerar Resumo', 'Configurar Agente'.) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0 g
+42.5196850393700814 360.0002362204724022 Td
+(6. Conexões e Sincronização) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 331.6537795275589815 Td
+(O aplicativo utiliza Realtime do Supabase para manter os dados sincronizados em múltiplos dispositivos.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 303.3073228346455608 Td
+(• Sincronização em Tempo Real: Alterações em tarefas ou chats são refletidas instantaneamente via) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 286.2994488188975311 Td
+(broadcasts e postgres_changes.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 257.952992125984224 Td
+(• Cache: TanStack Query mantém o estado local atualizado sem necessidade de refresh constante.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 229.6065354330708033 Td
+(• Integrações de IA: Conexão direta com APIs da OpenAI/Anthropic via Edge Functions para assistentes) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 212.5986614173227736 Td
+(inteligentes.) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0 g
+42.5196850393700814 184.2522047244093528 Td
+(7. Detalhamento de Portais) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 155.9057480314959321 Td
+(• Portal do Colaborador: Focado em tarefas atribuídas e controle de horas.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 127.559291338582625 Td
+(• Portal do Cliente: Visão simplificada de briefings e progresso de projetos.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+42.5196850393700814 99.2128346456692043 Td
+(• Super Admin: Gerenciamento de múltiplos espaços de trabalho \(workspaces\).) Tj
+ET
+endstream
+endobj
+1 0 obj
+<</Type /Pages
+/Kids [3 0 R 5 0 R ]
+/Count 2
+>>
+endobj
+7 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+8 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+9 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+10 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+11 0 obj
+<<
+/Type /Font
+/BaseFont /Courier
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+12 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+13 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+14 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+15 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Roman
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+16 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+17 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Italic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+18 0 obj
+<<
+/Type /Font
+/BaseFont /Times-BoldItalic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+19 0 obj
+<<
+/Type /Font
+/BaseFont /ZapfDingbats
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+20 0 obj
+<<
+/Type /Font
+/BaseFont /Symbol
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+2 0 obj
+<<
+/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]
+/Font <<
+/F1 7 0 R
+/F2 8 0 R
+/F3 9 0 R
+/F4 10 0 R
+/F5 11 0 R
+/F6 12 0 R
+/F7 13 0 R
+/F8 14 0 R
+/F9 15 0 R
+/F10 16 0 R
+/F11 17 0 R
+/F12 18 0 R
+/F13 19 0 R
+/F14 20 0 R
+>>
+/XObject <<
+>>
+>>
+endobj
+21 0 obj
+<<
+/Producer (jsPDF 4.2.1)
+/CreationDate (D:20260602203303-00'00')
+>>
+endobj
+22 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+/OpenAction [3 0 R /FitH null]
+/PageLayout /OneColumn
+>>
+endobj
+xref
+0 23
+0000000000 65535 f 
+0000009197 00000 n 
+0000011022 00000 n 
+0000000015 00000 n 
+0000000152 00000 n 
+0000004597 00000 n 
+0000004734 00000 n 
+0000009260 00000 n 
+0000009385 00000 n 
+0000009515 00000 n 
+0000009648 00000 n 
+0000009786 00000 n 
+0000009910 00000 n 
+0000010039 00000 n 
+0000010171 00000 n 
+0000010307 00000 n 
+0000010435 00000 n 
+0000010562 00000 n 
+0000010691 00000 n 
+0000010824 00000 n 
+0000010926 00000 n 
+0000011272 00000 n 
+0000011358 00000 n 
+trailer
+<<
+/Size 23
+/Root 22 0 R
+/Info 21 0 R
+/ID [ <A6E256D105B7A00D58D45EAF9996BA6D> <A6E256D105B7A00D58D45EAF9996BA6D> ]
+>>
+startxref
+11462
+%%EOF
