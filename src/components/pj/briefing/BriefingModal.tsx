@@ -47,6 +47,10 @@ export function BriefingModal({ briefing, isOpen, onClose }: BriefingModalProps)
     const toastId = toast.loading('Gerando PDF...');
     try {
       const element = contentRef.current;
+      
+      // Temporarily add a class to ensure light mode colors for capture
+      element.classList.add('bg-white', 'text-slate-900', 'light');
+      
       const canvas = await html2canvas(element, {
         scale: 2,
         logging: false,
@@ -62,6 +66,10 @@ export function BriefingModal({ briefing, isOpen, onClose }: BriefingModalProps)
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`briefing-${briefing.title.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+      
+      // Remove temporary classes
+      element.classList.remove('bg-white', 'text-slate-900', 'light');
+      
       toast.success('PDF baixado com sucesso!', { id: toastId });
     } catch (error) {
       console.error('Error generating PDF:', error);

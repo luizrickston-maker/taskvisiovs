@@ -11,6 +11,7 @@ import { AppBootstrap } from "@/components/bootstrap/AppBootstrap";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SuperAdminRoute } from "@/components/SuperAdminRoute";
 import { ClientPortalRoute } from "@/components/ClientPortalRoute";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 // Auth pages - loaded eagerly (needed immediately)
 import Auth from "@/pages/Auth";
@@ -101,9 +102,10 @@ const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Toaster />
-          <Sonner />
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme" attribute="class">
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
@@ -328,7 +330,8 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </AuthProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
