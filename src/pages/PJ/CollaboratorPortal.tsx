@@ -23,7 +23,7 @@ import { VideoEditingBriefing } from '@/types/video';
 export default function CollaboratorPortal() {
   const { user } = useAuthContext();
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const { projects, projectTasks, updateProject, updateProjectTask, addProject, addProjectTask, deleteProject, deleteProjectTask } = useAppStore();
   const [updating, setUpdating] = useState<string | null>(null);
   const [selectedBriefing, setSelectedBriefing] = useState<VideoEditingBriefing | null>(null);
@@ -162,10 +162,10 @@ export default function CollaboratorPortal() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             className="rounded-full w-10 h-10 border-border"
           >
-            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-600 rounded-full text-xs font-medium border border-green-500/20">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -246,7 +246,7 @@ export default function CollaboratorPortal() {
                     key={task.id} 
                     className={cn(
                       "group relative overflow-hidden transition-all duration-300 border-none shadow-xl",
-                      theme === 'dark' ? "bg-[#0a0a1a] text-white" : "bg-[#111122] text-white",
+                      resolvedTheme === 'dark' ? "bg-[#0a0a1a] text-white" : "bg-[#111122] text-white",
                       (task.status === 'done' || task.status === 'completed') && "opacity-60 grayscale-[0.5]"
                     )}
                   >
