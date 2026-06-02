@@ -28,9 +28,9 @@ export function TeamMemberProgressDetails({ member, onBack }: TeamMemberProgress
   const stats = useMemo(() => {
     return {
       total: memberTasks.length,
-      pending: memberTasks.filter(t => t.status === 'pending' || !t.status).length,
+      pending: memberTasks.filter(t => t.status === 'pending' || !t.status || t.status === 'todo').length,
       inProgress: memberTasks.filter(t => t.status === 'in_progress').length,
-      completed: memberTasks.filter(t => t.status === 'completed').length,
+      completed: memberTasks.filter(t => t.status === 'completed' || t.status === 'done').length,
     };
   }, [memberTasks]);
 
@@ -84,7 +84,7 @@ export function TeamMemberProgressDetails({ member, onBack }: TeamMemberProgress
         
         <TabsContent value="todo" className="mt-6">
           <CollaboratorTasksList 
-            tasks={memberTasks.filter(t => t.status === 'pending' || !t.status)} 
+            tasks={memberTasks.filter(t => t.status === 'pending' || !t.status || t.status === 'todo')} 
             projects={projects} 
           />
         </TabsContent>
@@ -98,7 +98,7 @@ export function TeamMemberProgressDetails({ member, onBack }: TeamMemberProgress
         
         <TabsContent value="done" className="mt-6">
           <CollaboratorTasksList 
-            tasks={memberTasks.filter(t => t.status === 'completed')} 
+            tasks={memberTasks.filter(t => t.status === 'completed' || t.status === 'done')} 
             projects={projects} 
           />
         </TabsContent>

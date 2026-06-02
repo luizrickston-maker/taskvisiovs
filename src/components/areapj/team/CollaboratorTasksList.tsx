@@ -31,6 +31,7 @@ export function CollaboratorTasksList({ tasks, projects }: CollaboratorTasksList
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
+      case 'done':
         return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">Concluído</Badge>;
       case 'in_progress':
         return <Badge className="bg-primary/10 text-primary border-primary/20">Em Andamento</Badge>;
