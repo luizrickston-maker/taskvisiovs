@@ -107,11 +107,28 @@ addList([
   "Integrações de IA: Conexão direta com APIs da OpenAI/Anthropic via Edge Functions para assistentes inteligentes."
 ]);
 
-addSubtitle("7. Detalhamento de Portais");
+addSubtitle("8. Esquema de Banco de Dados (Tabelas Principais)");
+addText("O sistema utiliza as seguintes tabelas no esquema public:");
 addList([
-  "Portal do Colaborador: Focado em tarefas atribuídas e controle de horas.",
-  "Portal do Cliente: Visão simplificada de briefings e progresso de projetos.",
-  "Super Admin: Gerenciamento de múltiplos espaços de trabalho (workspaces)."
+  "projects: Gestão de projetos de clientes e internos.",
+  "briefings: Armazenamento de informações coletadas via formulários.",
+  "clients: Cadastro de clientes e informações comerciais.",
+  "project_tasks: Tarefas vinculadas a projetos específicos.",
+  "incomes / expenses: Lançamentos financeiros para fluxo de caixa.",
+  "user_roles: Definição de permissões por usuário.",
+  "workspaces: Separação lógica de ambientes multi-tenant.",
+  "ai_agents: Configurações de agentes de inteligência artificial customizados.",
+  "portal_short_links: Redirecionamento de links curtos para acesso externo.",
+  "corporate_team: Gestão de colaboradores e equipe."
+]);
+
+addSubtitle("9. Detalhamento de Botões e Funções");
+addText("Abaixo, listamos botões críticos e sua lógica subjacente:");
+addList([
+  "Botão 'Alternar Contexto' (ContextSwitcher.tsx): Altera o estado 'mode' (personal/business) no store useAppStore, filtrando a visibilidade de menus e dados.",
+  "Botão 'Salvar Briefing' (BriefingEditorPage.tsx): Executa uma mutação via React Query que envia os dados para a tabela 'briefings' e 'briefing_responses'.",
+  "Botão 'Configurações' (Sidebar.tsx): Redireciona para /config, onde o usuário pode alterar preferências armazenadas na tabela 'user_preferences'.",
+  "Botão 'Chat IA' (AI360DashboardPage.tsx): Abre uma conversa com o Edge Function 'ai-360-agent', enviando o histórico para processamento de linguagem natural."
 ]);
 
 doc.save("Arquitetura_App.pdf");
