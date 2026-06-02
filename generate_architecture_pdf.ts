@@ -75,10 +75,14 @@ addList([
 addSubtitle("3. Lógica de Login e Acesso");
 addText("O sistema de autenticação é robusto e baseado em Supabase Auth.");
 addList([
-  "Auth.tsx: Gerencia o login via email/senha e solicitações de recuperação de senha.",
-  "ProtectedRoute.tsx: Intercepta rotas protegidas, verifica o JWT e redireciona usuários não autenticados.",
-  "Context Switcher: Permite ao usuário alternar entre o modo 'Pessoal' e 'Empresarial' (PJ).",
-  "Níveis de Acesso: Admin (acesso total), Colaborador (painel simplificado), Cliente (portal de briefing/entrega), Super Admin (gestão de workspaces)."
+  "Auth.tsx: Gerencia o login via email/senha e solicitações de recuperação de senha. Possui redirecionamentos específicos por email para fluxos comerciais.",
+  "ProtectedRoute.tsx: Intercepta rotas protegidas, verifica o JWT e redireciona usuários não autenticados. Usuários identificados como 'Client Portal' são forçados para a rota /portal.",
+  "Context Switcher: Permite ao usuário alternar entre o modo 'Pessoal' e 'Empresarial' (PJ). Isso altera o 'mode' global que filtra o menu lateral e os dashboards.",
+  "Níveis de Acesso (Roles):",
+  "  - Admin: Acesso total ao workspace e configurações.",
+  "  - Colaborador: Acesso restrito ao Painel do Colaborador, focando em tarefas próprias.",
+  "  - Cliente: Acesso exclusivo via Portal do Cliente (links externos).",
+  "  - Super Admin: Gerenciamento global de workspaces via /super-admin."
 ]);
 
 addSubtitle("4. Arquitetura Backend (Supabase)");
