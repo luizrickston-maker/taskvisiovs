@@ -27,5 +27,6 @@ export function RootRedirect() {
   }
 
   // Default redirect for owners/admins
-  return <Navigate to="/comercial" replace />;
+  const target = role === "admin" || role === "super_admin" ? "/comercial" : "/caixa";
+  return <Navigate to={target} replace />;
 }
