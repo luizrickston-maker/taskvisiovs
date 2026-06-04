@@ -86,7 +86,7 @@ serve(async (req) => {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)
 
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabaseAdmin
       .from('video_editing_briefings')
       .update({
         magic_link_token: token,
