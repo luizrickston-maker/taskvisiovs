@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Resolver workspace_id se não fornecido
+    // Resolver e validar workspace_id
     let resolvedWorkspaceId = workspace_id;
     if (!resolvedWorkspaceId) {
       const { data: ownerWs } = await supabaseAdmin
@@ -62,10 +62,24 @@ Deno.serve(async (req) => {
         .eq('owner_user_id', callingUser.id)
         .maybeSingle();
       resolvedWorkspaceId = ownerWs?.id || null;
+    } else {
+      // Validar se o usuário que está chamando tem permissão no workspace fornecido
+      const { data: membership, error: memberErr } = await supabaseAdmin
+        .from('workspace_members')
+        .select('role')
+        .eq('workspace_id', resolvedWorkspaceId)
+        .eq('user_id', callingUser.id)
+        .single();
+
+      if (memberErr || !membership || !['owner', 'admin'].includes(membership.role)) {
+        return new Response(JSON.stringify({ error: 'Acesso negado para este workspace' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     if (!resolvedWorkspaceId) {
-      return new Response(JSON.stringify({ error: 'Workspace não encontrado para o usuário' }), {
+      return new Response(JSON.stringify({ error: 'Workspace não encontrado ou acesso negado' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
