@@ -12,16 +12,59 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
+      authHeader.replace("Bearer ", "")
+    );
+
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { briefing_id } = await req.json();
 
     if (!briefing_id) {
       throw new Error("briefing_id is required");
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    // Verify user has access to the briefing (via workspace)
+    const { data: briefing, error: accessError } = await supabaseAdmin
+      .from("briefings")
+      .select("workspace_id")
+      .eq("id", briefing_id)
+      .single();
+
+    if (accessError || !briefing) {
+      return new Response(JSON.stringify({ error: "Briefing not found" }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: membership } = await supabaseAdmin
+      .from("workspace_members")
+      .select("role")
+      .eq("workspace_id", briefing.workspace_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!membership) {
+      return new Response(JSON.stringify({ error: "Forbidden: no access to this workspace" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Generate a secure token
     const token = crypto.randomUUID();
@@ -29,7 +72,7 @@ serve(async (req) => {
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
 
     // Update the briefing with the token and expiration
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from("briefings")
       .update({
         magic_link_token: token,
