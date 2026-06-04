@@ -62,17 +62,14 @@ export function TaskAttachments({ taskId, onUpdate }: TaskAttachmentsProps) {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('task-attachments')
-        .getPublicUrl(filePath);
-
       const { error: dbError } = await supabase
         .from('project_task_attachments')
         .insert({
           project_task_id: taskId,
           user_id: user.id,
           file_name: file.name,
-          file_url: publicUrl,
+          file_url: filePath, // Storing path in file_url for backward compatibility if needed, but we'll use file_path
+          file_path: filePath,
           file_type: file.type,
           file_size: file.size
         });
@@ -158,7 +155,19 @@ export function TaskAttachments({ taskId, onUpdate }: TaskAttachmentsProps) {
                         size="icon" 
                         variant="ghost" 
                         className="h-8 w-8" 
-                        onClick={() => window.open(att.file_url, '_blank')}
+                        onClick={async () => {
+                          const path = att.file_path || att.file_url;
+                          try {
+                            const { data, error } = await supabase.storage
+                              .from('task-attachments')
+                              .createSignedUrl(path, 60);
+                            if (error) throw error;
+                            window.open(data.signedUrl, '_blank');
+                          } catch (err) {
+                            console.error('Error opening file:', err);
+                            toast.error('Erro ao abrir arquivo');
+                          }
+                        }}
                       >
                         <ExternalLink className="w-4 h-4" />
                       </Button>
