@@ -220,16 +220,6 @@ export function FuturisticLoginCard({ onShowReset, onShowEmailSent }: Props) {
           </div>
         </div>
 
-        {/* Rick Prospero button */}
-        <div className="mt-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full h-10 md:h-11 text-sm font-semibold"
-          >
-            Rick Prospero
-          </Button>
-        </div>
       </div>
     </div>
   );
