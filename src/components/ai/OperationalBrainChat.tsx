@@ -19,6 +19,7 @@ import type { AIAgent, AIMessage, AIConversation } from '@/types/ai';
 import { useAIConversations, useAIMessages, useCreateConversation, useAddMessage, useDeleteConversation } from '@/hooks/useAiHistory';
 import { useAppStore } from '@/stores/useAppStore';
 import { toast } from 'sonner';
+import { useAiActionDispatcher } from '@/hooks/useAiActionDispatcher';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -64,7 +65,6 @@ export function OperationalBrainChat() {
   const deleteConversation = useDeleteConversation();
   
   const { 
-    addCorporateInvestment, 
     deleteTask, 
     deleteProject, 
     deleteProspect, 
@@ -72,6 +72,14 @@ export function OperationalBrainChat() {
     deleteEditorialCalendarItem,
     deleteScript
   } = useAppStore();
+
+  const {
+    processAiResponse,
+    pendingAction: dispatcherPendingAction,
+    confirmAction: dispatcherConfirmAction,
+    cancelAction: dispatcherCancelAction,
+    isConfirming: isDispatcherConfirming,
+  } = useAiActionDispatcher();
 
   const activeAgents = agents?.filter(a => a.is_active) ?? [];
 
@@ -107,39 +115,9 @@ export function OperationalBrainChat() {
   }, [messages, isLoading]);
 
 
-  const handleInvestmentRequest = useCallback(async (content: string) => {
-    const investmentRegex = /\[REQUEST_ADD_INVESTMENT:\s*item_name="([^"]+)",\s*amount=([\d.]+),\s*category="([^"]+)",\s*notes="([^"]*)"\]/g;
-    let match;
-    while ((match = investmentRegex.exec(content)) !== null) {
-      const [_, item_name, amountStr, category, notes] = match;
-      const amount = parseFloat(amountStr);
-      
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) continue;
-
-        const { data: newData, error } = await supabase
-          .from('corporate_investments')
-          .insert({
-            user_id: user.id,
-            item_name,
-            amount,
-            category: category.toLowerCase(),
-            notes,
-            purchase_date: new Date().toISOString().split('T')[0],
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        addCorporateInvestment(newData as any);
-        toast.success(`Investimento adicionado: ${item_name}`);
-      } catch (err) {
-        console.error('Erro ao adicionar investimento via IA:', err);
-        toast.error(`Falha ao adicionar investimento: ${item_name}`);
-      }
-    }
-  }, [addCorporateInvestment]);
+  const handleInvestmentRequest = useCallback(async (_content: string) => {
+    // Deprecated: investment requests are now handled by the ActionDispatcher (CREATE_INVESTMENT / REQUEST_ADD_INVESTMENT tokens)
+  }, []);
 
   const streamChat = useCallback(async (userMessage: string) => {
     setIsLoading(true);
@@ -255,16 +233,8 @@ export function OperationalBrainChat() {
         content: assistantContent,
       });
 
-      // 5. Handle action requests in assistant content
-      if (assistantContent.includes('[REQUEST_ADD_INVESTMENT:')) {
-        await handleInvestmentRequest(assistantContent);
-      }
-      
-      // Handle delete requests (existing functionality)
-      if (assistantContent.includes('[REQUEST_DELETE:')) {
-        // ... (The previous code didn't seem to have a frontend handler for this, but I should probably add one or keep it as is if it's handled elsewhere)
-        // For now, I'll just focus on the investment request as requested by the user.
-      }
+      // 5. Handle action requests via central dispatcher (auto-executes CREATE/UPDATE, queues DELETE for confirm)
+      await processAiResponse(assistantContent);
 
     } catch (error) {
       console.error('[OperationalBrain] Error:', error);
@@ -283,7 +253,7 @@ export function OperationalBrainChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, selectedAgent, isLoading, activeConversationId, createConversation, addMessage, handleInvestmentRequest]);
+  }, [messages, selectedAgent, isLoading, activeConversationId, createConversation, addMessage, processAiResponse]);
 
 
   const handleConfirmAction = async () => {
@@ -789,6 +759,36 @@ export function OperationalBrainChat() {
                   </div>
                 )}
               </ScrollArea>
+
+              {/* Dispatcher pending confirmation banner */}
+              {dispatcherPendingAction && (
+                <div className="p-3 border-t border-destructive/20 bg-destructive/5 shrink-0">
+                  <p className="text-[11px] font-semibold text-destructive flex items-center gap-1.5 mb-2">
+                    <Trash2 className="h-3 w-3" />
+                    Confirmar exclusão de &quot;{dispatcherPendingAction.name}&quot;?
+                  </p>
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={dispatcherCancelAction}
+                      disabled={isDispatcherConfirming}
+                      className="h-7 px-2 text-[10px]"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={dispatcherConfirmAction}
+                      disabled={isDispatcherConfirming}
+                      className="h-7 px-2 text-[10px]"
+                    >
+                      {isDispatcherConfirming ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Confirmar'}
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* Input Area */}
               <div className="p-3 border-t border-border/50 shrink-0">

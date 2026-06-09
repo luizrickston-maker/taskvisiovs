@@ -37,6 +37,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { ChatMessage, AIConversation, AIMessage } from '@/types/ai';
 import ReactMarkdown from 'react-markdown';
 import { useAIConversations, useAIMessages, useCreateConversation, useAddMessage, useDeleteConversation } from '@/hooks/useAiHistory';
+import { useAiActionDispatcher } from '@/hooks/useAiActionDispatcher';
 
 
 import { useQuery } from '@tanstack/react-query';
@@ -123,6 +124,14 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
   const { deleteProject } = useAppStore();
   const { deleteProspect } = useAppStore();
   const removeEditorialItem = useRemoveEditorialCalendarItem();
+
+  const {
+    processAiResponse,
+    pendingAction: dispatcherPendingAction,
+    confirmAction: dispatcherConfirmAction,
+    cancelAction: dispatcherCancelAction,
+    isConfirming: isDispatcherConfirming,
+  } = useAiActionDispatcher();
   
   // Briefings need a workspace ID, let's try to get it
   const { data: workspaceId } = useQuery({
@@ -222,48 +231,18 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
             content: fullContent,
           });
 
-          // Check for delete requests
+          // Handle all action tokens via central dispatcher
+          await processAiResponse(fullContent);
+
+          // Legacy: also check REQUEST_DELETE for inline confirm UI
           const deleteMatch = fullContent.match(/\[REQUEST_DELETE: type=(.+), id=(.+), name="(.+)"\]/);
           if (deleteMatch) {
             setPendingAction({
               type: deleteMatch[1].trim(),
               id: deleteMatch[2].trim(),
               name: deleteMatch[3].trim(),
-              messageIndex: newMessages.length // Current message index
+              messageIndex: newMessages.length
             });
-          }
-
-          // Check for investment requests and handle AUTOMATICALLY
-          const investmentMatch = fullContent.match(/\[REQUEST_ADD_INVESTMENT:\s*item_name="([^"]+)",\s*amount=([\d.]+),\s*category="([^"]+)",\s*notes="([^"]*)"\]/);
-          if (investmentMatch) {
-            const [_, item_name, amountStr, category, notes] = investmentMatch;
-            const amount = parseFloat(amountStr);
-            
-            try {
-              const { data: { user } } = await supabase.auth.getUser();
-              if (user) {
-                const { data: newData, error: invError } = await supabase
-                  .from('corporate_investments')
-                  .insert({
-                    user_id: user.id,
-                    item_name,
-                    amount,
-                    category: category.toLowerCase(),
-                    notes,
-                    purchase_date: new Date().toISOString().split('T')[0],
-                  })
-                  .select()
-                  .single();
-
-                if (!invError) {
-                  const { addCorporateInvestment } = useAppStore.getState();
-                  addCorporateInvestment(newData as any);
-                  toast.success(`Investimento adicionado: ${item_name}`);
-                }
-              }
-            } catch (err) {
-              console.error('Erro ao adicionar investimento via IA:', err);
-            }
           }
         },
 
@@ -277,7 +256,7 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
       setError(err.message);
       toast.error('Erro ao iniciar conversa');
     }
-  }, [input, messages, selectedAgentId, isPending, askAgent, activeConversationId, createConversation, addMessage]);
+  }, [input, messages, selectedAgentId, isPending, askAgent, activeConversationId, createConversation, addMessage, processAiResponse]);
 
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -548,6 +527,37 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
+        )}
+
+        {/* Dispatcher pending confirmation banner */}
+        {dispatcherPendingAction && (
+          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 space-y-2">
+            <p className="text-sm font-semibold text-destructive flex items-center gap-2">
+              <Trash2 className="h-4 w-4" />
+              Confirmar exclusão de &quot;{dispatcherPendingAction.name}&quot;?
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={dispatcherCancelAction}
+                disabled={isDispatcherConfirming}
+                className="h-8 gap-1"
+              >
+                <XIcon className="h-3.5 w-3.5" />
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={dispatcherConfirmAction}
+                disabled={isDispatcherConfirming}
+                className="h-8 gap-1"
+              >
+                {isDispatcherConfirming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Check className="h-3.5 w-3.5" /> Confirmar</>}
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Input Area */}

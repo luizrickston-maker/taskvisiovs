@@ -527,16 +527,47 @@ serve(async (req) => {
     const globalInstructions = `\n\n## CAPACIDADES E REGRAS DE OPERAÇÃO:
 1. VISIBILIDADE: Você TEM acesso total aos dados de: Tarefas, Projetos, Vendas (Pipeline/Metas), Agenda, Calendário Editorial, Equipe e TODO o módulo FINANCEIRO (Investimentos/Custos, Reservas e Dívidas).
 2. LISTAGEM: Quando o usuário pedir para listar algo, use os dados do CONTEXTO OPERACIONAL acima. Não diga que não tem acesso.
-3. PARA APAGAR: 
-   - Analise o CONTEXTO OPERACIONAL acima e identifique o item correspondente.
-   - SE ENCONTRAR: Use OBRIGATORIAMENTE este formato: "Encontrei este item: [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]. Deseja remover?"
-   - **IMPORTANTE**: O 'id' deve ser exatamente o UUID que aparece na tabela de contexto. NUNCA invente números.
-   - SE NÃO ENCONTRAR: Informe que o item não consta no sistema e sugira listar os itens atuais.
-   - Tipos válidos: task, project, prospect, editorial_item, briefing, investment, saving, debt.
-4. ADICIONAR INVESTIMENTO/CUSTO: Use [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]
-   - Se o usuário disser "adicione em custo", use este comando.
-5. ADICIONAR RESERVA/POUPANÇA: Use [REQUEST_ADD_SAVING: name="NOME", amount=VALOR]
-6. ADICIONAR DÍVIDA: Use [REQUEST_ADD_DEBT: description="NOME", amount=VALOR, due_date="YYYY-MM-DD"]`;
+
+## TOKENS DE AÇÃO (use exatamente este formato):
+
+### EXCLUSÃO (requer confirmação do usuário):
+- Item genérico legado: [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]
+- Prospect: [DELETE_PROSPECT: id="UUID", name="NOME"]
+- Projeto: [DELETE_PROJECT: id="UUID", name="NOME"]
+- Tarefa pessoal: [DELETE_TASK: id="UUID", name="NOME"]
+- Item editorial: [DELETE_EDITORIAL_ITEM: id="UUID", name="NOME"]
+- Briefing: [DELETE_BRIEFING: id="UUID", name="NOME"]
+- Investimento: [DELETE_INVESTMENT: id="UUID", name="NOME"]
+- **IMPORTANTE**: O id deve ser exatamente o UUID do contexto. NUNCA invente UUIDs.
+
+### CRIAÇÃO AUTOMÁTICA (executado imediatamente sem confirmação):
+- Prospect de vendas: [CREATE_PROSPECT: client_name="NOME", company_name="EMPRESA", status="novo", estimated_value=5000, notes="OBS"]
+- Atualizar status de prospect: [UPDATE_PROSPECT_STATUS: id="UUID", status="em_negociacao"]
+  - Status válidos: novo, contato, proposta, em_negociacao, ganho, perdido
+- Novo projeto PJ: [CREATE_PROJECT: nome="NOME DO PROJETO", descricao="DESCRIÇÃO", prioridade=3, status="todo", cliente="NOME_CLIENTE", prazo="YYYY-MM-DD"]
+- Atualizar status de projeto: [UPDATE_PROJECT_STATUS: id="UUID", status="progress"]
+  - Status válidos: todo, progress, review, done, archived
+- Tarefa em projeto: [CREATE_PROJECT_TASK: project_id="UUID", titulo="TÍTULO", prioridade=2, prazo="YYYY-MM-DD"]
+- Novo briefing: [CREATE_BRIEFING: titulo="TÍTULO", tipo="criativo", client_id="UUID_OPCIONAL"]
+  - Tipo: criativo ou edicao
+- Item no calendário editorial: [CREATE_EDITORIAL_ITEM: titulo="TÍTULO", plataforma="instagram", tipo="post", data="YYYY-MM-DD", status="idea"]
+  - Plataformas: instagram, tiktok, linkedin, blog, youtube
+  - Tipos: post, reel, story, article, video
+  - Status: idea, draft, review, approved, published
+- Atualizar status de conteúdo: [UPDATE_EDITORIAL_STATUS: id="UUID", status="approved"]
+- Lançamento no caixa PJ: [CREATE_CAIXA_TRANSACAO: tipo="entrada", descricao="DESCRIÇÃO", valor=1500, data="YYYY-MM-DD", forma="pix"]
+  - Tipo: entrada ou saida
+- Investimento corporativo: [CREATE_INVESTMENT: item_name="NOME", amount=1000, category="equipamentos", notes="OBS"]
+  - Categorias sugeridas: equipamentos, software, marketing, treinamento, outros
+
+### LEGADOS (mantidos para compatibilidade):
+- Investimento (formato antigo): [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]
+
+## REGRAS IMPORTANTES:
+- Sempre confirme ao usuário o que foi executado após usar um token de ação.
+- Para exclusões, SEMPRE pergunte antes de emitir o token DELETE.
+- Para criações, você PODE sugerir e executar diretamente se o usuário for claro na intenção.
+- Responda sempre em português brasileiro.`;
     
     const systemWithContext = `${systemPrompt}${globalInstructions}\n\n${finalContext}`;
 
