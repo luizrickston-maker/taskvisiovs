@@ -36,7 +36,7 @@ export function FuturisticLoginCard({ onShowReset, onShowEmailSent }: Props) {
       passwordSchema.parse(password);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        toast.error((error as any).errors[0].message);
+        toast.error(error.issues[0].message);
       }
       return;
     }
@@ -69,7 +69,7 @@ export function FuturisticLoginCard({ onShowReset, onShowEmailSent }: Props) {
       signupPasswordSchema.parse(password);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        toast.error((error as any).errors[0].message);
+        toast.error(error.issues[0].message);
       }
       return;
     }

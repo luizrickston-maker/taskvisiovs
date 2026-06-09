@@ -26,8 +26,8 @@ export function ContextSwitcher({ collapsed = false }: ContextSwitcherProps) {
   const navigate = useNavigate();
   const { data: userRole } = useUserRole();
   
-  // Hide switcher for specific user or collaborators
-  if (auth?.user?.email === 'chapadadigitalbr@gmail.com' || userRole === 'collaborator') {
+  // Hide switcher for collaborators
+  if (userRole === 'collaborator') {
     return null;
   }
   const current = contexts.find(c => c.value === mode) || contexts[0];

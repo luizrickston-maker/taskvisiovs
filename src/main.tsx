@@ -106,8 +106,13 @@ async function bootstrap() {
 
   ensureSafeLocalStorage();
   const { default: App } = await import("./App.tsx");
+  const { StrictMode } = await import("react");
 
-  createRoot(rootElement).render(<App />);
+  const AppWrapper = import.meta.env.DEV
+    ? () => <StrictMode><App /></StrictMode>
+    : App;
+
+  createRoot(rootElement).render(<AppWrapper />);
 
   if (import.meta.env.DEV) {
     console.log("[Main] React montado com sucesso");

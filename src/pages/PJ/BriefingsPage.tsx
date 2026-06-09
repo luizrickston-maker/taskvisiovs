@@ -51,7 +51,7 @@ export default function BriefingsPage() {
     }
   }, [authContext?.user?.id]);
 
-  const { briefings, deleteBriefing, generateMagicLink } = useBriefings(workspaceId);
+  const { briefings, deleteBriefing, generateMagicLink, duplicateBriefing } = useBriefings(workspaceId);
 
   const filteredBriefings = briefings.data?.filter(b => {
     const matchesSearch = b.title.toLowerCase().includes(search.toLowerCase());
@@ -219,7 +219,7 @@ export default function BriefingsPage() {
               }}
               onSend={handleSend}
               onDelete={handleDelete}
-              onDuplicate={(id) => console.log("Duplicate", id)}
+              onDuplicate={(id) => duplicateBriefing.mutate(id)}
             />
           ))}
         </div>

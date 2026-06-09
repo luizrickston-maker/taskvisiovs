@@ -6,6 +6,13 @@ import { CalendarGrid } from '@/components/editorial/CalendarGrid';
 import { CalendarNavigation } from '@/components/editorial/CalendarNavigation';
 import { EditorialItemForm } from '@/components/editorial/EditorialItemForm';
 import { useEditorialCalendarItems } from '@/hooks/useEditorialCalendar';
+import type { EditorialCalendarItem } from '@/types/editorial';
+import {
+  Dialog as EditDialog,
+  DialogContent as EditDialogContent,
+  DialogHeader as EditDialogHeader,
+  DialogTitle as EditDialogTitle,
+} from '@/components/ui/dialog';
 import { 
   contentStatusLabels, 
   contentPlatformConfig,
@@ -31,6 +38,8 @@ type CalendarViewType = 'month' | 'week';
 
 export default function CalendarioEditorialPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<EditorialCalendarItem | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [filterPlatform, setFilterPlatform] = useState<ContentPlatform | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<ContentStatus | 'all'>('all');
   const [calendarView, setCalendarView] = useState<CalendarViewType>('month');
@@ -243,11 +252,31 @@ export default function CalendarioEditorialPage() {
               items={filteredItems}
               currentDate={currentDate}
               view={calendarView}
-              onItemClick={(item) => console.log('Item clicked:', item)}
+              onItemClick={(item) => {
+                setEditingItem(item);
+                setIsEditOpen(true);
+              }}
             />
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Item Dialog */}
+      <EditDialog open={isEditOpen} onOpenChange={(open) => { setIsEditOpen(open); if (!open) setEditingItem(null); }}>
+        <EditDialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-visible">
+          <EditDialogHeader className="shrink-0">
+            <EditDialogTitle>Editar Conteúdo</EditDialogTitle>
+          </EditDialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {editingItem && (
+              <EditorialItemForm
+                editingItem={editingItem}
+                onSuccess={() => { setIsEditOpen(false); setEditingItem(null); }}
+              />
+            )}
+          </div>
+        </EditDialogContent>
+      </EditDialog>
     </div>
   );
 }

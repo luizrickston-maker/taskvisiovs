@@ -25,7 +25,7 @@ export function useInitializeData(userId: string | undefined) {
       // Tentar carregar preferências e categorias do cache se disponíveis para renderização instantânea
       const cachedPrefs = localStorage.getItem(`prefs_${userId}`);
       if (cachedPrefs) {
-        try { store.setUserPreferences(JSON.parse(cachedPrefs)); } catch(e) {}
+        try { store.setUserPreferences(JSON.parse(cachedPrefs)); } catch { localStorage.removeItem(`prefs_${userId}`); }
       }
 
       const [
@@ -88,24 +88,24 @@ export function useInitializeData(userId: string | undefined) {
         supabase.from('time_block_types').select('*').order('created_at', { ascending: true }),
         supabase.from('project_categories').select('*').order('created_at', { ascending: true }),
         supabase.from('projects').select('*').order('priority', { ascending: true }),
-        supabase.from('project_tasks').select('*').order('priority', { ascending: true }),
-        supabase.from('scripts').select('*').order('scheduled_date', { ascending: true }),
-        supabase.from('sales_goals').select('*').order('start_date', { ascending: false }),
-        supabase.from('prospects').select('*').order('prospection_date', { ascending: false }),
-        supabase.from('corporate_pricing').select('*').order('created_at', { ascending: false }),
-        supabase.from('corporate_investments').select('*').order('purchase_date', { ascending: false }),
-        supabase.from('corporate_team').select('*').order('name', { ascending: true }),
-        supabase.from('service_plans').select('*').order('created_at', { ascending: false }),
-        supabase.from('service_plan_items').select('*').order('created_at', { ascending: true }),
-        supabase.from('document_types').select('*').order('name', { ascending: true }),
-        supabase.from('corporate_cost_categories').select('*').order('name', { ascending: true }),
-        supabase.from('corporate_costs').select('*').order('created_at', { ascending: false }),
-        supabase.from('payment_fee_settings').select('*').order('method', { ascending: true }),
-        supabase.from('editorial_calendar_items').select('*').order('due_date', { ascending: true }),
-        supabase.from('editorial_comments').select('*').order('created_at', { ascending: false }),
-        supabase.from('purchase_plans').select('*').order('created_at', { ascending: false }),
-        supabase.from('products').select('*').order('name', { ascending: true }),
-        supabase.from('product_pricing_details').select('*').order('created_at', { ascending: true }),
+        supabase.from('project_tasks').select('*').order('priority', { ascending: true }).limit(500),
+        supabase.from('scripts').select('*').order('scheduled_date', { ascending: true }).limit(200),
+        supabase.from('sales_goals').select('*').order('start_date', { ascending: false }).limit(100),
+        supabase.from('prospects').select('*').order('prospection_date', { ascending: false }).limit(200),
+        supabase.from('corporate_pricing').select('*').order('created_at', { ascending: false }).limit(200),
+        supabase.from('corporate_investments').select('*').order('purchase_date', { ascending: false }).limit(200),
+        supabase.from('corporate_team').select('*').order('name', { ascending: true }).limit(100),
+        supabase.from('service_plans').select('*').order('created_at', { ascending: false }).limit(100),
+        supabase.from('service_plan_items').select('*').order('created_at', { ascending: true }).limit(500),
+        supabase.from('document_types').select('*').order('name', { ascending: true }).limit(100),
+        supabase.from('corporate_cost_categories').select('*').order('name', { ascending: true }).limit(100),
+        supabase.from('corporate_costs').select('*').order('created_at', { ascending: false }).limit(300),
+        supabase.from('payment_fee_settings').select('*').order('method', { ascending: true }).limit(50),
+        supabase.from('editorial_calendar_items').select('*').order('due_date', { ascending: true }).limit(300),
+        supabase.from('editorial_comments').select('*').order('created_at', { ascending: false }).limit(300),
+        supabase.from('purchase_plans').select('*').order('created_at', { ascending: false }).limit(200),
+        supabase.from('products').select('*').order('name', { ascending: true }).limit(200),
+        supabase.from('product_pricing_details').select('*').order('created_at', { ascending: true }).limit(500),
       ]);
 
       if (userIncomeCategoriesRes.data) store.setUserIncomeCategories(userIncomeCategoriesRes.data as UserIncomeCategory[]);

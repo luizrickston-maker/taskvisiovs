@@ -1,9 +1,10 @@
-import { Wallet, Receipt, Calculator, Tags, Percent } from 'lucide-react';
+import { Wallet, Receipt, Calculator, Tags, Percent, ArrowLeftRight } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CostList } from '@/components/areapj/CostList';
 import { PricingCalculator } from '@/components/areapj/PricingCalculator';
 import { CostCategoryManager } from '@/components/areapj/CostCategoryManager';
 import { PaymentFeeSettings } from '@/components/areapj/PaymentFeeSettings';
+import { CaixaPJDashboard } from '@/components/financaspj/CaixaPJDashboard';
 
 export default function FinanceiroPage() {
   return (
@@ -14,12 +15,16 @@ export default function FinanceiroPage() {
         </div>
         <div>
           <h1 className="text-xl md:text-2xl font-display font-bold">Financeiro</h1>
-          <p className="text-sm text-muted-foreground">Gestão de custos e precificação</p>
+          <p className="text-sm text-muted-foreground">Caixa, custos e precificação</p>
         </div>
       </div>
 
-      <Tabs defaultValue="custos" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 max-w-lg">
+      <Tabs defaultValue="caixa" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5 max-w-2xl">
+          <TabsTrigger value="caixa" className="flex items-center gap-2">
+            <ArrowLeftRight className="w-4 h-4" />
+            <span className="hidden sm:inline">Caixa</span>
+          </TabsTrigger>
           <TabsTrigger value="custos" className="flex items-center gap-2">
             <Receipt className="w-4 h-4" />
             <span className="hidden sm:inline">Custos</span>
@@ -37,6 +42,10 @@ export default function FinanceiroPage() {
             <span className="hidden sm:inline">Categorias</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="caixa">
+          <CaixaPJDashboard />
+        </TabsContent>
 
         <TabsContent value="custos">
           <CostList />

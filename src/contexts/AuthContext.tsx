@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 import type { Session, User, AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppStore } from "@/stores/useAppStore";
-import { useAppContext } from "@/hooks/useAppContext";
 import { useAuthRefreshCoordinator } from "@/hooks/useAuthRefreshCoordinator";
 
 // Tipos específicos para as respostas de autenticação
@@ -27,10 +26,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const resetStore = useAppStore((s) => s.resetStore);
-  const { setMode } = useAppContext();
   const manualSignOutRef = useRef(false);
   const signedOutRecoveryInFlightRef = useRef(false);
   const lastGoodSessionRef = useRef<Session | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useAuthRefreshCoordinator();
 
@@ -40,17 +39,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(
-        "[Auth] onAuthStateChange event:",
-        event,
-        session?.user?.email ?? "no-session"
-      );
+      if (import.meta.env.DEV) {
+        console.log(
+          "[Auth] onAuthStateChange event:",
+          event,
+          session?.user?.email ?? "no-session"
+        );
+      }
 
       // Tratamento de SIGNED_OUT inesperado (comum em Safari/iPad/Mobile)
       if (event === "SIGNED_OUT" && !manualSignOutRef.current) {
         if (signedOutRecoveryInFlightRef.current) return;
 
-        console.warn("[Auth] SIGNED_OUT detectado. Verificando persistência da sessão...");
+        if (import.meta.env.DEV) console.warn("[Auth] SIGNED_OUT detectado. Verificando persistência da sessão...");
         signedOutRecoveryInFlightRef.current = true;
         
         await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -58,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { session: recovered } } = await supabase.auth.getSession();
         
         if (recovered) {
-          console.warn("[Auth] Sessão recuperada com sucesso após SIGNED_OUT falso.");
+          if (import.meta.env.DEV) console.warn("[Auth] Sessão recuperada com sucesso após SIGNED_OUT falso.");
           setSession(recovered);
           setUser(recovered.user);
           setLoading(false);
@@ -67,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         
-        console.error("[Auth] Sessão realmente expirada ou inválida.");
+        if (import.meta.env.DEV) console.error("[Auth] Sessão realmente expirada ou inválida.");
         setSession(null);
         setUser(null);
         resetStore();
@@ -82,10 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session.user);
         setLoading(false);
         initialized = true;
-        
-        if (session.user?.email === 'chapadadigitalbr@gmail.com') {
-          setMode('business');
-        }
       } else if (event === "SIGNED_OUT") {
         setSession(null);
         setUser(null);
@@ -93,52 +90,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         initialized = true;
       } else if (event === "INITIAL_SESSION" && !session && !initialized) {
-        // Ignoramos INITIAL_SESSION nula se ainda não terminamos o initSession()
-        // O initSession() cuidará de setar loading(false) após as retentativas
-        console.log("[Auth] INITIAL_SESSION nula ignorada - aguardando initSession");
+        if (import.meta.env.DEV) console.log("[Auth] INITIAL_SESSION nula ignorada - aguardando initSession");
       }
     });
 
     // Carga inicial robusta para Safari/iPad/Dispositivos Móveis
     const initSession = async (retries = 3) => {
+      if (isUnmounted) return;
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
-        if (!initialized) {
+        if (!initialized && !isUnmounted) {
           if (currentSession) {
-            console.log("[Auth] Sessão inicial encontrada");
+            if (import.meta.env.DEV) console.log("[Auth] Sessão inicial encontrada");
             setSession(currentSession);
             setUser(currentSession.user);
-            if (currentSession.user?.email === 'chapadadigitalbr@gmail.com') {
-              setMode('business');
-            }
             setLoading(false);
             initialized = true;
           } else if (retries > 0) {
-            // No Safari/iPad, o localStorage pode não estar pronto no primeiro tick
-            console.warn(`[Auth] Nenhuma sessão encontrada, tentando novamente em 500ms... (${retries} restantes)`);
-            setTimeout(() => initSession(retries - 1), 500);
+            if (import.meta.env.DEV) console.warn(`[Auth] Nenhuma sessão encontrada, tentando novamente em 500ms... (${retries} restantes)`);
+            retryTimeoutRef.current = setTimeout(() => initSession(retries - 1), 500);
           } else {
-            console.log("[Auth] Nenhuma sessão persistente encontrada após retentativas");
+            if (import.meta.env.DEV) console.log("[Auth] Nenhuma sessão persistente encontrada após retentativas");
             setLoading(false);
             initialized = true;
           }
         }
       } catch (err) {
         if (retries > 0) {
-          console.error("[Auth] Erro ao carregar sessão inicial, tentando novamente...", err);
-          setTimeout(() => initSession(retries - 1), 1000);
+          if (import.meta.env.DEV) console.error("[Auth] Erro ao carregar sessão inicial, tentando novamente...", err);
+          retryTimeoutRef.current = setTimeout(() => initSession(retries - 1), 1000);
         } else {
-          setLoading(false);
-          initialized = true;
+          if (!isUnmounted) {
+            setLoading(false);
+            initialized = true;
+          }
         }
       }
     };
 
+    let isUnmounted = false;
     initSession();
 
-    return () => subscription.unsubscribe();
-  }, [resetStore, setMode]);
+    return () => {
+      isUnmounted = true;
+      if (retryTimeoutRef.current !== null) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      subscription.unsubscribe();
+    };
+  }, [resetStore]);
 
   const signUp: AuthContextValue["signUp"] = async (email, password) => {
     const redirectUrl = `${window.location.origin}/auth/callback`;
@@ -167,7 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut();
       if (error && !error.message?.includes('session_not_found')) {
-        console.error("[Auth] SignOut API error:", error);
+        if (import.meta.env.DEV) console.error("[Auth] SignOut API error:", error);
       }
     } catch (error) {
       if (import.meta.env.DEV) {

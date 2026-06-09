@@ -27,18 +27,7 @@ export function SuperAdminRoute({ children }: SuperAdminRouteProps) {
   }
 
   if (!isSuperAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4 text-center p-8">
-          <ShieldX className="w-16 h-16 text-destructive" />
-          <h1 className="text-2xl font-bold text-foreground">Acesso Negado</h1>
-          <p className="text-muted-foreground max-w-sm">
-            Você não tem permissão para acessar o painel de administração.
-          </p>
-          <Navigate to="/caixa" replace />
-        </div>
-      </div>
-    );
+    return <Navigate to="/caixa" replace />;
   }
 
   return <>{children}</>;

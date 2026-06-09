@@ -62,12 +62,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/portal" replace />;
   }
 
-  // Business-only users redirect to commercial if they try to access personal routes
-  const personalRoutes = ['/caixa', '/meu-dia', '/financas', '/planejamento', '/projetos', '/conteudos', '/roteiros', '/assistente-pessoal'];
-  if (user.email === 'chapadadigitalbr@gmail.com' && location.pathname === '/') {
-    return <Navigate to="/comercial" replace />;
-  }
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">

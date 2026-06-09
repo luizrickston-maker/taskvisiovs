@@ -68,12 +68,12 @@ export function QuickIncomeForm() {
       income_type: "fixed",
     };
 
-    const data = await handleSupabaseError<any>(
+    const data = await handleSupabaseError<Income>(
       supabase
         .from("incomes")
-        .insert(newIncome as any)
+        .insert(newIncome)
         .select()
-        .single() as any,
+        .single() as Promise<{ data: Income | null; error: unknown }>,
       "Erro ao adicionar entrada"
     );
 

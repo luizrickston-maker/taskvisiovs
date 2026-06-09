@@ -80,6 +80,51 @@ export const useBriefings = (workspaceId?: string) => {
 
   });
 
+  const duplicateBriefing = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: original, error: fetchError } = await supabase
+        .from('briefings')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError || !original) throw new Error('Briefing original não encontrado');
+
+      const {
+        id: _id,
+        created_at: _c,
+        updated_at: _u,
+        magic_link_token: _t,
+        magic_link_expires_at: _e,
+        filled_at: _f,
+        ...rest
+      } = original as Record<string, unknown>;
+
+      const { data, error } = await supabase
+        .from('briefings')
+        .insert([{
+          ...rest,
+          title: `${original.title} (Cópia)`,
+          status: 'draft',
+          magic_link_token: null,
+          magic_link_expires_at: null,
+          filled_at: null,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['briefings'] });
+      toast.success('Briefing duplicado com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao duplicar briefing');
+    },
+  });
+
   const generateMagicLink = useMutation({
     mutationFn: async (briefingId: string) => {
       const { data, error } = await supabase.functions.invoke('generate-briefing-magic-link', {
@@ -107,6 +152,7 @@ export const useBriefings = (workspaceId?: string) => {
     briefings,
     createBriefing,
     deleteBriefing,
+    duplicateBriefing,
     generateMagicLink
   };
 };
