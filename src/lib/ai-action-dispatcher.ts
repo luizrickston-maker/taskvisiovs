@@ -171,8 +171,19 @@ export async function dispatchActions(content: string): Promise<DispatchResult> 
 }
 
 /**
- * Execute a previously pending (confirmed) action.
+ * Strip ALL action tokens from visible chat content.
+ * Tokens are in the format [TOKEN_NAME: ...] or [TOKEN_NAME:...].
+ * This should be applied to any AI response before rendering it to the user.
  */
+export function stripActionTokens(content: string): string {
+  // Remove all [UPPERCASE_TOKEN: ...] patterns (single-line)
+  return content
+    .replace(/\[[A-Z][A-Z_]+:[^\]]*\]/g, '')
+    // Remove leftover blank lines caused by token removal
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export async function executeConfirmedAction(action: PendingConfirmAction): Promise<void> {
   const entry = registry.get(action.type.toUpperCase());
   if (!entry || entry.mode !== 'confirm') {

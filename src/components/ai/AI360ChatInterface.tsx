@@ -38,6 +38,7 @@ import type { ChatMessage, AIConversation, AIMessage } from '@/types/ai';
 import ReactMarkdown from 'react-markdown';
 import { useAIConversations, useAIMessages, useCreateConversation, useAddMessage, useDeleteConversation } from '@/hooks/useAiHistory';
 import { useAiActionDispatcher } from '@/hooks/useAiActionDispatcher';
+import { stripActionTokens } from '@/lib/ai-action-dispatcher';
 
 
 import { useQuery } from '@tanstack/react-query';
@@ -619,11 +620,7 @@ function MessageBubble({
 
   // Clean content from internal tags
   const cleanContent = useMemo(() => {
-    return message.content
-      .replace(/\[REQUEST_DELETE: type=.+, id=.+, name=".+"\]/g, '')
-      .replace(/\[DELETE_SUGGESTION: type=(.+), id=(.+), name="(.+)"\]/g, '$3')
-      .replace(/\| (.*?) \| R\$ (.*?) \| (.*?) \| (.*?) \|/g, '| $1 | R$ $2 | $3 |')
-      .trim();
+    return stripActionTokens(message.content);
   }, [message.content]);
 
 

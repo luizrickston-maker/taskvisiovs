@@ -42,6 +42,7 @@ const PlanosPage = lazy(() => import("@/pages/PJ/PlanosPage"));
 const InvestimentosPage = lazy(() => import("@/pages/PJ/InvestimentosPage"));
 const TimePage = lazy(() => import("@/pages/PJ/TimePage"));
 const ProjetosClientesPage = lazy(() => import("@/pages/PJ/ProjetosClientesPage"));
+const AgendaPage = lazy(() => import("@/pages/PJ/AgendaPage"));
 const CalendarioEditorialPage = lazy(() => import("@/pages/PJ/CalendarioEditorialPage"));
 const AI360DashboardPage = lazy(() => import("@/pages/PJ/AI360DashboardPage"));
 const AiAgentsManagerPage = lazy(() => import("@/pages/PJ/AiAgentsManagerPage"));
@@ -245,6 +246,11 @@ const App = () => {
                 <Route path="/pj/time" element={
                   <Suspense fallback={<PageLoader />}>
                     <TimePage />
+                  </Suspense>
+                } />
+                <Route path="/pj/agenda" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <AgendaPage />
                   </Suspense>
                 } />
                 <Route path="/pj/calendario-editorial" element={

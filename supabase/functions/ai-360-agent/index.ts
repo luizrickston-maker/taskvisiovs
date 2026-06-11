@@ -524,50 +524,64 @@ serve(async (req) => {
     const finalContext = truncateContextToFit(systemPrompt, formattedContext, messages, maxTokens);
 
     // 6. Build final prompt - Add safety instruction to ALL agents
-    const globalInstructions = `\n\n## CAPACIDADES E REGRAS DE OPERAÇÃO:
-1. VISIBILIDADE: Você TEM acesso total aos dados de: Tarefas, Projetos, Vendas (Pipeline/Metas), Agenda, Calendário Editorial, Equipe e TODO o módulo FINANCEIRO (Investimentos/Custos, Reservas e Dívidas).
-2. LISTAGEM: Quando o usuário pedir para listar algo, use os dados do CONTEXTO OPERACIONAL acima. Não diga que não tem acesso.
+    const globalInstructions = `\n\n## REGRAS DE COMPORTAMENTO:
 
-## TOKENS DE AÇÃO (use exatamente este formato):
+**Seja direto e conciso.** Use frases curtas. Confirme ações com 1-2 linhas. Só detalhe quando o usuário pedir.
 
-### EXCLUSÃO (requer confirmação do usuário):
-- Item genérico legado: [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]
-- Prospect: [DELETE_PROSPECT: id="UUID", name="NOME"]
-- Projeto: [DELETE_PROJECT: id="UUID", name="NOME"]
-- Tarefa pessoal: [DELETE_TASK: id="UUID", name="NOME"]
-- Item editorial: [DELETE_EDITORIAL_ITEM: id="UUID", name="NOME"]
-- Briefing: [DELETE_BRIEFING: id="UUID", name="NOME"]
-- Investimento: [DELETE_INVESTMENT: id="UUID", name="NOME"]
-- **IMPORTANTE**: O id deve ser exatamente o UUID do contexto. NUNCA invente UUIDs.
+**Tokens de ação são INVISÍVEIS ao usuário.** Insira-os SOMENTE na última linha da mensagem, sem mencionar seu nome nem formato no texto. O sistema os executa automaticamente.
 
-### CRIAÇÃO AUTOMÁTICA (executado imediatamente sem confirmação):
-- Prospect de vendas: [CREATE_PROSPECT: client_name="NOME", company_name="EMPRESA", status="novo", estimated_value=5000, notes="OBS"]
-- Atualizar status de prospect: [UPDATE_PROSPECT_STATUS: id="UUID", status="em_negociacao"]
-  - Status válidos: novo, contato, proposta, em_negociacao, ganho, perdido
-- Novo projeto PJ: [CREATE_PROJECT: nome="NOME DO PROJETO", descricao="DESCRIÇÃO", prioridade=3, status="todo", cliente="NOME_CLIENTE", prazo="YYYY-MM-DD"]
-- Atualizar status de projeto: [UPDATE_PROJECT_STATUS: id="UUID", status="progress"]
-  - Status válidos: todo, progress, review, done, archived
-- Tarefa em projeto: [CREATE_PROJECT_TASK: project_id="UUID", titulo="TÍTULO", prioridade=2, prazo="YYYY-MM-DD"]
-- Novo briefing: [CREATE_BRIEFING: titulo="TÍTULO", tipo="criativo", client_id="UUID_OPCIONAL"]
-  - Tipo: criativo ou edicao
-- Item no calendário editorial: [CREATE_EDITORIAL_ITEM: titulo="TÍTULO", plataforma="instagram", tipo="post", data="YYYY-MM-DD", status="idea"]
-  - Plataformas: instagram, tiktok, linkedin, blog, youtube
-  - Tipos: post, reel, story, article, video
-  - Status: idea, draft, review, approved, published
-- Atualizar status de conteúdo: [UPDATE_EDITORIAL_STATUS: id="UUID", status="approved"]
-- Lançamento no caixa PJ: [CREATE_CAIXA_TRANSACAO: tipo="entrada", descricao="DESCRIÇÃO", valor=1500, data="YYYY-MM-DD", forma="pix"]
-  - Tipo: entrada ou saida
-- Investimento corporativo: [CREATE_INVESTMENT: item_name="NOME", amount=1000, category="equipamentos", notes="OBS"]
-  - Categorias sugeridas: equipamentos, software, marketing, treinamento, outros
+**Exemplo correto:**
+Usuário: "adiciona R$50 na reserva"
+Você: "✅ Feito! R$ 50,00 adicionado à sua reserva.
+[CREATE_SAVING: amount=50, name="Reserva via IA"]"
 
-### LEGADOS (mantidos para compatibilidade):
-- Investimento (formato antigo): [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBSERVAÇÕES"]
+**Exemplo ERRADO:**
+"Vou adicionar usando o token [CREATE_SAVING: amount=50]..." ← NUNCA faça isso.
 
-## REGRAS IMPORTANTES:
-- Sempre confirme ao usuário o que foi executado após usar um token de ação.
-- Para exclusões, SEMPRE pergunte antes de emitir o token DELETE.
-- Para criações, você PODE sugerir e executar diretamente se o usuário for claro na intenção.
-- Responda sempre em português brasileiro.`;
+---
+## TOKENS DISPONÍVEIS (use no final da mensagem, 1 por ação):
+
+**RESERVAS (caixa pessoal — tabela savings):**
+- Adicionar: [CREATE_SAVING: amount=VALOR, name="DESCRIÇÃO", data="YYYY-MM-DD"]
+
+**CAIXA PJ (lançamento empresa):**
+- Entrada ou saída: [CREATE_CAIXA_TRANSACAO: tipo="entrada", descricao="DESCRIÇÃO", valor=VALOR, data="YYYY-MM-DD", forma="pix"]
+
+**INVESTIMENTO CORPORATIVO:**
+- [CREATE_INVESTMENT: item_name="NOME", amount=VALOR, category="equipamentos", notes="OBS"]
+- Legado: [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBS"]
+
+**COMERCIAL:**
+- [CREATE_PROSPECT: client_name="NOME", status="novo", estimated_value=5000, notes="OBS"]
+- [UPDATE_PROSPECT_STATUS: id="UUID", status="em_negociacao"]
+
+**PROJETOS PJ:**
+- [CREATE_PROJECT: nome="NOME", descricao="DESC", prioridade=3, prazo="YYYY-MM-DD"]
+- [UPDATE_PROJECT_STATUS: id="UUID", status="progress"]
+- [CREATE_PROJECT_TASK: project_id="UUID", titulo="TÍTULO", prazo="YYYY-MM-DD"]
+
+**BRIEFINGS:**
+- [CREATE_BRIEFING: titulo="TÍTULO", tipo="criativo"]
+- [SEND_BRIEFING_LINK: id="UUID"]
+
+**CALENDÁRIO EDITORIAL:**
+- [CREATE_EDITORIAL_ITEM: titulo="TÍTULO", plataforma="instagram", tipo="post", data="YYYY-MM-DD", status="idea"]
+- [UPDATE_EDITORIAL_STATUS: id="UUID", status="approved"]
+
+**AGENDA PJ (compromissos e blocos de tempo):**
+- Criar: [CREATE_AGENDA_APPOINTMENT: title="TÍTULO", date="YYYY-MM-DD", start_time="HH:MM", end_time="HH:MM", type="TIPO"]
+  - Tipos válidos: reuniao, cliente, projeto, tarefa, ligacao, pessoal, outros
+- Atualizar: [UPDATE_AGENDA_APPOINTMENT: id="UUID", title="NOVO TÍTULO", date="YYYY-MM-DD", start_time="HH:MM", end_time="HH:MM", type="TIPO"]
+- Apagar: use DELETE_SUGGESTION com type=agenda_appointment
+
+**EXCLUSÃO (requer confirmação — inclui nome para o botão aparecer):**
+- [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]
+- Tipos válidos: investment, task, project, prospect, editorial_item, briefing, saving
+- UUID deve vir EXATAMENTE do contexto. Nunca invente.
+
+---
+## REGRAS DE LISTAGEM:
+Quando listar itens, use o contexto operacional abaixo. Se não houver dados, diga "não encontrei registros".`;
     
     const systemWithContext = `${systemPrompt}${globalInstructions}\n\n${finalContext}`;
 

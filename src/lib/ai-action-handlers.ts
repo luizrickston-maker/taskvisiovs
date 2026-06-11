@@ -6,6 +6,7 @@
  * - Projetos PJ (projetos, tarefas)
  * - Briefings   (criar, enviar link)
  * - Calendário Editorial (criar, atualizar status)
+ * - Agenda PJ   (criar, atualizar, apagar time_blocks)
  * - Caixa PJ    (lançamento de transação)
  * - Investimentos (criar, apagar — pré-existente migrado aqui)
  * - Tarefas/Projetos pessoais (delete — pré-existente migrado aqui)
@@ -230,6 +231,79 @@ const deleteBriefingHandler: ConfirmHandler = async (id) => {
 };
 
 // =====================================================
+// AGENDA PJ — Time Blocks
+// =====================================================
+
+const VALID_APPOINTMENT_TYPES = ['reuniao', 'cliente', 'projeto', 'tarefa', 'ligacao', 'pessoal', 'outros'];
+const TYPE_COLORS: Record<string, string> = {
+  reuniao: '#3b82f6', cliente: '#8b5cf6', projeto: '#22c55e',
+  tarefa: '#f59e0b', ligacao: '#06b6d4', pessoal: '#ec4899', outros: '#6b7280',
+};
+
+const createAgendaAppointment: AutoHandler = async (params) => {
+  const user = await getUser();
+  const type = VALID_APPOINTMENT_TYPES.includes(params.type || '') ? params.type : 'reuniao';
+  const color = TYPE_COLORS[type] ?? '#3b82f6';
+
+  if (!params.start_time || !params.end_time) throw new Error('start_time e end_time são obrigatórios');
+  if (!params.date) throw new Error('date é obrigatório (YYYY-MM-DD)');
+
+  const { data, error } = await supabase
+    .from('time_blocks')
+    .insert({
+      user_id: user.id,
+      title: params.title || params.titulo || 'Compromisso',
+      date: params.date || today(),
+      start_time: params.start_time,
+      end_time: params.end_time,
+      type,
+      color: params.color || color,
+      completed: false,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  useAppStore.getState().addTimeBlock(data as any);
+  toast.success(`Compromisso criado: ${data.title} (${data.start_time}–${data.end_time})`);
+  return { label: `Agenda: "${data.title}" em ${data.date} ${data.start_time}–${data.end_time}` };
+};
+
+const updateAgendaAppointment: AutoHandler = async (params) => {
+  if (!params.id || !isValidUUID(params.id)) throw new Error('ID inválido para compromisso');
+
+  const updates: Record<string, unknown> = {};
+  if (params.title || params.titulo) updates.title = params.title || params.titulo;
+  if (params.date) updates.date = params.date;
+  if (params.start_time) updates.start_time = params.start_time;
+  if (params.end_time) updates.end_time = params.end_time;
+  if (params.type && VALID_APPOINTMENT_TYPES.includes(params.type)) {
+    updates.type = params.type;
+    updates.color = TYPE_COLORS[params.type] ?? '#6b7280';
+  }
+
+  const { data, error } = await supabase
+    .from('time_blocks')
+    .update(updates)
+    .eq('id', params.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  useAppStore.getState().updateTimeBlock(params.id, data as any);
+  toast.success(`Compromisso atualizado: ${data.title}`);
+  return { label: `Agenda: "${data.title}" atualizado` };
+};
+
+const deleteAgendaAppointmentHandler: ConfirmHandler = async (id) => {
+  if (!isValidUUID(id)) throw new Error('ID inválido');
+  const { error } = await supabase.from('time_blocks').delete().eq('id', id);
+  if (error) throw error;
+  useAppStore.getState().deleteTimeBlock(id);
+  toast.success('Compromisso removido da agenda');
+};
+
+// =====================================================
 // CALENDÁRIO EDITORIAL
 // =====================================================
 
@@ -323,6 +397,40 @@ const createCaixaTransacao: AutoHandler = async (params) => {
 };
 
 // =====================================================
+// RESERVAS (SAVINGS)
+// =====================================================
+
+const createSaving: AutoHandler = async (params) => {
+  const user = await getUser();
+  const amount = parseFloat(params.amount || params.valor || '0');
+  if (!amount || amount <= 0) throw new Error('Valor inválido para reserva');
+
+  const { data, error } = await supabase
+    .from('savings')
+    .insert({
+      user_id: user.id,
+      description: params.name || params.nome || params.description || params.descricao || 'Reserva via IA',
+      amount,
+      date: params.date || params.data || new Date().toISOString().split('T')[0],
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  useAppStore.getState().addSaving(data);
+  toast.success(`Reserva adicionada: R$ ${amount.toFixed(2)}`);
+  return { label: `Reserva de R$ ${amount.toFixed(2)} registrada` };
+};
+
+const deleteSavingHandler: ConfirmHandler = async (id) => {
+  if (!isValidUUID(id)) throw new Error('ID inválido');
+  const { error } = await supabase.from('savings').delete().eq('id', id);
+  if (error) throw error;
+  useAppStore.getState().deleteSaving(id);
+  toast.success('Reserva removida');
+};
+
+// =====================================================
 // INVESTIMENTOS CORPORATIVOS (migrado do handler antigo)
 // =====================================================
 
@@ -385,6 +493,11 @@ export function registerAllHandlers() {
   registerHandler('SEND_BRIEFING_LINK', 'auto', sendBriefingLink);
   registerHandler('DELETE_BRIEFING', 'confirm', deleteBriefingHandler);
 
+  // Agenda PJ
+  registerHandler('CREATE_AGENDA_APPOINTMENT', 'auto', createAgendaAppointment);
+  registerHandler('UPDATE_AGENDA_APPOINTMENT', 'auto', updateAgendaAppointment);
+  registerHandler('DELETE_AGENDA_APPOINTMENT', 'confirm', deleteAgendaAppointmentHandler);
+
   // Calendário Editorial
   registerHandler('CREATE_EDITORIAL_ITEM', 'auto', createEditorialItem);
   registerHandler('UPDATE_EDITORIAL_STATUS', 'auto', updateEditorialStatus);
@@ -393,12 +506,17 @@ export function registerAllHandlers() {
   // Caixa PJ
   registerHandler('CREATE_CAIXA_TRANSACAO', 'auto', createCaixaTransacao);
 
+  // Reservas (Savings)
+  registerHandler('CREATE_SAVING', 'auto', createSaving);
+  registerHandler('DELETE_SAVING', 'confirm', deleteSavingHandler);
+
   // Investimentos
   registerHandler('CREATE_INVESTMENT', 'auto', createInvestimento);
   registerHandler('DELETE_INVESTMENT', 'confirm', deleteInvestimentoHandler);
 
-  // Legacy aliases (backward compat with REQUEST_ADD_INVESTMENT token)
+  // Legacy aliases (backward compat with REQUEST_ADD_INVESTMENT / REQUEST_ADD_SAVING tokens)
   registerHandler('REQUEST_ADD_INVESTMENT', 'auto', createInvestimento);
+  registerHandler('REQUEST_ADD_SAVING', 'auto', createSaving);
   // NOTE: DELETE_SUGGESTION is intentionally NOT registered here.
   // It is handled by the inline button UI in OperationalBrainChat and AI360ChatInterface.
 }

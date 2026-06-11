@@ -20,6 +20,7 @@ import { useAIConversations, useAIMessages, useCreateConversation, useAddMessage
 import { useAppStore } from '@/stores/useAppStore';
 import { toast } from 'sonner';
 import { useAiActionDispatcher } from '@/hooks/useAiActionDispatcher';
+import { stripActionTokens } from '@/lib/ai-action-dispatcher';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -683,11 +684,7 @@ export function OperationalBrainChat() {
                           {msg.role === 'assistant' ? (
                             <div className="prose prose-sm dark:prose-invert max-w-none">
                               <ReactMarkdown>
-                                  {msg.content
-                                    .replace(/\[REQUEST_DELETE:\s*type=.+?,\s*id=.+?,\s*name=".+?"\]/g, '')
-                                    .replace(/\[DELETE_SUGGESTION:\s*type=(.+?),\s*id=(.+?),\s*name="(.+?)"\]/g, '$3')
-                                    .replace(/\| (.*?) \| R\$ (.*?) \| (.*?) \| (.*?) \|/g, '| $1 | R$ $2 | $3 |')
-                                    .trim()}
+                                  {stripActionTokens(msg.content)}
                               </ReactMarkdown>
                               
                               {!isLoading && msg.content.includes('[DELETE_SUGGESTION:') && (
