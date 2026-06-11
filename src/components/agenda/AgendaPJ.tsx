@@ -612,9 +612,13 @@ function AgendaDayView({ date, blocks, allBlocks, onAddAt, onEdit, onRequestDele
                   </div>
                 </PopoverTrigger>
                 <PopoverContent
-                  side="right" align="start"
+                  side="bottom"
+                  align="start"
+                  sideOffset={6}
+                  alignOffset={-4}
                   avoidCollisions
-                  className="w-56 p-3 z-30"
+                  collisionPadding={12}
+                  className="w-[min(224px,calc(100vw-24px))] p-3 z-30"
                   onClick={e => e.stopPropagation()}
                 >
                   <EventPopoverContent
@@ -743,9 +747,12 @@ function AgendaWeekView({ days, blocksForDate, allBlocks, onDaySelect, onAddAt, 
                         </div>
                       </PopoverTrigger>
                       <PopoverContent
-                        side="bottom" align="center"
+                        side="bottom"
+                        align="center"
+                        sideOffset={6}
                         avoidCollisions
-                        className="w-52 p-3 z-30"
+                        collisionPadding={12}
+                        className="w-[min(208px,calc(100vw-24px))] p-3 z-30"
                         onClick={e => e.stopPropagation()}
                       >
                         <EventPopoverContent
@@ -781,9 +788,9 @@ interface EventPopoverContentProps {
 function EventPopoverContent({ block, conflicted, onEdit, onRequestDelete }: EventPopoverContentProps) {
   const tc = getTypeConf(block.type);
   return (
-    <div className="space-y-2.5" onClick={e => e.stopPropagation()}>
-      <div>
-        <p className="font-semibold text-sm leading-tight">{block.title}</p>
+    <div className="space-y-2" onClick={e => e.stopPropagation()}>
+      <div className="min-w-0">
+        <p className="font-semibold text-sm leading-tight break-words">{block.title}</p>
         <div className="flex items-center gap-1.5 mt-1">
           <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
           <span className="text-xs text-muted-foreground">{block.start_time} – {block.end_time}</span>
@@ -802,17 +809,17 @@ function EventPopoverContent({ block, conflicted, onEdit, onRequestDelete }: Eve
           </div>
         )}
       </div>
-      <div className="flex gap-1.5 pt-1.5 border-t border-border/50">
+      <div className="flex gap-2 pt-2 border-t border-border/50">
         <Button
           variant="outline" size="sm"
-          className="flex-1 h-8 text-xs gap-1"
+          className="flex-1 h-9 text-xs gap-1 touch-manipulation"
           onClick={() => onEdit(block)}
         >
           <Edit2 className="w-3 h-3" /> Editar
         </Button>
         <Button
           variant="outline" size="sm"
-          className="h-8 w-8 p-0 shrink-0 text-destructive hover:bg-destructive/10 hover:border-destructive/40"
+          className="h-9 w-9 p-0 shrink-0 touch-manipulation text-destructive hover:bg-destructive/10 hover:border-destructive/40"
           onClick={() => onRequestDelete(block)}
         >
           <Trash2 className="w-3.5 h-3.5" />
