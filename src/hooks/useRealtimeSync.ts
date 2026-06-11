@@ -146,10 +146,11 @@ export function useRealtimeSync(userId: string | undefined) {
           }
         }
       )
-      // Projects
+      // Projects — sem filtro user_id: colaboradores podem atualizar status de projetos
+      // A RLS garante que o manager só recebe linhas às quais tem acesso
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'projects', filter: `user_id=eq.${userId}` },
+        { event: '*', schema: 'public', table: 'projects' },
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<Project>;
           if (eventType === 'INSERT') {
@@ -162,10 +163,11 @@ export function useRealtimeSync(userId: string | undefined) {
           }
         }
       )
-      // ProjectTasks
+      // ProjectTasks — sem filtro user_id: colaboradores atualizam status de tarefas
+      // A RLS garante que o manager só recebe linhas às quais tem acesso
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'project_tasks', filter: `user_id=eq.${userId}` },
+        { event: '*', schema: 'public', table: 'project_tasks' },
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<ProjectTask>;
           if (eventType === 'INSERT') {
