@@ -1,6 +1,11 @@
 import { useState, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus, Users, DollarSign } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -14,21 +19,25 @@ import type { CorporateTeamMember } from '@/types/database';
 
 export function TeamManager() {
   const { user } = useAuthContext();
+  const queryClient = useQueryClient();
   const { corporateTeam, addCorporateTeamMember, updateCorporateTeamMember, deleteCorporateTeamMember } = useAppStore();
-  
+
   const [formOpen, setFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<CorporateTeamMember | null>(null);
   const [selectedMemberProgress, setSelectedMemberProgress] = useState<CorporateTeamMember | null>(null);
+  const [deletingMember, setDeletingMember] = useState<CorporateTeamMember | null>(null);
 
-  const activeMembers = useMemo(() => {
-    return corporateTeam.filter(m => m.is_active);
-  }, [corporateTeam]);
+  const activeMembers = useMemo(
+    () => corporateTeam.filter(m => m.is_active),
+    [corporateTeam],
+  );
 
-  const totalMonthlyCost = useMemo(() => {
-    return activeMembers
+  const totalMonthlyCost = useMemo(
+    () => activeMembers
       .filter(m => m.contract_type !== 'freelancer')
-      .reduce((sum, m) => sum + m.cost, 0);
-  }, [activeMembers]);
+      .reduce((sum, m) => sum + m.cost, 0),
+    [activeMembers],
+  );
 
   const handleSave = async (data: Partial<CorporateTeamMember> & { email?: string; password?: string }) => {
     if (!user) return;
@@ -56,49 +65,46 @@ export function TeamManager() {
         toast.success('Colaborador atualizado!');
       }
     } else {
-      // Se houver email e senha, criar via Edge Function
       if (data.email && data.password) {
         try {
-          const { data: edgeData, error: edgeError } = await supabase.functions.invoke('create-collaborator', {
+          const { error: edgeError } = await supabase.functions.invoke('create-collaborator', {
             body: {
               email: data.email,
               password: data.password,
               name: data.name,
               role: data.role,
-              workspace_id: undefined, // Let the edge function handle finding the correct workspace_id
               cost: data.cost,
               contract_type: data.contract_type,
               payment_day: data.payment_day,
               hours_available: data.hours_available,
               clt_benefits: data.clt_benefits,
-              notes: data.notes
-            }
+              notes: data.notes,
+            },
           });
 
           if (edgeError) throw edgeError;
-          
-          const portalLink = "https://taskvisionpro.lovable.app/colaborador";
-          
+
+          const portalLink = `${window.location.origin}/colaborador`;
+
           toast.success('Colaborador criado com acesso ao portal!', {
-            description: `Link do portal: ${portalLink}`,
+            description: `Link: ${portalLink}`,
             action: {
               label: 'Copiar Link',
               onClick: () => {
                 navigator.clipboard.writeText(portalLink);
                 toast.success('Link copiado!');
-              }
-            }
+              },
+            },
           });
-          // Recarregar dados para pegar o novo membro
-          setTimeout(() => window.location.reload(), 2000); 
+
+          // Invalida o cache React Query para recarregar a equipe sem reload
+          await queryClient.invalidateQueries({ queryKey: ['corporate-team'] });
 
         } catch (error: any) {
-          console.error('Error creating collaborator:', error);
           const errorMsg = error.context?.error || error.message || 'Erro desconhecido';
           toast.error(`Erro ao criar colaborador: ${errorMsg}`);
         }
       } else {
-        // Criação normal sem login
         const { data: newData, error } = await supabase
           .from('corporate_team')
           .insert({
@@ -127,18 +133,20 @@ export function TeamManager() {
     setEditingMember(null);
   };
 
-  const handleDelete = async (id: string) => {
+  const confirmDelete = async () => {
+    if (!deletingMember) return;
     const { error } = await supabase
       .from('corporate_team')
       .delete()
-      .eq('id', id);
+      .eq('id', deletingMember.id);
 
     if (error) {
       toast.error('Erro ao remover colaborador');
     } else {
-      deleteCorporateTeamMember(id);
+      deleteCorporateTeamMember(deletingMember.id);
       toast.success('Colaborador removido');
     }
+    setDeletingMember(null);
   };
 
   const handleEdit = (member: CorporateTeamMember) => {
@@ -162,85 +170,110 @@ export function TeamManager() {
 
   if (selectedMemberProgress) {
     return (
-      <TeamMemberProgressDetails 
-        member={selectedMemberProgress} 
-        onBack={() => setSelectedMemberProgress(null)} 
+      <TeamMemberProgressDetails
+        member={selectedMemberProgress}
+        onBack={() => setSelectedMemberProgress(null)}
       />
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <DollarSign className="w-5 h-5 text-primary" />
+    <>
+      <div className="space-y-6">
+        {/* KPIs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Custo Mensal com Equipe</p>
+                  <p className="text-xl font-bold text-primary">{formatCurrency(totalMonthlyCost)}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Custo Mensal com Equipe</p>
-                <p className="text-xl font-bold text-primary">
-                  {formatCurrency(totalMonthlyCost)}
-                </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-muted/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-muted">
+                  <Users className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Colaboradores Ativos</p>
+                  <p className="text-xl font-bold">{activeMembers.length}</p>
+                </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Lista da equipe */}
+        <Card>
+          <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <CardTitle className="text-base">Equipe</CardTitle>
+            <Button onClick={() => { setEditingMember(null); setFormOpen(true); }} className="w-full md:w-auto">
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Colaborador
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {corporateTeam.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Nenhum colaborador registrado ainda.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {corporateTeam.map((member) => (
+                  <TeamMemberCard
+                    key={member.id}
+                    member={member}
+                    onEdit={handleEdit}
+                    onDelete={(id) => {
+                      const m = corporateTeam.find(m => m.id === id);
+                      if (m) setDeletingMember(m);
+                    }}
+                    onToggleActive={handleToggleActive}
+                    onViewProgress={(m) => setSelectedMemberProgress(m)}
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="bg-muted/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-muted">
-                <Users className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Colaboradores Ativos</p>
-                <p className="text-xl font-bold">{activeMembers.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <TeamMemberForm
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          onSave={handleSave}
+          member={editingMember}
+        />
       </div>
 
-      {/* Header com botão */}
-      <Card>
-        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <CardTitle className="text-base">Equipe</CardTitle>
-          <Button onClick={() => { setEditingMember(null); setFormOpen(true); }} className="w-full md:w-auto">
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Colaborador
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {corporateTeam.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Nenhum colaborador registrado ainda.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {corporateTeam.map((member) => (
-                <TeamMemberCard
-                  key={member.id}
-                  member={member}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onToggleActive={handleToggleActive}
-                  onViewProgress={(member) => setSelectedMemberProgress(member)}
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <TeamMemberForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSave={handleSave}
-        member={editingMember}
-      />
-    </div>
+      {/* Confirmação de exclusão */}
+      <AlertDialog open={!!deletingMember} onOpenChange={(open) => { if (!open) setDeletingMember(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover colaborador?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O colaborador <strong>{deletingMember?.name}</strong> será
+              removido da equipe permanentemente. O acesso ao portal será revogado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

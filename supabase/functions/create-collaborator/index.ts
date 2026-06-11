@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
       // Se o usuário já existir, tentamos atualizar a senha
       const msg = (userError.message || '').toLowerCase();
       if (msg.includes('already') || msg.includes('exist') || (userError as any).code === 'email_exists') {
-        const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+        const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000, page: 1 });
         const existingUser = existingUsers.users.find(u => u.email === email);
         
         if (existingUser) {
@@ -194,12 +194,9 @@ Deno.serve(async (req) => {
     });
 
   } catch (err) {
-    console.error('create-collaborator erro:', err);
-    return new Response(JSON.stringify({ 
-      error: err.message || 'Erro interno',
-      details: err.stack,
-      stack: err.stack
-    }), {
+    const msg = err instanceof Error ? err.message : 'Erro interno';
+    console.error('create-collaborator erro:', msg);
+    return new Response(JSON.stringify({ error: msg }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

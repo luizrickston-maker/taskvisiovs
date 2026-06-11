@@ -11,6 +11,7 @@ import { AppBootstrap } from "@/components/bootstrap/AppBootstrap";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SuperAdminRoute } from "@/components/SuperAdminRoute";
 import { ClientPortalRoute } from "@/components/ClientPortalRoute";
+import { CollaboratorRoute } from "@/components/auth/CollaboratorRoute";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 // Auth pages - loaded eagerly (needed immediately)
@@ -327,9 +328,11 @@ const App = () => {
                 } />
                 
                 <Route path="/colaborador" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <CollaboratorPortal />
-                  </Suspense>
+                  <CollaboratorRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <CollaboratorPortal />
+                    </Suspense>
+                  </CollaboratorRoute>
                 } />
                 
               </Route>
