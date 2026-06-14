@@ -1,4 +1,4 @@
-project_id = "kxuwzhnkragzsqafszpo"
+project_id = "gvjvwirlgzrmmeekpyzh"
 
 [functions.invite-client-user]
 verify_jwt = false
@@ -19,4 +19,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.create-collaborator]
+verify_jwt = false
+
+[functions.dispatch-webhook]
 verify_jwt = false
