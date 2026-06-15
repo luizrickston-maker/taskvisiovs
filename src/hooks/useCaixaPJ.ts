@@ -177,7 +177,7 @@ export function useCreateTransacao() {
       qc.invalidateQueries({ queryKey: ['caixa-pj-transacoes'] });
       toast.success('Transação registrada!');
     },
-    onError: () => toast.error('Erro ao registrar transação'),
+    onError: (e: any) => toast.error(`Erro ao registrar transação: ${e?.message ?? 'Verifique o console'}`),
   });
 }
 
@@ -293,7 +293,7 @@ export function useCreateContaPagar() {
       qc.invalidateQueries({ queryKey: ['caixa-pj-contas-pagar'] });
       toast.success('Conta a pagar registrada!');
     },
-    onError: () => toast.error('Erro ao registrar conta'),
+    onError: (e: any) => toast.error(`Erro ao registrar conta: ${e?.message ?? 'Verifique o console'}`),
   });
 }
 

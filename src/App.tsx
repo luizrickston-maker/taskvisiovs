@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+﻿import { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -90,6 +90,32 @@ function PageLoader() {
   );
 }
 
+// Fallback leve para erro isolado por rota — não derruba a navegação global
+function PageError() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 p-12 text-center">
+      <p className="text-sm font-medium text-destructive">Esta página encontrou um erro.</p>
+      <button
+        className="text-xs text-muted-foreground underline hover:text-foreground"
+        onClick={() => window.location.reload()}
+      >
+        Recarregar
+      </button>
+    </div>
+  );
+}
+
+// Combina Suspense + ErrorBoundary por rota para isolar falhas
+function SafePage({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary fallback={<PageError />}>
+      <Suspense fallback={<PageLoader />}>
+        {children}
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
 // Boot marker para debug
 if (import.meta.env.DEV) {
   console.log('[App] Bootstrap iniciado', { timestamp: new Date().toISOString() });
@@ -123,9 +149,9 @@ const App = () => {
               <Route path="/collaborator" element={<Navigate to="/colaborador" replace />} />
               {/* Short link redirect - public */}
               <Route path="/p/:code" element={
-                <Suspense fallback={<PageLoader />}>
+                <SafePage>
                   <PortalRedirect />
-                </Suspense>
+                </SafePage>
               } />
               <Route path="/briefing/fill" element={<BriefingFillPage />} />
               <Route path="/video-briefing/fill" element={<VideoBriefingViewPage />} />
@@ -133,25 +159,25 @@ const App = () => {
               {/* Client Portal - isolated from main app */}
               <Route path="/portal" element={
                 <ClientPortalRoute>
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <PortalDashboard />
-                  </Suspense>
+                  </SafePage>
                 </ClientPortalRoute>
               } />
               {/* Collaborator Portal is now at top level */}
               {/* Super Admin - outside AppLayout */}
               <Route path="/super-admin" element={
                 <SuperAdminRoute>
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <SuperAdminDashboard />
-                  </Suspense>
+                  </SafePage>
                 </SuperAdminRoute>
               } />
               <Route path="/super-admin/workspace/:id" element={
                 <SuperAdminRoute>
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <WorkspaceDetailsPage />
-                  </Suspense>
+                  </SafePage>
                 </SuperAdminRoute>
               } />
               <Route
@@ -165,173 +191,173 @@ const App = () => {
               >
                 {/* Personal Routes - Core */}
                 <Route path="/caixa" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <CaixaDashboard />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/meu-dia" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <FocoDashboard />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/foco" element={<Navigate to="/meu-dia" replace />} />
                 
                 {/* Personal Routes - Lazy loaded */}
                 <Route path="/financas" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <FinancasDashboard />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/planejamento" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <PlanejamentoDashboard />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/projetos" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <ProjetosDashboard />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/conteudos" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <ConteudosDashboard />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/roteiros" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <RoteirosDashboard />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/assistente-pessoal" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <AI360PersonalDashboardPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/financas/categorias" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <FinanceCategoryManagementPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/ferramentas" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <FerramentasPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 
                 {/* Business/PJ Routes - Lazy loaded */}
                 <Route path="/comercial" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <ComercialDashboard />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/projetos" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <ProjetosClientesPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/financeiro" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <FinanceiroPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/planos" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <PlanosPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/investimentos" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <InvestimentosPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/time" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <TimePage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/agenda" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <AgendaPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/calendario-editorial" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <CalendarioEditorialPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/cerebro-operacional" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <AI360DashboardPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/agentes-ia" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <AiAgentsManagerPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/processos" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <ProcessosPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/briefings" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <BriefingsPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/briefings/novo" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <BriefingEditorPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/briefings/:id/editar" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <BriefingEditorPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/briefings/:id/review" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <BriefingReviewPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/comercial/clientes" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <ClientesFinaisPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/comercial/clientes/:id" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <ClientFinalDetailsPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/processos/novo" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <ProcessEditorPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/processos/:id" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <ProcessViewPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 <Route path="/pj/processos/:id/editar" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <ProcessEditorPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 
                 {/* Config - Lazy loaded */}
                 <Route path="/config" element={
-                  <Suspense fallback={<PageLoader />}>
+                  <SafePage>
                     <ConfigPage />
-                  </Suspense>
+                  </SafePage>
                 } />
                 
                 <Route path="/colaborador" element={
                   <CollaboratorRoute>
-                    <Suspense fallback={<PageLoader />}>
+                    <SafePage>
                       <CollaboratorPortal />
-                    </Suspense>
+                    </SafePage>
                   </CollaboratorRoute>
                 } />
                 

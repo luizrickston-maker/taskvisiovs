@@ -55,21 +55,24 @@ export function ContaPagarForm({ open, onClose }: ContaPagarFormProps) {
     const numVal = parseFloat(values.valor);
     if (isNaN(numVal) || numVal <= 0) return;
 
-    await createConta.mutateAsync({
-      descricao: values.descricao.trim(),
-      fornecedor: values.fornecedor.trim() || undefined,
-      valor: numVal,
-      data_vencimento: values.data_vencimento,
-      categoria_id: values.categoria_id || undefined,
-      forma_pagamento: (values.forma_pagamento as CaixaFormaPagamento) || undefined,
-      recorrente,
-      frequencia: recorrente ? (values.frequencia as ContaPagarFrequencia) || undefined : undefined,
-      observacoes: values.observacoes.trim() || undefined,
-    });
-
-    reset();
-    setRecorrente(false);
-    onClose();
+    try {
+      await createConta.mutateAsync({
+        descricao: values.descricao.trim(),
+        fornecedor: values.fornecedor.trim() || undefined,
+        valor: numVal,
+        data_vencimento: values.data_vencimento,
+        categoria_id: values.categoria_id || undefined,
+        forma_pagamento: (values.forma_pagamento as CaixaFormaPagamento) || undefined,
+        recorrente,
+        frequencia: recorrente ? (values.frequencia as ContaPagarFrequencia) || undefined : undefined,
+        observacoes: values.observacoes.trim() || undefined,
+      });
+      reset();
+      setRecorrente(false);
+      onClose();
+    } catch {
+      // Erro exibido via toast no onError da mutation — não propagar ao ErrorBoundary
+    }
   };
 
   return (
