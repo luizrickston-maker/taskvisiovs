@@ -50,8 +50,9 @@ interface ClientTaskFormProps {
 
 export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTaskFormProps) {
   const { user } = useAuthContext();
-  const { addProjectTask, updateProjectTask, corporateTeam } = useAppStore();
+  const { addProjectTask, updateProjectTask, corporateTeam, projects } = useAppStore();
   const collaborators = corporateTeam.filter(m => m.member_user_id);
+  const parentProject = projects.find(p => p.id === projectId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
@@ -88,12 +89,12 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
         deadline_days: null,
         priority: 3,
         status: 'todo',
-        assigned_to: '',
+        assigned_to: parentProject?.assigned_to || '',
         estimated_hours: 0,
         actual_hours: 0,
       });
     }
-  }, [task, open]);
+  }, [task, open, parentProject?.assigned_to]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
