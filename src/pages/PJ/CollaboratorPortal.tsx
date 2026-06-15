@@ -200,11 +200,6 @@ export default function CollaboratorPortal() {
     }
   };
 
-  const getProjectProgress = (projectId: string) => {
-    const tasks = projectTasks.filter(t => t.project_id === projectId);
-    if (tasks.length === 0) return null;
-    return Math.round((tasks.filter(t => taskIsDone(t.status)).length / tasks.length) * 100);
-  };
 
   const realtimeIndicator = {
     connected:  { icon: Wifi,    label: 'Ao vivo',       cls: 'bg-green-500/10 text-green-600 border-green-500/20' },
@@ -601,7 +596,7 @@ export default function CollaboratorPortal() {
                                     : <Circle className="w-4 h-4 text-muted-foreground" />}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className={cn('font-medium leading-tight', isDone && 'line-through text-muted-foreground')}>{t.title}</p>
+                                  <p className={cn('font-medium leading-tight text-sm', isDone && 'line-through text-muted-foreground')}>{t.title}</p>
                                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                                     {t.deadline && (
                                       <span className={cn('text-[11px] flex items-center gap-1', isOverdue ? 'text-red-500 font-semibold' : 'text-muted-foreground')}>
@@ -617,6 +612,48 @@ export default function CollaboratorPortal() {
                                       </span>
                                     )}
                                   </div>
+                                  {/* Botões de ação — replicam o padrão do card de tarefa ativa */}
+                                  {!isDone && (
+                                    <div className="flex gap-1.5 mt-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className={cn(
+                                          'h-7 px-2.5 gap-1 text-[10px] font-bold uppercase tracking-wide transition-all',
+                                          t.status === 'in_progress'
+                                            ? 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600'
+                                            : '',
+                                        )}
+                                        disabled={updating === t.id || t.status === 'in_progress'}
+                                        onClick={() => handleStatusUpdate('task', t.id, 'in_progress')}
+                                      >
+                                        {updating === t.id
+                                          ? <Loader2 className="w-3 h-3 animate-spin" />
+                                          : <Hourglass className="w-3 h-3" />}
+                                        {t.status === 'in_progress' ? 'Em Andamento' : 'Iniciar'}
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 px-2.5 gap-1 text-[10px] font-bold uppercase tracking-wide hover:bg-green-600 hover:text-white hover:border-green-600 transition-all"
+                                        disabled={updating === t.id}
+                                        onClick={() => handleStatusUpdate('task', t.id, 'done')}
+                                      >
+                                        <CheckCircle className="w-3 h-3" /> Concluir
+                                      </Button>
+                                    </div>
+                                  )}
+                                  {isDone && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 px-2 mt-1 text-[10px] text-muted-foreground hover:text-foreground"
+                                      disabled={updating === t.id}
+                                      onClick={() => handleStatusUpdate('task', t.id, 'todo')}
+                                    >
+                                      Reabrir
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             );
