@@ -19,7 +19,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
@@ -175,7 +175,7 @@ export function ClientProjectForm({ open, onOpenChange, project, prospectData }:
     }
   };
 
-  const selectedDate = formData.deadline ? new Date(formData.deadline) : undefined;
+  const selectedDate = formData.deadline ? parseISO(formData.deadline) : undefined;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -233,8 +233,8 @@ export function ClientProjectForm({ open, onOpenChange, project, prospectData }:
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.deadline 
-                      ? format(new Date(formData.deadline), "dd/MM/yyyy", { locale: ptBR })
+                    {formData.deadline
+                      ? format(parseISO(formData.deadline), "dd/MM/yyyy", { locale: ptBR })
                       : "Selecionar data"
                     }
                   </Button>
