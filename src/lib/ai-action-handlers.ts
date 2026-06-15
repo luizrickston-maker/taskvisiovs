@@ -106,10 +106,12 @@ const deleteProspectHandler: ConfirmHandler = async (id) => {
 
 const createProject: AutoHandler = async (params) => {
   const user = await getUser();
+  const workspaceId = await getWorkspaceId();
   const { data, error } = await supabase
     .from('projects')
     .insert({
       user_id: user.id,
+      workspace_id: workspaceId,
       project: params.nome || params.project || 'Novo Projeto',
       task: params.descricao || params.task || '',
       status: params.status || 'todo',

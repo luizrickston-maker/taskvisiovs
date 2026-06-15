@@ -37,7 +37,13 @@ const projectSchema = z.object({
   deadline: z.string().optional(),
   priority: z.number().min(1).max(5),
   status: z.enum(['todo', 'progress', 'blocked', 'done']),
-  assigned_to: z.string().uuid().nullable().optional(),
+  // Aceita '' (não preenchido), 'none' (Nenhum) ou um UUID de colaborador
+  assigned_to: z
+    .string()
+    .refine((v) => v === '' || v === 'none' || z.string().uuid().safeParse(v).success, {
+      message: 'Colaborador inválido',
+    })
+    .optional(),
 });
 
 interface ClientProjectFormProps {
@@ -114,8 +120,17 @@ export function ClientProjectForm({ open, onOpenChange, project, prospectData }:
     setIsSubmitting(true);
 
     try {
+      // workspace_id é obrigatório pela política RLS de INSERT/UPDATE de projects
+      const { data: workspaceId, error: wsError } = await supabase.rpc('get_my_workspace_id');
+      if (wsError || !workspaceId) {
+        toast.error('Não foi possível identificar seu workspace. Recarregue a página e tente novamente.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const projectData = {
         user_id: user.id,
+        workspace_id: workspaceId,
         project: formData.project,
         task: formData.project, // Required field, using project name
         client_name: formData.client_name || null,

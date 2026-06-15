@@ -88,7 +88,7 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
       priority: Number(priority),
       status,
       estimated_time: estimatedTime?.trim() || null,
-      assigned_to: assignedTo === 'none' ? null : assignedTo,
+      assigned_to: (assignedTo === 'none' || !assignedTo) ? null : assignedTo,
     };
 
     if (editProject) {
@@ -106,9 +106,17 @@ export default function ProjectForm({ open, onOpenChange, editProject }: Project
       updateProject(editProject.id, projectData);
       toast.success('Projeto atualizado!');
     } else {
+      // workspace_id é obrigatório pela política RLS de INSERT de projects
+      const { data: workspaceId, error: wsError } = await supabase.rpc('get_my_workspace_id');
+      if (wsError || !workspaceId) {
+        toast.error('Não foi possível identificar seu workspace. Recarregue a página e tente novamente.');
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('projects')
-        .insert({ ...projectData, user_id: user.id })
+        .insert({ ...projectData, user_id: user.id, workspace_id: workspaceId })
         .select()
         .single();
 
