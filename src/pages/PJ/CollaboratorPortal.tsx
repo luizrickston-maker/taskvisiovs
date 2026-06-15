@@ -221,48 +221,53 @@ export default function CollaboratorPortal() {
 
     return (
       <Card key={task.id} className="group overflow-hidden transition-all bg-card border border-border hover:border-primary/40 hover:shadow-md">
-        <CardContent className="p-5 space-y-4">
-          <div className="flex justify-between items-start gap-3">
-            <div className="space-y-1 flex-1 min-w-0">
-              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.15em] truncate">
-                {clientName ? `${clientName} · ${projectName}` : projectName}
-              </p>
-              <h3 className="text-lg font-black uppercase tracking-tight leading-tight group-hover:text-primary transition-colors">
-                {task.title}
-              </h3>
+        <CardContent className="p-4 sm:p-5 space-y-3">
+          {/* Cabeçalho: projeto + título */}
+          <div className="space-y-0.5">
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.15em] truncate">
+              {clientName ? `${clientName} · ${projectName}` : projectName}
+            </p>
+            <h3 className="text-base sm:text-lg font-black uppercase tracking-tight leading-tight group-hover:text-primary transition-colors">
+              {task.title}
+            </h3>
+          </div>
+
+          {/* Descrição completa */}
+          {task.description && (
+            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap border-l-2 border-border pl-3">
+              {task.description}
+            </p>
+          )}
+
+          {/* Metadados: prioridade, horas, prazo, anexos */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={cn('text-[11px] font-bold px-2 py-0.5 rounded-full text-white', pc.className)}>
+              {pc.label}
+            </span>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="w-3 h-3" />
+              <span>{task.actual_hours ?? 0}h / {task.estimated_hours ?? 0}h</span>
             </div>
+            {task.deadline && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <CalendarClock className="w-3 h-3" />
+                <span>{format(new Date(task.deadline), 'dd MMM', { locale: ptBR })}</span>
+              </div>
+            )}
             <TaskAttachments taskId={task.id} />
           </div>
 
-          {task.description && (
-            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{task.description}</p>
-          )}
-
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className={cn('text-xs font-bold px-2.5 py-1 rounded-full text-white', pc.className)}>
-              {pc.label}
-            </span>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
-              <Clock className="w-3.5 h-3.5" />{task.actual_hours ?? 0}h / {task.estimated_hours ?? 0}h
-            </div>
-            {task.deadline && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
-                <CalendarClock className="w-3.5 h-3.5" />
-                {format(new Date(task.deadline), 'dd MMM', { locale: ptBR })}
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border">
+          {/* Ações */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
             {hasBriefing && can('briefings') && (
               <Button variant="outline" size="sm"
-                className="gap-1.5 text-[11px] font-bold uppercase tracking-wider h-9"
+                className="gap-1.5 text-[11px] font-bold uppercase tracking-wider h-8"
                 onClick={() => handleOpenBriefing(task.id)}>
                 <FileText className="w-3.5 h-3.5" /> Briefing
               </Button>
             )}
             <Button variant="outline" size="sm"
-              className={cn('gap-1.5 text-[11px] font-bold uppercase tracking-wider h-9 transition-all',
+              className={cn('gap-1.5 text-[11px] font-bold uppercase tracking-wider h-8 transition-all',
                 task.status === 'in_progress' ? 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600' : '')}
               onClick={() => handleStatusUpdate('task', task.id, 'in_progress')}
               disabled={updating === task.id || task.status === 'in_progress'}>
@@ -272,7 +277,7 @@ export default function CollaboratorPortal() {
               {task.status === 'in_progress' ? 'Em Andamento' : 'Iniciar'}
             </Button>
             <Button variant="outline" size="sm"
-              className="gap-1.5 text-[11px] font-bold uppercase tracking-wider h-9 hover:bg-green-600 hover:text-white hover:border-green-600 transition-all"
+              className="gap-1.5 text-[11px] font-bold uppercase tracking-wider h-8 hover:bg-green-600 hover:text-white hover:border-green-600 transition-all"
               onClick={() => handleStatusUpdate('task', task.id, 'done')}
               disabled={updating === task.id}>
               <CheckCircle className="w-3.5 h-3.5" /> Concluir
