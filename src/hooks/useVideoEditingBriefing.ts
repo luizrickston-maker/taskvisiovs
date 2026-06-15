@@ -32,10 +32,6 @@ export const useCreateVideoEditingBriefing = () => {
 
   return useMutation({
     mutationFn: async (briefing: Partial<VideoEditingBriefing>) => {
-      if (!briefing.client_id) {
-        throw new Error('Este projeto não possui cliente vinculado. Associe um cliente ao projeto antes de criar o briefing.');
-      }
-
       const payload = {
         ...briefing,
         created_by_user_id: briefing.created_by_user_id ?? user?.id,

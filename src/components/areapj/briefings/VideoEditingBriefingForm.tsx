@@ -16,34 +16,34 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { 
-  Video, 
-  User, 
-  Calendar as CalendarIcon, 
-  Target, 
-  Clock, 
-  Film, 
-  Save, 
+import {
+  Video,
+  Calendar as CalendarIcon,
+  Target,
+  Clock,
+  Film,
+  Save,
   Loader2,
   Palette,
   Type,
   Music,
   AlertCircle,
   Send,
-  FolderOpen,
-  Check
+  FolderOpen
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useClientVideoSettings } from "@/hooks/useClientVideoSettings";
-import { 
-  VideoEditingBriefing, 
-  useVideoEditingBriefing, 
-  useCreateVideoEditingBriefing, 
+import {
+  VideoEditingBriefing,
+  useVideoEditingBriefing,
+  useCreateVideoEditingBriefing,
   useUpdateVideoEditingBriefing,
   useGenerateVideoBriefingMagicLink
 } from "@/hooks/useVideoEditingBriefing";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VideoEditingBriefingFormProps {
   briefingId?: string;
@@ -63,8 +63,22 @@ export function VideoEditingBriefingForm({
   onCancel
 }: VideoEditingBriefingFormProps) {
   const { data: existingBriefing, isLoading: isLoadingBriefing } = useVideoEditingBriefing(briefingId || "");
-  const { data: clientSettings } = useClientVideoSettings(clientId || existingBriefing?.client_id || "");
-  
+
+  const [clients, setClients] = useState<{ id: string; name: string; company_name: string | null }[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<string>(clientId || "");
+
+  useEffect(() => {
+    if (clientId || briefingId) return;
+    supabase
+      .from("clients")
+      .select("id, name, company_name")
+      .order("name", { ascending: true })
+      .then(({ data }) => { if (data) setClients(data); });
+  }, [clientId, briefingId]);
+
+  const effectiveClientId = clientId || selectedClientId || existingBriefing?.client_id || "";
+  const { data: clientSettings } = useClientVideoSettings(effectiveClientId);
+
   const createMutation = useCreateVideoEditingBriefing();
   const updateMutation = useUpdateVideoEditingBriefing();
   const magicLinkMutation = useGenerateVideoBriefingMagicLink();
@@ -116,7 +130,7 @@ export function VideoEditingBriefingForm({
       } else {
         const newBriefing = await createMutation.mutateAsync({
           ...data,
-          client_id: clientId,
+          client_id: effectiveClientId || undefined,
           project_task_id: taskId,
           workspace_id: workspaceId,
           status,
@@ -146,6 +160,32 @@ export function VideoEditingBriefingForm({
 
   return (
     <div className="space-y-6">
+      {/* Client selector — shown only when creating a new briefing without a pre-set client */}
+      {!clientId && !briefingId && (
+        <Card className="border-primary/10 shadow-sm overflow-hidden">
+          <div className="h-1.5 gradient-primary" />
+          <CardContent className="pt-4 pb-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-1.5">
+                Cliente <span className="text-muted-foreground font-normal">(opcional)</span>
+              </Label>
+              <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar cliente..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.company_name ? `${c.name} — ${c.company_name}` : c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header Info */}
       <Card className="border-primary/10 shadow-sm overflow-hidden">
         <div className="h-1.5 gradient-primary" />
