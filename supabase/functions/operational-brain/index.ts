@@ -196,20 +196,55 @@ serve(async (req) => {
     // Build messages with context
     const systemWithContext = `${SYSTEM_PROMPT}\n\n${contextSummary}`;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    // Fetch user's first active API key
+    const { data: activeKeyData } = await supabase
+      .from("ai_api_keys")
+      .select("provider, api_key")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!activeKeyData?.api_key) {
+      return new Response(
+        JSON.stringify({ error: "Configure uma chave de API em /pj/agentes-ia para usar o Cérebro Operacional." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    console.log("[operational-brain] Calling AI Gateway with streaming");
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiKey = activeKeyData.api_key.trim();
+    const aiProvider = (activeKeyData.provider || "openrouter").toLowerCase();
+    const aiHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    let aiEndpoint: string;
+    let aiModel: string;
+
+    if (aiProvider === "openai") {
+      aiEndpoint = "https://api.openai.com/v1/chat/completions";
+      aiModel = "gpt-4o-mini";
+      aiHeaders["Authorization"] = `Bearer ${aiKey}`;
+    } else if (aiProvider === "anthropic") {
+      aiEndpoint = "https://api.anthropic.com/v1/messages";
+      aiModel = "claude-3-haiku-20240307";
+      aiHeaders["anthropic-version"] = "2023-06-01";
+      aiHeaders["x-api-key"] = aiKey;
+    } else if (aiProvider === "google" || aiProvider === "gemini") {
+      aiEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+      aiModel = "gemini-1.5-flash";
+      aiHeaders["Authorization"] = `Bearer ${aiKey}`;
+    } else {
+      aiEndpoint = "https://openrouter.ai/api/v1/chat/completions";
+      aiModel = "google/gemini-flash-1.5";
+      aiHeaders["Authorization"] = `Bearer ${aiKey}`;
+      aiHeaders["HTTP-Referer"] = Deno.env.get("SITE_URL") ?? "https://taskvisiovs.vercel.app";
+      aiHeaders["X-Title"] = "TaskVision PRO";
+    }
+
+    console.log(`[operational-brain] Calling ${aiProvider} API at ${aiEndpoint}`);
+    const response = await fetch(aiEndpoint, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: aiHeaders,
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: aiModel,
         messages: [
           { role: "system", content: systemWithContext },
           ...messages,

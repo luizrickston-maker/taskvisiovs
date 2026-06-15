@@ -639,7 +639,7 @@ Quando listar itens, use o contexto operacional abaixo. Se não houver dados, di
         default:
           apiEndpoint = "https://openrouter.ai/api/v1/chat/completions";
           extraHeaders = {
-            "HTTP-Referer": "https://taskvisionpro.lovable.app",
+            "HTTP-Referer": Deno.env.get("SITE_URL") ?? "https://taskvisiovs.vercel.app",
             "X-Title": "TaskVision PRO",
           };
           // OpenRouter accepts the full "provider/model" format
@@ -648,33 +648,40 @@ Quando listar itens, use o contexto operacional abaixo. Se não houver dados, di
       
       console.log(`[ai-360-agent] Using ${rawProvider} API at ${apiEndpoint}, model: ${modelName}`);
     } else {
-      // Use Lovable AI Gateway (default)
-      apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
-      apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
-      
-      // Mapping for models supported by the current Lovable AI Gateway configuration (2026 Environment)
-      const m = modelName.toLowerCase();
-      if (m.includes("gemini-1.5-flash") || m.includes("gemini-3-flash") || m.includes("gemini-flash")) {
-        modelName = "google/gemini-3-flash-preview";
-      } else if (m.includes("gemini-1.5-pro") || m.includes("gemini-3.1-pro") || m.includes("gemini-pro")) {
-        modelName = "google/gemini-3.1-pro-preview";
-      } else if (m.includes("gpt-4o-mini") || m.includes("gpt-5-mini") || m.includes("gpt-3.5")) {
-        modelName = "openai/gpt-5-mini";
-      } else if (m.includes("gpt-4") || m.includes("gpt-o1") || m.includes("gpt-o3") || m.includes("gpt-5")) {
-        modelName = "openai/gpt-5";
-      } else {
-        // Fallback to a guaranteed supported model if it's unknown
-        console.warn(`[ai-360-agent] Unknown model "${modelName}" for Lovable Gateway. Falling back to google/gemini-3-flash-preview.`);
-        modelName = "google/gemini-3-flash-preview";
-      }
+      // No agent key configured — try first active key for this user
+      const { data: fallbackKeyData } = await supabase
+        .from("ai_api_keys")
+        .select("provider, api_key")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (!apiKey) {
-        console.error("[ai-360-agent] No LOVABLE_API_KEY configured");
+      if (!fallbackKeyData?.api_key) {
         return new Response(
-          JSON.stringify({ error: "Configuração de IA não encontrada" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Configure uma chave de API em /pj/agentes-ia para usar o assistente IA." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      apiKey = fallbackKeyData.api_key.trim();
+      const prov = (fallbackKeyData.provider || "openrouter").toLowerCase();
+      if (prov === "openai") {
+        apiEndpoint = "https://api.openai.com/v1/chat/completions";
+        if (!/^(gpt-|o1|o3)/i.test(modelName)) modelName = "gpt-4o-mini";
+      } else if (prov === "anthropic") {
+        apiEndpoint = "https://api.anthropic.com/v1/messages";
+        extraHeaders = { "anthropic-version": "2023-06-01", "x-api-key": apiKey };
+        apiKey = "";
+        if (!/^claude/i.test(modelName)) modelName = "claude-3-5-haiku-latest";
+      } else if (prov === "google" || prov === "gemini") {
+        apiEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+        if (!/^gemini/i.test(modelName)) modelName = "gemini-1.5-flash";
+      } else {
+        apiEndpoint = "https://openrouter.ai/api/v1/chat/completions";
+        extraHeaders = { "HTTP-Referer": Deno.env.get("SITE_URL") ?? "https://taskvisiovs.vercel.app", "X-Title": "TaskVision PRO" };
+      }
+      console.log(`[ai-360-agent] Using fallback key (${prov}) at ${apiEndpoint}`);
     }
 
     // 8. Call AI API with streaming

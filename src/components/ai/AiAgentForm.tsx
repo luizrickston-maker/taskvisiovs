@@ -539,7 +539,7 @@ export function AiAgentForm({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="system">
-                  🔑 Usar chave do sistema (Lovable AI)
+                  ⚠️ Sem chave configurada (IA desativada)
                 </SelectItem>
                 {activeApiKeys.map((key) => (
                   <SelectItem key={key.id} value={key.id}>

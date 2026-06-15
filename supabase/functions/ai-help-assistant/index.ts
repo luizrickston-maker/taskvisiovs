@@ -109,8 +109,8 @@ async function fetchAgentConfig(
   let modelName = "google/gemini-3-flash-preview";
   let temperature = 0.7;
   let maxTokens = 4096;
-  let apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
-  let apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
+  let apiKey = "";
+  let apiEndpoint = "";
   let extraHeaders: Record<string, string> = {};
 
   if (!agentError && agentData) {
@@ -154,7 +154,7 @@ async function fetchAgentConfig(
             case "openrouter":
             default:
               apiEndpoint = "https://openrouter.ai/api/v1/chat/completions";
-              extraHeaders = { "HTTP-Referer": "https://taskvisionpro.lovable.app", "X-Title": "TaskVision PRO" };
+              extraHeaders = { "HTTP-Referer": Deno.env.get("SITE_URL") ?? "https://taskvisiovs.vercel.app", "X-Title": "TaskVision PRO" };
               break;
           }
         }
@@ -163,7 +163,41 @@ async function fetchAgentConfig(
   }
 
   if (!apiKey) {
-    throw new Error("Configuração de IA não encontrada");
+    const { data: fallbackKey } = await supabase
+      .from("ai_api_keys")
+      .select("provider, api_key")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (fallbackKey?.api_key?.trim()) {
+      apiKey = fallbackKey.api_key.trim();
+      switch ((fallbackKey.provider || "openrouter").toLowerCase()) {
+        case "openai":
+          apiEndpoint = "https://api.openai.com/v1/chat/completions";
+          if (!modelName.startsWith("gpt-") && !modelName.startsWith("o1") && !modelName.startsWith("o3")) modelName = "gpt-4o-mini";
+          break;
+        case "gemini":
+        case "google":
+          apiEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+          if (modelName.startsWith("google/")) modelName = modelName.replace("google/", "");
+          break;
+        case "anthropic":
+          apiEndpoint = "https://api.anthropic.com/v1/messages";
+          extraHeaders = { "anthropic-version": "2023-06-01", "x-api-key": apiKey };
+          break;
+        case "openrouter":
+        default:
+          apiEndpoint = "https://openrouter.ai/api/v1/chat/completions";
+          extraHeaders = { "HTTP-Referer": Deno.env.get("SITE_URL") ?? "https://taskvisiovs.vercel.app", "X-Title": "TaskVision PRO" };
+          break;
+      }
+    }
+  }
+
+  if (!apiKey || !apiEndpoint) {
+    throw new Error("Configure uma chave de API em Configurações → Agentes IA para usar o assistente.");
   }
 
   return { modelName, temperature, maxTokens, apiKey, apiEndpoint, extraHeaders };

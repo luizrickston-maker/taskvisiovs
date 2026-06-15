@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Copy, Check, KeyRound, Mail, Globe, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
-const PORTAL_URL = 'https://taskvisionpro.lovable.app/auth';
+const PORTAL_URL = 'https://taskvisiovs.vercel.app/auth';
 
 interface CredentialsModalProps {
   open: boolean;

@@ -101,7 +101,7 @@ serve(async (req) => {
 
     // Use a published URL if available, otherwise fallback to preview or a generic placeholder
     // In production, the user provided app.taskvision.pro
-    const baseUrl = 'https://taskvisionpro.lovable.app' 
+    const baseUrl = Deno.env.get("SITE_URL") ?? 'https://taskvisiovs.vercel.app'
     const magicLink = `${baseUrl}/video-briefing/fill?token=${token}`
 
     return new Response(

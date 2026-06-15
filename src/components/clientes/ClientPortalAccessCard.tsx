@@ -20,7 +20,7 @@ import {
 import { Globe, UserPlus, UserMinus, RefreshCw, Loader2, ShieldCheck, ShieldOff, UserCheck, Copy, Check, ExternalLink, KeyRound } from 'lucide-react';
 import { CredentialsModal } from './CredentialsModal';
 
-const PORTAL_URL = 'https://taskvisionpro.lovable.app/auth';
+const PORTAL_URL = 'https://taskvisiovs.vercel.app/auth';
 
 interface ClientUser {
   id: string;

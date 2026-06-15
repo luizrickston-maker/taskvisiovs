@@ -9,7 +9,7 @@
 #   .\scripts\deploy-to-new-project.ps1 -LovableApiKey "sua-chave-aqui" -ResendApiKey "sua-chave-aqui"
 #
 # Parâmetros opcionais:
-#   -SiteUrl    URL do site (default: https://taskvisionpro.lovable.app)
+#   -SiteUrl    URL do site (default: https://taskvisiovs.vercel.app)
 #   -AllowedOrigin  Origem permitida para CORS (default: *)
 
 param(
@@ -19,7 +19,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$ResendApiKey,
 
-    [string]$SiteUrl = "https://taskvisionpro.lovable.app",
+    [string]$SiteUrl = "https://taskvisiovs.vercel.app",
     [string]$AllowedOrigin = "*"
 )
 

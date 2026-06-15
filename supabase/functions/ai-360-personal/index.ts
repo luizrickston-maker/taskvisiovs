@@ -507,7 +507,7 @@ serve(async (req) => {
         default:
           apiEndpoint = "https://openrouter.ai/api/v1/chat/completions";
           extraHeaders = {
-            "HTTP-Referer": "https://taskvisionpro.lovable.app",
+            "HTTP-Referer": Deno.env.get("SITE_URL") ?? "https://taskvisiovs.vercel.app",
             "X-Title": "TaskVision PRO",
           };
           break;
@@ -515,16 +515,40 @@ serve(async (req) => {
       
       console.log(`[ai-360-personal] Using ${customKeyInfo.provider} API at ${apiEndpoint}, model: ${modelName}`);
     } else {
-      apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
-      apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
-      
-      if (!apiKey) {
-        console.error("[ai-360-personal] No LOVABLE_API_KEY configured");
+      // No agent key configured — try first active key for this user
+      const { data: fallbackKeyData } = await supabase
+        .from("ai_api_keys")
+        .select("provider, api_key")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!fallbackKeyData?.api_key) {
         return new Response(
-          JSON.stringify({ error: "Configuração de IA não encontrada" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Configure uma chave de API em /pj/agentes-ia para usar o assistente IA." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      apiKey = fallbackKeyData.api_key.trim();
+      const prov = (fallbackKeyData.provider || "openrouter").toLowerCase();
+      if (prov === "openai") {
+        apiEndpoint = "https://api.openai.com/v1/chat/completions";
+        if (!/^(gpt-|o1|o3)/i.test(modelName)) modelName = "gpt-4o-mini";
+      } else if (prov === "anthropic") {
+        apiEndpoint = "https://api.anthropic.com/v1/messages";
+        extraHeaders = { "anthropic-version": "2023-06-01", "x-api-key": apiKey };
+        apiKey = "";
+        if (!/^claude/i.test(modelName)) modelName = "claude-3-5-haiku-latest";
+      } else if (prov === "google" || prov === "gemini") {
+        apiEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+        if (!/^gemini/i.test(modelName)) modelName = "gemini-1.5-flash";
+      } else {
+        apiEndpoint = "https://openrouter.ai/api/v1/chat/completions";
+        extraHeaders = { "HTTP-Referer": Deno.env.get("SITE_URL") ?? "https://taskvisiovs.vercel.app", "X-Title": "TaskVision PRO" };
+      }
+      console.log(`[ai-360-personal] Using fallback key (${prov}) at ${apiEndpoint}`);
     }
 
     // 8. Call AI API with streaming

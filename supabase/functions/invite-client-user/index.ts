@@ -30,7 +30,7 @@ async function sendCredentialsEmail(
     return;
   }
 
-  const portalUrl = 'https://taskvisionpro.lovable.app/auth';
+  const portalUrl = (Deno.env.get("SITE_URL") ?? 'https://taskvisiovs.vercel.app') + '/auth';
 
   const htmlBody = `
 <!DOCTYPE html>
