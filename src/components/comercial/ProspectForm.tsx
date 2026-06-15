@@ -185,21 +185,29 @@ export function ProspectForm({ open, onOpenChange, editingProspect }: ProspectFo
           .eq('id', editingProspect.id);
 
         if (error) throw error;
-        
+
         updateProspect(editingProspect.id, prospectData);
         toast.success('Prospecção atualizada!');
       } else {
+        const { data: workspaceId, error: wsError } = await supabase.rpc('get_my_workspace_id');
+        if (wsError || !workspaceId) {
+          toast.error('Não foi possível identificar seu workspace. Recarregue a página.');
+          setIsSubmitting(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from('prospects')
           .insert({
             user_id: user.id,
+            workspace_id: workspaceId,
             ...prospectData,
           })
           .select()
           .single();
 
         if (error) throw error;
-        
+
         addProspect(data as Prospect);
         toast.success('Prospecção adicionada!');
       }
