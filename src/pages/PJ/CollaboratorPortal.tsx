@@ -235,7 +235,7 @@ export default function CollaboratorPortal() {
           </div>
 
           {task.description && (
-            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{task.description}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{task.description}</p>
           )}
 
           <div className="flex items-center gap-3 flex-wrap">
