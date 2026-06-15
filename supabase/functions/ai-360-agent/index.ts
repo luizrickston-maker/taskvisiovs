@@ -262,7 +262,7 @@ function formatSalesPipelineSection(pipeline: SalesPipelineSummary | null, goals
 function formatScheduleSection(schedule: ScheduleSummary | null): string {
   if (!schedule) return "";
 
-  const todayItems = (schedule.items || []).filter((s: AppointmentItem) => s.day_status === "today");
+  const items = schedule.items || [];
 
   let section = `### 📅 AGENDA
 | Período | Compromissos |
@@ -271,9 +271,14 @@ function formatScheduleSection(schedule: ScheduleSummary | null): string {
 | Amanhã | ${schedule.tomorrow || 0} |
 | Esta Semana | ${schedule.this_week || 0} |`;
 
-  if (todayItems.length > 0) {
-    section += `\n\n**Hoje:**\n${todayItems
-      .map((b: AppointmentItem) => `- ${b.start_time}-${b.end_time}: ${b.title} ${b.completed ? "✅" : ""}`)
+  if (items.length > 0) {
+    const dayLabel: Record<string, string> = { today: "Hoje", tomorrow: "Amanhã", this_week: "Esta semana" };
+    section += `\n\n**Próximos compromissos (use estes dados para listar):**\n${items
+      .map((b: AppointmentItem) => {
+        const quando = dayLabel[b.day_status] || b.date;
+        const tipo = b.type_name || b.type;
+        return `- ${b.date} (${quando}) ${b.start_time}–${b.end_time}: "${b.title}"${tipo ? ` [${tipo}]` : ""}${b.completed ? " ✅" : ""}`;
+      })
       .join("\n")}`;
   }
 
