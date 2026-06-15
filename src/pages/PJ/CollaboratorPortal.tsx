@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   CheckCircle2, Clock, Layout, ListTodo, PlayCircle,
   Loader2, Hourglass, CheckCircle, Sun, Moon, FileText,
-  Wifi, WifiOff, CalendarClock,
+  Wifi, WifiOff, CalendarClock, ChevronDown, ChevronUp,
+  AlertTriangle, Circle,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -46,6 +47,7 @@ export default function CollaboratorPortal() {
   const { can } = useCollaboratorPermissions();
 
   const [updating, setUpdating] = useState<string | null>(null);
+  const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [selectedBriefing, setSelectedBriefing] = useState<VideoEditingBriefing | null>(null);
   const [isBriefingModalOpen, setIsBriefingModalOpen] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
@@ -467,13 +469,22 @@ export default function CollaboratorPortal() {
             </p>
           ) : (
             assignedProjects.map(project => {
-              const progress = getProjectProgress(project.id);
+              const today = new Date().toISOString().split('T')[0];
+              const projTasks = projectTasks.filter(t => t.project_id === project.id);
+              const tasksDone = projTasks.filter(t => taskIsDone(t.status));
+              const tasksActive = projTasks.filter(t => !taskIsDone(t.status));
+              const tasksOverdue = tasksActive.filter(t => t.deadline && t.deadline < today);
+              const progress = projTasks.length > 0
+                ? Math.round((tasksDone.length / projTasks.length) * 100)
+                : null;
               const projDone = project.status === 'done';
+              const isExpanded = expandedProject === project.id;
+
               return (
-                <Card key={project.id} className={cn('border-border shadow-sm transition-all', projDone && 'opacity-60 grayscale-[0.3]')}>
-                  <CardHeader className="p-5 pb-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <CardTitle className="text-base font-bold leading-tight">{project.project}</CardTitle>
+                <Card key={project.id} className={cn('border-border shadow-sm transition-all flex flex-col', projDone && 'opacity-70')}>
+                  <CardHeader className="p-4 pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-sm font-bold leading-tight">{project.project}</CardTitle>
                       <Badge className={cn(
                         'text-[10px] uppercase font-bold px-2 py-0.5 rounded-md shrink-0',
                         projDone
@@ -486,39 +497,133 @@ export default function CollaboratorPortal() {
                       </Badge>
                     </div>
                     {project.client_name && (
-                      <CardDescription className="text-xs font-medium mt-1">Cliente: {project.client_name}</CardDescription>
+                      <CardDescription className="text-xs mt-0.5">Cliente: {project.client_name}</CardDescription>
                     )}
                   </CardHeader>
-                  <CardContent className="p-5 pt-0 space-y-4">
+
+                  <CardContent className="p-4 pt-0 space-y-3 flex-1 flex flex-col">
+                    {/* Barra de progresso */}
                     {progress !== null && (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
-                          <span>Progresso das tarefas</span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[11px] font-semibold text-muted-foreground">
+                          <span>Progresso</span>
                           <span className="text-primary">{progress}%</span>
                         </div>
                         <Progress value={progress} className="h-1.5" />
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-3">
+
+                    {/* Indicadores de tarefas (#5) */}
+                    {projTasks.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {tasksActive.length > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                            <Circle className="w-2.5 h-2.5" />
+                            {tasksActive.length} ativa{tasksActive.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {tasksOverdue.length > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 border border-red-500/20">
+                            <AlertTriangle className="w-2.5 h-2.5" />
+                            {tasksOverdue.length} atrasada{tasksOverdue.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {tasksDone.length > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            {tasksDone.length} concluída{tasksDone.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {projTasks.length === 0 && (
+                          <span className="text-[11px] text-muted-foreground">Sem tarefas</span>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex-1" />
+
+                    {/* Ações do projeto */}
+                    <div className="flex gap-2 pt-1">
                       <Button variant="outline" size="sm"
-                        className={cn('gap-2 font-bold text-[10px] uppercase h-9',
+                        className={cn('flex-1 gap-1.5 font-bold text-[10px] uppercase h-8',
                           project.status === 'in_progress' && 'bg-amber-500/10 border-amber-500/50 text-amber-600')}
                         onClick={() => handleStatusUpdate('project', project.id, project.status === 'in_progress' ? 'todo' : 'in_progress')}
                         disabled={updating === project.id || projDone}>
-                        <PlayCircle className={cn('w-4 h-4', project.status === 'in_progress' && 'animate-pulse')} />
+                        <PlayCircle className={cn('w-3.5 h-3.5', project.status === 'in_progress' && 'animate-pulse')} />
                         {project.status === 'in_progress' ? 'Andamento' : 'Iniciar'}
                       </Button>
                       <Button variant="outline" size="sm"
-                        className={cn('gap-2 font-bold text-[10px] uppercase h-9',
-                          projDone
-                            ? 'bg-green-600/10 border-green-500/50 text-green-600'
-                            : 'hover:bg-green-600 hover:text-white transition-colors')}
+                        className={cn('flex-1 gap-1.5 font-bold text-[10px] uppercase h-8',
+                          projDone ? 'bg-green-600/10 border-green-500/50 text-green-600' : 'hover:bg-green-600 hover:text-white transition-colors')}
                         onClick={() => handleStatusUpdate('project', project.id, projDone ? 'todo' : 'done')}
                         disabled={updating === project.id}>
-                        <CheckCircle2 className="w-4 h-4" />
+                        <CheckCircle2 className="w-3.5 h-3.5" />
                         {projDone ? 'Reabrir' : 'Concluir'}
                       </Button>
                     </div>
+
+                    {/* Botão expandir tarefas (#4) */}
+                    {projTasks.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full h-8 gap-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-border hover:bg-muted/40"
+                        onClick={() => setExpandedProject(isExpanded ? null : project.id)}
+                      >
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        {isExpanded ? 'Fechar tarefas' : `Ver tarefas (${projTasks.length})`}
+                      </Button>
+                    )}
+
+                    {/* Lista expandida de tarefas (#4) */}
+                    {isExpanded && (
+                      <div className="space-y-2 pt-1 border-t border-border">
+                        {projTasks.length === 0 ? (
+                          <p className="text-xs text-muted-foreground text-center py-3">Nenhuma tarefa neste projeto.</p>
+                        ) : (
+                          projTasks.map(t => {
+                            const isDone = taskIsDone(t.status);
+                            const isOverdue = !isDone && t.deadline && t.deadline < today;
+                            return (
+                              <div key={t.id} className={cn(
+                                'flex items-start gap-2.5 p-2.5 rounded-lg border text-sm transition-colors',
+                                isDone ? 'bg-green-500/5 border-green-500/20' :
+                                isOverdue ? 'bg-red-500/5 border-red-500/20' :
+                                'bg-muted/30 border-border',
+                              )}>
+                                <div className="mt-0.5 shrink-0">
+                                  {isDone
+                                    ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                    : isOverdue
+                                    ? <AlertTriangle className="w-4 h-4 text-red-500" />
+                                    : t.status === 'in_progress'
+                                    ? <Hourglass className="w-4 h-4 text-amber-500" />
+                                    : <Circle className="w-4 h-4 text-muted-foreground" />}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className={cn('font-medium leading-tight', isDone && 'line-through text-muted-foreground')}>{t.title}</p>
+                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                    {t.deadline && (
+                                      <span className={cn('text-[11px] flex items-center gap-1', isOverdue ? 'text-red-500 font-semibold' : 'text-muted-foreground')}>
+                                        <CalendarClock className="w-3 h-3" />
+                                        {format(new Date(t.deadline + 'T12:00:00'), 'dd MMM', { locale: ptBR })}
+                                        {isOverdue && ' · Atrasada'}
+                                      </span>
+                                    )}
+                                    {(t.estimated_hours ?? 0) > 0 && (
+                                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {t.actual_hours ?? 0}h/{t.estimated_hours}h
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
