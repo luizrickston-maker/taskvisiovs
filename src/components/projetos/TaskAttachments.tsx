@@ -187,7 +187,11 @@ export function TaskAttachments({ taskId, onUpdate }: TaskAttachmentsProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted/60"
+        className={
+          attachments.length > 0
+            ? 'inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors bg-primary/10 text-primary border-primary/30 hover:bg-primary/20'
+            : 'inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors bg-muted text-muted-foreground border-border hover:bg-muted/80 hover:text-foreground'
+        }
       >
         <Paperclip className="w-3.5 h-3.5 shrink-0" />
         <span>Anexos{attachments.length > 0 ? ` (${attachments.length})` : ''}</span>
