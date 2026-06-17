@@ -41,7 +41,7 @@ import { useAiActionDispatcher } from '@/hooks/useAiActionDispatcher';
 import { stripActionTokens } from '@/lib/ai-action-dispatcher';
 
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface AI360ChatInterfaceProps {
   agentId?: string;
@@ -125,6 +125,7 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
   const { deleteProject } = useAppStore();
   const { deleteProspect } = useAppStore();
   const removeEditorialItem = useRemoveEditorialCalendarItem();
+  const queryClient = useQueryClient();
 
   const {
     processAiResponse,
@@ -370,6 +371,16 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
           const { error: agendaError } = await supabase.from('time_blocks').delete().eq('id', id);
           if (agendaError) throw agendaError;
           useAppStore.getState().deleteTimeBlock(id);
+          success = true;
+          break;
+
+        case 'caixa_transacao':
+        case 'transacao':
+        case 'caixa':
+        case 'pj_caixa_transacoes':
+          const { error: caixaError } = await supabase.from('pj_caixa_transacoes' as never).delete().eq('id', id);
+          if (caixaError) throw caixaError;
+          queryClient.invalidateQueries({ queryKey: ['caixa-pj-transacoes'] });
           success = true;
           break;
 

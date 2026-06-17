@@ -18,6 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { AIAgent, AIMessage, AIConversation } from '@/types/ai';
 import { useAIConversations, useAIMessages, useCreateConversation, useAddMessage, useDeleteConversation } from '@/hooks/useAiHistory';
 import { useAppStore } from '@/stores/useAppStore';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAiActionDispatcher } from '@/hooks/useAiActionDispatcher';
 import { stripActionTokens } from '@/lib/ai-action-dispatcher';
@@ -76,6 +77,7 @@ export function OperationalBrainChat() {
     deleteSaving,
     deleteDebt
   } = useAppStore();
+  const queryClient = useQueryClient();
 
   const {
     processAiResponse,
@@ -356,6 +358,16 @@ export function OperationalBrainChat() {
           const { error: agendaError } = await supabase.from('time_blocks').delete().eq('id', id);
           if (agendaError) throw agendaError;
           deleteTimeBlock(id);
+          success = true;
+          break;
+
+        case 'caixa_transacao':
+        case 'transacao':
+        case 'caixa':
+        case 'pj_caixa_transacoes':
+          const { error: caixaError } = await supabase.from('pj_caixa_transacoes' as never).delete().eq('id', id);
+          if (caixaError) throw caixaError;
+          queryClient.invalidateQueries({ queryKey: ['caixa-pj-transacoes'] });
           success = true;
           break;
 

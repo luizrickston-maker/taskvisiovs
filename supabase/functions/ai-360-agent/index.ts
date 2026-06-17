@@ -28,18 +28,24 @@ const corsHeaders = {
 };
 
 // Default system prompt fallback
-const DEFAULT_SYSTEM_PROMPT = `Você é o "Seu Zé", o Cérebro Operacional do sistema, um assistente de IA sênior com visão 360° de todas as operações, finanças e conteúdos.
+const DEFAULT_SYSTEM_PROMPT = `Você é o "Seu Zé", o Cérebro Operacional do módulo PJ (empresa) do sistema, um assistente de IA sênior com visão 360° das operações EMPRESARIAIS.
 
-## Suas Capacidades:
-- **Financeiro**: Você gerencia Custos Corporativos (Investimentos/Gastos), Reservas e Dívidas. Sempre use os UUIDs fornecidos no contexto para referenciar itens.
-- **Operacional**: Você monitora Projetos, Tarefas, Agenda e Equipe.
-- **Conteúdo**: Você tem acesso aos Briefings (Calendário Editorial). Se o usuário pedir para listar ou apagar briefings, use os dados da seção "CALENDÁRIO EDITORIAL".
-- **Ações**: Quando o usuário quiser apagar algo, você DEVE fornecer o comando formatado: [DELETE_SUGGESTION:table_name:uuid:item_name].
+## ESCOPO (apenas PJ / empresa):
+Você atua SOMENTE sobre dados da empresa. Você NÃO tem acesso ao módulo pessoal
+do usuário (reservas/poupança pessoal, dívidas pessoais, finanças pessoais).
+Se o usuário pedir algo pessoal, explique que isso é tratado pelo Assistente
+Pessoal, não por você.
+
+## Suas Capacidades (PJ):
+- **Financeiro PJ**: Caixa da empresa (entradas/saídas) e Investimentos/Custos Corporativos. Use sempre os UUIDs do contexto.
+- **Operacional**: Projetos, Tarefas, Agenda e Equipe.
+- **Comercial**: Prospects e metas de vendas.
+- **Conteúdo**: Briefings e Calendário Editorial.
 
 ## Como Responder:
-- Seja proativo e estratégico.
-- Use emojis para clareza 📊.
-- Se algo estiver como "Contexto Indisponível", informe ao usuário, mas verifique se os dados estão presentes nas outras seções.
+- Seja direto, proativo e estratégico.
+- Use os UUIDs EXATAMENTE como aparecem no contexto. Nunca invente identificadores.
+- Se algo estiver como "Contexto Indisponível", informe ao usuário, mas verifique as outras seções antes.
 - Responda sempre em português brasileiro.`;
 
 interface RequestBody {
@@ -139,7 +145,7 @@ async function fetchOperationalContext(
 
 function formatAIContext(
   ctx: AI360Context | null,
-  priority: string[] = ["investments", "savings", "debts", "tasks", "projects", "sales_pipeline", "schedule", "editorial", "team"]
+  priority: string[] = ["caixa_pj", "investments", "tasks", "projects", "sales_pipeline", "schedule", "editorial", "team"]
 ): string {
   if (!ctx) {
     return "## ⚠️ Contexto Indisponível\nNão foi possível carregar os dados operacionais.";
@@ -153,8 +159,7 @@ function formatAIContext(
     editorial: () => formatEditorialSection(ctx.editorial),
     team: () => formatTeamSection(ctx.team),
     investments: () => formatInvestmentsSection(ctx.investments),
-    savings: () => formatSavingsSection(ctx.savings),
-    debts: () => formatDebtsSection(ctx.debts),
+    caixa_pj: () => formatCaixaPJSection((ctx as { caixa_pj?: unknown }).caixa_pj),
   };
 
 
@@ -334,18 +339,19 @@ function formatInvestmentsSection(investments: any | null): string {
   return section;
 }
 
-function formatSavingsSection(savings: any | null): string {
-  if (!savings || !savings.items || savings.items.length === 0) return "";
+function formatCaixaPJSection(caixa: any | null): string {
+  if (!caixa || !caixa.items || caixa.items.length === 0) return "";
 
-  let section = `### 🏦 RESERVAS E POUPANÇA
-| Item | Valor | UUID |
-|------|-------|------|`;
-  
-  savings.items.slice(0, 10).forEach((s: any) => {
-    section += `\n| ${s.name || 'Reserva'} | R$ ${s.amount.toLocaleString('pt-BR')} | ${s.id} |`;
+  let section = `### 💵 CAIXA PJ — MOVIMENTAÇÕES DA EMPRESA (use o UUID para apagar/atualizar)
+| Tipo | Descrição | Valor | Data | Forma | UUID |
+|------|-----------|-------|------|-------|------|`;
+
+  caixa.items.slice(0, 25).forEach((t: any) => {
+    const tipo = t.tipo === 'entrada' ? '📈 entrada' : '📉 saída';
+    section += `\n| ${tipo} | ${t.descricao || '-'} | R$ ${Number(t.valor).toLocaleString('pt-BR')} | ${t.data} | ${t.forma_pagamento || '-'} | ${t.id} |`;
   });
 
-  section += `\n\nTotal em reservas: **R$ ${savings.total_amount.toLocaleString('pt-BR')}**`;
+  section += `\n\nTotal entradas: **R$ ${Number(caixa.total_entradas || 0).toLocaleString('pt-BR')}** · Total saídas: **R$ ${Number(caixa.total_saidas || 0).toLocaleString('pt-BR')}**`;
   return section;
 }
 
@@ -477,6 +483,7 @@ serve(async (req) => {
     const temperature = agent?.temperature ?? 0.7;
     const maxTokens = agent?.max_tokens || 4096;
     const contextPriority = agent?.context_priority || [
+      "caixa_pj",
       "tasks",
       "projects",
       "sales_pipeline",
@@ -536,21 +543,24 @@ serve(async (req) => {
 **Tokens de ação são INVISÍVEIS ao usuário.** Insira-os SOMENTE na última linha da mensagem, sem mencionar seu nome nem formato no texto. O sistema os executa automaticamente.
 
 **Exemplo correto:**
-Usuário: "adiciona R$50 na reserva"
-Você: "✅ Feito! R$ 50,00 adicionado à sua reserva.
-[CREATE_SAVING: amount=50, name="Reserva via IA"]"
+Usuário: "lança uma entrada de R$50 no caixa"
+Você: "✅ Feito! Entrada de R$ 50,00 registrada no caixa.
+[CREATE_CAIXA_TRANSACAO: tipo="entrada", descricao="Entrada via IA", valor=50, forma="pix"]"
 
 **Exemplo ERRADO:**
-"Vou adicionar usando o token [CREATE_SAVING: amount=50]..." ← NUNCA faça isso.
+"Vou lançar usando o token [CREATE_CAIXA_TRANSACAO: ...]..." ← NUNCA faça isso.
+
+**Não fique repetindo perguntas.** Se o usuário já confirmou e o item está
+identificável no contexto (tem UUID), execute a ação. Só peça esclarecimento se
+o item realmente não estiver no contexto — e, nesse caso, diga claramente que
+não encontrou o registro, em vez de perguntar de novo.
 
 ---
 ## TOKENS DISPONÍVEIS (use no final da mensagem, 1 por ação):
 
-**RESERVAS (caixa pessoal — tabela savings):**
-- Adicionar: [CREATE_SAVING: amount=VALOR, name="DESCRIÇÃO", data="YYYY-MM-DD"]
-
-**CAIXA PJ (lançamento empresa):**
+**CAIXA PJ (lançamento da empresa):**
 - Entrada ou saída: [CREATE_CAIXA_TRANSACAO: tipo="entrada", descricao="DESCRIÇÃO", valor=VALOR, data="YYYY-MM-DD", forma="pix"]
+- Apagar transação: use DELETE_SUGGESTION com type=caixa_transacao (UUID da seção CAIXA PJ)
 
 **INVESTIMENTO CORPORATIVO:**
 - [CREATE_INVESTMENT: item_name="NOME", amount=VALOR, category="equipamentos", notes="OBS"]
@@ -581,8 +591,9 @@ Você: "✅ Feito! R$ 50,00 adicionado à sua reserva.
 
 **EXCLUSÃO (requer confirmação — inclui nome para o botão aparecer):**
 - [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]
-- Tipos válidos: investment, task, project, prospect, editorial_item, briefing, saving, debt, agenda_appointment
-- Para apagar/cancelar um compromisso da agenda use type=agenda_appointment com o UUID da seção AGENDA.
+- Tipos válidos (PJ): caixa_transacao, investment, task, project, prospect, editorial_item, briefing, agenda_appointment
+- Caixa PJ: para apagar uma entrada/saída use type=caixa_transacao com o UUID da seção CAIXA PJ.
+- Agenda: para apagar/cancelar um compromisso use type=agenda_appointment com o UUID da seção AGENDA.
 - UUID deve vir EXATAMENTE do contexto. Nunca invente.
 
 ---
