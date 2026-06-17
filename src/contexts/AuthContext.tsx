@@ -21,6 +21,32 @@ export type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// Margem (ms) antes da expiração para considerar o token "velho" e renová-lo
+// preventivamente, evitando liberar a UI com um JWT já vencido (que faria os
+// INSERT/UPDATE protegidos por RLS falharem com 401 / "JWT expired").
+const SESSION_REFRESH_MARGIN_MS = 60_000;
+
+/**
+ * Retorna uma sessão com token comprovadamente válido.
+ * Se a sessão persistida estiver expirada (ou prestes a expirar), força um
+ * refresh único antes de devolvê-la. Toda renovação passa pelo Web Lock interno
+ * do supabase-js, então é seguro mesmo com o auto-refresh nativo ativo.
+ */
+async function getValidSession(): Promise<Session | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return null;
+
+  const expiresAtMs = (session.expires_at ?? 0) * 1000;
+  const isStale = expiresAtMs > 0 && expiresAtMs - Date.now() < SESSION_REFRESH_MARGIN_MS;
+
+  if (isStale) {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (!error && data.session) return data.session;
+  }
+
+  return session;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -56,8 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
-        const { data: { session: recovered } } = await supabase.auth.getSession();
-        
+        const recovered = await getValidSession();
+
         if (recovered) {
           if (import.meta.env.DEV) console.warn("[Auth] Sessão recuperada com sucesso após SIGNED_OUT falso.");
           setSession(recovered);
@@ -98,8 +124,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initSession = async (retries = 3) => {
       if (isUnmounted) return;
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        
+        const currentSession = await getValidSession();
+
         if (!initialized && !isUnmounted) {
           if (currentSession) {
             if (import.meta.env.DEV) console.log("[Auth] Sessão inicial encontrada");
