@@ -65,13 +65,16 @@ export function OperationalBrainChat() {
   const addMessage = useAddMessage();
   const deleteConversation = useDeleteConversation();
   
-  const { 
-    deleteTask, 
-    deleteProject, 
-    deleteProspect, 
+  const {
+    deleteTask,
+    deleteProject,
+    deleteProspect,
     deleteCorporateInvestment,
     deleteEditorialCalendarItem,
-    deleteScript
+    deleteScript,
+    deleteTimeBlock,
+    deleteSaving,
+    deleteDebt
   } = useAppStore();
 
   const {
@@ -326,6 +329,33 @@ export function OperationalBrainChat() {
           const { error: scriptError } = await supabase.from('scripts').delete().eq('id', id);
           if (scriptError) throw scriptError;
           deleteScript(id);
+          success = true;
+          break;
+
+        case 'saving':
+        case 'reserva':
+          const { error: savingError } = await supabase.from('savings').delete().eq('id', id);
+          if (savingError) throw savingError;
+          deleteSaving(id);
+          success = true;
+          break;
+
+        case 'debt':
+        case 'divida':
+        case 'dívida':
+          const { error: debtError } = await supabase.from('debts').delete().eq('id', id);
+          if (debtError) throw debtError;
+          deleteDebt(id);
+          success = true;
+          break;
+
+        case 'agenda_appointment':
+        case 'agenda':
+        case 'compromisso':
+        case 'time_block':
+          const { error: agendaError } = await supabase.from('time_blocks').delete().eq('id', id);
+          if (agendaError) throw agendaError;
+          deleteTimeBlock(id);
           success = true;
           break;
 

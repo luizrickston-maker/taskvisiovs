@@ -273,11 +273,11 @@ function formatScheduleSection(schedule: ScheduleSummary | null): string {
 
   if (items.length > 0) {
     const dayLabel: Record<string, string> = { today: "Hoje", tomorrow: "Amanhã", this_week: "Esta semana" };
-    section += `\n\n**Próximos compromissos (use estes dados para listar):**\n${items
+    section += `\n\n**Próximos compromissos (use o UUID para apagar/atualizar):**\n${items
       .map((b: AppointmentItem) => {
         const quando = dayLabel[b.day_status] || b.date;
         const tipo = b.type_name || b.type;
-        return `- ${b.date} (${quando}) ${b.start_time}–${b.end_time}: "${b.title}"${tipo ? ` [${tipo}]` : ""}${b.completed ? " ✅" : ""}`;
+        return `- ${b.date} (${quando}) ${b.start_time}–${b.end_time}: "${b.title}"${tipo ? ` [${tipo}]` : ""}${b.completed ? " ✅" : ""} (UUID: ${b.id})`;
       })
       .join("\n")}`;
   }
@@ -581,7 +581,8 @@ Você: "✅ Feito! R$ 50,00 adicionado à sua reserva.
 
 **EXCLUSÃO (requer confirmação — inclui nome para o botão aparecer):**
 - [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]
-- Tipos válidos: investment, task, project, prospect, editorial_item, briefing, saving
+- Tipos válidos: investment, task, project, prospect, editorial_item, briefing, saving, debt, agenda_appointment
+- Para apagar/cancelar um compromisso da agenda use type=agenda_appointment com o UUID da seção AGENDA.
 - UUID deve vir EXATAMENTE do contexto. Nunca invente.
 
 ---

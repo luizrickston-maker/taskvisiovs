@@ -346,6 +346,33 @@ export function AI360ChatInterface({ agentId: propAgentId }: AI360ChatInterfaceP
           success = true;
           break;
 
+        case 'saving':
+        case 'reserva':
+          const { error: savingError } = await supabase.from('savings').delete().eq('id', id);
+          if (savingError) throw savingError;
+          useAppStore.getState().deleteSaving(id);
+          success = true;
+          break;
+
+        case 'debt':
+        case 'divida':
+        case 'dívida':
+          const { error: debtError } = await supabase.from('debts').delete().eq('id', id);
+          if (debtError) throw debtError;
+          useAppStore.getState().deleteDebt(id);
+          success = true;
+          break;
+
+        case 'agenda_appointment':
+        case 'agenda':
+        case 'compromisso':
+        case 'time_block':
+          const { error: agendaError } = await supabase.from('time_blocks').delete().eq('id', id);
+          if (agendaError) throw agendaError;
+          useAppStore.getState().deleteTimeBlock(id);
+          success = true;
+          break;
+
         default:
           toast.error(`Ação para o tipo "${type}" ainda não implementada.`);
           break;
