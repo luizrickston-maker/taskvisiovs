@@ -482,7 +482,7 @@ serve(async (req) => {
     let modelName = agent?.model_name || "google/gemini-1.5-flash";
     const temperature = agent?.temperature ?? 0.7;
     const maxTokens = agent?.max_tokens || 4096;
-    const contextPriority = agent?.context_priority || [
+    let contextPriority: string[] = agent?.context_priority || [
       "caixa_pj",
       "tasks",
       "projects",
@@ -492,6 +492,15 @@ serve(async (req) => {
       "team",
       "investments",
     ];
+
+    // Caixa PJ é essencial p/ operações financeiras da empresa (listar/apagar).
+    // Muitos agentes foram criados ANTES dessa seção existir e têm um
+    // context_priority salvo sem "caixa_pj" — garantimos a presença aqui para
+    // que a IA sempre enxergue as transações do caixa (e no topo, para não ser
+    // cortada pelo limite de tokens).
+    if (!contextPriority.includes("caixa_pj")) {
+      contextPriority = ["caixa_pj", ...contextPriority];
+    }
 
     // 4. Implement routing if enabled
     if (agent?.routing_enabled) {
