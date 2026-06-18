@@ -45,7 +45,8 @@ Deno.serve(async (req) => {
       payment_day, 
       hours_available,
       clt_benefits,
-      notes 
+      notes,
+      whatsapp
     } = await req.json();
 
     if (!email || !password || !name) {
@@ -118,6 +119,7 @@ Deno.serve(async (req) => {
               hours_available: hours_available || 160,
               clt_benefits: clt_benefits || 0,
               notes,
+              whatsapp: whatsapp || null,
               is_active: true
             }, { onConflict: 'member_user_id' })
             .select()
@@ -167,6 +169,7 @@ Deno.serve(async (req) => {
         hours_available: hours_available || 160,
         clt_benefits: clt_benefits || 0,
         notes,
+        whatsapp: whatsapp || null,
         is_active: true
       })
       .select()

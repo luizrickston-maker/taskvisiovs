@@ -199,6 +199,7 @@ export interface CorporateTeamMember {
   user_id: string;
   workspace_id: string | null;
   member_user_id?: string | null;
+  whatsapp?: string | null;
 }
 
 export interface Debt {

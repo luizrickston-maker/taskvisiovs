@@ -55,6 +55,7 @@ export function TeamManager() {
           clt_benefits: data.clt_benefits,
           notes: data.notes,
           is_active: data.is_active,
+          whatsapp: data.whatsapp ?? null,
         })
         .eq('id', editingMember.id);
 
@@ -79,6 +80,7 @@ export function TeamManager() {
               hours_available: data.hours_available,
               clt_benefits: data.clt_benefits,
               notes: data.notes,
+              whatsapp: data.whatsapp,
             },
           });
 
@@ -116,6 +118,7 @@ export function TeamManager() {
             payment_day: data.payment_day || 5,
             notes: data.notes,
             is_active: data.is_active ?? true,
+            whatsapp: data.whatsapp ?? null,
           })
           .select()
           .single();

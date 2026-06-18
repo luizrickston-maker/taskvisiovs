@@ -36,6 +36,7 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
   const [isActive, setIsActive] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
       setCltBenefits((member.clt_benefits || 0).toString());
       setNotes(member.notes || '');
       setIsActive(member.is_active);
+      setWhatsapp(member.whatsapp || '');
     } else {
       setName('');
       setRole('');
@@ -61,6 +63,7 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
       setIsActive(true);
       setEmail('');
       setPassword('');
+      setWhatsapp('');
     }
   }, [member, open]);
 
@@ -104,6 +107,7 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
       clt_benefits: parseFloat(cltBenefits) || 0,
       notes: notes.trim() || undefined,
       is_active: isActive,
+      whatsapp: whatsapp.replace(/\D/g, '') || undefined,
       email: email.trim() || undefined,
       password: password.trim() || undefined,
     });
@@ -304,6 +308,21 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
                 onChange={(e) => setPaymentDay(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="whatsapp">WhatsApp (para notificações)</Label>
+            <Input
+              id="whatsapp"
+              type="tel"
+              inputMode="numeric"
+              placeholder="Ex: 5511999999999 (DDI + DDD + número)"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Com DDI e DDD, apenas números. Brasil: 55 + DDD + número. Usado para avisar o colaborador no WhatsApp ao receber uma tarefa.
+            </p>
           </div>
 
           <div className="space-y-2">
