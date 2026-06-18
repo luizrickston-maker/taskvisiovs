@@ -198,13 +198,13 @@ export function TaskAttachments({ taskId, onUpdate }: TaskAttachmentsProps) {
       </button>
 
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetLinkForm(); }}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-md p-0 gap-0 overflow-hidden">
-          <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
-            <DialogTitle className="text-base font-semibold">Anexos da Tarefa</DialogTitle>
+        <DialogContent className="flex flex-col w-[calc(100vw-2rem)] max-w-md max-h-[88vh] p-0 gap-0 overflow-hidden">
+          <DialogHeader className="shrink-0 min-w-0 px-5 pt-5 pb-4 border-b border-border text-left">
+            <DialogTitle className="text-base font-semibold truncate">Anexos da Tarefa</DialogTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Arquivos e links relacionados a esta tarefa.</p>
           </DialogHeader>
 
-          <div className="p-5 space-y-4">
+          <div className="flex-1 min-h-0 min-w-0 p-5 space-y-4 overflow-y-auto">
             {/* Ações */}
             <div className="flex gap-2">
               <Button
@@ -274,7 +274,7 @@ export function TaskAttachments({ taskId, onUpdate }: TaskAttachmentsProps) {
             )}
 
             {/* Lista de anexos */}
-            <div className="space-y-1.5 max-h-64 overflow-y-auto -mx-1 px-1">
+            <div className="space-y-1.5 -mx-1 px-1">
               {loading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
