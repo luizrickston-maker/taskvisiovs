@@ -160,6 +160,7 @@ function formatAIContext(
     team: () => formatTeamSection(ctx.team),
     investments: () => formatInvestmentsSection(ctx.investments),
     caixa_pj: () => formatCaixaPJSection((ctx as { caixa_pj?: unknown }).caixa_pj),
+    contas_pagar: () => formatContasPagarSection((ctx as { contas_pagar?: unknown }).contas_pagar),
   };
 
 
@@ -355,6 +356,22 @@ function formatCaixaPJSection(caixa: any | null): string {
   return section;
 }
 
+function formatContasPagarSection(contas: any | null): string {
+  if (!contas || !contas.items || contas.items.length === 0) return "";
+
+  let section = `### 📄 CONTAS A PAGAR — pendentes/vencidas (use o UUID para pagar/apagar)
+| Descrição | Fornecedor | Valor | Vencimento | Status | Recorrente | UUID |
+|-----------|------------|-------|------------|--------|-----------|------|`;
+
+  contas.items.slice(0, 25).forEach((c: any) => {
+    const rec = c.recorrente ? `sim (${c.frequencia || '-'})` : 'não';
+    section += `\n| ${c.descricao || '-'} | ${c.fornecedor || '-'} | R$ ${Number(c.valor).toLocaleString('pt-BR')} | ${c.data_vencimento} | ${c.status} | ${rec} | ${c.id} |`;
+  });
+
+  section += `\n\nTotal a pagar (pendente/vencido): **R$ ${Number(contas.total_pendente || 0).toLocaleString('pt-BR')}** em ${contas.count_pendente || 0} conta(s).`;
+  return section;
+}
+
 function formatDebtsSection(debts: any | null): string {
   if (!debts || !debts.items || debts.items.length === 0) return "";
 
@@ -484,6 +501,7 @@ serve(async (req) => {
     const maxTokens = agent?.max_tokens || 4096;
     let contextPriority: string[] = agent?.context_priority || [
       "caixa_pj",
+      "contas_pagar",
       "tasks",
       "projects",
       "sales_pipeline",
@@ -493,13 +511,14 @@ serve(async (req) => {
       "investments",
     ];
 
-    // Caixa PJ é essencial p/ operações financeiras da empresa (listar/apagar).
-    // Muitos agentes foram criados ANTES dessa seção existir e têm um
-    // context_priority salvo sem "caixa_pj" — garantimos a presença aqui para
-    // que a IA sempre enxergue as transações do caixa (e no topo, para não ser
-    // cortada pelo limite de tokens).
-    if (!contextPriority.includes("caixa_pj")) {
-      contextPriority = ["caixa_pj", ...contextPriority];
+    // Seções financeiras PJ essenciais p/ operações (listar/pagar/apagar).
+    // Muitos agentes foram criados ANTES dessas seções existirem e têm um
+    // context_priority salvo sem elas — garantimos a presença aqui (no topo,
+    // para não serem cortadas pelo limite de tokens).
+    for (const essential of ["contas_pagar", "caixa_pj"]) {
+      if (!contextPriority.includes(essential)) {
+        contextPriority = [essential, ...contextPriority];
+      }
     }
 
     // 4. Implement routing if enabled
@@ -571,6 +590,12 @@ não encontrou o registro, em vez de perguntar de novo.
 - Entrada ou saída: [CREATE_CAIXA_TRANSACAO: tipo="entrada", descricao="DESCRIÇÃO", valor=VALOR, data="YYYY-MM-DD", forma="pix"]
 - Apagar transação: use DELETE_SUGGESTION com type=caixa_transacao (UUID da seção CAIXA PJ)
 
+**CONTAS A PAGAR (pj_contas_pagar):**
+- Criar: [CREATE_CONTA_PAGAR: descricao="DESCRIÇÃO", valor=VALOR, data_vencimento="YYYY-MM-DD", fornecedor="NOME", forma="pix", recorrente="true", frequencia="mensal"]
+  - recorrente e frequencia são opcionais (frequencia: mensal, trimestral, semestral, anual)
+- Pagar (marcar como paga): [PAY_CONTA_PAGAR: id="UUID", forma="pix", data_pagamento="YYYY-MM-DD"]
+- Apagar: use DELETE_SUGGESTION com type=conta_pagar (UUID da seção CONTAS A PAGAR)
+
 **INVESTIMENTO CORPORATIVO:**
 - [CREATE_INVESTMENT: item_name="NOME", amount=VALOR, category="equipamentos", notes="OBS"]
 - Legado: [REQUEST_ADD_INVESTMENT: item_name="NOME", amount=VALOR, category="CATEGORIA", notes="OBS"]
@@ -600,8 +625,9 @@ não encontrou o registro, em vez de perguntar de novo.
 
 **EXCLUSÃO (requer confirmação — inclui nome para o botão aparecer):**
 - [DELETE_SUGGESTION: type=TIPO, id=UUID_EXATO, name="NOME_EXATO"]
-- Tipos válidos (PJ): caixa_transacao, investment, task, project, prospect, editorial_item, briefing, agenda_appointment
+- Tipos válidos (PJ): caixa_transacao, conta_pagar, investment, task, project, prospect, editorial_item, briefing, agenda_appointment
 - Caixa PJ: para apagar uma entrada/saída use type=caixa_transacao com o UUID da seção CAIXA PJ.
+- Contas a pagar: para apagar use type=conta_pagar (UUID da seção CONTAS A PAGAR); para PAGAR use o token PAY_CONTA_PAGAR (não é exclusão).
 - Agenda: para apagar/cancelar um compromisso use type=agenda_appointment com o UUID da seção AGENDA.
 - UUID deve vir EXATAMENTE do contexto. Nunca invente.
 

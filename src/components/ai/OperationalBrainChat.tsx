@@ -371,6 +371,15 @@ export function OperationalBrainChat() {
           success = true;
           break;
 
+        case 'conta_pagar':
+        case 'conta':
+        case 'pj_contas_pagar':
+          const { error: contaError } = await supabase.from('pj_contas_pagar' as never).delete().eq('id', id);
+          if (contaError) throw contaError;
+          queryClient.invalidateQueries({ queryKey: ['caixa-pj-contas-pagar'] });
+          success = true;
+          break;
+
         default:
           toast.error(`Ação para o tipo "${type}" ainda não implementada.`);
           break;

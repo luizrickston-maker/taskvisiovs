@@ -399,6 +399,70 @@ const createCaixaTransacao: AutoHandler = async (params) => {
 };
 
 // =====================================================
+// CAIXA PJ — Contas a Pagar
+// =====================================================
+
+const FREQ_VALIDAS = ['mensal', 'trimestral', 'semestral', 'anual'];
+
+const createContaPagar: AutoHandler = async (params) => {
+  const user = await getUser();
+  const wsId = await getWorkspaceId();
+
+  const valor = parseFloat(params.valor || params.value || '0');
+  if (!valor || valor <= 0) throw new Error('Valor inválido para conta a pagar');
+
+  const vencimento = params.data_vencimento || params.vencimento || params.data || today();
+  const recorrente = params.recorrente === 'true' || params.recorrente === 'sim';
+  const frequencia = FREQ_VALIDAS.includes(params.frequencia || '')
+    ? params.frequencia
+    : (recorrente ? 'mensal' : null);
+
+  const { data, error } = await supabase
+    .from('pj_contas_pagar')
+    .insert({
+      workspace_id: wsId,
+      created_by: user.id,
+      descricao: params.descricao || params.description || 'Conta a pagar via IA',
+      fornecedor: params.fornecedor || params.supplier || null,
+      valor,
+      data_vencimento: vencimento,
+      status: 'pendente',
+      forma_pagamento: params.forma || params.forma_pagamento || null,
+      recorrente,
+      frequencia,
+      observacoes: params.obs || params.observacoes || null,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  const rec = recorrente ? ` (recorrente ${frequencia})` : '';
+  toast.success(`Conta a pagar criada: ${data.descricao} — vence ${data.data_vencimento}`);
+  return { label: `Conta "${data.descricao}" de R$ ${valor.toFixed(2)} (vence ${data.data_vencimento})${rec}` };
+};
+
+const payContaPagar: AutoHandler = async (params) => {
+  if (!params.id || !isValidUUID(params.id)) throw new Error('ID inválido para conta a pagar');
+
+  const { data, error } = await supabase
+    .from('pj_contas_pagar')
+    .update({
+      status: 'pago',
+      data_pagamento: params.data_pagamento || params.data || today(),
+      ...((params.forma || params.forma_pagamento)
+        ? { forma_pagamento: params.forma || params.forma_pagamento }
+        : {}),
+    })
+    .eq('id', params.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  toast.success(`Conta paga: ${data.descricao}`);
+  return { label: `Conta "${data.descricao}" marcada como paga` };
+};
+
+// =====================================================
 // RESERVAS (SAVINGS)
 // =====================================================
 
@@ -507,6 +571,10 @@ export function registerAllHandlers() {
 
   // Caixa PJ
   registerHandler('CREATE_CAIXA_TRANSACAO', 'auto', createCaixaTransacao);
+
+  // Caixa PJ — Contas a Pagar
+  registerHandler('CREATE_CONTA_PAGAR', 'auto', createContaPagar);
+  registerHandler('PAY_CONTA_PAGAR', 'auto', payContaPagar);
 
   // Reservas (Savings)
   registerHandler('CREATE_SAVING', 'auto', createSaving);
