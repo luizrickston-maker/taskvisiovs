@@ -37,11 +37,22 @@ function normalizeNumber(raw: string | null): string | null {
   return d;
 }
 
-function formatDateBR(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("pt-BR");
+/** Prazo em data detalhada pt-BR (ex.: "sexta-feira, 17 de julho de 2026").
+ *  Ancora ao meio-dia para datas YYYY-MM-DD não sofrerem shift de fuso. */
+function formatDeadline(iso: string | null): string {
+  if (!iso) return "Sem prazo definido";
+  const base = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? `${iso}T12:00:00` : iso;
+  const d = new Date(base);
+  if (isNaN(d.getTime())) return iso;
+  const full = d.toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "America/Sao_Paulo",
+  });
+  const curta = d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  return `${full} (${curta})`;
 }
 
 Deno.serve(async (req) => {
@@ -126,7 +137,6 @@ Deno.serve(async (req) => {
 
     // 4) Mensagem
     const urgencia = URGENCIA[task.priority as number] ?? "🟡 Média";
-    const prazo = formatDateBR(task.deadline);
     const linhas = [
       "📌 *Nova tarefa atribuída a você!*",
       "",
@@ -134,7 +144,7 @@ Deno.serve(async (req) => {
       `Urgência: ${urgencia}`,
     ];
     if (projectName) linhas.push(`Projeto: ${projectName}${clientName ? ` • Cliente: ${clientName}` : ""}`);
-    if (prazo) linhas.push(`Prazo: ${prazo}`);
+    linhas.push(`📅 Prazo de entrega: ${formatDeadline(task.deadline)}`);
     linhas.push("", "Acesse o portal do colaborador para ver os detalhes.");
     const message = linhas.join("\n");
 
