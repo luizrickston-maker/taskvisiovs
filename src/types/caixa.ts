@@ -58,6 +58,7 @@ export interface ContaPagar {
   frequencia?: ContaPagarFrequencia | null;
   observacoes?: string | null;
   comprovante_url?: string | null;
+  corporate_team_id?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
