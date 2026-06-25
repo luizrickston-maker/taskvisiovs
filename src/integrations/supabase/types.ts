@@ -3431,6 +3431,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          notify_whatsapp: string | null
           owner_user_id: string
           plan: string
           status: string
@@ -3440,6 +3441,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          notify_whatsapp?: string | null
           owner_user_id: string
           plan?: string
           status?: string
@@ -3449,6 +3451,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          notify_whatsapp?: string | null
           owner_user_id?: string
           plan?: string
           status?: string
