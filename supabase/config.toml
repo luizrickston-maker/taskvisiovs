@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.notify-task-status]
 verify_jwt = false
+
+[functions.whatsapp-tools]
+verify_jwt = false
