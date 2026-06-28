@@ -3426,6 +3426,111 @@ export type Database = {
           },
         ]
       }
+      client_charges: {
+        Row: {
+          alert_days_before: number[] | null
+          caixa_transacao_id: string | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          descricao: string
+          due_date: string
+          external_ref: string | null
+          frequencia: string | null
+          id: string
+          invoice_slug: string | null
+          overdue_every_days: number | null
+          overdue_max: number | null
+          paid_amount: number | null
+          paid_at: string | null
+          payment_link: string | null
+          receipt_url: string | null
+          recorrente: boolean
+          status: string
+          updated_at: string
+          valor: number
+          workspace_id: string
+        }
+        Insert: {
+          alert_days_before?: number[] | null
+          caixa_transacao_id?: string | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          descricao: string
+          due_date: string
+          external_ref?: string | null
+          frequencia?: string | null
+          id?: string
+          invoice_slug?: string | null
+          overdue_every_days?: number | null
+          overdue_max?: number | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          payment_link?: string | null
+          receipt_url?: string | null
+          recorrente?: boolean
+          status?: string
+          updated_at?: string
+          valor: number
+          workspace_id: string
+        }
+        Update: {
+          alert_days_before?: number[] | null
+          caixa_transacao_id?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          descricao?: string
+          due_date?: string
+          external_ref?: string | null
+          frequencia?: string | null
+          id?: string
+          invoice_slug?: string | null
+          overdue_every_days?: number | null
+          overdue_max?: number | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          payment_link?: string | null
+          receipt_url?: string | null
+          recorrente?: boolean
+          status?: string
+          updated_at?: string
+          valor?: number
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      client_charge_events: {
+        Row: {
+          charge_id: string
+          created_at: string
+          detail: string | null
+          id: string
+          kind: string
+          reference: string
+          status: string | null
+        }
+        Insert: {
+          charge_id: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind: string
+          reference: string
+          status?: string | null
+        }
+        Update: {
+          charge_id?: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind?: string
+          reference?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       notification_recipients: {
         Row: {
           created_at: string

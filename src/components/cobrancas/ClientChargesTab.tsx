@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Copy, ExternalLink, Check, Ban, Repeat, Loader2 } from 'lucide-react';
+import { Plus, Copy, ExternalLink, Check, Ban, Repeat, Loader2, Send, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   ClientCharge, STATUS_META, FREQ_LABELS, money, formatBRDate,
-  criarCobranca, marcarCobrancaPaga, cancelarCobranca,
+  criarCobranca, marcarCobrancaPaga, cancelarCobranca, enviarCobrancaAgora,
 } from '@/lib/cobrancas';
 
 interface Props {
@@ -84,8 +84,25 @@ export function ClientChargesTab({ clientId, clientName }: Props) {
     finally { setBusy(null); }
   };
 
+  const handleEnviar = async (c: ClientCharge) => {
+    setBusy(c.id);
+    try { await enviarCobrancaAgora(c.id); toast.success('Mensagem enviada ao cliente no WhatsApp!'); }
+    catch (e: any) { toast.error(`Não foi possível enviar: ${e?.message ?? 'tente novamente'}`); }
+    finally { setBusy(null); }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Como funciona */}
+      <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex gap-2.5 text-xs text-muted-foreground">
+        <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p><strong className="text-foreground">Como funciona:</strong> ao criar uma cobrança, geramos um link de pagamento (InfinitePay) e o cliente recebe avisos automáticos no WhatsApp.</p>
+          <p>📅 <strong className="text-foreground">Lembretes:</strong> 3 e 1 dia antes do vencimento • 💰 <strong className="text-foreground">no dia</strong> do vencimento • ⚠️ <strong className="text-foreground">atraso</strong> a cada 3 dias (até 5x).</p>
+          <p>✅ Quando o cliente paga, a baixa é automática (entra no caixa e você é avisado). Use <strong className="text-foreground">"Enviar agora"</strong> para mandar a cobrança na hora, fora da cadência.</p>
+        </div>
+      </div>
+
       {/* Nova cobrança */}
       <Card>
         <CardHeader>
@@ -172,6 +189,10 @@ export function ClientChargesTab({ clientId, clientName }: Props) {
                       )}
                       {aberta && (
                         <>
+                          <Button size="sm" variant="outline" className="h-8 gap-1.5 text-primary hover:text-primary"
+                            disabled={busy === c.id} onClick={() => handleEnviar(c)}>
+                            {busy === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />} Enviar agora
+                          </Button>
                           <Button size="sm" variant="outline" className="h-8 gap-1.5 text-green-600 hover:text-green-700"
                             disabled={busy === c.id} onClick={() => handlePagar(c)}>
                             <Check className="w-3.5 h-3.5" /> Marcar paga

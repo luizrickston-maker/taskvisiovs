@@ -96,3 +96,10 @@ export async function criarCobranca(input: {
   if (data?.error) throw new Error(data.error);
   return { payment_link: data?.payment_link ?? null };
 }
+
+/** Envia a cobrança/lembrete AGORA para o WhatsApp do cliente (fora da cadência). */
+export async function enviarCobrancaAgora(chargeId: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('send-charge-now', { body: { charge_id: chargeId } });
+  if (error) throw new Error(error.message);
+  if (data?.error) throw new Error(data.error);
+}
