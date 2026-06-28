@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { Settings, Moon, Sun, Check, User, Building2, Clock, MessageCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Settings, Moon, Sun, Check, User, Building2, Clock } from 'lucide-react';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { supabase } from '@/integrations/supabase/client';
+import { NotificationRecipients } from '@/components/config/NotificationRecipients';
 import { toast } from 'sonner';
 
 export default function ConfigPage() {
@@ -30,47 +30,6 @@ export default function ConfigPage() {
   const [isSavingPersonal, setIsSavingPersonal] = useState(false);
   const [isSavingBusiness, setIsSavingBusiness] = useState(false);
   const [isSavingHours, setIsSavingHours] = useState(false);
-
-  // WhatsApp do gestor para notificações de atualização de tarefas
-  const [notifyWhatsapp, setNotifyWhatsapp] = useState('');
-  const [isSavingNotify, setIsSavingNotify] = useState(false);
-
-  useEffect(() => {
-    if (isCollaborator) return;
-    (async () => {
-      const { data: wsId } = await supabase.rpc('get_my_workspace_id');
-      if (!wsId) return;
-      const { data } = await supabase
-        .from('workspaces')
-        .select('notify_whatsapp')
-        .eq('id', wsId)
-        .maybeSingle();
-      if (data?.notify_whatsapp) setNotifyWhatsapp(data.notify_whatsapp);
-    })();
-  }, [isCollaborator]);
-
-  const handleSaveNotifyWhatsapp = async () => {
-    setIsSavingNotify(true);
-    try {
-      const { data: wsId } = await supabase.rpc('get_my_workspace_id');
-      if (!wsId) {
-        toast.error('Workspace não encontrado.');
-        return;
-      }
-      const digits = notifyWhatsapp.replace(/\D/g, '') || null;
-      const { error } = await supabase
-        .from('workspaces')
-        .update({ notify_whatsapp: digits })
-        .eq('id', wsId);
-      if (error) throw error;
-      setNotifyWhatsapp(digits ?? '');
-      toast.success('WhatsApp de notificações atualizado!');
-    } catch {
-      toast.error('Erro ao salvar o WhatsApp de notificações.');
-    } finally {
-      setIsSavingNotify(false);
-    }
-  };
 
   const handleSavePersonalName = async () => {
     if (!newPersonalName.trim()) return;
@@ -157,29 +116,6 @@ export default function ConfigPage() {
                 </p>
               </div>
 
-              {/* WhatsApp do gestor para notificações de tarefas */}
-              <div className="space-y-2">
-                <Label htmlFor="notifyWhatsapp" className="flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4 text-muted-foreground" />
-                  WhatsApp para Notificações (Gestor)
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="notifyWhatsapp"
-                    type="tel"
-                    inputMode="numeric"
-                    value={notifyWhatsapp}
-                    onChange={(e) => setNotifyWhatsapp(e.target.value)}
-                    placeholder="Ex: 5511999999999 (DDI + DDD + número)"
-                  />
-                  <Button onClick={handleSaveNotifyWhatsapp} disabled={isSavingNotify}>
-                    <Check className="w-4 h-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Você recebe um aviso neste número sempre que um colaborador atualizar o status de uma tarefa (iniciar, concluir, reabrir), com a hora exata.
-                </p>
-              </div>
             </>
           )}
 
@@ -235,6 +171,8 @@ export default function ConfigPage() {
           </div>
         </CardContent>
       </Card>
+
+      {!isCollaborator && <NotificationRecipients />}
     </div>
   );
 }

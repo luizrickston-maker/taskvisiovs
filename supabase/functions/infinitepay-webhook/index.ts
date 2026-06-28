@@ -168,12 +168,21 @@ Deno.serve(async (req) => {
       status: "ok", detail: `${paidAmount} via ${body.capture_method ?? "?"}`,
     });
 
-    // 6.1) Notifica o gestor no WhatsApp que o cliente pagou.
-    const gestor = normalizeNumber(ws?.notify_whatsapp ?? null);
-    if (gestor) {
+    // 6.1) Notifica os destinatários do tipo "financeiro" que o cliente pagou
+    //      (fallback ao número legado notify_whatsapp).
+    const { data: recps } = await sb.from("notification_recipients")
+      .select("whatsapp").eq("workspace_id", charge.workspace_id).eq("is_active", true)
+      .contains("types", ["financeiro"]);
+    let gestores = ((recps ?? []) as any[])
+      .map((r) => normalizeNumber(r.whatsapp)).filter((n): n is string => !!n);
+    if (gestores.length === 0) {
+      const n = normalizeNumber(ws?.notify_whatsapp ?? null);
+      if (n) gestores = [n];
+    }
+    if (gestores.length > 0) {
       const forma = body.capture_method === "pix" ? "PIX"
         : body.capture_method === "credit_card" ? "Cartão de crédito" : "—";
-      await sendWhatsapp(gestor, [
+      const msg = [
         "💰 *Pagamento recebido!*",
         "",
         `👤 Cliente: ${cliente?.name ?? "Cliente"}`,
@@ -181,7 +190,8 @@ Deno.serve(async (req) => {
         `💵 Valor: ${money(paidAmount)}`,
         `💳 Forma: ${forma}`,
         ...(body.receipt_url ? ["", `🧾 Comprovante: ${body.receipt_url}`] : []),
-      ].join("\n"));
+      ].join("\n");
+      for (const g of gestores) await sendWhatsapp(g, msg);
     }
 
     // 7) Próxima cobrança se recorrente.

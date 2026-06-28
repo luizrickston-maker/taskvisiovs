@@ -100,29 +100,32 @@ Deno.serve(async (req) => {
       return json({ error: "task_not_found" }, 404);
     }
 
-    // 3) Número do gestor: workspaces.notify_whatsapp (pelo workspace da tarefa,
-    //    ou resolvido pelo dono da tarefa quando workspace_id é nulo).
-    let managerNumber: string | null = null;
-    if (task.workspace_id) {
-      const { data: ws } = await supabase
-        .from("workspaces")
-        .select("notify_whatsapp")
-        .eq("id", task.workspace_id)
-        .maybeSingle();
-      managerNumber = normalizeNumber(ws?.notify_whatsapp ?? null);
+    // 3) Destinatários do tipo "tarefas" (notification_recipients), com fallback
+    //    ao número único legado (workspaces.notify_whatsapp).
+    let wsId = (task.workspace_id ?? null) as string | null;
+    if (!wsId && task.user_id) {
+      const { data: w } = await supabase.from("workspaces")
+        .select("id").eq("owner_user_id", task.user_id).maybeSingle();
+      wsId = w?.id ?? null;
     }
-    if (!managerNumber && task.user_id) {
-      const { data: ws } = await supabase
-        .from("workspaces")
-        .select("notify_whatsapp")
-        .eq("owner_user_id", task.user_id)
-        .maybeSingle();
-      managerNumber = normalizeNumber(ws?.notify_whatsapp ?? null);
+    let numbers: string[] = [];
+    if (wsId) {
+      const { data: recps } = await supabase.from("notification_recipients")
+        .select("whatsapp").eq("workspace_id", wsId).eq("is_active", true)
+        .contains("types", ["tarefas"]);
+      numbers = ((recps ?? []) as any[])
+        .map((r) => normalizeNumber(r.whatsapp)).filter((n): n is string => !!n);
+      if (numbers.length === 0) {
+        const { data: ws } = await supabase.from("workspaces")
+          .select("notify_whatsapp").eq("id", wsId).maybeSingle();
+        const n = normalizeNumber(ws?.notify_whatsapp ?? null);
+        if (n) numbers = [n];
+      }
     }
 
-    if (!managerNumber) {
-      await log("skipped_no_phone", "gestor sem notify_whatsapp configurado");
-      return json({ skipped: "no_manager_whatsapp" });
+    if (numbers.length === 0) {
+      await log("skipped_no_phone", "sem destinatário para 'tarefas'");
+      return json({ skipped: "no_recipient" });
     }
 
     // 4) Nome do colaborador (quem alterou; fallback p/ responsável).
@@ -170,20 +173,18 @@ Deno.serve(async (req) => {
       return json({ error: "AGZAP_TOKEN não configurado" }, 500);
     }
 
-    const resp = await fetch(AGZAP_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, number: managerNumber, type: "text", message }),
-    });
-    const respText = await resp.text();
-
-    if (!resp.ok) {
-      await log("error", `agzap_${resp.status}: ${respText.slice(0, 300)}`);
-      return json({ error: "agzap_failed", status: resp.status, body: respText.slice(0, 300) }, 502);
+    let enviados = 0;
+    for (const number of numbers) {
+      const resp = await fetch(AGZAP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, number, type: "text", message }),
+      });
+      if (resp.ok) enviados++;
     }
 
-    await log("sent", respText.slice(0, 300));
-    return json({ sent: true, to: managerNumber });
+    await log(enviados > 0 ? "sent" : "error", `enviados ${enviados}/${numbers.length}`);
+    return json({ sent: enviados > 0, count: enviados });
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }

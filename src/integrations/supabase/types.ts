@@ -3426,6 +3426,36 @@ export type Database = {
           },
         ]
       }
+      notification_recipients: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          types: string[]
+          whatsapp: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          types?: string[]
+          whatsapp: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          types?: string[]
+          whatsapp?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       workspaces: {
         Row: {
           created_at: string
