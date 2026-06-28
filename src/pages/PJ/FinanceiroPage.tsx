@@ -1,10 +1,11 @@
-import { Wallet, Receipt, Calculator, Tags, Percent, ArrowLeftRight } from 'lucide-react';
+import { Wallet, Receipt, Calculator, Tags, Percent, ArrowLeftRight, HandCoins } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CostList } from '@/components/areapj/CostList';
 import { PricingCalculator } from '@/components/areapj/PricingCalculator';
 import { CostCategoryManager } from '@/components/areapj/CostCategoryManager';
 import { PaymentFeeSettings } from '@/components/areapj/PaymentFeeSettings';
 import { CaixaPJDashboard } from '@/components/financaspj/CaixaPJDashboard';
+import { ContasReceberTab } from '@/components/cobrancas/ContasReceberTab';
 
 export default function FinanceiroPage() {
   return (
@@ -20,10 +21,14 @@ export default function FinanceiroPage() {
       </div>
 
       <Tabs defaultValue="caixa" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5 max-w-2xl">
+        <TabsList className="grid w-full grid-cols-6 max-w-2xl">
           <TabsTrigger value="caixa" className="flex items-center gap-2">
             <ArrowLeftRight className="w-4 h-4" />
             <span className="hidden sm:inline">Caixa</span>
+          </TabsTrigger>
+          <TabsTrigger value="receber" className="flex items-center gap-2">
+            <HandCoins className="w-4 h-4" />
+            <span className="hidden sm:inline">A Receber</span>
           </TabsTrigger>
           <TabsTrigger value="custos" className="flex items-center gap-2">
             <Receipt className="w-4 h-4" />
@@ -45,6 +50,10 @@ export default function FinanceiroPage() {
 
         <TabsContent value="caixa">
           <CaixaPJDashboard />
+        </TabsContent>
+
+        <TabsContent value="receber">
+          <ContasReceberTab />
         </TabsContent>
 
         <TabsContent value="custos">

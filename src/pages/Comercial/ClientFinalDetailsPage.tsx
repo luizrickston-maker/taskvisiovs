@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { ArrowLeft, Edit2, Trash2, UserCheck, UserX, History, Video } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, UserCheck, UserX, History, Video, HandCoins } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientVideoSettings } from "@/components/clientes/ClientVideoSettings";
+import { ClientChargesTab } from "@/components/cobrancas/ClientChargesTab";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 interface Client {
@@ -288,6 +289,9 @@ export default function ClientFinalDetailsPage() {
           <TabsTrigger value="video" className="gap-2">
             <Video className="w-4 h-4" /> Módulo de Vídeo
           </TabsTrigger>
+          <TabsTrigger value="cobrancas" className="gap-2">
+            <HandCoins className="w-4 h-4" /> Cobranças
+          </TabsTrigger>
           <TabsTrigger value="history" className="gap-2">
             <History className="w-4 h-4" /> Histórico
           </TabsTrigger>
@@ -313,6 +317,10 @@ export default function ClientFinalDetailsPage() {
 
         <TabsContent value="video" className="mt-6">
           <ClientVideoSettings clientId={id!} />
+        </TabsContent>
+
+        <TabsContent value="cobrancas" className="mt-6">
+          <ClientChargesTab clientId={client.id} clientName={client.name} />
         </TabsContent>
 
         <TabsContent value="history" className="mt-6">
