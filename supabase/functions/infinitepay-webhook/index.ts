@@ -26,7 +26,30 @@ type SB = ReturnType<typeof createClient<any>>;
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+const AGZAP_URL = "https://app.agzap.com.br/send";
 const MESES: Record<string, number> = { mensal: 1, trimestral: 3, semestral: 6, anual: 12 };
+
+function money(v: number) { return `R$ ${Number(v).toFixed(2).replace(".", ",")}`; }
+
+function normalizeNumber(raw: string | null): string | null {
+  if (!raw) return null;
+  let d = raw.replace(/\D/g, "");
+  if (!d) return null;
+  if (d.length === 10 || d.length === 11) d = "55" + d;
+  return d;
+}
+
+/** Envia WhatsApp via agzap (best-effort: não quebra o webhook se falhar). */
+async function sendWhatsapp(number: string, message: string): Promise<void> {
+  const token = Deno.env.get("AGZAP_TOKEN");
+  if (!token) return;
+  try {
+    await fetch(AGZAP_URL, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, number, type: "text", message }),
+    });
+  } catch { /* não bloqueia a reconciliação */ }
+}
 
 function addMonths(isoDate: string, months: number): string {
   const d = new Date(`${isoDate}T12:00:00`);
@@ -94,7 +117,7 @@ Deno.serve(async (req) => {
 
     // Handle do workspace.
     const { data: ws } = await sb.from("workspaces")
-      .select("billing_handle").eq("id", charge.workspace_id).maybeSingle();
+      .select("billing_handle, notify_whatsapp").eq("id", charge.workspace_id).maybeSingle();
     const handle = ws?.billing_handle as string | undefined;
 
     // 3) Confirma via payment_check (anti-fraude), salvo flag de teste.
@@ -144,6 +167,22 @@ Deno.serve(async (req) => {
       charge_id: charge.id, kind: "pago", reference: "webhook",
       status: "ok", detail: `${paidAmount} via ${body.capture_method ?? "?"}`,
     });
+
+    // 6.1) Notifica o gestor no WhatsApp que o cliente pagou.
+    const gestor = normalizeNumber(ws?.notify_whatsapp ?? null);
+    if (gestor) {
+      const forma = body.capture_method === "pix" ? "PIX"
+        : body.capture_method === "credit_card" ? "Cartão de crédito" : "—";
+      await sendWhatsapp(gestor, [
+        "💰 *Pagamento recebido!*",
+        "",
+        `👤 Cliente: ${cliente?.name ?? "Cliente"}`,
+        `📋 ${charge.descricao}`,
+        `💵 Valor: ${money(paidAmount)}`,
+        `💳 Forma: ${forma}`,
+        ...(body.receipt_url ? ["", `🧾 Comprovante: ${body.receipt_url}`] : []),
+      ].join("\n"));
+    }
 
     // 7) Próxima cobrança se recorrente.
     if (charge.recorrente && handle) {
