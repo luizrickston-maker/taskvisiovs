@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.whatsapp-tools]
 verify_jwt = false
+
+[functions.create-client-charge]
+verify_jwt = false
