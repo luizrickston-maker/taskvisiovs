@@ -26,6 +26,26 @@ const json = (body: unknown, status = 200) =>
     status, headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+/** Gera um código curto para o short link. */
+function shortCode(len = 8): string {
+  const cs = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const v = crypto.getRandomValues(new Uint8Array(len));
+  return Array.from(v, (x) => cs[x % cs.length]).join("");
+}
+
+/** Encurta a URL via portal_short_links (validade 1 ano). Fallback: URL original. */
+// deno-lint-ignore no-explicit-any
+async function shorten(sb: any, longUrl: string | null): Promise<string | null> {
+  const site = Deno.env.get("SITE_URL");
+  if (!site || !longUrl) return longUrl;
+  const code = shortCode();
+  const expires = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString();
+  const { error } = await sb.from("portal_short_links")
+    .insert({ code, target_url: longUrl, expires_at: expires });
+  if (error) return longUrl;
+  return `${site.replace(/\/$/, "")}/p/${code}`;
+}
+
 /** Tenta extrair a URL do link da resposta do InfinitePay (formato não fixo na doc). */
 function extractLink(data: unknown): string | null {
   if (typeof data === "string" && data.startsWith("http")) return data;
@@ -159,7 +179,8 @@ Deno.serve(async (req) => {
         body: respText.slice(0, 500), charge_id: charge.id }, 502);
     }
 
-    const link = extractLink(respData);
+    const longLink = extractLink(respData);
+    const link = await shorten(supabase, longLink);
     const slug = (respData as any)?.slug ?? (respData as any)?.invoice_slug ?? null;
 
     await supabase.from("client_charges")

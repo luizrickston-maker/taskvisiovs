@@ -74,6 +74,23 @@ async function getCategoriaRecebimentos(sb: SB, ws: string): Promise<string | nu
   return novo?.id ?? null;
 }
 
+/** Encurta a URL via portal_short_links (validade 1 ano). Fallback: URL original. */
+function shortCode(len = 8): string {
+  const cs = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const v = crypto.getRandomValues(new Uint8Array(len));
+  return Array.from(v, (x) => cs[x % cs.length]).join("");
+}
+async function shorten(sb: SB, longUrl: string | null): Promise<string | null> {
+  const site = Deno.env.get("SITE_URL");
+  if (!site || !longUrl) return longUrl;
+  const code = shortCode();
+  const expires = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString();
+  const { error } = await sb.from("portal_short_links")
+    .insert({ code, target_url: longUrl, expires_at: expires });
+  if (error) return longUrl;
+  return `${site.replace(/\/$/, "")}/p/${code}`;
+}
+
 /** Gera link InfinitePay para a próxima cobrança recorrente. */
 async function gerarLink(handle: string, valor: number, descricao: string, orderNsu: string,
   webhookUrl: string, customer: Record<string, unknown> | null): Promise<{ link: string | null; slug: string | null }> {
@@ -213,7 +230,8 @@ Deno.serve(async (req) => {
           phone_number: cliente.phone ?? undefined,
         } : null;
         const { link, slug } = await gerarLink(handle, Number(charge.valor), charge.descricao, prox.id, webhookUrl, customer);
-        await sb.from("client_charges").update({ payment_link: link, invoice_slug: slug, external_ref: prox.id }).eq("id", prox.id);
+        const shortLink = await shorten(sb, link);
+        await sb.from("client_charges").update({ payment_link: shortLink, invoice_slug: slug, external_ref: prox.id }).eq("id", prox.id);
       }
     }
 
