@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { NotificationRecipients } from '@/components/config/NotificationRecipients';
+import { AgendaReminderSettings } from '@/components/config/AgendaReminderSettings';
 import { toast } from 'sonner';
 
 export default function ConfigPage() {
@@ -172,6 +173,7 @@ export default function ConfigPage() {
         </CardContent>
       </Card>
 
+      {!isCollaborator && <AgendaReminderSettings />}
       {!isCollaborator && <NotificationRecipients />}
     </div>
   );

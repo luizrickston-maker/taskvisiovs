@@ -3561,8 +3561,34 @@ export type Database = {
         }
         Relationships: []
       }
+      agenda_reminder_events: {
+        Row: {
+          created_at: string
+          id: string
+          reference: string
+          status: string | null
+          time_block_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reference: string
+          status?: string | null
+          time_block_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reference?: string
+          status?: string | null
+          time_block_id?: string
+        }
+        Relationships: []
+      }
       workspaces: {
         Row: {
+          agenda_remind_days_before: number[]
+          agenda_remind_hours_before: number[]
           created_at: string
           id: string
           name: string
@@ -3573,6 +3599,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agenda_remind_days_before?: number[]
+          agenda_remind_hours_before?: number[]
           created_at?: string
           id?: string
           name: string
@@ -3583,6 +3611,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agenda_remind_days_before?: number[]
+          agenda_remind_hours_before?: number[]
           created_at?: string
           id?: string
           name?: string

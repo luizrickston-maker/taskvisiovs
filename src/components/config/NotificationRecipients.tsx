@@ -21,6 +21,7 @@ interface Recipient {
 const NOTIFICATION_TYPES: { value: string; label: string }[] = [
   { value: 'financeiro', label: 'Financeiro (pagamentos de clientes)' },
   { value: 'tarefas', label: 'Tarefas (mudança de status)' },
+  { value: 'agenda', label: 'Agenda (lembretes de compromisso)' },
 ];
 
 export function NotificationRecipients() {
