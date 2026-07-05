@@ -179,6 +179,32 @@ Deno.serve(async (req) => {
 
     if (tx?.id) await sb.from("client_charges").update({ caixa_transacao_id: tx.id }).eq("id", charge.id);
 
+    // 5.1) Rateio (metodologia de gestão): divide o valor recebido em fatias por
+    //      destino, conforme a regra do workspace. Só para pagamentos de cliente.
+    const { data: rules } = await sb.from("caixa_allocation_rules")
+      .select("label, percent, destino, sort").eq("workspace_id", charge.workspace_id)
+      .eq("is_active", true).order("sort", { ascending: true });
+    const activeRules = (rules ?? []) as any[];
+    if (activeRules.length > 0) {
+      let acumulado = 0;
+      const linhas = activeRules.map((r, i) => {
+        let valor: number;
+        if (i === activeRules.length - 1) {
+          valor = Math.round((paidAmount - acumulado) * 100) / 100; // última fatia = resto (fecha 100%)
+        } else {
+          valor = Math.round(paidAmount * Number(r.percent)) / 100;
+          acumulado += valor;
+        }
+        return {
+          workspace_id: charge.workspace_id,
+          charge_id: charge.id,
+          source_transacao_id: tx?.id ?? null,
+          label: r.label, destino: r.destino, valor,
+        };
+      });
+      await sb.from("caixa_allocations").insert(linhas);
+    }
+
     // 6) Log.
     await sb.from("client_charge_events").insert({
       charge_id: charge.id, kind: "pago", reference: "webhook",

@@ -3561,6 +3561,78 @@ export type Database = {
         }
         Relationships: []
       }
+      caixa_allocation_rules: {
+        Row: {
+          created_at: string
+          destino: string
+          id: string
+          is_active: boolean
+          label: string
+          percent: number
+          sort: number
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          destino: string
+          id?: string
+          is_active?: boolean
+          label: string
+          percent: number
+          sort?: number
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          destino?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          percent?: number
+          sort?: number
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      caixa_allocations: {
+        Row: {
+          charge_id: string | null
+          created_at: string
+          destino: string
+          id: string
+          label: string
+          source_transacao_id: string | null
+          transferido: boolean
+          transferido_at: string | null
+          valor: number
+          workspace_id: string
+        }
+        Insert: {
+          charge_id?: string | null
+          created_at?: string
+          destino: string
+          id?: string
+          label: string
+          source_transacao_id?: string | null
+          transferido?: boolean
+          transferido_at?: string | null
+          valor: number
+          workspace_id: string
+        }
+        Update: {
+          charge_id?: string | null
+          created_at?: string
+          destino?: string
+          id?: string
+          label?: string
+          source_transacao_id?: string | null
+          transferido?: boolean
+          transferido_at?: string | null
+          valor?: number
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       agenda_reminder_events: {
         Row: {
           created_at: string

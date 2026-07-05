@@ -1,4 +1,4 @@
-import { Wallet, Receipt, Calculator, Tags, Percent, ArrowLeftRight, HandCoins } from 'lucide-react';
+import { Wallet, Receipt, Calculator, Tags, Percent, ArrowLeftRight, HandCoins, PiggyBank } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CostList } from '@/components/areapj/CostList';
 import { PricingCalculator } from '@/components/areapj/PricingCalculator';
@@ -6,6 +6,7 @@ import { CostCategoryManager } from '@/components/areapj/CostCategoryManager';
 import { PaymentFeeSettings } from '@/components/areapj/PaymentFeeSettings';
 import { CaixaPJDashboard } from '@/components/financaspj/CaixaPJDashboard';
 import { ContasReceberTab } from '@/components/cobrancas/ContasReceberTab';
+import { DistribuicaoTab } from '@/components/cobrancas/DistribuicaoTab';
 
 export default function FinanceiroPage() {
   return (
@@ -21,7 +22,7 @@ export default function FinanceiroPage() {
       </div>
 
       <Tabs defaultValue="caixa" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6 max-w-2xl">
+        <TabsList className="grid w-full grid-cols-7 max-w-3xl">
           <TabsTrigger value="caixa" className="flex items-center gap-2">
             <ArrowLeftRight className="w-4 h-4" />
             <span className="hidden sm:inline">Caixa</span>
@@ -29,6 +30,10 @@ export default function FinanceiroPage() {
           <TabsTrigger value="receber" className="flex items-center gap-2">
             <HandCoins className="w-4 h-4" />
             <span className="hidden sm:inline">A Receber</span>
+          </TabsTrigger>
+          <TabsTrigger value="distribuicao" className="flex items-center gap-2">
+            <PiggyBank className="w-4 h-4" />
+            <span className="hidden sm:inline">Distribuição</span>
           </TabsTrigger>
           <TabsTrigger value="custos" className="flex items-center gap-2">
             <Receipt className="w-4 h-4" />
@@ -54,6 +59,10 @@ export default function FinanceiroPage() {
 
         <TabsContent value="receber">
           <ContasReceberTab />
+        </TabsContent>
+
+        <TabsContent value="distribuicao">
+          <DistribuicaoTab />
         </TabsContent>
 
         <TabsContent value="custos">
