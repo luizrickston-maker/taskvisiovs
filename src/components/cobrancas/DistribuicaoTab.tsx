@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Check, PiggyBank, Save, Info } from 'lucide-react';
+import { Plus, Trash2, Check, PiggyBank, Save, Info, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { money } from '@/lib/cobrancas';
@@ -11,9 +10,12 @@ import { money } from '@/lib/cobrancas';
 interface Rule { id?: string; label: string; percent: number; destino: string; sort: number; }
 interface Allocation {
   id: string; label: string; destino: string; valor: number;
-  transferido: boolean; created_at: string;
-  charge?: { descricao: string; client?: { name: string } | null } | null;
+  transferido: boolean; transferido_at: string | null; created_at: string;
 }
+
+const MESES = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const mesLabel = (ym: string) => { const [y, m] = ym.split('-'); return `${MESES[parseInt(m, 10)]} ${y}`; };
 
 export function DistribuicaoTab() {
   const [wsId, setWsId] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export function DistribuicaoTab() {
       supabase.from('caixa_allocation_rules').select('id, label, percent, destino, sort')
         .eq('workspace_id', id).order('sort', { ascending: true }),
       supabase.from('caixa_allocations')
-        .select('id, label, destino, valor, transferido, created_at, charge:client_charges(descricao, client:clients(name))')
+        .select('id, label, destino, valor, transferido, transferido_at, created_at')
         .eq('workspace_id', id).order('created_at', { ascending: false }),
     ]);
     setRules((r ?? []).map((x: any) => ({ ...x, percent: Number(x.percent) })));
@@ -91,6 +93,19 @@ export function DistribuicaoTab() {
     }
     return Array.from(m.entries());
   }, [pendentes]);
+
+  // Histórico do que já foi transferido, agrupado por mês -> destino.
+  const historico = useMemo(() => {
+    const byMonth = new Map<string, { total: number; destinos: Map<string, number> }>();
+    for (const a of allocs.filter(x => x.transferido)) {
+      const key = (a.transferido_at ?? a.created_at).slice(0, 7); // YYYY-MM
+      const g = byMonth.get(key) ?? { total: 0, destinos: new Map() };
+      g.total += Number(a.valor);
+      g.destinos.set(a.destino, (g.destinos.get(a.destino) ?? 0) + Number(a.valor));
+      byMonth.set(key, g);
+    }
+    return Array.from(byMonth.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [allocs]);
 
   return (
     <div className="space-y-6">
@@ -165,7 +180,7 @@ export function DistribuicaoTab() {
                     {g.items.map(a => (
                       <div key={a.id} className="flex items-center justify-between gap-2 text-xs">
                         <span className="text-muted-foreground truncate">
-                          {a.label} • {a.charge?.client?.name ?? 'Cliente'} — {money(a.valor)}
+                          {a.label} — {money(a.valor)}
                         </span>
                         <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]"
                           disabled={busy !== null} onClick={() => marcarTransferido([a.id])}>
@@ -180,6 +195,34 @@ export function DistribuicaoTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Histórico transferido por mês */}
+      {historico.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2"><History className="w-4 h-4 text-primary" /> Histórico transferido</CardTitle>
+            <CardDescription>Total já distribuído para cada destino, por mês.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {historico.map(([ym, g]) => (
+              <div key={ym} className="rounded-lg border border-border p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-semibold text-sm">{mesLabel(ym)}</p>
+                  <p className="text-sm font-bold text-green-600">{money(g.total)}</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                  {Array.from(g.destinos.entries()).map(([destino, total]) => (
+                    <div key={destino} className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{destino}</span>
+                      <span className="font-medium text-foreground">{money(total)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
