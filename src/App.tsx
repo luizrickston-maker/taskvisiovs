@@ -267,6 +267,16 @@ const App = () => {
                     <ProjetosClientesPage />
                   </SafePage>
                 } />
+                <Route path="/pj/projetos/minhas-tarefas" element={
+                  <SafePage>
+                    <MyTasksPage />
+                  </SafePage>
+                } />
+                <Route path="/pj/projetos/:id" element={
+                  <SafePage>
+                    <ProjectDetailPage />
+                  </SafePage>
+                } />
                 <Route path="/pj/financeiro" element={
                   <SafePage>
                     <FinanceiroPage />

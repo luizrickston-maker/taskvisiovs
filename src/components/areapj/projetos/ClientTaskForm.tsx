@@ -46,11 +46,13 @@ interface ClientTaskFormProps {
   onOpenChange: (open: boolean) => void;
   projectId: string;
   task?: ProjectTask | null;
+  /** Quando definido, pré-preenche a etapa (criação rápida em uma etapa) */
+  defaultStageId?: string | null;
 }
 
-export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTaskFormProps) {
+export function ClientTaskForm({ open, onOpenChange, projectId, task, defaultStageId }: ClientTaskFormProps) {
   const { user } = useAuthContext();
-  const { addProjectTask, updateProjectTask, corporateTeam, projects } = useAppStore();
+  const { addProjectTask, updateProjectTask, corporateTeam, projects, projectStages } = useAppStore();
   const collaborators = corporateTeam.filter(m => m.member_user_id);
   const parentProject = projects.find(p => p.id === projectId);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,6 +68,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
     assigned_to: '' as string,
     estimated_hours: 0,
     actual_hours: 0,
+    stage_id: '' as string,
   });
 
   useEffect(() => {
@@ -80,6 +83,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
         assigned_to: task.assigned_to || '',
         estimated_hours: task.estimated_hours || 0,
         actual_hours: task.actual_hours || 0,
+        stage_id: task.stage_id || '',
       });
     } else {
       setFormData({
@@ -92,9 +96,10 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
         assigned_to: parentProject?.assigned_to || '',
         estimated_hours: 0,
         actual_hours: 0,
+        stage_id: defaultStageId || '',
       });
     }
-  }, [task, open, parentProject?.assigned_to]);
+  }, [task, open, parentProject?.assigned_to, defaultStageId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,6 +126,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
         assigned_to: formData.assigned_to === 'none' ? null : (formData.assigned_to || null),
         estimated_hours: formData.estimated_hours,
         actual_hours: formData.actual_hours,
+        stage_id: formData.stage_id || null,
         completed_at: formData.status === 'done' ? new Date().toISOString() : null,
       };
 
@@ -216,6 +222,35 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task }: ClientTa
                 rows={3}
               />
             </div>
+
+            {/* Seletor de Etapa (mostra se o projeto já tem etapas criadas) */}
+            {(() => {
+              const projectStagesList = projectStages
+                .filter(s => s.project_id === projectId)
+                .sort((a, b) => a.order_index - b.order_index);
+              if (projectStagesList.length === 0) return null;
+              return (
+                <div className="space-y-2">
+                  <Label htmlFor="stage_id">Etapa (opcional)</Label>
+                  <Select
+                    value={formData.stage_id || 'none'}
+                    onValueChange={(v) => setFormData(prev => ({ ...prev, stage_id: v === 'none' ? '' : v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma etapa..." />
+                    </SelectTrigger>
+                    <SelectContent className="z-[200]">
+                      <SelectItem value="none">Sem etapa</SelectItem>
+                      {projectStagesList.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.order_index + 1}. {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            })()}
             
             {/* Prazo */}
             <div className="space-y-2">
