@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
-import type { 
-  Income, Expense, Debt, Saving, Task, 
-  TimeBlock, Project, Script, Goal, Category, ProjectTask, SalesGoal, Prospect,
+import type {
+  Income, Expense, Debt, Saving, Task,
+  TimeBlock, Project, Script, Goal, Category, ProjectTask, ProjectStage, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
   CorporateCostCategory, CorporateCost, PurchasePlan, UserIncomeCategory, UserDebtCategory,
   Product, ProductPricingDetail
@@ -26,6 +26,7 @@ export function useRealtimeSync(userId: string | undefined) {
     addTimeBlock, updateTimeBlock, deleteTimeBlock,
     addProject, updateProject, deleteProject,
     addProjectTask, updateProjectTask, deleteProjectTask,
+    addProjectStage, updateProjectStage, deleteProjectStage,
     addScript, updateScript, deleteScript,
     addGoal, updateGoal, deleteGoal,
     addCategory, updateCategory, deleteCategory,
@@ -177,6 +178,22 @@ export function useRealtimeSync(userId: string | undefined) {
             updateProjectTask(newRecord.id, newRecord);
           } else if (eventType === 'DELETE') {
             deleteProjectTask(oldRecord.id);
+          }
+        }
+      )
+      // ProjectStages
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'project_stages' },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload as unknown as RealtimePayload<ProjectStage>;
+          if (eventType === 'INSERT') {
+            const exists = useAppStore.getState().projectStages.some(s => s.id === newRecord.id);
+            if (!exists) addProjectStage(newRecord);
+          } else if (eventType === 'UPDATE') {
+            updateProjectStage(newRecord.id, newRecord);
+          } else if (eventType === 'DELETE') {
+            deleteProjectStage(oldRecord.id);
           }
         }
       )

@@ -21,6 +21,7 @@ export interface Project {
   user_id: string;
   workspace_id: string | null;
   assigned_to?: string | null;
+  current_stage_id?: string | null;
 }
 
 export interface ProjectTask {
@@ -42,6 +43,32 @@ export interface ProjectTask {
   video_editing_briefing_id: string | null;
   workspace_id: string | null;
   assigned_to?: string | null;
+  stage_id?: string | null;
+  sort_order?: number;
+}
+
+export type ProjectStageStatus = 'todo' | 'in_progress' | 'blocked' | 'done';
+
+export interface ProjectStage {
+  id: string;
+  user_id: string | null;
+  workspace_id: string | null;
+  project_id: string;
+  name: string;
+  description: string | null;
+  status: ProjectStageStatus;
+  order_index: number;
+  icon: string | null;
+  color: string | null;
+  sla_days: number | null;
+  deadline: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  assigned_to: string | null;
+  notes: string | null;
+  template_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ProjectCategory {
@@ -52,6 +79,20 @@ export interface ProjectCategory {
   name: string;
   user_id: string;
   workspace_id: string | null;
+  default_stage_template?: string | null;
+}
+
+export type StageTemplateId = 'video' | 'design' | 'motion' | 'outros';
+
+export interface StageTemplate {
+  id: StageTemplateId;
+  label: string;
+  description: string;
+  stages: Array<{
+    name: string;
+    icon: string;
+    sla_days: number;
+  }>;
 }
 
 export interface Workspace {

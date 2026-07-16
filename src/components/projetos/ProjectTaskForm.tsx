@@ -21,6 +21,9 @@ interface ProjectTaskFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editTask?: ProjectTask | null;
+  /** Quando definido, pré-seleciona este projeto e esta etapa (criação rápida em etapa) */
+  defaultProjectId?: string;
+  defaultStageId?: string | null;
 }
 
 const statusOptions: { value: ProjectTaskStatus; label: string }[] = [
@@ -37,13 +40,14 @@ const priorityOptions = [
   { value: '5', label: 'P5 - Mínima', color: 'text-priority-minimal' },
 ];
 
-export default function ProjectTaskForm({ open, onOpenChange, editTask }: ProjectTaskFormProps) {
-  const { projects, addProjectTask, updateProjectTask, corporateTeam } = useAppStore();
+export default function ProjectTaskForm({ open, onOpenChange, editTask, defaultProjectId, defaultStageId }: ProjectTaskFormProps) {
+  const { projects, addProjectTask, updateProjectTask, corporateTeam, projectStages } = useAppStore();
   const navigate = useNavigate();
-  
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [projectId, setProjectId] = useState<string>('');
+  const [stageId, setStageId] = useState<string>('');
   const [priority, setPriority] = useState('3');
   const [status, setStatus] = useState<ProjectTaskStatus>('todo');
   const [deadline, setDeadline] = useState<string>('');
@@ -55,19 +59,24 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
       setTitle(editTask.title);
       setDescription(editTask.description || '');
       setProjectId(editTask.project_id || '');
+      setStageId(editTask.stage_id || '');
       setPriority(String(editTask.priority));
       setStatus(editTask.status);
       setDeadline(editTask.deadline || '');
       setAssignedTo(editTask.assigned_to || 'none');
     } else {
       resetForm();
+      // Pré-preencher com defaults (criação rápida dentro de uma etapa)
+      if (defaultProjectId) setProjectId(defaultProjectId);
+      if (defaultStageId) setStageId(defaultStageId);
     }
-  }, [editTask, open]);
+  }, [editTask, open, defaultProjectId, defaultStageId]);
 
   const resetForm = () => {
     setTitle('');
     setDescription('');
     setProjectId('');
+    setStageId('');
     setPriority('3');
     setStatus('todo');
     setDeadline('');
@@ -89,6 +98,7 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
       title: title.trim(),
       description: description.trim() || null,
       project_id: projectId || null,
+      stage_id: stageId || null,
       priority: Number(priority),
       status,
       deadline: deadline || null,
@@ -162,9 +172,13 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
 
           <div className="space-y-2">
             <Label>Projeto</Label>
-            <Select 
-              value={projectId || "none"} 
-              onValueChange={(v) => setProjectId(v === "none" ? "" : v)}
+            <Select
+              value={projectId || "none"}
+              onValueChange={(v) => {
+                setProjectId(v === "none" ? "" : v);
+                // Ao trocar de projeto, resetar a etapa selecionada
+                if (v === "none") setStageId("");
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um projeto..." />
@@ -179,6 +193,35 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask }: Projec
               </SelectContent>
             </Select>
           </div>
+
+          {/* Seletor de Etapa (apenas se houver projeto selecionado e etapas criadas) */}
+          {projectId && (() => {
+            const projectStagesList = projectStages
+              .filter(s => s.project_id === projectId)
+              .sort((a, b) => a.order_index - b.order_index);
+            if (projectStagesList.length === 0) return null;
+            return (
+              <div className="space-y-2">
+                <Label>Etapa (opcional)</Label>
+                <Select
+                  value={stageId || "none"}
+                  onValueChange={(v) => setStageId(v === "none" ? "" : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma etapa..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem etapa</SelectItem>
+                    {projectStagesList.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.order_index + 1}. {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          })()}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
