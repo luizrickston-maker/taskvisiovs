@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Plus, ListTodo, Loader2, Ban, CheckCircle2, FolderKanban, LayoutGrid, ClipboardList, Calendar as CalendarIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, ListTodo, Loader2, Ban, CheckCircle2, FolderKanban, LayoutGrid, ClipboardList, Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,12 +9,15 @@ import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import KanbanColumn from '@/components/projetos/KanbanColumn';
-import ProjectForm from '@/components/projetos/ProjectForm';
+import ProjectCard from '@/components/projetos/ProjectCard';
+import ProjectWizard from '@/components/projetos/ProjectWizard';
 import CategoryManager from '@/components/projetos/CategoryManager';
 import ProjectTasksSection from '@/components/projetos/ProjectTasksSection';
 import ProjectCalendar from '@/components/projetos/ProjectCalendar';
 import ProjectTaskForm from '@/components/projetos/ProjectTaskForm';
+import { computeSla } from '@/lib/sla';
 import type { Project, ProjectStatus, ProjectTask } from '@/types/database';
 
 const columns: { status: ProjectStatus; title: string; icon: typeof ListTodo; color: string }[] = [
@@ -24,6 +28,7 @@ const columns: { status: ProjectStatus; title: string; icon: typeof ListTodo; co
 ];
 
 export default function ProjetosDashboard() {
+  const navigate = useNavigate();
   const { projects, projectCategories, projectTasks, updateProject, deleteProject } = useAppStore();
   const [formOpen, setFormOpen] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
@@ -38,7 +43,11 @@ export default function ProjetosDashboard() {
     const inProgress = projects.filter(p => p.status === 'progress').length;
     const blocked = projects.filter(p => p.status === 'blocked').length;
     const done = projects.filter(p => p.status === 'done').length;
-    return { total, todo, inProgress, blocked, done };
+    const overdue = projects.filter(p => {
+      if (p.status === 'done' || !p.deadline) return false;
+      return computeSla(p.deadline, p.status).level === 'overdue';
+    }).length;
+    return { total, todo, inProgress, blocked, done, overdue };
   }, [projects]);
 
   const handleDrop = async (projectId: string, newStatus: string) => {
@@ -107,10 +116,14 @@ export default function ProjetosDashboard() {
           <Plus className="w-4 h-4" />
           Novo Projeto
         </Button>
+        <Button variant="outline" onClick={() => navigate('/projetos/minhas-tarefas')} className="gap-2 w-full md:w-auto">
+          <ListTodo className="w-4 h-4" />
+          Minhas Tarefas
+        </Button>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="glass-card">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -139,15 +152,17 @@ export default function ProjetosDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
+        <Card className={cn("glass-card", kpis.overdue > 0 && "border-status-blocked/40 bg-status-blocked/5")}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Bloqueados</p>
-                <p className="text-2xl font-bold text-destructive">{kpis.blocked}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Atrasados</p>
+                <p className={cn("text-2xl font-bold", kpis.overdue > 0 ? "text-status-blocked" : "text-muted-foreground")}>
+                  {kpis.overdue}
+                </p>
               </div>
-              <div className="p-2 rounded-lg bg-destructive/10">
-                <Ban className="w-5 h-5 text-destructive" />
+              <div className="p-2 rounded-lg bg-status-blocked/10">
+                <AlertTriangle className="w-5 h-5 text-status-blocked" />
               </div>
             </div>
           </CardContent>
@@ -244,6 +259,15 @@ export default function ProjetosDashboard() {
                 onDrop={handleDrop}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                renderCard={(project, category, onEdit, onDelete) => (
+                  <ProjectCard
+                    project={project}
+                    category={category}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    linkToDetail
+                  />
+                )}
               />
             ))}
           </div>
@@ -268,8 +292,8 @@ export default function ProjetosDashboard() {
         </TabsContent>
       </Tabs>
 
-      {/* Project Form Dialog */}
-      <ProjectForm
+      {/* Project Wizard Dialog */}
+      <ProjectWizard
         open={formOpen}
         onOpenChange={handleFormClose}
         editProject={editProject}

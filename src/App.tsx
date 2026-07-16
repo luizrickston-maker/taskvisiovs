@@ -32,6 +32,8 @@ const PortalRedirect = lazy(() => import("@/pages/PortalRedirect"));
 const FinancasDashboard = lazy(() => import("@/pages/FinancasDashboard"));
 const PlanejamentoDashboard = lazy(() => import("@/pages/PlanejamentoDashboard"));
 const ProjetosDashboard = lazy(() => import("@/pages/ProjetosDashboard"));
+const ProjectDetailPage = lazy(() => import("@/pages/ProjectDetailPage"));
+const MyTasksPage = lazy(() => import("@/pages/MyTasksPage"));
 const ComercialDashboard = lazy(() => import("@/pages/ComercialDashboard"));
 const ConteudosDashboard = lazy(() => import("@/pages/ConteudosDashboard"));
 const RoteirosDashboard = lazy(() => import("@/pages/RoteirosDashboard"));
@@ -216,6 +218,16 @@ const App = () => {
                 <Route path="/projetos" element={
                   <SafePage>
                     <ProjetosDashboard />
+                  </SafePage>
+                } />
+                <Route path="/projetos/minhas-tarefas" element={
+                  <SafePage>
+                    <MyTasksPage />
+                  </SafePage>
+                } />
+                <Route path="/projetos/:id" element={
+                  <SafePage>
+                    <ProjectDetailPage />
                   </SafePage>
                 } />
                 <Route path="/conteudos" element={

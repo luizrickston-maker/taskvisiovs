@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/stores/useAppStore';
-import type { 
-  Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script, 
-  UserPreference, CustomTimeBlockType, ProjectTask, SalesGoal, Prospect,
+import type {
+  Category, Income, Expense, Debt, Saving, Goal, Task, TimeBlock, ProjectCategory, Project, Script,
+  UserPreference, CustomTimeBlockType, ProjectTask, ProjectStage, SalesGoal, Prospect,
   CorporatePricing, CorporateInvestment, CorporateTeamMember, ServicePlan, ServicePlanItem,
   DocumentType, CorporateCostCategory, CorporateCost, PaymentFeeSetting, PurchasePlan,
   UserIncomeCategory, UserDebtCategory, Product, ProductPricingDetail
@@ -13,6 +13,9 @@ import type { EditorialCalendarItem, EditorialComment } from '@/types/editorial'
 export function useInitializeData(userId: string | undefined) {
   const loadingRef = useRef(false);
   const store = useAppStore();
+
+  // Cast para tabelas novas (project_stages) ainda não reconhecidas pelo gerador de tipos
+  const db = supabase as unknown as { from: (t: string) => any };
 
   useEffect(() => {
     if (!userId || loadingRef.current || store.dataInitialized) return;
@@ -76,7 +79,7 @@ export function useInitializeData(userId: string | undefined) {
       const [
         userIncomeCategoriesRes, userDebtCategoriesRes,
         customTimeBlockTypesRes, projectCategoriesRes, projectsRes,
-        projectTasksRes, scriptsRes, salesGoalsRes, prospectsRes,
+        projectTasksRes, projectStagesRes, scriptsRes, salesGoalsRes, prospectsRes,
         corporatePricingsRes, corporateInvestmentsRes, corporateTeamRes,
         servicePlansRes, servicePlanItemsRes, documentTypesRes,
         costCategoriesRes, costsRes, paymentFeeSettingsRes,
@@ -89,6 +92,7 @@ export function useInitializeData(userId: string | undefined) {
         supabase.from('project_categories').select('*').order('created_at', { ascending: true }),
         supabase.from('projects').select('*').order('priority', { ascending: true }),
         supabase.from('project_tasks').select('*').order('priority', { ascending: true }).limit(500),
+        db.from('project_stages').select('*').order('order_index', { ascending: true }).limit(2000),
         supabase.from('scripts').select('*').order('scheduled_date', { ascending: true }).limit(200),
         supabase.from('sales_goals').select('*').order('start_date', { ascending: false }).limit(100),
         supabase.from('prospects').select('*').order('prospection_date', { ascending: false }).limit(200),
@@ -114,6 +118,7 @@ export function useInitializeData(userId: string | undefined) {
       if (projectCategoriesRes.data) store.setProjectCategories(projectCategoriesRes.data as ProjectCategory[]);
       if (projectsRes.data) store.setProjects(projectsRes.data as Project[]);
       if (projectTasksRes.data) store.setProjectTasks(projectTasksRes.data as ProjectTask[]);
+      if (projectStagesRes.data) store.setProjectStages(projectStagesRes.data as ProjectStage[]);
       if (scriptsRes.data) store.setScripts(scriptsRes.data as Script[]);
       if (salesGoalsRes.data) store.setSalesGoals(salesGoalsRes.data as SalesGoal[]);
       if (prospectsRes.data) store.setProspects(prospectsRes.data as Prospect[]);

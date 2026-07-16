@@ -86,6 +86,7 @@ export const useAppStore = create<AppState>()((...args) => ({
     projectCategories: [],
     projects: [],
     projectTasks: [],
+    projectStages: [],
     scripts: [],
     
     // Sales

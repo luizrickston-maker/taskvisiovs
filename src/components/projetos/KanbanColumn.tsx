@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { Project, ProjectCategory } from '@/types/database';
 import ProjectCard from './ProjectCard';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 
 interface KanbanColumnProps {
   title: string;
@@ -15,6 +15,13 @@ interface KanbanColumnProps {
   onDrop: (projectId: string, newStatus: string) => void;
   onEdit: (project: Project) => void;
   onDelete: (projectId: string) => void;
+  /** Permite customizar a renderização do card (ex: com link para detalhe) */
+  renderCard?: (
+    project: Project,
+    category: ProjectCategory | undefined,
+    onEdit: () => void,
+    onDelete: () => void,
+  ) => ReactNode;
 }
 
 export default function KanbanColumn({
@@ -27,6 +34,7 @@ export default function KanbanColumn({
   onDrop,
   onEdit,
   onDelete,
+  renderCard,
 }: KanbanColumnProps) {
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -147,12 +155,21 @@ export default function KanbanColumn({
                 focusedIndex === index && "ring-2 ring-primary ring-offset-2 ring-offset-background"
               )}
             >
-              <ProjectCard
-                project={project}
-                category={categories.find(c => c.id === project.project_category_id)}
-                onEdit={() => onEdit(project)}
-                onDelete={() => onDelete(project.id)}
-              />
+              {renderCard ? (
+                renderCard(
+                  project,
+                  categories.find(c => c.id === project.project_category_id),
+                  () => onEdit(project),
+                  () => onDelete(project.id),
+                )
+              ) : (
+                <ProjectCard
+                  project={project}
+                  category={categories.find(c => c.id === project.project_category_id)}
+                  onEdit={() => onEdit(project)}
+                  onDelete={() => onDelete(project.id)}
+                />
+              )}
             </div>
           ))
         )}
