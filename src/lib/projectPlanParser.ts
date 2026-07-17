@@ -204,8 +204,8 @@ export function validatePlan(plan: ProjectPlanV1): PlanValidationIssue[] {
       if (task.deadline && ISO_DATE_RE.test(stage.deadline) && task.deadline > stage.deadline) {
         issues.push({ severity: "error", path: `${tpath}.deadline`, message: `Tarefa com deadline ${task.deadline} após o da etapa ${stage.deadline}.` });
       }
-      if (task.estimated_hours && (task.estimated_hours < 0.5 || task.estimated_hours > 8)) {
-        issues.push({ severity: "warning", path: `${tpath}.estimated_hours`, message: `Tarefa com ${task.estimated_hours}h (recomendado 0.5-8h).` });
+      if (task.estimated_hours && (task.estimated_hours < 0.5 || task.estimated_hours > 12)) {
+        issues.push({ severity: "warning", path: `${tpath}.estimated_hours`, message: `Tarefa com ${task.estimated_hours}h (recomendado 0.5-12h; considere quebrar se passar de 12h).` });
       }
     });
   });

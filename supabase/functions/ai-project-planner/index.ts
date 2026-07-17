@@ -169,7 +169,7 @@ Bloco de código sempre identificado por json-project-plan (sem isso o sistema n
 - Sempre incluir work_calendar no JSON, mesmo em planos triviais.
 - Cronologia monotônica: nunca etapa posterior com deadline anterior.
 - Se o cliente pedir algo inviável dentro da capacidade de 43h/sem por pessoa, NÃO recalcular — registrar em Premissas e deixar o gestor decidir.
-- Tarefas devem ser acionáveis por uma pessoa só e concluíveis em 0.5-8h.
+- Tarefas devem ser acionáveis por uma pessoa só e concluíveis em 0.5-12h. Tarefas de captação/edição longas (gravação contínua, dia inteiro de filmagem) podem chegar a 10-12h; tarefas de gestão/reunião ficam em 0.5-2h. Se passar de 12h, quebrar em 2 tarefas (Parte 1 / Parte 2) ANTES de retornar.
 - Se faltar categoria, inferir pelo nome: contém "vídeo/reels/shorts" → Vídeo; "design/arte/capa/thumb" → Design; "motion/animação" → Motion; senão → Outros.
 - Se faltar prioridade, P3 (Média); upgrade para P2 se prazo < 2 semanas; P1 se < 1 semana.
 - Se faltar deadline do projeto, ancorar HOJE + soma dos SLAs + folga.
