@@ -369,7 +369,7 @@ export function ProjectPlannerPage() {
             )}
 
             {parsedPlan && (
-              <Tabs defaultValue="summary" className="flex-1 flex flex-col">
+              <Tabs defaultValue="summary" className="flex-1 flex flex-col min-h-0">
                 <TabsList className="m-2 self-start">
                   <TabsTrigger value="summary" className="text-xs">
                     <FileText className="h-3 w-3 mr-1" />
@@ -381,11 +381,11 @@ export function ProjectPlannerPage() {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="summary" className="flex-1 overflow-auto px-4 pb-4 mt-0">
+                <TabsContent value="summary" className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 mt-0 data-[state=inactive]:hidden">
                   <PlanSummary parsed={parsedPlan} />
                 </TabsContent>
 
-                <TabsContent value="json" className="flex-1 overflow-auto px-4 pb-4 mt-0">
+                <TabsContent value="json" className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 mt-0 data-[state=inactive]:hidden">
                   <pre className="text-xs bg-muted p-3 rounded-md overflow-auto whitespace-pre-wrap break-all">
                     {JSON.stringify(parsedPlan.plan, null, 2)}
                   </pre>
