@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays, Wrench, Shield, ChevronDown, Workflow, Layout, CalendarClock } from 'lucide-react';
+import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays, Wrench, Shield, ChevronDown, Workflow, Layout, CalendarClock, Sparkles } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -55,6 +55,7 @@ const businessNavItems: NavItem[] = [
     ],
   },
   { title: 'Projetos', url: '/pj/projetos', icon: FolderKanban },
+  { title: 'Planejamento IA', url: '/pj/planejamento-ia', icon: Sparkles },
   { title: 'Briefings', url: '/pj/briefings', icon: FileText },
   { title: 'Processos', url: '/pj/processos', icon: Workflow },
   { title: 'Agenda', url: '/pj/agenda', icon: CalendarClock },

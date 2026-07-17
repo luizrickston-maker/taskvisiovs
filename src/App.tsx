@@ -48,6 +48,7 @@ const ProjetosClientesPage = lazy(() => import("@/pages/PJ/ProjetosClientesPage"
 const AgendaPage = lazy(() => import("@/pages/PJ/AgendaPage"));
 const CalendarioEditorialPage = lazy(() => import("@/pages/PJ/CalendarioEditorialPage"));
 const AI360DashboardPage = lazy(() => import("@/pages/PJ/AI360DashboardPage"));
+const ProjectPlannerPage = lazy(() => import("@/pages/PJ/ProjectPlannerPage"));
 const AiAgentsManagerPage = lazy(() => import("@/pages/PJ/AiAgentsManagerPage"));
 const ProcessosPage = lazy(() => import("@/pages/PJ/ProcessosPage"));
 const ProcessEditorPage = lazy(() => import("@/pages/PJ/ProcessEditorPage"));
@@ -315,6 +316,11 @@ const App = () => {
                 <Route path="/pj/agentes-ia" element={
                   <SafePage>
                     <AiAgentsManagerPage />
+                  </SafePage>
+                } />
+                <Route path="/pj/planejamento-ia" element={
+                  <SafePage>
+                    <ProjectPlannerPage />
                   </SafePage>
                 } />
                 <Route path="/pj/processos" element={
