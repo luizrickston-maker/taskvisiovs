@@ -193,11 +193,11 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task, defaultSta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-lg max-h-[85vh] flex flex-col p-0">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-4 pb-2 shrink-0">
           <DialogTitle>{task ? 'Editar Tarefa' : 'Nova Tarefa'}</DialogTitle>
         </DialogHeader>
-        
+
         <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
           <form id="client-task-form" onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -210,7 +210,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task, defaultSta
                 maxLength={200}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="description">Descrição</Label>
               <Textarea
@@ -219,7 +219,8 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task, defaultSta
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Detalhes da tarefa..."
                 maxLength={500}
-                rows={3}
+                rows={2}
+                className="resize-none"
               />
             </div>
 

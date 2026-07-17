@@ -143,7 +143,7 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask, defaultP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {editTask ? 'Editar Tarefa' : 'Nova Tarefa'}
@@ -163,10 +163,11 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask, defaultP
           <div className="space-y-2">
             <Label>Descrição</Label>
             <Textarea
-              placeholder="Descreva os detalhes da tarefa..."
+              placeholder="Detalhes da tarefa (opcional)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={3}
+              rows={2}
+              className="resize-none"
             />
           </div>
 
@@ -194,36 +195,63 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask, defaultP
             </Select>
           </div>
 
-          {/* Seletor de Etapa (apenas se houver projeto selecionado e etapas criadas) */}
-          {projectId && (() => {
-            const projectStagesList = projectStages
-              .filter(s => s.project_id === projectId)
-              .sort((a, b) => a.order_index - b.order_index);
-            if (projectStagesList.length === 0) return null;
-            return (
-              <div className="space-y-2">
-                <Label>Etapa (opcional)</Label>
-                <Select
-                  value={stageId || "none"}
-                  onValueChange={(v) => setStageId(v === "none" ? "" : v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma etapa..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem etapa</SelectItem>
-                    {projectStagesList.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.order_index + 1}. {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            );
-          })()}
+          {/* Projeto + Etapa em grid horizontal */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Projeto</Label>
+              <Select
+                value={projectId || "none"}
+                onValueChange={(v) => {
+                  setProjectId(v === "none" ? "" : v);
+                  if (v === "none") setStageId("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um projeto..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum projeto</SelectItem>
+                  {projects.map((proj) => (
+                    <SelectItem key={proj.id} value={proj.id}>
+                      {proj.project}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="grid grid-cols-2 gap-4">
+            {/* Etapa inline (só renderiza se houver projeto+etapas) */}
+            {projectId && (() => {
+              const projectStagesList = projectStages
+                .filter(s => s.project_id === projectId)
+                .sort((a, b) => a.order_index - b.order_index);
+              if (projectStagesList.length === 0) return null;
+              return (
+                <div className="space-y-2">
+                  <Label>Etapa</Label>
+                  <Select
+                    value={stageId || "none"}
+                    onValueChange={(v) => setStageId(v === "none" ? "" : v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem etapa</SelectItem>
+                      {projectStagesList.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.order_index + 1}. {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Prioridade + Status + Prazo + Colaborador em grid 4-col */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Prioridade</Label>
               <Select value={priority} onValueChange={setPriority}>
@@ -257,75 +285,78 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask, defaultP
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Prazo</Label>
-            <Popover>
-              <PopoverTrigger asChild>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Prazo</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !deadline && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {deadline ? (
+                      format(parseISO(deadline), "dd 'de' MMMM, yyyy", { locale: ptBR })
+                    ) : (
+                      "Selecione uma data"
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={deadline ? parseISO(deadline) : undefined}
+                    onSelect={(date) => setDeadline(date ? format(date, 'yyyy-MM-dd') : '')}
+                    locale={ptBR}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              {deadline && (
                 <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !deadline && "text-muted-foreground"
-                  )}
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={() => setDeadline('')}
+                  className="h-7 px-2 text-xs text-muted-foreground"
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {deadline ? (
-                    format(parseISO(deadline), "dd 'de' MMMM, yyyy", { locale: ptBR })
-                  ) : (
-                    "Selecione uma data"
-                  )}
+                  <X className="w-3 h-3 mr-1" />
+                  Limpar prazo
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={deadline ? parseISO(deadline) : undefined}
-                  onSelect={(date) => setDeadline(date ? format(date, 'yyyy-MM-dd') : '')}
-                  locale={ptBR}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-            {deadline && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setDeadline('')}
-                className="h-8 px-2 text-xs text-muted-foreground"
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Atribuir a Colaborador</Label>
+              <Select
+                value={assignedTo || "none"}
+                onValueChange={setAssignedTo}
               >
-                <X className="w-3 h-3 mr-1" />
-                Limpar prazo
-              </Button>
-            )}
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Ninguém (Apenas eu)</SelectItem>
+                  {corporateTeam
+                    .filter(m => m.is_active && m.member_user_id)
+                    .map((member) => (
+                      <SelectItem key={member.member_user_id} value={member.member_user_id!}>
+                        {member.name} ({member.role})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Atribuir a Colaborador</Label>
-            <Select 
-              value={assignedTo || "none"} 
-              onValueChange={setAssignedTo}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um colaborador..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Ninguém (Apenas eu)</SelectItem>
-                {corporateTeam
-                  .filter(m => m.is_active && m.member_user_id)
-                  .map((member) => (
-                    <SelectItem key={member.member_user_id} value={member.member_user_id!}>
-                      {member.name} ({member.role})
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-col gap-2 pt-2">
+          <div className="flex flex-col gap-2 pt-4 border-t">
             {editTask && (
-              <Button 
-                type="button" 
-                variant="secondary" 
+              <Button
+                type="button"
+                variant="secondary"
                 className="w-full gap-2"
                 onClick={() => navigate(`/pj/projetos/tarefas/${editTask.id}/briefing`)}
               >
