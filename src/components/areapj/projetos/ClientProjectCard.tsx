@@ -25,6 +25,8 @@ interface ClientProjectCardProps {
   onDelete: () => void;
   /** Quando true (PJ), navega para /pj/projetos/:id; senão para /projetos/:id */
   basePath?: 'pj' | 'personal';
+  /** Quando false, o card não é arrastável (default: true) */
+  draggable?: boolean;
 }
 
 const priorityConfig: Record<number, { label: string; color: string; bg: string }> = {
@@ -35,7 +37,7 @@ const priorityConfig: Record<number, { label: string; color: string; bg: string 
   5: { label: 'Mínima',  color: 'text-priority-minimal',  bg: 'bg-priority-minimal' },
 };
 
-export function ClientProjectCard({ project, tasks, onEdit, onDelete, basePath = 'pj' }: ClientProjectCardProps) {
+export function ClientProjectCard({ project, tasks, onEdit, onDelete, basePath = 'pj', draggable = true }: ClientProjectCardProps) {
   const navigate = useNavigate();
   const { projectStages } = useAppStore();
 
@@ -70,10 +72,26 @@ export function ClientProjectCard({ project, tasks, onEdit, onDelete, basePath =
     navigate(basePath === 'pj' ? `/pj/projetos/${project.id}` : `/projetos/${project.id}`);
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('projectId', project.id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.currentTarget.classList.add('opacity-50', 'scale-95');
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove('opacity-50', 'scale-95');
+  };
+
   return (
     <div
+      draggable={draggable}
+      onDragStart={draggable ? handleDragStart : undefined}
+      onDragEnd={draggable ? handleDragEnd : undefined}
       onClick={handleCardClick}
-      className="group relative rounded-lg bg-background/80 border border-border/50 hover:shadow-lg hover:bg-background transition-all duration-200 overflow-hidden cursor-pointer hover:border-primary/40"
+      className={cn(
+        "group relative rounded-lg bg-background/80 border border-border/50 hover:shadow-lg hover:bg-background transition-all duration-200 overflow-hidden cursor-pointer hover:border-primary/40",
+        draggable && "active:cursor-grabbing"
+      )}
     >
       {/* Barra colorida de PRIORIDADE no topo */}
       <div className={cn("h-1 w-full", priority.bg)} aria-hidden />
@@ -180,6 +198,7 @@ export function ClientProjectCard({ project, tasks, onEdit, onDelete, basePath =
                 size="icon"
                 className="h-7 w-7 transition-opacity"
                 onClick={(e) => e.stopPropagation()}
+                onDragStart={(e) => e.stopPropagation()}
               >
                 <MoreVertical className="w-4 h-4" />
               </Button>
