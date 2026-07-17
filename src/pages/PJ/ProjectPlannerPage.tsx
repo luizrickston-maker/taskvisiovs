@@ -51,26 +51,38 @@ export function ProjectPlannerPage() {
   const [input, setInput] = useState("");
   const [streamingContent, setStreamingContent] = useState("");
   const [agentId, setAgentId] = useState<string | null>(null);
+  const [agentError, setAgentError] = useState<string | null>(null);
+  const [isCreatingAgent, setIsCreatingAgent] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { send, isSending, error } = useProjectPlannerChat();
   const { importPlan, isImporting } = useImportProjectPlan();
 
   // Garante que o agente "Planejamento de Projeto (IA)" existe para este usuário
   // (RPC ensure_planner_agent é idempotente e por-usuário)
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  const ensureAgent = useCallback(async () => {
+    setIsCreatingAgent(true);
+    setAgentError(null);
+    try {
       const { data, error } = await supabase.rpc("ensure_planner_agent");
-      if (!cancelled) {
-        if (error) {
-          console.warn("[ProjectPlannerPage] ensure_planner_agent error:", error);
-        } else if (data) {
-          setAgentId(data as string);
-        }
+      if (error) {
+        console.error("[ProjectPlannerPage] ensure_planner_agent error:", error);
+        setAgentError(`Erro ao criar agente: ${error.message} (código: ${error.code || "?"})`);
+        return;
       }
-    })();
-    return () => { cancelled = true; };
+      if (data) {
+        setAgentId(data as string);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setAgentError(`Exceção: ${msg}`);
+    } finally {
+      setIsCreatingAgent(false);
+    }
   }, []);
+
+  useEffect(() => {
+    ensureAgent();
+  }, [ensureAgent]);
 
   // Auto-scroll para o fim do chat
   useEffect(() => {
@@ -158,11 +170,42 @@ export function ProjectPlannerPage() {
             <CardTitle className="text-sm flex items-center gap-2">
               <Bot className="h-4 w-4 text-violet-500" />
               Conversa com o agente
+              <span className="ml-auto text-xs text-muted-foreground">
+                {agentId ? (
+                  <span className="text-emerald-600">✓ agente pronto</span>
+                ) : isCreatingAgent ? (
+                  <span className="text-amber-600">criando agente...</span>
+                ) : (
+                  <span className="text-amber-600">sem agente</span>
+                )}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
             <ScrollArea className="flex-1 px-4 py-3" ref={scrollRef}>
               <div className="space-y-3">
+                {agentError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs space-y-2">
+                      <div>{agentError}</div>
+                      <div className="text-xs opacity-80">
+                        Verifique se rodou o <code className="bg-muted px-1 rounded">setup-planner-ia.sql</code> no Supabase.
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={ensureAgent}
+                        disabled={isCreatingAgent}
+                        className="h-7 text-xs"
+                      >
+                        <RefreshCw className={`h-3 w-3 mr-1 ${isCreatingAgent ? "animate-spin" : ""}`} />
+                        Tentar novamente
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {turns.length === 0 && !streamingContent && (
                   <div className="space-y-3">
                     <Alert>
