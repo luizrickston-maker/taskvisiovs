@@ -22,8 +22,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   FolderKanban, Plus, Search, Briefcase,
-  Clock, CheckCircle2, AlertTriangle, ListTodo,
+  Clock, CheckCircle2, AlertTriangle, ListTodo, Loader2, Ban,
+  LayoutGrid, ClipboardList, Calendar as CalendarIcon,
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAppStore } from '@/stores/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -32,10 +34,21 @@ import { computeSla } from '@/lib/sla';
 import type { Project } from '@/types/database';
 import { ClientProjectCard } from '@/components/areapj/projetos/ClientProjectCard';
 import ProjectWizard from '@/components/projetos/ProjectWizard';
+import KanbanColumn from '@/components/projetos/KanbanColumn';
+import ProjectCalendar from '@/components/projetos/ProjectCalendar';
+import { ClientTaskForm } from '@/components/areapj/projetos/ClientTaskForm';
+import type { ProjectTask } from '@/types/database';
+
+const columns: { status: string; title: string; icon: typeof ListTodo; color: string }[] = [
+  { status: 'todo', title: 'A Fazer', icon: ListTodo, color: 'text-primary' },
+  { status: 'progress', title: 'Em Progresso', icon: Loader2, color: 'text-status-progress' },
+  { status: 'blocked', title: 'Bloqueado', icon: Ban, color: 'text-status-blocked' },
+  { status: 'done', title: 'Concluído', icon: CheckCircle2, color: 'text-status-done' },
+];
 
 export default function ProjetosClientesPage() {
   const navigate = useNavigate();
-  const { projects, projectTasks, deleteProject } = useAppStore();
+  const { projects, projectTasks, deleteProject, updateProject } = useAppStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -44,6 +57,10 @@ export default function ProjetosClientesPage() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
+
+  // Estado do form de tarefa (para o calendário poder clicar)
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
 
   const corporateProjects = useMemo(() =>
     projects.filter(p => p.is_corporate === true),
@@ -98,6 +115,18 @@ export default function ProjetosClientesPage() {
     } finally {
       setDeletingProjectId(null);
     }
+  };
+
+  const handleDrop = async (projectId: string, newStatus: string) => {
+    const { error } = await supabase
+      .from('projects')
+      .update({ status: newStatus })
+      .eq('id', projectId);
+    if (error) {
+      toast.error('Erro ao mover projeto');
+      return;
+    }
+    updateProject(projectId, { status: newStatus as Project['status'] });
   };
 
   const getProjectTasks = (projectId: string) => {
@@ -267,7 +296,7 @@ export default function ProjetosClientesPage() {
         </CardContent>
       </Card>
 
-      {/* Projects Grid */}
+      {/* Projects: Kanban (default) / Lista / Calendario */}
       {sortedProjects.length === 0 ? (
         <div className="text-center py-12">
           <FolderKanban className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -291,21 +320,90 @@ export default function ProjetosClientesPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sortedProjects.map(project => (
-            <ClientProjectCard
-              key={project.id}
-              project={project}
-              tasks={getProjectTasks(project.id)}
-              basePath="pj"
-              onEdit={() => {
-                setEditingProject(project);
-                setWizardOpen(true);
-              }}
-              onDelete={() => setDeletingProjectId(project.id)}
-            />
-          ))}
-        </div>
+        <Tabs defaultValue="kanban" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3 max-w-md">
+            <TabsTrigger value="kanban" className="gap-2">
+              <LayoutGrid className="w-4 h-4" />
+              Kanban
+            </TabsTrigger>
+            <TabsTrigger value="lista" className="gap-2">
+              <ClipboardList className="w-4 h-4" />
+              Lista
+            </TabsTrigger>
+            <TabsTrigger value="calendario" className="gap-2">
+              <CalendarIcon className="w-4 h-4" />
+              Calendário
+            </TabsTrigger>
+          </TabsList>
+
+          {/* KANBAN (default) */}
+          <TabsContent value="kanban" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {columns.map((col) => (
+                <KanbanColumn
+                  key={col.status}
+                  title={col.title}
+                  status={col.status}
+                  icon={col.icon}
+                  color={col.color}
+                  projects={sortedProjects.filter((p) => p.status === col.status)}
+                  categories={[]}
+                  onDrop={handleDrop}
+                  onEdit={(project) => {
+                    setEditingProject(project);
+                    setWizardOpen(true);
+                  }}
+                  onDelete={(projectId) => setDeletingProjectId(projectId)}
+                  renderCard={(project, _category, onEdit, onDelete) => (
+                    <ClientProjectCard
+                      project={project}
+                      tasks={getProjectTasks(project.id)}
+                      basePath="pj"
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
+                  )}
+                />
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* LISTA */}
+          <TabsContent value="lista" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sortedProjects.map(project => (
+                <ClientProjectCard
+                  key={project.id}
+                  project={project}
+                  tasks={getProjectTasks(project.id)}
+                  basePath="pj"
+                  onEdit={() => {
+                    setEditingProject(project);
+                    setWizardOpen(true);
+                  }}
+                  onDelete={() => setDeletingProjectId(project.id)}
+                />
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* CALENDARIO (mostra tarefas dos projetos PJ com prazo) */}
+          <TabsContent value="calendario">
+            <Card className="glass-card">
+              <CardContent className="p-4">
+                <ProjectCalendar
+                  tasks={projectTasks.filter(t =>
+                    sortedProjects.some(p => p.id === t.project_id)
+                  )}
+                  onTaskClick={(task) => {
+                    setEditingTask(task);
+                    setTaskFormOpen(true);
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       )}
 
       {/* Wizard (substitui o modal único antigo) */}
@@ -317,6 +415,19 @@ export default function ProjetosClientesPage() {
         }}
         editProject={editingProject}
       />
+
+      {/* Form de tarefa (acionado pelo calendário) */}
+      {editingTask && (
+        <ClientTaskForm
+          open={taskFormOpen}
+          onOpenChange={(open) => {
+            setTaskFormOpen(open);
+            if (!open) setEditingTask(null);
+          }}
+          projectId={editingTask.project_id || ''}
+          task={editingTask}
+        />
+      )}
 
       <AlertDialog open={!!deletingProjectId} onOpenChange={() => setDeletingProjectId(null)}>
         <AlertDialogContent>
