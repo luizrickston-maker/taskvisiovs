@@ -63,7 +63,11 @@ export function ProjectPlannerPage() {
     setIsCreatingAgent(true);
     setAgentError(null);
     try {
-      const { data, error } = await supabase.rpc("ensure_planner_agent");
+      // Cast agressivo: a RPC existe no banco mas ainda não foi regenerada nos tipos
+      const client = supabase as unknown as {
+        rpc(name: string, params?: Record<string, unknown>): Promise<{ data: unknown; error: { message: string; code?: string } | null }>;
+      };
+      const { data, error } = await client.rpc("ensure_planner_agent");
       if (error) {
         console.error("[ProjectPlannerPage] ensure_planner_agent error:", error);
         setAgentError(`Erro ao criar agente: ${error.message} (código: ${error.code || "?"})`);
@@ -146,7 +150,7 @@ export function ProjectPlannerPage() {
   const canImport = parsedPlan && errorCount === 0;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="flex flex-col" style={{ height: "calc(100vh - 4rem - 1px)" }}>
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <div>
           <h1 className="text-xl font-semibold flex items-center gap-2">
@@ -329,7 +333,7 @@ export function ProjectPlannerPage() {
         </Card>
 
         {/* COLUNA DIREITA — PREVIEW */}
-        <Card className="flex flex-col overflow-hidden">
+        <Card className="flex flex-col overflow-hidden min-h-0">
           <CardHeader className="border-b py-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm flex items-center gap-2">

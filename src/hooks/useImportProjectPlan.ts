@@ -26,9 +26,10 @@ export function useImportProjectPlan() {
   const importPlan = useCallback(async (plan: ProjectPlanV1): Promise<ImportResult | null> => {
     setIsImporting(true);
     try {
-      const { data, error } = await supabase.rpc("import_project_plan", {
-        p_plan: plan,
-      });
+      const client = supabase as unknown as {
+        rpc(name: string, params: Record<string, unknown>): Promise<{ data: unknown; error: { message: string } | null }>;
+      };
+      const { data, error } = await client.rpc("import_project_plan", { p_plan: plan });
 
       if (error) {
         console.error("[import-project-plan] RPC error:", error);
@@ -37,7 +38,7 @@ export function useImportProjectPlan() {
         return null;
       }
 
-      const result = data as ImportResult & {
+      const result = data as unknown as ImportResult & {
         project: { id: string; project: string };
         stages: unknown[];
         tasks: unknown[];
