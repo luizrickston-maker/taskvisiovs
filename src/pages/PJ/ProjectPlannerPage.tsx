@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Send, Bot, User, Loader2, AlertCircle, Sparkles,
   ClipboardCheck, Download, RefreshCw, FileText, Code,
-  AlertTriangle, CheckCircle2, Calendar, Users,
+  AlertTriangle, CheckCircle2, Calendar, Users, FileUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
 import { useProjectPlannerChat, type PlannerChatMessage } from "@/hooks/useProjectPlannerChat";
 import { useImportProjectPlan } from "@/hooks/useImportProjectPlan";
 import { parseAndValidatePlan, type ParsedPlan } from "@/lib/projectPlanParser";
@@ -53,6 +57,9 @@ export function ProjectPlannerPage() {
   const [agentId, setAgentId] = useState<string | null>(null);
   const [agentError, setAgentError] = useState<string | null>(null);
   const [isCreatingAgent, setIsCreatingAgent] = useState(false);
+  const [isJsonDialogOpen, setIsJsonDialogOpen] = useState(false);
+  const [jsonPaste, setJsonPaste] = useState("");
+  const [jsonParseError, setJsonParseError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { send, isSending, error } = useProjectPlannerChat();
   const { importPlan, isImporting } = useImportProjectPlan();
@@ -145,6 +152,45 @@ export function ProjectPlannerPage() {
     }
   }, [parsedPlan, importPlan, navigate]);
 
+  const handleImportDirectJson = useCallback(async () => {
+    setJsonParseError(null);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonPaste);
+    } catch (e) {
+      setJsonParseError(`JSON inválido: ${e instanceof Error ? e.message : String(e)}`);
+      return;
+    }
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      (parsed as Record<string, unknown>).version !== "1.0" ||
+      !Array.isArray((parsed as Record<string, unknown>).stages)
+    ) {
+      setJsonParseError('JSON não parece ser um plano v1.0 válido (esperado: { version: "1.0", stages: [...] }).');
+      return;
+    }
+    const result = await importPlan(parsed as Parameters<typeof importPlan>[0]);
+    if (result) {
+      setIsJsonDialogOpen(false);
+      setJsonPaste("");
+      navigate(`/pj/projetos/${result.project_id}`);
+    }
+  }, [jsonPaste, importPlan, navigate]);
+
+  const handleLoadJsonFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = typeof reader.result === "string" ? reader.result : "";
+      setJsonPaste(text);
+      setJsonParseError(null);
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }, []);
+
   const errorCount = parsedPlan?.warnings.filter((w) => w.severity === "error").length ?? 0;
   const warningCount = parsedPlan?.warnings.filter((w) => w.severity === "warning").length ?? 0;
   const canImport = parsedPlan && errorCount === 0;
@@ -161,10 +207,77 @@ export function ProjectPlannerPage() {
             Cole o contrato ou briefing — receba um plano completo de etapas, tarefas e cronograma.
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => { setTurns([]); setStreamingContent(""); }}>
-          <RefreshCw className="h-4 w-4 mr-1" />
-          Nova conversa
-        </Button>
+        <div className="flex items-center gap-2">
+          <Dialog open={isJsonDialogOpen} onOpenChange={(o) => { setIsJsonDialogOpen(o); if (!o) { setJsonPaste(""); setJsonParseError(null); } }}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <FileUp className="h-4 w-4 mr-1" />
+                Importar JSON
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Importar plano JSON direto</DialogTitle>
+                <DialogDescription>
+                  Cole aqui o conteúdo de um arquivo no schema v1.0 do planejador
+                  (pula o agente IA — útil quando você já tem o plano pronto).
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2 flex-1 min-h-0 overflow-y-auto">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground">
+                    Carregar arquivo:
+                  </label>
+                  <input
+                    type="file"
+                    accept="application/json,.json"
+                    onChange={handleLoadJsonFile}
+                    className="text-xs"
+                  />
+                </div>
+                <Textarea
+                  value={jsonPaste}
+                  onChange={(e) => { setJsonPaste(e.target.value); setJsonParseError(null); }}
+                  placeholder='{"version": "1.0", "project": {...}, "stages": [...]}'
+                  rows={14}
+                  className="font-mono text-xs resize-none"
+                />
+                {jsonParseError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">{jsonParseError}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsJsonDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleImportDirectJson}
+                  disabled={!jsonPaste.trim() || isImporting}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {isImporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      Importando...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-1" />
+                      Importar
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Button variant="ghost" size="sm" onClick={() => { setTurns([]); setStreamingContent(""); }}>
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Nova conversa
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 overflow-hidden">
