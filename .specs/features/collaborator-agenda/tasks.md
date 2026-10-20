@@ -262,11 +262,11 @@ T18
 
 **Done when**:
 
-- [ ] `buildAppointmentMessage` emits collaborator first name, title, `dd/MM/yyyy` date, `HH:MM–HH:MM` range, observation and the deep link `https://taskvisiovs.vercel.app/colaborador/agenda`
-- [ ] A non-empty `notes` appears between the time range and the deep link (NOTIF-09)
-- [ ] A null or empty `notes` produces **no** observation line
-- [ ] The module imports nothing — no Deno APIs, nothing from `src/`
-- [ ] Vitest imports the exact file the edge function will import
+- [x] `buildAppointmentMessage` emits collaborator first name, title, `dd/MM/yyyy` date, `HH:MM–HH:MM` range, observation and the deep link `https://taskvisiovs.vercel.app/colaborador/agenda`
+- [x] A non-empty `notes` appears between the time range and the deep link (NOTIF-09) — asserted structurally: exactly one line separates the range line from the link line
+- [x] A null or empty `notes` produces **no** observation line — the deep link follows the range line directly, for `null`, `''` and blank
+- [x] The module imports nothing — no Deno APIs, nothing from `src/` — asserted against the file's own source
+- [x] Vitest imports the exact file the edge function will import (same path; T7 asserts the edge function's import specifier)
 
 **Tests**: unit
 **Gate**: quick
