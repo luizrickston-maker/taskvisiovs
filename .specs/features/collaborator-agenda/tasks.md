@@ -519,10 +519,10 @@ T18
 
 **Done when**:
 
-- [ ] Lists exactly `is_active === true && member_user_id != null` (MGR-01)
-- [ ] A collaborator with `member_user_id` NULL is excluded (COLAB-11)
-- [ ] `null` is a valid value meaning "my own calendar"
-- [ ] Unit tests assert the filter excludes deactivated and accountless members
+- [x] Lists exactly `is_active === true && member_user_id != null` (MGR-01)
+- [x] A collaborator with `member_user_id` NULL is excluded (COLAB-11)
+- [x] `null` is a valid value meaning "my own calendar"
+- [x] Unit tests assert the filter excludes deactivated and accountless members
 
 **Tests**: unit
 **Gate**: quick
@@ -546,13 +546,14 @@ T18
 
 **Done when**:
 
-- [ ] With no collaborator selected the page renders personal `time_blocks` exactly as today (MGR-02)
-- [ ] Selecting a collaborator replaces the source with their appointments and availability, and clears the personal events (MGR-03, MGR-11)
-- [ ] Creating inside declared unavailability shows `Este período está indisponível para {nome} de {início} a {fim}.` and persists nothing (MGR-04)
-- [ ] A successful create persists `status = 'pending'` with the member and workspace (MGR-05)
-- [ ] The observation field is present, optional, and persisted as `notes` (MGR-12)
-- [ ] Unavailability blocks render visually distinct from appointments (MGR-10)
-- [ ] Component tests cover: own calendar, collaborator calendar, blocked save, successful save with notes
+- [x] With no collaborator selected the page renders personal `time_blocks` exactly as today (MGR-02)
+- [x] Selecting a collaborator replaces the source with their appointments and availability, and clears the personal events (MGR-03, MGR-11)
+- [x] Creating inside declared unavailability shows `Este período está indisponível para {nome} de {início} a {fim}.` and persists nothing (MGR-04)
+- [x] A successful create persists `status = 'pending'` with the member and workspace (MGR-05)
+- [x] The observation field is present, optional, and persisted as `notes` (MGR-12)
+- [x] Unavailability blocks render visually distinct from appointments (MGR-10)
+- [x] Component tests cover: own calendar, collaborator calendar, blocked save, successful save with notes
+- [x] Manager cancel exists as a dedicated mutation whose payload carries no `status`, so a manager can never send `confirmed` (AD-007); component tests cover cancel from `pending` and from `confirmed`
 
 **Tests**: unit
 **Gate**: full
@@ -576,12 +577,12 @@ T18
 
 **Done when**:
 
-- [ ] A successful insert invokes the function exactly once
-- [ ] A null or empty `whatsapp` shows `Colaborador sem WhatsApp cadastrado — notificação não enviada.` with a resend affordance (MGR-07)
-- [ ] A failed or timed-out send keeps the appointment and shows the same affordance (NOTIF-02)
-- [ ] Resend writes a new attempt; the prior attempt is unchanged (NOTIF-03)
-- [ ] The attempt history from `appointment_notification_log` is observable through `notify_status` (NOTIF-08)
-- [ ] Component tests cover: sent, no-whatsapp, failed-then-resent
+- [x] A successful insert invokes the function exactly once
+- [x] A null or empty `whatsapp` shows `Colaborador sem WhatsApp cadastrado — notificação não enviada.` with a resend affordance (MGR-07)
+- [x] A failed or timed-out send keeps the appointment and shows the same affordance (NOTIF-02)
+- [x] Resend writes a new attempt; the prior attempt is unchanged (NOTIF-03) — client proves the resend is a bare `{ appointment_id }` invocation with no table write; the append-not-mutate half is asserted in `supabase/functions/notify-appointment/notify-appointment.test.ts`
+- [x] The attempt history from `appointment_notification_log` is observable through `notify_status` (NOTIF-08)
+- [x] Component tests cover: sent, no-whatsapp, failed-then-resent
 
 **Tests**: unit
 **Gate**: full
@@ -605,12 +606,14 @@ T18
 
 **Done when**:
 
-- [ ] `collaborator_appointments` maps to the appointment query key and `collaborator_availability` to the availability key
-- [ ] A collaborator confirming an appointment invalidates the manager's cache (SYNC-01)
-- [ ] A manager creating an appointment invalidates the collaborator's cache (SYNC-02)
-- [ ] Availability changes invalidate both (SYNC-04)
-- [ ] Unit tests assert the bindings produce the expected invalidations for the payloads in the three cases
-- [ ] No binding is added for `time_blocks` beyond the one that already exists
+- [x] `collaborator_appointments` maps to the appointment query key and `collaborator_availability` to the availability key
+- [x] A collaborator confirming an appointment invalidates the manager's cache (SYNC-01)
+- [x] A manager creating an appointment invalidates the collaborator's cache (SYNC-02)
+- [x] Availability changes invalidate both (SYNC-04)
+- [x] Unit tests assert the bindings produce the expected invalidations for the payloads in the three cases
+- [x] No binding is added for `time_blocks` beyond the one that already exists
+
+Note: the bindings are table-scoped, which is what `useRealtimeQueryInvalidation` consumes, so SYNC-01 and SYNC-02 are one event seen from both sides. SYNC-03 was already satisfied by the migration's realtime publication registration (T4) and is not re-tested here.
 
 **Tests**: unit
 **Gate**: full
