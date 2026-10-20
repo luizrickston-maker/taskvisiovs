@@ -167,6 +167,35 @@ describe('conflict detection (MGR-04)', () => {
   });
 });
 
+describe('availability saved over an appointment (AVAIL-10)', () => {
+  it('saves the unavailability on top of a pending or confirmed appointment', async () => {
+    const pendingId = await createAppointmentFor('2026-10-21', '10:00', '11:00');
+    const confirmedId = await createAppointmentFor('2026-10-22', '10:00', '11:00');
+
+    await asUser(COLLABORATOR_C);
+    await client.query(
+      `UPDATE public.collaborator_appointments SET status = 'confirmed' WHERE id = $1`,
+      [confirmedId]
+    );
+
+    // The collaborator takes the time off anyway: blocking them because the
+    // manager booked first would invert the feature. The conflict rule is
+    // scoped to appointments, never to an availability write.
+    const inserted = await client.query<{ id: string }>(
+      `INSERT INTO public.collaborator_availability
+         (workspace_id, member_user_id, start_date, end_date, start_time, end_time, reason)
+       VALUES ($1, $2, '2026-10-21', '2026-10-22', NULL, NULL, 'Consulta')
+       RETURNING id`,
+      [WORKSPACE_A, COLLABORATOR_C]
+    );
+    expect(inserted.rowCount).toBe(1);
+
+    // …and neither appointment is touched by the save.
+    expect((await readAppointment(pendingId)).status).toBe('pending');
+    expect((await readAppointment(confirmedId)).status).toBe('confirmed');
+  });
+});
+
 describe('appointment state machine', () => {
   it("records decided_at and decided_by on pending -> confirmed (COLAB-02)", async () => {
     const id = await createAppointmentFor('2026-10-08', '10:00', '11:00');

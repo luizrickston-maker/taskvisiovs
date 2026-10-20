@@ -130,6 +130,30 @@ describe('ColaboratorAgendaPage', () => {
     expect(screen.getByText('Nenhuma indisponibilidade declarada neste mês.')).toBeInTheDocument();
   });
 
+  it('marks only the appointment that overlaps declared unavailability (AVAIL-10)', () => {
+    // A timed block, so the day still holds an appointment that does not touch it.
+    availabilityRows.push(availability({ start_time: '14:00', end_time: '16:00' }));
+    appointments.push(
+      appointment({ id: 'ap-overlap', title: 'Dentista', start_time: '15:00', end_time: '16:00' }),
+      appointment({ id: 'ap-free', title: 'Visita técnica', start_time: '09:00', end_time: '10:00' }),
+    );
+    renderPage();
+
+    const dayEvents = [...document.querySelectorAll('[data-event]')];
+    const overlapping = dayEvents.find(el => el.textContent?.includes('Dentista'));
+    const free = dayEvents.find(el => el.textContent?.includes('Visita técnica'));
+
+    // The badge the spec asks for: a conflict ring and its alert icon.
+    expect(overlapping).toBeTruthy();
+    expect(overlapping!.className).toContain('ring-destructive');
+    expect(overlapping!.querySelector('svg')).toBeTruthy();
+
+    // …and only on that one: a badge that is always on would pass a one-sided test.
+    expect(free).toBeTruthy();
+    expect(free!.className).not.toContain('ring-destructive');
+    expect(free!.querySelector('svg')).toBeFalsy();
+  });
+
   it('shows both confirm and cancel for a pending appointment (COLAB-06)', () => {
     appointments.push(appointment({ status: 'pending' }));
     renderPage();

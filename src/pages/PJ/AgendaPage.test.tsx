@@ -298,6 +298,39 @@ describe('AgendaPage — collaborator calendar (MGR-03, MGR-11)', () => {
   });
 });
 
+describe('AgendaPage — conflict badge (AVAIL-10)', () => {
+  it('marks the appointment that overlaps declared unavailability, and only that one', async () => {
+    queueResult('collaborator_appointments', {
+      data: [
+        appointment({ id: 'ap-overlap', title: 'Dentista', start_time: '15:00', end_time: '16:00' }),
+        appointment({ id: 'ap-free', title: 'Visita técnica', start_time: '09:00', end_time: '10:00' }),
+      ],
+      error: null,
+    });
+    queueResult('collaborator_availability', { data: [availability()], error: null });
+
+    renderPage();
+    await selectCollaborator();
+
+    await screen.findAllByText('Dentista');
+    expect(screen.getAllByText('Visita técnica').length).toBeGreaterThan(0);
+
+    const dayEvents = [...document.querySelectorAll('[data-event]')];
+    const overlapping = dayEvents.find(el => el.textContent?.includes('Dentista'));
+    const free = dayEvents.find(el => el.textContent?.includes('Visita técnica'));
+
+    // The badge the spec asks for: a conflict ring and its alert icon.
+    expect(overlapping).toBeTruthy();
+    expect(overlapping!.className).toContain('ring-destructive');
+    expect(overlapping!.querySelector('svg')).toBeTruthy();
+
+    // …and only on that one: a badge that is always on would pass a one-sided test.
+    expect(free).toBeTruthy();
+    expect(free!.className).not.toContain('ring-destructive');
+    expect(free!.querySelector('svg')).toBeFalsy();
+  });
+});
+
 describe('AgendaPage — creating an appointment', () => {
   it('refuses an overlapping save with the spec message and persists nothing (MGR-04)', async () => {
     const monthStart = startOfMonth(new Date());
