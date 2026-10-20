@@ -15,6 +15,22 @@ const TEAM_MEMBER_B = '33333333-3333-4333-8333-333333333304';
 // Dates kept clear of the ones other suites use, so fixtures never collide.
 const AVAILABILITY_A_DATE = '2026-11-20';
 const AVAILABILITY_B_DATE = '2026-11-21';
+// AVAIL-12 owns its two rows, on dates no other suite touches.
+const AVAIL_DENIAL_DATE = '2026-11-27';
+const AVAIL_CONTROL_DATE = '2026-11-28';
+
+/** Every column of collaborator_availability, compared value by value. */
+interface AvailabilityFixtureRow {
+  id: string;
+  workspace_id: string;
+  member_user_id: string;
+  start_date: string;
+  end_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  reason: string | null;
+  created_at: Date;
+}
 // Appointment fixtures sit clear of the unavailability rows: once the
 // BEFORE INSERT conflict trigger (T5) exists, an appointment inside declared
 // unavailability is exactly the row MGR-04 says the database must refuse.
@@ -377,6 +393,77 @@ describe('row-level security', () => {
       [COLLABORATOR_B]
     );
     expect(persisted.rows[0].count).toBe('0');
+  });
+
+  // The positive control for AVAIL-12 below: without it, a DELETE policy that
+  // simply matched nothing for anyone would pass the refusal case.
+  it('lets a collaborator delete their own unavailability row (AVAIL-09)', async () => {
+    await asSuperuser();
+    const own = await client.query<{ id: string }>(
+      `INSERT INTO public.collaborator_availability
+         (workspace_id, member_user_id, start_date, end_date, reason)
+       VALUES ($1, $2, $3, $3, 'Controle positivo')
+       RETURNING id::text AS id`,
+      [WORKSPACE_A, COLLABORATOR_B, AVAIL_CONTROL_DATE]
+    );
+    const ownId = own.rows[0].id;
+
+    await asUser(COLLABORATOR_B);
+    const deleted = await client.query(
+      'DELETE FROM public.collaborator_availability WHERE id = $1',
+      [ownId]
+    );
+    expect(deleted.rowCount).toBe(1);
+
+    await asSuperuser();
+    const remaining = await client.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM public.collaborator_availability WHERE id = $1',
+      [ownId]
+    );
+    expect(remaining.rows[0].count).toBe('0');
+  });
+
+  // AVAIL-12: the DELETE policy's USING predicate is the only thing standing
+  // between two collaborators sharing a workspace. PostgreSQL raises no
+  // SQLSTATE for a DELETE whose USING filters every candidate row - the
+  // denial IS the zero-row result - so the refusal is asserted as "affected
+  // nothing" plus the row surviving under the superuser.
+  it("refuses a collaborator deleting another collaborator's unavailability (AVAIL-12)", async () => {
+    await asSuperuser();
+    const target = await client.query<AvailabilityFixtureRow>(
+      `INSERT INTO public.collaborator_availability
+         (workspace_id, member_user_id, start_date, end_date, reason)
+       VALUES ($1, $2, $3, $3, 'Viagem de campo')
+       RETURNING id::text AS id, workspace_id::text AS workspace_id,
+                 member_user_id::text AS member_user_id, start_date::text AS start_date,
+                 end_date::text AS end_date, start_time, end_time, reason, created_at`,
+      [WORKSPACE_A, COLLABORATOR_A, AVAIL_DENIAL_DATE]
+    );
+    const targetRow = target.rows[0];
+
+    await asUser(COLLABORATOR_B);
+    const byId = await client.query(
+      'DELETE FROM public.collaborator_availability WHERE id = $1',
+      [targetRow.id]
+    );
+    expect(byId.rowCount).toBe(0);
+
+    const byOwner = await client.query(
+      'DELETE FROM public.collaborator_availability WHERE member_user_id = $1',
+      [COLLABORATOR_A]
+    );
+    expect(byOwner.rowCount).toBe(0);
+
+    await asSuperuser();
+    const remaining = await client.query<AvailabilityFixtureRow>(
+      `SELECT id::text AS id, workspace_id::text AS workspace_id,
+              member_user_id::text AS member_user_id, start_date::text AS start_date,
+              end_date::text AS end_date, start_time, end_time, reason, created_at
+       FROM public.collaborator_availability WHERE id = $1`,
+      [targetRow.id]
+    );
+    expect(remaining.rowCount).toBe(1);
+    expect(remaining.rows[0]).toEqual(targetRow);
   });
 });
 
