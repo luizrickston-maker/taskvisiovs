@@ -1,0 +1,7 @@
+# Local test stub for Supabase's pg_net extension, which does not exist on
+# vanilla PostgreSQL. Creating the extension creates nothing: the real objects
+# (net.http_post) are declared by tests/db/bootstrap.sql, so the migration
+# files' CREATE EXTENSION statements succeed without colliding with them.
+comment = 'Local database-test stub for pg_net; real objects come from tests/db/bootstrap.sql'
+default_version = '1.0'
+relocatable = true

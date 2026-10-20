@@ -1,0 +1,3 @@
+-- Local database-test stub for pg_net.
+-- Intentionally empty: tests/db/bootstrap.sql owns net.http_post, so this
+-- script must create nothing or the two definitions would collide.

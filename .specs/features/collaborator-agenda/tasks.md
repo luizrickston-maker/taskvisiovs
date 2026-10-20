@@ -23,7 +23,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 | React components and hooks | unit (Testing Library + jsdom) | Every listed edge case plus the rendered states named in the ACs | `src/**/*.test.tsx` | `npm run test` |
 | Edge function transport (`notify-appointment`) | unit with mocked `fetch` | Happy path + every failure row in the Error Handling table | `supabase/functions/notify-appointment/**/*.test.ts` | `npm run test` |
 | Database: RLS policies, CHECK constraints, triggers, RPC | integration against a local Supabase stack | Every DB-authoritative AC: AVAIL-04, AVAIL-05, AVAIL-06, AVAIL-08, AVAIL-11, MGR-04, MGR-05, MGR-08, COLAB-02, COLAB-03, COLAB-04, COLAB-05, COLAB-09, SYNC-03 | `tests/db/*.test.ts` | `npm run test:db` |
-| Migrations | integration (applies cleanly to an empty DB) | `supabase db reset` succeeds; publication membership asserted | `supabase/migrations/*.sql` | `npm run test:db` |
+| Migrations | integration (applies cleanly to an empty DB) | All 120 migrations apply in filename order with no skips; a failing migration exits non-zero; publication membership asserted | `supabase/migrations/*.sql` | `npm run test:db` |
 | Entity / config (routes, nav arrays, `config.toml`) | none | — (build gate only) | — | build gate |
 
 ## Gate Check Commands
@@ -128,13 +128,13 @@ T18
 
 ---
 
-### T2: Establish the local database test harness
+### T2: Establish the database test harness
 
-**What**: Start a disposable Supabase stack with Docker, make `supabase db reset` apply every migration to an empty database, add a `test:db` script plus a seed that provisions two workspaces and one collaborator identity for RLS assertions.
-**Where**: `supabase/config.toml`
+**What**: Bootstrap and runner that recreate a scratch database on the natively installed PostgreSQL 17, apply a Supabase-compatibility bootstrap, apply all 120 migrations in order, and seed two workspaces plus collaborator identities for RLS assertions.
+**Where**: `tests/db/`
 **Depends on**: T1
 **Reuses**: existing `supabase/migrations/` ordering; `has_workspace_access()` helpers from `20260218161244_…`
-**Requirement**: — (prerequisite; unlocks the 14 DB-authoritative ACs)
+**Requirement**: — (prerequisite; unlocks the DB-authoritative ACs)
 
 **Tools**:
 
@@ -143,15 +143,17 @@ T18
 
 **Done when**:
 
-- [ ] `npx supabase start` brings the stack up and `npx supabase db reset` applies all 120 existing migrations without error
-- [ ] `npm run test:db` exists, runs a trivial query assertion, and exits 0
-- [ ] Seed creates: workspace A (manager A), workspace B (manager B), one collaborator linked to A with `member_user_id` set, one collaborator with `member_user_id` NULL
-- [ ] No test targets the hosted project — `config.toml` project id is never used by the harness
+- [x] `tests/db/bootstrap.sql` creates every Supabase object the migrations need and that a vanilla install lacks: `auth.users`, `auth.uid()` implemented as `NULLIF(current_setting('request.jwt.claims', true), '')::json->>'sub'::uuid`, `auth.role()`, the `anon` / `authenticated` / `service_role` roles, the `supabase_realtime` publication, and no-op stubs for `net.http_post`, `cron.schedule`, `cron.unschedule`, `storage.buckets` and `storage.objects`
+- [x] `npm run test:db` drops and recreates a **scratch** database (never a shared or production one), applies the bootstrap, applies all 120 migrations in filename order **with no skips**, seeds the fixtures, runs its assertions and exits 0 — 121 on disk now that this task added `20260101000000_backfill_products_services.sql`; the assertion compares against the directory listing, so it covers every migration present
+- [x] A migration that fails to apply makes `test:db` exit non-zero — proven by temporarily breaking one on purpose and restoring it
+- [x] Seed creates: workspace A (manager A), workspace B (manager B), one collaborator linked to A with `member_user_id` set, one collaborator with `member_user_id` NULL
+- [x] A test can impersonate a user via `SET request.jwt.claims` and `auth.uid()` returns exactly that user — asserted directly, since every RLS test depends on this being faithful
+- [x] Connection details come from a local env var only; nothing in the harness references `gvjvwirlgzrmmeekpyzh` or any hosted URL
 
 **Tests**: integration
 **Gate**: full
 
-**Commit**: `chore(test): establish local supabase db test harness`
+**Commit**: `chore(test): establish postgres database test harness`
 
 ---
 

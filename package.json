@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:db": "vitest run --config tests/db/vitest.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -77,6 +78,7 @@
     "@testing-library/react": "^16.3.3",
     "@types/html2canvas": "^1.0.0",
     "@types/node": "^22.16.5",
+    "@types/pg": "^8.23.1",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
@@ -87,6 +89,7 @@
     "globals": "^15.15.0",
     "jsdom": "^25.0.1",
     "lovable-tagger": "^1.1.13",
+    "pg": "^8.23.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",

@@ -1,0 +1,4 @@
+-- Local database-test stub for pg_cron.
+-- Intentionally empty: tests/db/bootstrap.sql owns cron.schedule,
+-- cron.unschedule and cron.job, so this script must create nothing or the two
+-- definitions would collide.
