@@ -24,6 +24,21 @@ const contractTypes: { value: ContractType; label: string }[] = [
   { value: 'freelancer', label: 'Freelancer' },
 ];
 
+/**
+ * Edge Case: um `whatsapp` que não seja só dígitos é recusado na entrada,
+ * não normalizado em silêncio — este é o número para onde a notificação do
+ * colaborador é enviada.
+ */
+export const WHATSAPP_DIGITS_ERROR =
+  'Informe o WhatsApp com DDI, DDD e número, apenas dígitos.';
+
+/** Vazio é permitido (o campo é opcional); o resto precisa ser só dígitos. */
+export function whatsappDigitsError(value: string): string | null {
+  const trimmed = value.trim();
+  if (trimmed === '') return null;
+  return /^\d+$/.test(trimmed) ? null : WHATSAPP_DIGITS_ERROR;
+}
+
 export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMemberFormProps) {
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
@@ -37,6 +52,7 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  const [whatsappError, setWhatsappError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -51,6 +67,7 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
       setNotes(member.notes || '');
       setIsActive(member.is_active);
       setWhatsapp(member.whatsapp || '');
+      setWhatsappError(null);
     } else {
       setName('');
       setRole('');
@@ -64,6 +81,7 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
       setEmail('');
       setPassword('');
       setWhatsapp('');
+      setWhatsappError(null);
     }
   }, [member, open]);
 
@@ -95,8 +113,16 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
     
     if (!name.trim() || !role.trim()) return;
 
+    // Edge Case: recusa na entrada em vez de normalizar em silêncio.
+    const digitsError = whatsappDigitsError(whatsapp);
+    if (digitsError) {
+      setWhatsappError(digitsError);
+      return;
+    }
+    setWhatsappError(null);
+
     setSaving(true);
-    
+
     await onSave({
       name: name.trim(),
       role: role.trim(),
@@ -107,7 +133,7 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
       clt_benefits: parseFloat(cltBenefits) || 0,
       notes: notes.trim() || undefined,
       is_active: isActive,
-      whatsapp: whatsapp.replace(/\D/g, '') || undefined,
+      whatsapp: whatsapp.trim() || undefined,
       email: email.trim() || undefined,
       password: password.trim() || undefined,
     });
@@ -318,8 +344,15 @@ export function TeamMemberForm({ open, onOpenChange, onSave, member }: TeamMembe
               inputMode="numeric"
               placeholder="Ex: 5511999999999 (DDI + DDD + número)"
               value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
+              aria-invalid={whatsappError ? true : undefined}
+              onChange={(e) => {
+                setWhatsapp(e.target.value);
+                if (whatsappError) setWhatsappError(null);
+              }}
             />
+            {whatsappError && (
+              <p className="text-[10px] text-destructive">{whatsappError}</p>
+            )}
             <p className="text-xs text-muted-foreground">
               Com DDI e DDD, apenas números. Brasil: 55 + DDD + número. Usado para avisar o colaborador no WhatsApp ao receber uma tarefa.
             </p>

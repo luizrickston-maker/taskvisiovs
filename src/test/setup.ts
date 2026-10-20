@@ -17,6 +17,16 @@ if (!Element.prototype.hasPointerCapture) {
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => {};
 }
+// jsdom implements no ResizeObserver; Radix's Checkbox measures itself with
+// one on mount (@radix-ui/react-use-size).
+if (!('ResizeObserver' in globalThis)) {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = ResizeObserverStub;
+}
 // jsdom implements no media queries; the sidebar queries them on mount.
 if (!window.matchMedia) {
   window.matchMedia = (query: string) => ({
