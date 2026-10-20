@@ -462,11 +462,11 @@ T18
 
 **Done when**:
 
-- [ ] Renders appointments and availability from the two hooks using the T9 mappers
-- [ ] A `pending` row shows both confirm and cancel; a terminal row shows neither (COLAB-06, COLAB-07)
-- [ ] A non-empty `notes` is rendered with the appointment (COLAB-12)
-- [ ] Confirm/cancel navigate correctly from the WhatsApp deep link with no extra login step when a session exists (COLAB-01)
-- [ ] Component tests cover: empty state, pending row, confirmed row, cancelled row, notes rendering
+- [x] Renders appointments and availability from the two hooks using the T9 mappers
+- [x] A `pending` row shows both confirm and cancel; a terminal row shows neither (COLAB-06, COLAB-07)
+- [x] A non-empty `notes` is rendered with the appointment (COLAB-12)
+- [x] Confirm/cancel navigate correctly from the WhatsApp deep link with no extra login step when a session exists (COLAB-01)
+- [x] Component tests cover: empty state, pending row, confirmed row, cancelled row, notes rendering
 
 **Tests**: unit
 **Gate**: quick
