@@ -200,14 +200,14 @@ T18
 
 **Done when**:
 
-- [ ] `supabase db reset` applies the migration cleanly
-- [ ] All four availability CHECKs and the appointment CHECKs reject their invalid shapes, each asserted with the exact SQL error
-- [ ] A manager in workspace B receives **zero rows** for workspace A's appointments and availability (MGR-08, AVAIL-11)
-- [ ] A collaborator receives only their own rows (COLAB-09)
-- [ ] A collaborator INSERT with `member_user_id` set to someone else is rejected by RLS (AVAIL-11)
-- [ ] `appointment_notification_log` has RLS enabled with no policies (service_role only)
-- [ ] Both new tables appear in `supabase_realtime` with `REPLICA IDENTITY FULL` (SYNC-03)
-- [ ] Test count: no assertion deleted from T2's seed suite
+- [x] `supabase db reset` applies the migration cleanly — **environment deviation**: `supabase` CLI needs Docker/WSL, unavailable here, so the gate is `npm run test:db`, which rebuilds the database from zero and replays every migration in filename order (the operation `db reset` performs)
+- [x] All four availability CHECKs and the appointment CHECKs reject their invalid shapes, each asserted with the exact SQL error (SQLSTATE + constraint name; the server words messages in pt_BR, so the locale-independent identity is what is pinned)
+- [x] A manager in workspace B receives **zero rows** for workspace A's appointments and availability (MGR-08, AVAIL-11)
+- [x] A collaborator receives only their own rows (COLAB-09) — also asserted for a collaborator who is a `workspace_members` row with role `member`, the shape `create-collaborator` produces
+- [x] A collaborator INSERT with `member_user_id` set to someone else is rejected by RLS (AVAIL-11)
+- [x] `appointment_notification_log` has RLS enabled with no policies (service_role only)
+- [x] Both new tables appear in `supabase_realtime` with `REPLICA IDENTITY FULL` (SYNC-03)
+- [x] Test count: no assertion deleted from T2's seed suite (14/14 still run and pass in the same gate)
 
 **Tests**: integration
 **Gate**: full

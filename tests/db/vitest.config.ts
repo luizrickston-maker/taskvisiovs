@@ -13,6 +13,10 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/db/**/*.test.ts'],
     globalSetup: ['tests/db/globalSetup.ts'],
+    // Every file shares one scratch database, so suites must not run at the
+    // same time: a fixture created in one file would break an exact-row
+    // assertion in another.
+    fileParallelism: false,
     testTimeout: 60_000,
     hookTimeout: 600_000,
   },
