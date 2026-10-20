@@ -378,11 +378,11 @@ T18
 
 **Done when**:
 
-- [ ] Query key `collab-availability`; mutations invalidate by prefix, matching `useAgendaPJ.ts:73-80`
-- [ ] Insert supports all three row shapes: single day with times, single day without times, multi-day range without times
-- [ ] Delete removes the row and the cache entry
-- [ ] The hook sends `workspace_id` from `get_my_workspace_id()` and `member_user_id` from the session
-- [ ] Unit tests cover all five granularities producing the right row shape
+- [x] Query key `collab-availability`; mutations invalidate by prefix, matching `useAgendaPJ.ts:73-80`
+- [x] Insert supports all three row shapes: single day with times, single day without times, multi-day range without times
+- [x] Delete removes the row and the cache entry
+- [x] The hook sends `workspace_id` from `get_my_workspace_id()` and `member_user_id` from the session
+- [x] Unit tests cover all five granularities producing the right row shape
 
 **Tests**: unit
 **Gate**: quick
