@@ -406,11 +406,11 @@ T18
 
 **Done when**:
 
-- [ ] The three error messages appear exactly as the spec names them, before any network call
-- [ ] A granularity selector produces: hour range, half day, full day, multi-day range, full month
-- [ ] Submitting a valid row calls the T10 mutation once
-- [ ] Unit tests drive each rejection path and assert the message text
-- [ ] `end_date` earlier than `start_date` is rejected (AVAIL-04)
+- [x] The three error messages appear exactly as the spec names them, before any network call
+- [x] A granularity selector produces: hour range, half day, full day, multi-day range, full month
+- [x] Submitting a valid row calls the T10 mutation once
+- [x] Unit tests drive each rejection path and assert the message text
+- [x] `end_date` earlier than `start_date` is rejected (AVAIL-04)
 
 **Tests**: unit
 **Gate**: quick
