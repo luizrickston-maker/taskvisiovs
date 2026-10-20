@@ -424,6 +424,46 @@ describe('notification log', () => {
     );
     expect(attempts.rows[0].count).toBe('1');
   });
+
+  // SPEC_PRECISION_GAP: Deno is not installed on this machine (AD-003), so
+  // notify-appointment/index.ts never runs its real INSERT/UPDATE here. The
+  // table and the column names are pinned against the source in
+  // supabase/functions/notify-appointment/notify-appointment.test.ts; this
+  // case pins what the database itself produces for the five columns
+  // NOTIF-08 names.
+  it('holds the five columns NOTIF-08 names, with created_at filled by the database', async () => {
+    await asSuperuser();
+    const appointment = await client.query<{ id: string }>(
+      `SELECT id FROM public.collaborator_appointments
+       WHERE member_user_id = $1 ORDER BY date LIMIT 1`,
+      [COLLABORATOR_B]
+    );
+    expect(appointment.rowCount).toBeGreaterThan(0);
+    const appointmentId = appointment.rows[0].id;
+
+    const inserted = await client.query<{
+      appointment_id: string;
+      attempt: number;
+      status: string;
+      provider_response: string | null;
+      created_at: Date | null;
+    }>(
+      `INSERT INTO public.appointment_notification_log
+         (appointment_id, attempt, status, provider_response)
+       VALUES ($1, 1, 'sent', NULL)
+       RETURNING appointment_id::text AS appointment_id, attempt, status,
+                 provider_response, created_at`,
+      [appointmentId]
+    );
+
+    expect(inserted.rows[0]).toEqual({
+      appointment_id: appointmentId,
+      attempt: 1,
+      status: 'sent',
+      provider_response: null,
+      created_at: expect.any(Date),
+    });
+  });
 });
 
 describe('realtime registration (SYNC-03)', () => {

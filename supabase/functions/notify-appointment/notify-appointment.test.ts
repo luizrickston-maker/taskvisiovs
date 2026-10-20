@@ -38,6 +38,13 @@ type FakeState = {
   appointment: AppointmentRow | null;
   collaborator: CollaboratorRow | null;
   attempts: Array<{ attempt: number; status: NotifyStatus | null; providerResponse: string | null }>;
+  /** Every argument the module handed to the log write (NOTIF-08). */
+  logged: Array<{
+    appointmentId: string;
+    attempt: number;
+    status: NotifyStatus;
+    providerResponse: string | null;
+  }>;
   notifyStatus: string | null;
 };
 
@@ -53,6 +60,7 @@ function makeStore(options: {
         ? { name: 'Maria Silva', whatsapp: '5511999990001' }
         : options.collaborator,
     attempts: [],
+    logged: [],
     notifyStatus: 'pending',
   };
 
@@ -66,7 +74,8 @@ function makeStore(options: {
       state.attempts.push({ attempt, status: null, providerResponse: null });
       return true;
     },
-    recordAttempt: async (_id, attempt, status, providerResponse) => {
+    recordAttempt: async (appointmentId, attempt, status, providerResponse) => {
+      state.logged.push({ appointmentId, attempt, status, providerResponse });
       const row = state.attempts.find((candidate) => candidate.attempt === attempt);
       if (row) {
         row.status = status;
@@ -297,6 +306,54 @@ describe('resend history (NOTIF-03)', () => {
     expect(state.attempts[1].status).toBe('failed');
     // NOTIF-08: `notify_status` carries the latest verdict of that history.
     expect(state.appointment?.notify_status).toBe('failed');
+  });
+});
+
+describe('log row per send attempt (NOTIF-08)', () => {
+  it('hands the appointment id to the log write along with attempt, status and provider response', async () => {
+    const { store, state } = makeStore();
+    const { fetchImpl } = makeFetch(() => ({
+      ok: false,
+      status: 503,
+      statusText: 'Service Unavailable',
+      text: async () => 'indisponível',
+    }));
+
+    await handleNotifyAppointment('appointment-1', deps({ store, fetchImpl }));
+
+    // The spec names one row per attempt carrying appointment_id, attempt,
+    // status and provider_response; created_at is the database default and is
+    // asserted against the real table in
+    // tests/db/schema-collaborator-agenda.test.ts.
+    expect(state.logged).toEqual([
+      {
+        appointmentId: 'appointment-1',
+        attempt: 1,
+        status: 'failed',
+        providerResponse: expect.stringContaining('agzap_503'),
+      },
+    ]);
+  });
+
+  it('keeps the attempt history one row per attempt, never an update of an earlier one', async () => {
+    const { store, state } = makeStore();
+    await handleNotifyAppointment('appointment-1', deps({ store, fetchImpl: makeFetch(() => okFetch()).fetchImpl }));
+    await handleNotifyAppointment('appointment-1', deps({ store, fetchImpl: makeFetch(() => okFetch()).fetchImpl }));
+
+    expect(state.logged.map((row) => row.attempt)).toEqual([1, 2]);
+    expect(state.logged.map((row) => row.appointmentId)).toEqual(['appointment-1', 'appointment-1']);
+  });
+
+  it('writes those columns against appointment_notification_log in the Deno entry point', () => {
+    // SPEC_PRECISION_GAP: Deno is not installed on this machine (AD-003), so
+    // index.ts's real INSERT/UPDATE never executes here. The write is pinned
+    // at the only boundary this suite can reach - the table name and the
+    // column names in the source - while the row the database actually
+    // produces, including created_at, is asserted in
+    // tests/db/schema-collaborator-agenda.test.ts.
+    expect(indexSource).toContain('.from("appointment_notification_log")');
+    expect(indexSource).toContain('appointment_id: id');
+    expect(indexSource).toContain('provider_response: providerResponse');
   });
 });
 
