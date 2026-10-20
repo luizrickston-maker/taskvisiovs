@@ -76,10 +76,17 @@ ALTER TABLE public.appointment_notification_log ENABLE ROW LEVEL SECURITY;
 -- Policies
 -- =====================================================
 
--- SPEC_DEVIATION: design.md's reuse table says every new policy scopes on
---   has_workspace_access(workspace_id). That predicate is true for ANY
---   workspace member, and create-collaborator adds collaborators as role
---   'member' (supabase/functions/create-collaborator/index.ts:139,189), so a
+-- SPEC_DEVIATION: AD-001 (.specs/STATE.md:5) gives every new workspace-scoped
+--   table its own workspace_id and scopes its RLS on
+--   has_workspace_access(workspace_id) instead of reusing time_blocks. These
+--   policies follow AD-001 for the new tables but depart from it on the
+--   manager side, where AD-006 (.specs/STATE.md:45) is the governing
+--   decision: on a table carrying per-collaborator rows, manager-side RLS
+--   uses is_workspace_admin(workspace_id, auth.uid()) OR
+--   is_super_admin(auth.uid()) and never has_workspace_access alone. That
+--   predicate is true for ANY workspace member, and create-collaborator adds
+--   collaborators as role 'member'
+--   (supabase/functions/create-collaborator/index.ts:139,189), so a
 --   has_workspace_access read policy would show collaborator A the rows of
 --   collaborator B - COLAB-09 is absolute ("any row whose member_user_id
 --   differs from their own id"). The manager side therefore checks
