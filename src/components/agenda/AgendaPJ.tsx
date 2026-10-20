@@ -1,17 +1,16 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import {
   format, addDays, subDays, startOfWeek, endOfWeek,
-  eachDayOfInterval, isToday, addWeeks, subWeeks,
-  startOfMonth, endOfMonth, addMonths, subMonths, isSameMonth, isSameDay,
+  eachDayOfInterval, addWeeks, subWeeks,
+  startOfMonth, endOfMonth, addMonths, subMonths,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   CalendarClock, ChevronLeft, ChevronRight, Plus,
-  Edit2, Trash2, AlertTriangle, Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -22,55 +21,46 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Popover, PopoverContent, PopoverTrigger,
-} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   useTimeBlocks, useCreateTimeBlock, useUpdateTimeBlock, useDeleteTimeBlock,
 } from '@/hooks/useAgendaPJ';
 import { hasConflict, timeToMinutes } from '@/lib/schedule';
+import {
+  AgendaDayView, AgendaWeekView, AgendaMonthView,
+  APPOINTMENT_TYPES, END_HOUR, START_HOUR, getTypeConf, type AgendaViewEvent,
+} from '@/components/agenda/views';
 import type { TimeBlock } from '@/types/database';
 
-// ─────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────
-
-const HOUR_HEIGHT = 56;
-const START_HOUR = 7;
-const END_HOUR = 22;
-const TOTAL_HOURS = END_HOUR - START_HOUR;
-const CONTAINER_HEIGHT = TOTAL_HOURS * HOUR_HEIGHT;
-
-export const APPOINTMENT_TYPES = [
-  { value: 'reuniao',  label: 'Reunião',   color: '#3b82f6' },
-  { value: 'cliente',  label: 'Cliente',   color: '#8b5cf6' },
-  { value: 'projeto',  label: 'Projeto',   color: '#22c55e' },
-  { value: 'tarefa',   label: 'Tarefa',    color: '#f59e0b' },
-  { value: 'ligacao',  label: 'Ligação',   color: '#06b6d4' },
-  { value: 'pessoal',  label: 'Pessoal',   color: '#ec4899' },
-  { value: 'outros',   label: 'Outros',    color: '#6b7280' },
-];
+// =====================================================
+// Personal agenda. The month/day/week views and the popover live in
+// src/components/agenda/views/ as presentational components driven by an
+// `events` prop; this component only owns the data, the form and the dialogs.
+// =====================================================
 
 const TIME_OPTIONS: string[] = [];
 for (let m = START_HOUR * 60; m <= END_HOUR * 60; m += 30) {
   TIME_OPTIONS.push(`${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`);
 }
 
-const HOURS = Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => START_HOUR + i);
-
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
-
-function getTypeConf(type: string) {
-  return APPOINTMENT_TYPES.find(t => t.value === type) ?? APPOINTMENT_TYPES[APPOINTMENT_TYPES.length - 1];
-}
-
 function addMinutes(time: string, min: number): string {
   const total = Math.min(timeToMinutes(time) + min, END_HOUR * 60);
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/** `time_blocks` row -> the presentation shape the views render. */
+function toViewEvent(block: TimeBlock): AgendaViewEvent {
+  return {
+    id: block.id,
+    date: block.date,
+    start: block.start_time,
+    end: block.end_time,
+    title: block.title,
+    color: block.color ?? getTypeConf(block.type).color,
+    type: block.type,
+    kind: 'personal',
+  };
 }
 
 interface FormState {
@@ -103,7 +93,6 @@ export function AgendaPJ() {
 
   const weekStart  = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd    = endOfWeek(selectedDate, { weekStartsOn: 1 });
-  const weekDays   = eachDayOfInterval({ start: weekStart, end: weekEnd });
   const monthStart = startOfMonth(selectedDate);
   const monthEnd   = endOfMonth(selectedDate);
 
@@ -119,10 +108,7 @@ export function AgendaPJ() {
   const updateMut = useUpdateTimeBlock();
   const deleteMut = useDeleteTimeBlock();
 
-  const blocksForDate = useCallback((d: Date) => {
-    const s = format(d, 'yyyy-MM-dd');
-    return blocks.filter(b => b.date === s).sort((a, b) => a.start_time.localeCompare(b.start_time));
-  }, [blocks]);
+  const events = useMemo(() => blocks.map(toViewEvent), [blocks]);
 
   const formConflicts = useMemo(() => {
     if (!form.start_time || !form.end_time) return [];
@@ -159,6 +145,18 @@ export function AgendaPJ() {
       type: block.type, color: block.color ?? '#3b82f6',
     });
     setFormOpen(true);
+  }
+
+  // The views hand back presentation events; the dialogs still work on the
+  // original row so nothing about the form's values changes.
+  function openEditFromEvent(ev: AgendaViewEvent) {
+    const block = blocks.find(b => b.id === ev.id);
+    if (block) openEdit(block);
+  }
+
+  function requestDeleteFromEvent(ev: AgendaViewEvent) {
+    const block = blocks.find(b => b.id === ev.id);
+    if (block) setDeletingBlock(block);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -256,28 +254,29 @@ export function AgendaPJ() {
           {view === 'day' && (
             <AgendaDayView
               date={selectedDate}
-              blocks={blocksForDate(selectedDate)}
-              allBlocks={blocks}
+              events={events}
+              mode="edit"
               onAddAt={(t) => openAdd(selectedDate, t)}
-              onEdit={openEdit}
-              onRequestDelete={setDeletingBlock}
+              onEdit={openEditFromEvent}
+              onRequestDelete={requestDeleteFromEvent}
             />
           )}
           {view === 'week' && (
             <AgendaWeekView
-              days={weekDays}
-              blocksForDate={blocksForDate}
-              allBlocks={blocks}
+              days={eachDayOfInterval({ start: weekStart, end: weekEnd })}
+              events={events}
+              mode="edit"
               onDaySelect={(d) => { setSelectedDate(d); setView('day'); }}
               onAddAt={(d, t) => openAdd(d, t)}
-              onEdit={openEdit}
-              onRequestDelete={setDeletingBlock}
+              onEdit={openEditFromEvent}
+              onRequestDelete={requestDeleteFromEvent}
             />
           )}
           {view === 'month' && (
             <AgendaMonthView
               selectedDate={selectedDate}
-              blocksForDate={blocksForDate}
+              events={events}
+              mode="edit"
               onDaySelect={(d) => { setSelectedDate(d); setView('day'); }}
               onAddAt={(d) => openAdd(d)}
             />
@@ -394,437 +393,5 @@ export function AgendaPJ() {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
-}
-
-// ─────────────────────────────────────────────
-// Month View
-// ─────────────────────────────────────────────
-
-interface MonthViewProps {
-  selectedDate: Date;
-  blocksForDate: (d: Date) => TimeBlock[];
-  onDaySelect: (d: Date) => void;
-  onAddAt: (d: Date) => void;
-}
-
-function AgendaMonthView({ selectedDate, blocksForDate, onDaySelect, onAddAt }: MonthViewProps) {
-  const monthStart = startOfMonth(selectedDate);
-  const monthEnd   = endOfMonth(selectedDate);
-  const gridStart  = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const gridEnd    = endOfWeek(monthEnd, { weekStartsOn: 1 });
-  const allDays    = eachDayOfInterval({ start: gridStart, end: gridEnd });
-  const weekLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-
-  return (
-    <div className="rounded-lg border border-border/30 overflow-hidden">
-      {/* Day-of-week headers */}
-      <div className="grid grid-cols-7 border-b border-border/30 bg-muted/30">
-        {weekLabels.map(d => (
-          <div key={d} className="py-2 text-center text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-            <span className="hidden sm:inline">{d}</span>
-            <span className="sm:hidden">{d[0]}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Days grid */}
-      <div className="grid grid-cols-7">
-        {allDays.map((day, idx) => {
-          const dayBlocks = blocksForDate(day);
-          const isCurrentMonth = isSameMonth(day, selectedDate);
-          const today = isToday(day);
-          const isSelected = isSameDay(day, selectedDate);
-          const MAX_VISIBLE = 2;
-          const overflow = dayBlocks.length - MAX_VISIBLE;
-
-          return (
-            <div
-              key={idx}
-              className={cn(
-                'min-h-[72px] md:min-h-[90px] p-1 md:p-1.5 border-b border-r border-border/20 cursor-pointer group transition-colors',
-                !isCurrentMonth && 'bg-muted/20',
-                today && 'bg-primary/5',
-                isSelected && !today && 'bg-accent/30',
-                'hover:bg-accent/20 active:bg-accent/40',
-              )}
-              onClick={() => onDaySelect(day)}
-            >
-              <div className="flex items-center justify-between mb-0.5 md:mb-1">
-                <span className={cn(
-                  'inline-flex w-5 h-5 md:w-6 md:h-6 items-center justify-center rounded-full text-[11px] md:text-xs font-semibold',
-                  today ? 'bg-primary text-primary-foreground' : isCurrentMonth ? 'text-foreground' : 'text-muted-foreground/40',
-                )}>
-                  {format(day, 'd')}
-                </span>
-                {isCurrentMonth && (
-                  <button
-                    className="opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
-                    onClick={e => { e.stopPropagation(); onAddAt(day); }}
-                    title="Adicionar compromisso"
-                  >
-                    <Plus className="w-3 h-3 md:w-3.5 md:h-3.5 text-primary" />
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-0.5">
-                {dayBlocks.slice(0, MAX_VISIBLE).map(block => {
-                  const tc = getTypeConf(block.type);
-                  return (
-                    <div
-                      key={block.id}
-                      className="truncate rounded px-1 py-0.5 text-[9px] md:text-[10px] font-medium text-white leading-tight"
-                      style={{ background: block.color ?? tc.color }}
-                    >
-                      <span className="hidden sm:inline opacity-80 mr-0.5">{block.start_time} </span>
-                      {block.title}
-                    </div>
-                  );
-                })}
-                {overflow > 0 && (
-                  <div className="text-[9px] md:text-[10px] text-muted-foreground font-medium px-0.5">
-                    +{overflow}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Legend — hidden on mobile to save space */}
-      <div className="hidden sm:flex px-3 py-2 border-t border-border/30 bg-muted/20 flex-wrap gap-3">
-        {APPOINTMENT_TYPES.map(t => (
-          <div key={t.value} className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full shrink-0" style={{ background: t.color }} />
-            <span className="text-[10px] text-muted-foreground">{t.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// Day Timeline View
-// ─────────────────────────────────────────────
-
-interface DayViewProps {
-  date: Date;
-  blocks: TimeBlock[];
-  allBlocks: TimeBlock[];
-  onAddAt: (startTime: string) => void;
-  onEdit: (b: TimeBlock) => void;
-  onRequestDelete: (b: TimeBlock) => void;
-}
-
-function AgendaDayView({ date, blocks, allBlocks, onAddAt, onEdit, onRequestDelete }: DayViewProps) {
-  const now = new Date();
-  const nowMin = now.getHours() * 60 + now.getMinutes();
-  const nowTop = ((nowMin - START_HOUR * 60) / (TOTAL_HOURS * 60)) * 100;
-  const showNow = isToday(date) && nowMin > START_HOUR * 60 && nowMin < END_HOUR * 60;
-
-  function handleBgClick(e: React.MouseEvent<HTMLDivElement>) {
-    if ((e.target as HTMLElement).closest('[data-event]')) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const totalMin = START_HOUR * 60 + Math.floor((y / CONTAINER_HEIGHT) * TOTAL_HOURS * 60);
-    const rounded = Math.floor(totalMin / 30) * 30;
-    onAddAt(`${String(Math.floor(rounded / 60)).padStart(2, '0')}:${String(rounded % 60).padStart(2, '0')}`);
-  }
-
-  return (
-    <div className="overflow-y-auto rounded-lg border border-border/30" style={{ maxHeight: 'min(520px, 65vh)' }}>
-      <div className="flex" style={{ minHeight: CONTAINER_HEIGHT }}>
-        {/* Hour labels */}
-        <div className="w-12 shrink-0 relative select-none" style={{ height: CONTAINER_HEIGHT }}>
-          {HOURS.map(h => (
-            <div
-              key={h}
-              className="absolute right-2 text-[10px] text-muted-foreground/60 leading-none"
-              style={{ top: `${((h - START_HOUR) / TOTAL_HOURS) * 100}%`, transform: 'translateY(-50%)' }}
-            >
-              {String(h).padStart(2, '0')}h
-            </div>
-          ))}
-        </div>
-
-        {/* Timeline area */}
-        <div
-          className="flex-1 relative border-l border-border/30 cursor-pointer"
-          style={{ height: CONTAINER_HEIGHT }}
-          onClick={handleBgClick}
-        >
-          {HOURS.map(h => (
-            <div key={h} className="absolute w-full border-t border-border/25"
-              style={{ top: `${((h - START_HOUR) / TOTAL_HOURS) * 100}%` }} />
-          ))}
-          {HOURS.slice(0, -1).map(h => (
-            <div key={`hh-${h}`} className="absolute w-full border-t border-dashed border-border/10"
-              style={{ top: `${((h - START_HOUR + 0.5) / TOTAL_HOURS) * 100}%` }} />
-          ))}
-
-          {/* Now line */}
-          {showNow && (
-            <div className="absolute w-full flex items-center z-20 pointer-events-none" style={{ top: `${nowTop}%` }}>
-              <div className="w-2.5 h-2.5 rounded-full bg-primary -ml-1.5 shrink-0" />
-              <div className="flex-1 h-px bg-primary" />
-            </div>
-          )}
-
-          {/* Events */}
-          {blocks.map(block => {
-            const startMin  = timeToMinutes(block.start_time) - START_HOUR * 60;
-            const duration  = timeToMinutes(block.end_time) - timeToMinutes(block.start_time);
-            const topPct    = Math.max(0, (startMin / (TOTAL_HOURS * 60)) * 100);
-            const heightPct = Math.max(1.8, (duration / (TOTAL_HOURS * 60)) * 100);
-            const tc        = getTypeConf(block.type);
-            const conflicted = allBlocks.some(b => b.id !== block.id && hasConflict(block, b));
-
-            return (
-              <Popover key={block.id}>
-                <PopoverTrigger asChild>
-                  <div
-                    data-event
-                    className={cn(
-                      'absolute left-1 right-1 rounded-md px-2 py-1 text-white text-[11px] cursor-pointer z-10',
-                      'hover:brightness-110 active:brightness-95 transition-all shadow-sm overflow-hidden select-none',
-                      conflicted && 'ring-2 ring-destructive/70 ring-offset-1',
-                    )}
-                    style={{
-                      top: `${topPct}%`,
-                      height: `${heightPct}%`,
-                      minHeight: 28,
-                      background: block.color ?? tc.color,
-                    }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <div className="flex items-start gap-1 overflow-hidden h-full">
-                      {conflicted && <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0 opacity-90" />}
-                      <div className="min-w-0">
-                        <p className="font-semibold leading-tight truncate">{block.title}</p>
-                        {duration >= 30 && (
-                          <p className="opacity-80 text-[10px] leading-tight">{block.start_time}–{block.end_time}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent
-                  side="bottom"
-                  align="start"
-                  sideOffset={6}
-                  alignOffset={-4}
-                  avoidCollisions
-                  collisionPadding={12}
-                  className="w-[min(224px,calc(100vw-24px))] p-3 z-30"
-                  onClick={e => e.stopPropagation()}
-                >
-                  <EventPopoverContent
-                    block={block}
-                    conflicted={conflicted}
-                    onEdit={onEdit}
-                    onRequestDelete={onRequestDelete}
-                  />
-                </PopoverContent>
-              </Popover>
-            );
-          })}
-
-          {blocks.length === 0 && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
-              <p className="text-xs text-muted-foreground/50">Nenhum compromisso</p>
-              <p className="text-[10px] text-muted-foreground/35 hidden md:block">Toque na timeline para adicionar</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// Week View
-// ─────────────────────────────────────────────
-
-interface WeekViewProps {
-  days: Date[];
-  blocksForDate: (d: Date) => TimeBlock[];
-  allBlocks: TimeBlock[];
-  onDaySelect: (d: Date) => void;
-  onAddAt: (d: Date, time: string) => void;
-  onEdit: (b: TimeBlock) => void;
-  onRequestDelete: (b: TimeBlock) => void;
-}
-
-function AgendaWeekView({ days, blocksForDate, allBlocks, onDaySelect, onAddAt, onEdit, onRequestDelete }: WeekViewProps) {
-  function handleColClick(day: Date, e: React.MouseEvent<HTMLDivElement>) {
-    if ((e.target as HTMLElement).closest('[data-event]')) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const totalMin = START_HOUR * 60 + Math.floor((y / CONTAINER_HEIGHT) * TOTAL_HOURS * 60);
-    const rounded = Math.floor(totalMin / 30) * 30;
-    onAddAt(day, `${String(Math.floor(rounded / 60)).padStart(2, '0')}:${String(rounded % 60).padStart(2, '0')}`);
-  }
-
-  return (
-    <div className="overflow-auto rounded-lg border border-border/30" style={{ maxHeight: 'min(520px, 65vh)' }}>
-      <div className="flex min-w-[400px]">
-        {/* Hour labels */}
-        <div className="w-10 shrink-0 relative bg-card sticky left-0 z-10" style={{ height: CONTAINER_HEIGHT + 32 }}>
-          <div className="h-8 border-b border-border/30" />
-          <div className="relative" style={{ height: CONTAINER_HEIGHT }}>
-            {HOURS.map(h => (
-              <div
-                key={h}
-                className="absolute right-1 text-[9px] text-muted-foreground/60 leading-none select-none"
-                style={{ top: `${((h - START_HOUR) / TOTAL_HOURS) * 100}%`, transform: 'translateY(-50%)' }}
-              >
-                {String(h).padStart(2, '0')}h
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Day columns */}
-        {days.map(day => {
-          const dayBlocks = blocksForDate(day);
-          const today = isToday(day);
-          return (
-            <div key={day.toISOString()} className="flex-1 min-w-[52px] border-l border-border/25 flex flex-col">
-              <div
-                className={cn(
-                  'h-8 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 active:bg-muted transition-colors border-b border-border/30 sticky top-0 bg-card z-10 shrink-0',
-                  today && 'bg-primary/5',
-                )}
-                onClick={() => onDaySelect(day)}
-              >
-                <span className="text-[9px] md:text-[10px] text-muted-foreground font-medium capitalize">
-                  {format(day, 'EEE', { locale: ptBR })}
-                </span>
-                <span className={cn('text-xs font-bold leading-tight', today ? 'text-primary' : 'text-foreground')}>
-                  {format(day, 'd')}
-                </span>
-              </div>
-
-              <div
-                className="relative cursor-pointer"
-                style={{ height: CONTAINER_HEIGHT }}
-                onClick={(e) => handleColClick(day, e)}
-              >
-                {HOURS.map(h => (
-                  <div key={h} className="absolute w-full border-t border-border/15"
-                    style={{ top: `${((h - START_HOUR) / TOTAL_HOURS) * 100}%` }} />
-                ))}
-                {dayBlocks.map(block => {
-                  const startMin  = timeToMinutes(block.start_time) - START_HOUR * 60;
-                  const duration  = timeToMinutes(block.end_time) - timeToMinutes(block.start_time);
-                  const topPct    = Math.max(0, (startMin / (TOTAL_HOURS * 60)) * 100);
-                  const heightPct = Math.max(1.8, (duration / (TOTAL_HOURS * 60)) * 100);
-                  const tc        = getTypeConf(block.type);
-                  const conflicted = allBlocks.some(b => b.id !== block.id && hasConflict(block, b));
-
-                  return (
-                    <Popover key={block.id}>
-                      <PopoverTrigger asChild>
-                        <div
-                          data-event
-                          className={cn(
-                            'absolute left-0.5 right-0.5 rounded px-1 text-white text-[9px] cursor-pointer z-10',
-                            'hover:brightness-110 active:brightness-95 transition-all shadow-sm overflow-hidden select-none',
-                            conflicted && 'ring-1 ring-destructive',
-                          )}
-                          style={{
-                            top: `${topPct}%`,
-                            height: `${heightPct}%`,
-                            minHeight: 20,
-                            background: block.color ?? tc.color,
-                          }}
-                          onClick={e => e.stopPropagation()}
-                        >
-                          <p className="font-medium truncate leading-tight">{block.title}</p>
-                        </div>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        side="bottom"
-                        align="center"
-                        sideOffset={6}
-                        avoidCollisions
-                        collisionPadding={12}
-                        className="w-[min(208px,calc(100vw-24px))] p-3 z-30"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <EventPopoverContent
-                          block={block}
-                          conflicted={conflicted}
-                          onEdit={onEdit}
-                          onRequestDelete={onRequestDelete}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// Event Popover Content
-// ─────────────────────────────────────────────
-
-interface EventPopoverContentProps {
-  block: TimeBlock;
-  conflicted: boolean;
-  onEdit: (b: TimeBlock) => void;
-  onRequestDelete: (b: TimeBlock) => void;
-}
-
-function EventPopoverContent({ block, conflicted, onEdit, onRequestDelete }: EventPopoverContentProps) {
-  const tc = getTypeConf(block.type);
-  return (
-    <div className="space-y-2" onClick={e => e.stopPropagation()}>
-      <div className="min-w-0">
-        <p className="font-semibold text-sm leading-tight break-words">{block.title}</p>
-        <div className="flex items-center gap-1.5 mt-1">
-          <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
-          <span className="text-xs text-muted-foreground">{block.start_time} – {block.end_time}</span>
-        </div>
-        <Badge
-          variant="outline"
-          className="mt-1.5 text-[10px] py-0 px-1.5 h-4"
-          style={{ borderColor: block.color ?? tc.color, color: block.color ?? tc.color }}
-        >
-          {tc.label}
-        </Badge>
-        {conflicted && (
-          <div className="flex items-center gap-1 mt-1.5 text-[11px] text-amber-500">
-            <AlertTriangle className="w-3 h-3 shrink-0" />
-            Conflito de horário
-          </div>
-        )}
-      </div>
-      <div className="flex gap-2 pt-2 border-t border-border/50">
-        <Button
-          variant="outline" size="sm"
-          className="flex-1 h-9 text-xs gap-1 touch-manipulation"
-          onClick={() => onEdit(block)}
-        >
-          <Edit2 className="w-3 h-3" /> Editar
-        </Button>
-        <Button
-          variant="outline" size="sm"
-          className="h-9 w-9 p-0 shrink-0 touch-manipulation text-destructive hover:bg-destructive/10 hover:border-destructive/40"
-          onClick={() => onRequestDelete(block)}
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </Button>
-      </div>
-    </div>
   );
 }

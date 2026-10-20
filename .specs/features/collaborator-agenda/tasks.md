@@ -321,11 +321,11 @@ T18
 
 **Done when**:
 
-- [ ] `AgendaMonthView`, `AgendaDayView`, `AgendaWeekView`, `EventPopoverContent` live under `src/components/agenda/views/` and take `events` + `mode`
-- [ ] They import no data hook — `useAgendaPJ` is not referenced from the views
-- [ ] `AgendaPJ.tsx` mounts them and still renders the personal agenda with no user-visible change (design R1)
-- [ ] Component test renders each view with a fixed event set and asserts the same DOM a pre-change snapshot produced
-- [ ] `npm run build` passes and the bundle still resolves
+- [x] `AgendaMonthView`, `AgendaDayView`, `AgendaWeekView`, `EventPopoverContent` live under `src/components/agenda/views/` and take `events` + `mode`
+- [x] They import no data hook — `useAgendaPJ` is not referenced from the views
+- [x] `AgendaPJ.tsx` mounts them and still renders the personal agenda with no user-visible change (design R1)
+- [x] Component test renders each view with a fixed event set and asserts the same DOM a pre-change snapshot produced
+- [x] `npm run build` passes and the bundle still resolves
 
 **Tests**: unit
 **Gate**: quick
