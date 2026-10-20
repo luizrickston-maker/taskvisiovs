@@ -58,6 +58,14 @@
 - **Date**: 2026-10-19
 - **Status**: active
 
+### AD-008
+- **Decision**: When a privileged user writes a row *on behalf of another person*, the INSERT `WITH CHECK` must constrain **who the row is about**, not only who is writing it — and where the validating table is not readable by the writer, the check runs as a `SECURITY DEFINER` function with an explicit `SET search_path`.
+- **Reason**: `collaborator_appointments` originally had `WITH CHECK (is_workspace_admin(...) OR is_super_admin(...))`, which validates only the actor. That let a workspace admin write a row for **any** auth user, who would then see it in their own portal through a policy keyed on `auth.uid() = member_user_id`. An INVOKER guard was rejected because `corporate_team` is readable only by `user_id` or the member itself, so a second legitimate admin of the same workspace could not see a colleague's row and would have been refused — fail-closed in the wrong direction.
+- **Trade-off**: `SECURITY DEFINER` widens what the function can read, so it needs `SET search_path` pinned and must be reachable only after `WITH CHECK` has already constrained the caller.
+- **Scope**: Any table where one party creates records belonging to another.
+- **Date**: 2026-10-19
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: none

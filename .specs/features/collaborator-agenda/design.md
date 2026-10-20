@@ -262,7 +262,7 @@ Single enforcement point for state-transition integrity and field-level rights, 
 | Duplicate `notify-appointment` call | `UNIQUE(appointment_id, attempt)` + `ON CONFLICT DO NOTHING` | At most one message per attempt |
 | `corporate_team.whatsapp` is null/empty | Function short-circuits, attempt row `no_whatsapp`, `notify_status = 'no_whatsapp'` | `Colaborador sem WhatsApp cadastrado — notificação não enviada.` |
 | `whatsapp` contains non-digits | zod rejects at entry | `Informe o WhatsApp com DDI, DDD e número, apenas dígitos.` |
-| Collaborator deactivated between select and save | Trigger/membership check rejects | `Este colaborador não está mais ativo.` |
+| Collaborator deactivated between select and save | `BEFORE INSERT` trigger `assert_appointment_member_active` refuses unless an **active** `corporate_team` row exists for that `member_user_id` in that workspace | `Este colaborador não está mais ativo.` |
 | Deep link opened unauthenticated | Existing `CollaboratorRoute`/`ProtectedRoute` flow | `/auth`, then return to the agenda |
 | Deep link opened by a non-collaborator | `CollaboratorRoute.tsx:30` | Redirect `/caixa` — existing behavior, unchanged |
 
