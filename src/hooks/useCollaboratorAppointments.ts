@@ -5,7 +5,8 @@ import { toast } from 'sonner';
 import { formatDateBR } from '@/lib/schedule';
 import type { CollaboratorAppointmentRow, CollaboratorAvailabilityRow } from '@/components/agenda/CalendarEvent';
 
-const QUERY_KEY = 'collab-appointments';
+/** Prefix shared by every appointment query, so invalidation covers both readers. */
+export const APPOINTMENT_QUERY_KEY = 'collab-appointments';
 
 /** COLAB-04 — the exact message the database trigger raises. */
 export const ALREADY_ANSWERED_MESSAGE = 'Esta solicitação já foi respondida.';
@@ -43,7 +44,7 @@ export function useCollaboratorAppointments(
   const target = memberUserId === undefined ? user?.id ?? null : memberUserId;
 
   return useQuery({
-    queryKey: [QUERY_KEY, target, dateFrom, dateTo],
+    queryKey: [APPOINTMENT_QUERY_KEY, target, dateFrom, dateTo],
     queryFn: async () => {
       if (!target) return [];
       const { data, error } = await supabase
@@ -135,7 +136,7 @@ export function useCreateAppointment() {
         .single();
       if (error) throw error;
 
-      qc.invalidateQueries({ queryKey: [QUERY_KEY] });
+      qc.invalidateQueries({ queryKey: [APPOINTMENT_QUERY_KEY] });
       return data as unknown as CollaboratorAppointmentRow;
     },
     onSuccess: () => toast.success('Compromisso criado!'),
@@ -166,7 +167,7 @@ export function useUpdateAppointment() {
         .select()
         .single();
       if (error) throw error;
-      qc.invalidateQueries({ queryKey: [QUERY_KEY] });
+      qc.invalidateQueries({ queryKey: [APPOINTMENT_QUERY_KEY] });
       return data as unknown as CollaboratorAppointmentRow;
     },
     onSuccess: () => toast.success('Compromisso atualizado!'),
@@ -205,7 +206,7 @@ export function useCancelAppointment() {
         .single();
       if (error) throw new Error(error.message);
 
-      qc.invalidateQueries({ queryKey: [QUERY_KEY] });
+      qc.invalidateQueries({ queryKey: [APPOINTMENT_QUERY_KEY] });
       return data as unknown as CollaboratorAppointmentRow;
     },
     onSuccess: () => toast.success('Compromisso cancelado!'),
@@ -256,7 +257,7 @@ export function useRespondAppointment() {
         .single();
       if (error) throw new Error(error.message);
 
-      qc.invalidateQueries({ queryKey: [QUERY_KEY] });
+      qc.invalidateQueries({ queryKey: [APPOINTMENT_QUERY_KEY] });
       return data as unknown as CollaboratorAppointmentRow;
     },
     onSuccess: (_data, { action }) =>

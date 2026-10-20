@@ -13,12 +13,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AgendaPJ } from '@/components/agenda/AgendaPJ';
 import { CollaboratorSelector } from '@/components/agenda/CollaboratorSelector';
+import { AppointmentNotifier } from '@/components/agenda/AppointmentNotifier';
 import { AgendaDayView, AgendaMonthView } from '@/components/agenda/views';
 import {
   availabilityConflictsWith,
   mapAppointmentToCalendarEvent,
   mapAvailabilityToCalendarEvents,
 } from '@/components/agenda/CalendarEvent';
+import type { CollaboratorAppointmentRow } from '@/components/agenda/CalendarEvent';
 import { useTimeBlocks } from '@/hooks/useAgendaPJ';
 import { useCollaboratorAvailability } from '@/hooks/useCollaboratorAvailability';
 import {
@@ -94,6 +96,7 @@ function CollaboratorAgenda({ memberUserId }: { memberUserId: string }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [formOpen, setFormOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [created, setCreated] = useState<CollaboratorAppointmentRow | null>(null);
   const [form, setForm] = useState<AppointmentForm>({
     title: '',
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -151,7 +154,8 @@ function CollaboratorAgenda({ memberUserId }: { memberUserId: string }) {
     }
 
     try {
-      await create.mutateAsync({
+      // NOTIF-01 starts here: one created appointment, one notification.
+      const createdRow = await create.mutateAsync({
         member_user_id: memberUserId,
         collaboratorName: member.name,
         title: form.title.trim(),
@@ -160,6 +164,7 @@ function CollaboratorAgenda({ memberUserId }: { memberUserId: string }) {
         start_time: form.start_time,
         end_time: form.end_time,
       });
+      setCreated(createdRow);
       setFormOpen(false);
     } catch (err) {
       // MGR-04: the refusal is shown here and nothing reached the database.
@@ -311,6 +316,9 @@ function CollaboratorAgenda({ memberUserId }: { memberUserId: string }) {
           </div>
         )}
       </section>
+
+      {/* NOTIF-02 / NOTIF-08: how the notification for this appointment went. */}
+      {created && <AppointmentNotifier appointment={created} />}
 
       {/* Create */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
@@ -490,7 +498,11 @@ export default function AgendaPage() {
       </div>
 
       {/* MGR-02 / MGR-03 / MGR-11: the source follows the selector. */}
-      {selectedMemberId === null ? <AgendaPJ /> : <CollaboratorAgenda memberUserId={selectedMemberId} />}
+      {selectedMemberId === null ? (
+        <AgendaPJ />
+      ) : (
+        <CollaboratorAgenda key={selectedMemberId} memberUserId={selectedMemberId} />
+      )}
     </div>
   );
 }

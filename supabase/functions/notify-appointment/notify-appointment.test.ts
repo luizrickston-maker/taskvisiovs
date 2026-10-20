@@ -229,6 +229,45 @@ describe('attempt deduplication (NOTIF-04)', () => {
   });
 });
 
+describe('resend history (NOTIF-03)', () => {
+  it('appends the next attempt and leaves the previous one untouched', async () => {
+    const { store, state } = makeStore();
+
+    const first = await handleNotifyAppointment(
+      'appointment-1',
+      deps({ store, fetchImpl: makeFetch(() => okFetch()).fetchImpl })
+    );
+
+    // A resend reaches the same appointment and fails; the earlier attempt
+    // keeps its own outcome instead of being overwritten.
+    const second = await handleNotifyAppointment(
+      'appointment-1',
+      deps({
+        store,
+        fetchImpl: makeFetch(() => ({
+          ok: false,
+          status: 500,
+          statusText: 'Server Error',
+          text: async () => 'boom',
+        })).fetchImpl,
+      })
+    );
+
+    expect(first.body.attempt).toBe(1);
+    expect(second.body.attempt).toBe(2);
+    expect(state.attempts).toHaveLength(2);
+    expect(state.attempts[0]).toEqual({
+      attempt: 1,
+      status: 'sent',
+      providerResponse: null,
+    });
+    expect(state.attempts[1].attempt).toBe(2);
+    expect(state.attempts[1].status).toBe('failed');
+    // NOTIF-08: `notify_status` carries the latest verdict of that history.
+    expect(state.appointment?.notify_status).toBe('failed');
+  });
+});
+
 describe('missing whatsapp (MGR-07)', () => {
   const cases: Array<[label: string, whatsapp: string | null]> = [
     ['null', null],
