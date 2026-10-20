@@ -434,11 +434,11 @@ T18
 
 **Done when**:
 
-- [ ] Insert calls `fn_collaborator_has_conflict` via RPC before writing, and surfaces the spec's refusal message on conflict
-- [ ] Confirm and cancel set `status`, `decided_at`, `decided_by` and nothing else
-- [ ] Edit and cancel by the manager send no notification — the hook contains no notify call on those paths (MGR-09)
-- [ ] Actions are only offered for `pending` rows; a terminal row produces no action call
-- [ ] Unit tests cover: happy path, RPC refusal, terminal-state refusal, foreign-row refusal
+- [x] Insert calls `fn_collaborator_has_conflict` via RPC before writing, and surfaces the spec's refusal message on conflict
+- [x] Confirm and cancel set `status`, `decided_at`, `decided_by` and nothing else
+- [x] Edit and cancel by the manager send no notification — the hook contains no notify call on those paths (MGR-09)
+- [x] Actions are only offered for `pending` rows; a terminal row produces no action call
+- [x] Unit tests cover: happy path, RPC refusal, terminal-state refusal, foreign-row refusal
 
 **Tests**: unit
 **Gate**: quick
