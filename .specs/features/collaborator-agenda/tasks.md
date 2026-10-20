@@ -231,14 +231,14 @@ T18
 
 **Done when**:
 
-- [ ] `fn_collaborator_has_conflict` is `SECURITY INVOKER` and `STABLE` — asserted by reading `pg_proc`, so a later refactor cannot silently make it `DEFINER` (design R7)
-- [ ] An appointment overlapping an unavailability row is refused and **nothing is persisted** (MGR-04)
-- [ ] A touching-but-not-overlapping pair is accepted (Edge Cases)
-- [ ] `pending → confirmed` and `pending → cancelled` both succeed and record `decided_at`/`decided_by` (COLAB-02, COLAB-03)
-- [ ] Any transition out of `confirmed` or `cancelled` is refused with nothing persisted (COLAB-04)
-- [ ] A collaborator attempting to change `title`, `notes`, `date`, `start_time`, `end_time` or `workspace_id` is refused (COLAB-05)
-- [ ] A manager cannot alter `status` or `decided_*`
-- [ ] Test count: no assertion from T4 deleted
+- [x] `fn_collaborator_has_conflict` is `SECURITY INVOKER` and `STABLE` — asserted by reading `pg_proc`, so a later refactor cannot silently make it `DEFINER` (design R7)
+- [x] An appointment overlapping an unavailability row is refused and **nothing is persisted** (MGR-04) — asserted for a timed row and for a whole-day row
+- [x] A touching-but-not-overlapping pair is accepted (Edge Cases) — both endpoints (before 09:00, after 12:00) asserted
+- [x] `pending → confirmed` and `pending → cancelled` both succeed and record `decided_at`/`decided_by` (COLAB-02, COLAB-03) — the update sends only `status`, so the database itself proves it fills both columns
+- [x] Any transition out of `confirmed` or `cancelled` is refused with nothing persisted (COLAB-04)
+- [x] A collaborator attempting to change `title`, `notes`, `date`, `start_time`, `end_time` or `workspace_id` is refused (COLAB-05)
+- [x] A manager cannot alter `status` or `decided_*`
+- [x] Test count: no assertion from T4 deleted (schema suite still 17/17, harness 14/14 in the same gate)
 
 **Tests**: integration
 **Gate**: full

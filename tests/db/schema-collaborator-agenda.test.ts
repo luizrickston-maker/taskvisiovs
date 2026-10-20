@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Client } from 'pg';
 import { scratchUrl } from './connection';
+import { expectFailure as expectSqlFailure } from './pg-helpers';
 
 // Fixed fixture ids. Workspace A / manager A / collaborator A come from
 // tests/db/seed.sql; the rest are created here so this file owns its rows.
@@ -13,8 +14,11 @@ const COLLABORATOR_B = '11111111-1111-4111-8111-111111111104';
 // Dates kept clear of the ones other suites use, so fixtures never collide.
 const AVAILABILITY_A_DATE = '2026-11-20';
 const AVAILABILITY_B_DATE = '2026-11-21';
+// Appointment fixtures sit clear of the unavailability rows: once the
+// BEFORE INSERT conflict trigger (T5) exists, an appointment inside declared
+// unavailability is exactly the row MGR-04 says the database must refuse.
 const APPOINTMENT_A_DATE = '2026-11-20';
-const APPOINTMENT_B_DATE = '2026-11-21';
+const APPOINTMENT_B_DATE = '2026-11-22';
 
 let client: Client;
 
@@ -35,30 +39,13 @@ async function asSuperuser(): Promise<void> {
   await claims(null);
 }
 
-/**
- * Asserts the exact SQL error. The SQLSTATE is locale-independent - this
- * server words its messages in pt_BR - and the constraint name appears
- * verbatim inside the message in either language.
- */
+/** Binds this suite's connection to the shared exact-SQL-error assertion. */
 async function expectFailure(
   sql: string,
   params: unknown[],
   expected: { code: string; constraint?: string; messageIncludes?: string }
 ): Promise<void> {
-  try {
-    await client.query(sql, params);
-    throw new Error(`statement was expected to fail with SQLSTATE ${expected.code} but succeeded`);
-  } catch (error) {
-    const failure = error as Error & { code?: string; constraint?: string | null };
-    expect(failure.code).toBe(expected.code);
-    if (expected.constraint !== undefined) {
-      expect(failure.constraint).toBe(expected.constraint);
-      expect(failure.message).toContain(expected.constraint);
-    }
-    if (expected.messageIncludes !== undefined) {
-      expect(failure.message).toContain(expected.messageIncludes);
-    }
-  }
+  await expectSqlFailure(client, sql, params, expected);
 }
 
 beforeAll(async () => {
@@ -91,7 +78,7 @@ beforeAll(async () => {
   await client.query(
     `INSERT INTO public.collaborator_appointments
        (workspace_id, member_user_id, created_by, title, date, start_time, end_time, status)
-     VALUES ($1, $2, $3, 'Reunião A', $4, '15:00', '15:30', 'pending'),
+     VALUES ($1, $2, $3, 'Reunião A', $4, '17:00', '18:00', 'pending'),
             ($1, $5, $3, 'Reunião B', $6, '09:00', '10:00', 'pending')`,
     [WORKSPACE_A, COLLABORATOR_A, MANAGER_A, APPOINTMENT_A_DATE, COLLABORATOR_B, APPOINTMENT_B_DATE]
   );
@@ -209,7 +196,7 @@ describe('appointment CHECKs', () => {
     await expectFailure(
       `INSERT INTO public.collaborator_appointments
          (workspace_id, member_user_id, created_by, title, date, start_time, end_time)
-       VALUES ($1, $2, $3, 'Horário invertido', '2026-12-10', '14:00', '14:00')`,
+       VALUES ($1, $2, $3, 'Horário invertido', '2026-11-18', '14:00', '14:00')`,
       [WORKSPACE_A, COLLABORATOR_A, MANAGER_A],
       { code: '23514', constraint: 'collaborator_appointments_time_order_check' }
     );
@@ -220,7 +207,7 @@ describe('appointment CHECKs', () => {
     await expectFailure(
       `INSERT INTO public.collaborator_appointments
          (workspace_id, member_user_id, created_by, title, date, start_time, end_time, status)
-       VALUES ($1, $2, $3, 'Status inválido', '2026-12-10', '14:00', '15:00', 'rejected')`,
+       VALUES ($1, $2, $3, 'Status inválido', '2026-11-18', '14:00', '15:00', 'rejected')`,
       [WORKSPACE_A, COLLABORATOR_A, MANAGER_A],
       { code: '23514', constraint: 'collaborator_appointments_status_check' }
     );
@@ -231,7 +218,7 @@ describe('appointment CHECKs', () => {
     await expectFailure(
       `INSERT INTO public.collaborator_appointments
          (workspace_id, member_user_id, created_by, title, date, start_time, end_time, notify_status)
-       VALUES ($1, $2, $3, 'Status de envio inválido', '2026-12-10', '14:00', '15:00', 'queued')`,
+       VALUES ($1, $2, $3, 'Status de envio inválido', '2026-11-18', '14:00', '15:00', 'queued')`,
       [WORKSPACE_A, COLLABORATOR_A, MANAGER_A],
       { code: '23514', constraint: 'collaborator_appointments_notify_status_check' }
     );
@@ -247,7 +234,7 @@ describe('appointment CHECKs', () => {
     }>(
       `INSERT INTO public.collaborator_appointments
          (workspace_id, member_user_id, created_by, title, date, start_time, end_time)
-       VALUES ($1, $2, $3, 'Visita técnica', '2026-12-11', '10:00', '11:00')
+       VALUES ($1, $2, $3, 'Visita técnica', '2026-11-19', '10:00', '11:00')
        RETURNING status, member_user_id::text, workspace_id::text, created_by::text`,
       [WORKSPACE_A, COLLABORATOR_A, MANAGER_A]
     );

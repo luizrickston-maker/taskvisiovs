@@ -26,6 +26,17 @@ BEGIN
 END
 $$;
 
+-- Supabase grants every table, sequence and function created in public to the
+-- API roles by default; a vanilla install does nothing of the sort, so a policy
+-- could pass while the GRANT fails ("permission denied for table ..."). Runs
+-- before every migration, so it covers all of them.
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;
+
 -- ────────────────────────────────────────────────────────────────────────────
 -- 2. pgcrypto: Supabase ships it pre-installed; gen_random_uuid() is core in
 --    PG 13+, but 20260518141720 uses gen_random_bytes() as a column DEFAULT,
