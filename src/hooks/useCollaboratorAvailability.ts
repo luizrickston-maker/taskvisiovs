@@ -13,26 +13,37 @@ const QUERY_KEY = 'collab-availability';
 // Queries
 // =====================================================
 
-/** Rows overlapping [dateFrom, dateTo] for the signed-in collaborator. */
-export function useCollaboratorAvailability(dateFrom: string, dateTo: string) {
+/**
+ * Rows overlapping [dateFrom, dateTo].
+ *
+ * No third argument: the signed-in collaborator's own rows. A member id: the
+ * manager reading the collaborator selected in `/pj/agenda` (MGR-03).
+ * Explicit `null`: no collaborator selected, so the query stays disabled.
+ */
+export function useCollaboratorAvailability(
+  dateFrom: string,
+  dateTo: string,
+  memberUserId?: string | null,
+) {
   const { user } = useAuthContext();
+  const target = memberUserId === undefined ? user?.id ?? null : memberUserId;
 
   return useQuery({
-    queryKey: [QUERY_KEY, user?.id, dateFrom, dateTo],
+    queryKey: [QUERY_KEY, target, dateFrom, dateTo],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!target) return [];
       const { data, error } = await supabase
         // The generated Supabase types predate this table.
         .from('collaborator_availability' as any)
         .select('*')
-        .eq('member_user_id', user.id)
+        .eq('member_user_id', target)
         .lte('start_date', dateTo)
         .gte('end_date', dateFrom)
         .order('start_date', { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as CollaboratorAvailabilityRow[];
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!target,
     staleTime: 60_000,
   });
 }

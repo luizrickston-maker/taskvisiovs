@@ -24,19 +24,33 @@ function formatBound(date: string, time: string | null): string {
 // Queries
 // =====================================================
 
-/** The signed-in collaborator's appointments inside the period. */
-export function useCollaboratorAppointments(dateFrom: string, dateTo: string) {
+/**
+ * Appointments for one member inside the period.
+ *
+ * No third argument: the signed-in collaborator's own rows (the portal page).
+ * A member id: the manager reading the collaborator selected in `/pj/agenda`
+ * (MGR-03). Explicit `null`: no collaborator selected, so the query stays
+ * disabled and the manager's own `time_blocks` are the only source
+ * (Edge Case: "the manager's own calendar ... SHALL not query
+ * `collaborator_appointments` at all").
+ */
+export function useCollaboratorAppointments(
+  dateFrom: string,
+  dateTo: string,
+  memberUserId?: string | null,
+) {
   const { user } = useAuthContext();
+  const target = memberUserId === undefined ? user?.id ?? null : memberUserId;
 
   return useQuery({
-    queryKey: [QUERY_KEY, user?.id, dateFrom, dateTo],
+    queryKey: [QUERY_KEY, target, dateFrom, dateTo],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!target) return [];
       const { data, error } = await supabase
         // The generated Supabase types predate this table.
         .from('collaborator_appointments' as any)
         .select('*')
-        .eq('member_user_id', user.id)
+        .eq('member_user_id', target)
         .gte('date', dateFrom)
         .lte('date', dateTo)
         .order('date', { ascending: true })
@@ -44,13 +58,13 @@ export function useCollaboratorAppointments(dateFrom: string, dateTo: string) {
       if (error) throw error;
       return (data ?? []) as unknown as CollaboratorAppointmentRow[];
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!target,
     staleTime: 60_000,
   });
 }
 
 // =====================================================
-// Manager: create (with the conflict pre-check) and edit
+// Manager: create (with the conflict pre-check), edit and cancel
 // =====================================================
 
 export interface CreateAppointmentInput {
@@ -136,8 +150,9 @@ export type AppointmentEditableFields = Pick<
 
 /**
  * Manager edit (MGR-09). The status and decided_* columns are deliberately
- * absent from the payload type: the database refuses a manager touching the
- * collaborator's answer, and no edit or cancel sends a notification.
+ * absent from the payload type: an edit changes the body of the appointment
+ * only — withdrawing is `useCancelAppointment`, accepting stays the
+ * collaborator's — and neither edit nor cancel sends a notification.
  */
 export function useUpdateAppointment() {
   const qc = useQueryClient();
@@ -156,6 +171,45 @@ export function useUpdateAppointment() {
     },
     onSuccess: () => toast.success('Compromisso atualizado!'),
     onError: () => toast.error('Erro ao atualizar compromisso'),
+  });
+}
+
+/**
+ * Manager cancel (MGR-09, AD-007): the manager withdraws scheduling they
+ * created, from `pending` or `confirmed`, and never confirms — that act stays
+ * the collaborator's.
+ *
+ * The payload carries no status field at all: the caller names a row, and the
+ * mutation writes `cancelled`. The type therefore cannot advertise `confirmed`,
+ * and the body cannot send it either, so the client never offers an operation
+ * the `20261019130000` trigger would reject at runtime. Like every edit or
+ * cancel, this path sends no notification (MGR-09).
+ */
+export function useCancelAppointment() {
+  const qc = useQueryClient();
+  const { user } = useAuthContext();
+
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      if (!user) throw new Error('Não autenticado');
+
+      const { data, error } = await supabase
+        .from('collaborator_appointments' as any)
+        .update({
+          status: 'cancelled',
+          decided_at: new Date().toISOString(),
+          decided_by: user.id,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+
+      qc.invalidateQueries({ queryKey: [QUERY_KEY] });
+      return data as unknown as CollaboratorAppointmentRow;
+    },
+    onSuccess: () => toast.success('Compromisso cancelado!'),
+    onError: (err: Error) => toast.error(err.message || 'Erro ao cancelar compromisso'),
   });
 }
 

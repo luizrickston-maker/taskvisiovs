@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import {
   ALREADY_ANSWERED_MESSAGE,
   formatConflictMessage,
+  useCancelAppointment,
   useCollaboratorAppointments,
   useCreateAppointment,
   useRespondAppointment,
@@ -285,6 +286,38 @@ describe('useUpdateAppointment (MGR-09)', () => {
       'utf-8',
     );
     expect(source).not.toMatch(/functions\.invoke|notify-appointment|AGZAP/i);
+  });
+});
+
+describe('useCancelAppointment (MGR-09, AD-007)', () => {
+  it('withdraws from a pending row and records who ended it', async () => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+
+    const { result } = renderHook(() => useCancelAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ id: 'ap-1' });
+    });
+
+    expect(calls.of('update')[0].args).toEqual([{
+      status: 'cancelled',
+      decided_at: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+      decided_by: 'member-1',
+    }]);
+  });
+
+  it('reads nothing but the id, so a caller can never smuggle `confirmed`', async () => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+
+    const { result } = renderHook(() => useCancelAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      // The payload type rejects this at compile time; the body drops it too.
+      await result.current.mutateAsync({ id: 'ap-1', status: 'confirmed' } as { id: string });
+    });
+
+    const payload = calls.of('update')[0].args[0] as Record<string, unknown>;
+    expect(payload.status).toBe('cancelled');
   });
 });
 
