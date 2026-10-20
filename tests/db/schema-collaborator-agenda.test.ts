@@ -311,6 +311,55 @@ describe('row-level security', () => {
     ]);
   });
 
+  it('refuses a manager of workspace B writing an appointment into workspace A (MGR-08)', async () => {
+    await asUser(MANAGER_B);
+    await expectFailure(
+      `INSERT INTO public.collaborator_appointments
+         (workspace_id, member_user_id, created_by, title, date, start_time, end_time)
+       VALUES ($1, $2, $3, 'Invasão de agenda', '2026-11-25', '10:00', '11:00')`,
+      [WORKSPACE_A, COLLABORATOR_A, MANAGER_B],
+      { code: '42501', messageIncludes: 'collaborator_appointments' }
+    );
+
+    await asSuperuser();
+    const persisted = await client.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM public.collaborator_appointments
+       WHERE member_user_id = $1 AND date = '2026-11-25'`,
+      [COLLABORATOR_A]
+    );
+    expect(persisted.rows[0].count).toBe('0');
+  });
+
+  it('lets a manager of workspace B reach no row of workspace A to update either (MGR-08)', async () => {
+    await asSuperuser();
+    const target = await client.query<{ id: string }>(
+      `SELECT id FROM public.collaborator_appointments
+       WHERE member_user_id = $1 ORDER BY date LIMIT 1`,
+      [COLLABORATOR_A]
+    );
+    expect(target.rowCount).toBeGreaterThan(0);
+    const targetId = target.rows[0].id;
+    const before = await client.query<{ title: string }>(
+      'SELECT title FROM public.collaborator_appointments WHERE id = $1',
+      [targetId]
+    );
+
+    await asUser(MANAGER_B);
+    const updated = await client.query(
+      `UPDATE public.collaborator_appointments SET title = 'Tomado' WHERE id = $1`,
+      [targetId]
+    );
+    // No error and no effect: the row is outside what this manager can see.
+    expect(updated.rowCount).toBe(0);
+
+    await asSuperuser();
+    const after = await client.query<{ title: string }>(
+      'SELECT title FROM public.collaborator_appointments WHERE id = $1',
+      [targetId]
+    );
+    expect(after.rows[0].title).toBe(before.rows[0].title);
+  });
+
   it("refuses an availability insert naming someone else's member_user_id (AVAIL-11)", async () => {
     await asUser(COLLABORATOR_A);
     await expectFailure(
