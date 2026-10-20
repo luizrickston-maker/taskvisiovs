@@ -4,10 +4,13 @@ import { scratchUrl } from './connection';
 import { expectFailure } from './pg-helpers';
 
 const MANAGER_A = '11111111-1111-4111-8111-111111111101';
+const MANAGER_D = '11111111-1111-4111-8111-111111111109';
 const COLLABORATOR_C = '11111111-1111-4111-8111-111111111105';
 const WORKSPACE_A = '22222222-2222-4222-8222-222222222201';
 const WORKSPACE_B = '22222222-2222-4222-8222-222222222202';
 const TEAM_MEMBER_C = '33333333-3333-4333-8333-333333333303';
+// MGR-06's own date, clear of every other fixture in this file.
+const OVERLAP_DATE = '2026-10-23';
 
 let client: Client;
 
@@ -25,6 +28,16 @@ async function asUser(user: string): Promise<void> {
 async function asSuperuser(): Promise<void> {
   await client.query('RESET ROLE');
   await claims(null);
+}
+
+/** Binds any connection to an identity, so two managers can act at once. */
+async function authenticate(connection: Client, user: string): Promise<void> {
+  await connection.query('RESET ROLE');
+  await connection.query('SELECT set_config($1, $2, false)', [
+    'request.jwt.claims',
+    JSON.stringify({ sub: user, role: 'authenticated' }),
+  ]);
+  await connection.query('SET ROLE authenticated');
 }
 
 async function fail(sql: string, params: unknown[], expected: { code: string; messageIncludes?: string }): Promise<void> {
@@ -89,6 +102,14 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await asSuperuser();
+  // Only MGR-06's fixtures are undone: the rest of this file deliberately
+  // leaves its rows in place, like every other suite does.
+  await client.query('DELETE FROM public.collaborator_appointments WHERE date = $1', [OVERLAP_DATE]);
+  await client.query(
+    'DELETE FROM public.workspace_members WHERE workspace_id = $1 AND user_id = $2',
+    [WORKSPACE_A, MANAGER_D]
+  );
+  await client.query('DELETE FROM auth.users WHERE id = $1', [MANAGER_D]);
   await client?.end();
 });
 
@@ -164,6 +185,59 @@ describe('conflict detection (MGR-04)', () => {
 
     expect(before.rows[0]).toEqual({ start_time: '06:00', end_time: '09:00' });
     expect(after.rows[0]).toEqual({ start_time: '12:00', end_time: '13:00' });
+  });
+});
+
+describe('two managers booking the same slot (MGR-06)', () => {
+  it('persists both mutually overlapping appointments, because the conflict rule is scoped to unavailability', async () => {
+    // A second manager of the same workspace, so both writers are allowed in.
+    await asSuperuser();
+    await client.query(
+      `INSERT INTO auth.users (id, email) VALUES ($1, 'manager.d@fixture.test')
+       ON CONFLICT (id) DO NOTHING`,
+      [MANAGER_D]
+    );
+    await client.query(
+      `INSERT INTO public.workspace_members (workspace_id, user_id, role)
+       VALUES ($1, $2, 'admin') ON CONFLICT (workspace_id, user_id) DO NOTHING`,
+      [WORKSPACE_A, MANAGER_D]
+    );
+
+    const otherConnection = new Client({ connectionString: scratchUrl() });
+    await otherConnection.connect();
+    try {
+      await authenticate(client, MANAGER_A);
+      await authenticate(otherConnection, MANAGER_D);
+
+      // Both managers open the same window at the same time.
+      const insert = `INSERT INTO public.collaborator_appointments
+         (workspace_id, member_user_id, created_by, title, date, start_time, end_time)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id`;
+      const [first, second] = await Promise.all([
+        client.query<{ id: string }>(insert, [
+          WORKSPACE_A, COLLABORATOR_C, MANAGER_A, 'Do gestor A', OVERLAP_DATE, '10:00', '11:00',
+        ]),
+        otherConnection.query<{ id: string }>(insert, [
+          WORKSPACE_A, COLLABORATOR_C, MANAGER_D, 'Do gestor D', OVERLAP_DATE, '10:30', '11:30',
+        ]),
+      ]);
+
+      expect(first.rows).toHaveLength(1);
+      expect(second.rows).toHaveLength(1);
+
+      await asSuperuser();
+      const persisted = await client.query<{ created_by: string }>(
+        `SELECT created_by::text AS created_by FROM public.collaborator_appointments
+         WHERE member_user_id = $1 AND date = $2 ORDER BY created_by`,
+        [COLLABORATOR_C, OVERLAP_DATE]
+      );
+      expect(persisted.rows.map(row => row.created_by).sort()).toEqual(
+        [MANAGER_A, MANAGER_D].sort()
+      );
+    } finally {
+      await otherConnection.end();
+    }
   });
 });
 
