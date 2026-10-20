@@ -424,10 +424,16 @@ describe('row-level security', () => {
   });
 
   // AVAIL-12: the DELETE policy's USING predicate is the only thing standing
-  // between two collaborators sharing a workspace. PostgreSQL raises no
-  // SQLSTATE for a DELETE whose USING filters every candidate row - the
-  // denial IS the zero-row result - so the refusal is asserted as "affected
-  // nothing" plus the row surviving under the superuser.
+  // between two collaborators sharing a workspace.
+  //
+  // Written the way it is for a measured reason. EXPLAIN VERBOSE on
+  // PostgreSQL 17 shows that a *filtered* DELETE is additionally gated by the
+  // SELECT policy: `DELETE ... WHERE member_user_id = '<someone else>'`
+  // affects nothing under the real policy AND under a weakened one, so it
+  // cannot tell the two apart. Only an unscoped DELETE puts the delete
+  // policy's USING alone on the plan, so that statement carries the assertion
+  // that has to discriminate. PostgreSQL raises no SQLSTATE either way - a
+  // DELETE whose policies filter every candidate row simply affects nothing.
   it("refuses a collaborator deleting another collaborator's unavailability (AVAIL-12)", async () => {
     await asSuperuser();
     const target = await client.query<AvailabilityFixtureRow>(
@@ -441,7 +447,20 @@ describe('row-level security', () => {
     );
     const targetRow = target.rows[0];
 
+    const foreignBefore = await client.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM public.collaborator_availability
+       WHERE member_user_id <> $1`,
+      [COLLABORATOR_B]
+    );
+    expect(Number(foreignBefore.rows[0].count)).toBeGreaterThan(0);
+
+    const ownedBefore = await client.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM public.collaborator_availability WHERE member_user_id = $1',
+      [COLLABORATOR_B]
+    );
+
     await asUser(COLLABORATOR_B);
+    // The literal reading of the rule: a targeted attempt removes nothing.
     const byId = await client.query(
       'DELETE FROM public.collaborator_availability WHERE id = $1',
       [targetRow.id]
@@ -454,7 +473,19 @@ describe('row-level security', () => {
     );
     expect(byOwner.rowCount).toBe(0);
 
+    // The statement the policy is actually guarding: every row is a candidate
+    // and only the collaborator's own may go.
+    const unscoped = await client.query('DELETE FROM public.collaborator_availability');
+    expect(unscoped.rowCount).toBe(Number(ownedBefore.rows[0].count));
+
     await asSuperuser();
+    const foreignAfter = await client.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM public.collaborator_availability
+       WHERE member_user_id <> $1`,
+      [COLLABORATOR_B]
+    );
+    expect(foreignAfter.rows[0].count).toBe(foreignBefore.rows[0].count);
+
     const remaining = await client.query<AvailabilityFixtureRow>(
       `SELECT id::text AS id, workspace_id::text AS workspace_id,
               member_user_id::text AS member_user_id, start_date::text AS start_date,
