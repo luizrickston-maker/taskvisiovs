@@ -10,6 +10,7 @@ const MANAGER_B = '11111111-1111-4111-8111-111111111102';
 const COLLABORATOR_A = '11111111-1111-4111-8111-111111111103';
 const WORKSPACE_A = '22222222-2222-4222-8222-222222222201';
 const COLLABORATOR_B = '11111111-1111-4111-8111-111111111104';
+const TEAM_MEMBER_B = '33333333-3333-4333-8333-333333333304';
 
 // Dates kept clear of the ones other suites use, so fixtures never collide.
 const AVAILABILITY_A_DATE = '2026-11-20';
@@ -66,6 +67,18 @@ beforeAll(async () => {
      VALUES ($1, $2, 'member') ON CONFLICT (workspace_id, user_id) DO NOTHING`,
     [WORKSPACE_A, COLLABORATOR_B]
   );
+  // On the team, like any collaborator the manager's selector could actually
+  // offer. The BEFORE INSERT guard added by
+  // 20261019140000_collaborator_appointment_member_guard.sql refuses an
+  // appointment for a member_user_id with no active corporate_team row, so a
+  // member who is only a workspace_members row is not a valid scheduling
+  // target and would be refused here.
+  await client.query(
+    `INSERT INTO public.corporate_team (id, user_id, name, role, workspace_id, member_user_id, is_active)
+     VALUES ($1, $2, 'Colaborador B', 'colaborador', $3, $4, true)
+     ON CONFLICT (id) DO NOTHING`,
+    [TEAM_MEMBER_B, MANAGER_A, WORKSPACE_A, COLLABORATOR_B]
+  );
   // Availability: A has a half day, B a full day.
   await client.query(
     `INSERT INTO public.collaborator_availability
@@ -86,12 +99,14 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await asSuperuser();
-  // Leaves the shared workspace_members fixture exactly as seed.sql made it,
-  // so suites running after this file still see the two owner rows only.
+  // Leaves the shared fixtures exactly as seed.sql made them, so suites
+  // running after this file still see the two owner rows and the two seed
+  // team members only.
   await client.query('DELETE FROM public.workspace_members WHERE workspace_id = $1 AND user_id = $2', [
     WORKSPACE_A,
     COLLABORATOR_B,
   ]);
+  await client.query('DELETE FROM public.corporate_team WHERE id = $1', [TEAM_MEMBER_B]);
   await client?.end();
 });
 
