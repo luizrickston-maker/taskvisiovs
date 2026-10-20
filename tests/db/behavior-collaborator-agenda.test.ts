@@ -253,25 +253,103 @@ describe('appointment state machine', () => {
     expect(await readAppointment(id)).toEqual(before);
   });
 
-  it('refuses status and decided_* changes from the manager', async () => {
+  // MGR-09: o gestor cancela (pending ou confirmed) e edita o corpo do
+  // compromisso. 20261019130000_collaborator_appointment_manager_cancel.sql
+  // supersede a restrição anterior, que travava o status inteiro.
+
+  it('lets the manager cancel a pending appointment, recording who decided (MGR-09)', async () => {
     const id = await createAppointmentFor('2026-10-14', '10:00', '11:00');
+
+    await asUser(MANAGER_A);
+    // Só o status é enviado, do jeito que um cliente mínimo enviaria: o
+    // banco tem que preencher decided_at/decided_by do cancelamento.
+    await client.query(
+      `UPDATE public.collaborator_appointments SET status = 'cancelled' WHERE id = $1`,
+      [id]
+    );
+
+    const row = await readAppointment(id);
+    expect(row.status).toBe('cancelled');
+    expect(row.decided_by).toBe(MANAGER_A);
+    expect(row.decided_at).not.toBe(null);
+  });
+
+  it('lets the manager cancel an appointment the collaborator already confirmed', async () => {
+    const id = await createAppointmentFor('2026-10-16', '10:00', '11:00');
+
+    await asUser(COLLABORATOR_C);
+    await client.query(
+      `UPDATE public.collaborator_appointments SET status = 'confirmed' WHERE id = $1`,
+      [id]
+    );
+
+    await asUser(MANAGER_A);
+    await client.query(
+      `UPDATE public.collaborator_appointments SET status = 'cancelled' WHERE id = $1`,
+      [id]
+    );
+
+    const row = await readAppointment(id);
+    expect(row.status).toBe('cancelled');
+    expect(row.decided_by).toBe(MANAGER_A);
+  });
+
+  it('refuses a manager trying to confirm a pending appointment (only the collaborator accepts)', async () => {
+    const id = await createAppointmentFor('2026-10-17', '10:00', '11:00');
     const before = await readAppointment(id);
 
     await asUser(MANAGER_A);
     await fail(
       `UPDATE public.collaborator_appointments SET status = 'confirmed' WHERE id = $1`,
       [id],
-      { code: 'P0001', messageIncludes: 'O gestor não pode alterar status' }
+      { code: 'P0001', messageIncludes: 'O gestor só pode cancelar um compromisso, não confirmá-lo.' }
     );
+
+    expect(await readAppointment(id)).toEqual(before);
+  });
+
+  it('refuses a manager reopening a cancelled appointment, back to pending or confirmed', async () => {
+    const id = await createAppointmentFor('2026-10-18', '10:00', '11:00');
+
+    await asUser(COLLABORATOR_C);
+    await client.query(
+      `UPDATE public.collaborator_appointments SET status = 'cancelled' WHERE id = $1`,
+      [id]
+    );
+    const before = await readAppointment(id);
+
+    await asUser(MANAGER_A);
+    for (const status of ['pending', 'confirmed']) {
+      await fail(
+        `UPDATE public.collaborator_appointments SET status = '${status}' WHERE id = $1`,
+        [id],
+        { code: 'P0001', messageIncludes: 'Esta solicitação já foi respondida.' }
+      );
+    }
+
+    expect(await readAppointment(id)).toEqual(before);
+  });
+
+  it('refuses decided_at/decided_by moved by the manager without a status change', async () => {
+    const id = await createAppointmentFor('2026-10-19', '10:00', '11:00');
+    const before = await readAppointment(id);
+
+    await asUser(MANAGER_A);
     await fail(
       `UPDATE public.collaborator_appointments SET decided_at = now() WHERE id = $1`,
       [id],
-      { code: 'P0001', messageIncludes: 'O gestor não pode alterar status' }
+      { code: 'P0001', messageIncludes: 'decided_at/decided_by só mudam junto com o status.' }
     );
     await fail(
       `UPDATE public.collaborator_appointments SET decided_by = $2 WHERE id = $1`,
       [id, MANAGER_A],
-      { code: 'P0001', messageIncludes: 'O gestor não pode alterar status' }
+      { code: 'P0001', messageIncludes: 'decided_at/decided_by só mudam junto com o status.' }
+    );
+    // O mesmo vale para um "status sem transição": nada muda, nada grava.
+    await fail(
+      `UPDATE public.collaborator_appointments SET status = 'pending', decided_at = now() WHERE id = $1`,
+      [id],
+      { code: 'P0001', messageIncludes: 'decided_at/decided_by só mudam junto com o status.' }
     );
 
     expect(await readAppointment(id)).toEqual(before);
@@ -281,14 +359,29 @@ describe('appointment state machine', () => {
     const id = await createAppointmentFor('2026-10-15', '10:00', '11:00');
 
     await asUser(MANAGER_A);
-    const updated = await client.query<{ title: string; notes: string | null }>(
+    const updated = await client.query<{
+      title: string; notes: string | null; date: string; start_time: string; end_time: string;
+    }>(
       `UPDATE public.collaborator_appointments
-       SET title = 'Corrigido', notes = 'Sala 2'
+       SET title = 'Corrigido', notes = 'Sala 2', date = '2026-10-20',
+           start_time = '14:00', end_time = '15:30'
        WHERE id = $1
-       RETURNING title, notes`,
+       RETURNING title, notes, date::text AS date, start_time, end_time`,
       [id]
     );
 
-    expect(updated.rows[0]).toEqual({ title: 'Corrigido', notes: 'Sala 2' });
+    expect(updated.rows[0]).toEqual({
+      title: 'Corrigido',
+      notes: 'Sala 2',
+      date: '2026-10-20',
+      start_time: '14:00',
+      end_time: '15:30',
+    });
+
+    // Uma edição de campo não move a resposta.
+    const row = await readAppointment(id);
+    expect(row.status).toBe('pending');
+    expect(row.decided_at).toBe(null);
+    expect(row.decided_by).toBe(null);
   });
 });
