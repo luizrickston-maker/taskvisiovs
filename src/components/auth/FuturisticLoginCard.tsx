@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,7 @@ interface Props {
 
 export function FuturisticLoginCard({ onShowReset, onShowEmailSent }: Props) {
   const { signIn, signUp } = useAuthContext();
+  const location = useLocation();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,7 +54,11 @@ export function FuturisticLoginCard({ onShowReset, onShowEmailSent }: Props) {
       }
     } else {
       toast.success('Login realizado com sucesso!');
-      window.location.replace('/');
+      // The reload below discards the router state, so the page that sent the
+      // visitor here (CollaboratorRoute on the WhatsApp deep link) has to be
+      // carried in the URL itself.
+      const from = (location.state as { from?: { pathname?: string } } | null)?.from;
+      window.location.replace(from?.pathname ?? '/');
     }
   };
 

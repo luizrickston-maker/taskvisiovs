@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -15,6 +15,7 @@ interface CollaboratorRouteProps {
 export function CollaboratorRoute({ children }: CollaboratorRouteProps) {
   const { user, loading: authLoading } = useAuthContext();
   const { data: role, isLoading: roleLoading } = useUserRole();
+  const location = useLocation();
 
   if (authLoading || roleLoading) {
     return (
@@ -24,7 +25,9 @@ export function CollaboratorRoute({ children }: CollaboratorRouteProps) {
     );
   }
 
-  if (!user) return <Navigate to="/auth" replace />;
+  // The WhatsApp deep link lands here with no session: /auth has to know where
+  // to send the collaborator back once the session exists (Edge Cases).
+  if (!user) return <Navigate to="/auth" state={{ from: location }} replace />;
 
   // Admins e gestores têm acesso ao painel completo — redireciona para área deles
   if (role && role !== 'collaborator') return <Navigate to="/caixa" replace />;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ const emailSchema = z.string().email('Email inválido');
 
 export default function Auth() {
   const authContext = useAuthContextSafe();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -34,8 +35,12 @@ export default function Auth() {
 
   const { user, resetPassword } = authContext;
 
+  // Guards such as CollaboratorRoute and ProtectedRoute send the visitor here
+  // with `state.from`; a session that already exists goes straight back to the
+  // page that was requested (Edge Cases: the WhatsApp deep link).
   if (user) {
-    return <Navigate to="/" replace />;
+    const from = (location.state as { from?: { pathname?: string } } | null)?.from;
+    return <Navigate to={from?.pathname ?? '/'} replace />;
   }
 
   const handleResetPassword = async (e: React.FormEvent) => {
