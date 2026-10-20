@@ -290,14 +290,14 @@ T18
 
 **Done when**:
 
-- [ ] `POST { appointment_id }` sends exactly one message and marks `notify_status = 'sent'` (NOTIF-01)
-- [ ] The agzap URL and token come only from `Deno.env.get` — a repo-wide grep for `VITE_` in this path returns nothing for the credential (NOTIF-05)
-- [ ] Non-2xx, thrown error and a 10 s timeout each leave the appointment intact and log the attempt as `failed` / `timeout` (NOTIF-02, NOTIF-06)
-- [ ] `UNIQUE(appointment_id, attempt)` plus `ON CONFLICT DO NOTHING` makes a duplicate invocation send nothing (NOTIF-04)
-- [ ] Missing or non-digits `whatsapp` logs `no_whatsapp` and does not call agzap (MGR-07)
-- [ ] Editing or cancelling sends nothing — no code path exists for it (NOTIF-07)
-- [ ] `config.toml` is **not** modified to add this function to the `verify_jwt = false` list
-- [ ] `fetch` is mocked; no test makes a real network call
+- [x] `POST { appointment_id }` sends exactly one message and marks `notify_status = 'sent'` (NOTIF-01) — the verb gate itself is asserted at source level, since `Deno.serve` cannot run under Vitest (AD-003)
+- [x] The agzap URL and token come only from `Deno.env.get` — a repo-wide grep for `VITE_` in this path returns nothing for the credential (NOTIF-05); with both absent the send is refused before any fetch
+- [x] Non-2xx, thrown error and a 10 s timeout each leave the appointment intact and log the attempt as `failed` / `timeout` (NOTIF-02, NOTIF-06)
+- [x] `UNIQUE(appointment_id, attempt)` plus `ON CONFLICT DO NOTHING` makes a duplicate invocation send nothing (NOTIF-04) — the constraint is proven in the T4 suite, the "lost claim ⇒ no send" half here
+- [x] Missing or non-digits `whatsapp` logs `no_whatsapp` and does not call agzap (MGR-07) — asserted for null, empty and non-digits-only values
+- [x] Editing or cancelling sends nothing — no code path exists for it (NOTIF-07) — the module's runtime surface is one handler and index.ts refuses every verb but POST
+- [x] `config.toml` is **not** modified to add this function to the `verify_jwt = false` list
+- [x] `fetch` is mocked; no test makes a real network call — asserted by replacing the global `fetch` with one that throws
 
 **Tests**: unit
 **Gate**: full
