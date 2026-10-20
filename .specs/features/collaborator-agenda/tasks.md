@@ -170,11 +170,11 @@ T18
 
 **Done when**:
 
-- [ ] `timeToMinutes` and `hasConflict` exported from `src/lib/schedule.ts`; `useAgendaPJ.ts` re-imports them and no longer defines them
-- [ ] `parseDateOnly('2026-11-05')` yields 2026-11-05 in `America/Sao_Paulo` — asserted for a UTC-3 viewer so the `CollaboratorPortal.tsx:251` class of bug cannot recur
-- [ ] `rangesOverlap` treats touching endpoints as non-overlapping, matching `useAgendaPJ.ts:16-24`
-- [ ] `formatDateBR` renders `dd/MM/yyyy`
-- [ ] Existing personal agenda still builds (`npm run build`)
+- [x] `timeToMinutes` and `hasConflict` exported from `src/lib/schedule.ts`; `useAgendaPJ.ts` re-imports them and no longer defines them
+- [x] `parseDateOnly('2026-11-05')` yields 2026-11-05 in `America/Sao_Paulo` — asserted for a UTC-3 viewer so the `CollaboratorPortal.tsx:251` class of bug cannot recur
+- [x] `rangesOverlap` treats touching endpoints as non-overlapping, matching `useAgendaPJ.ts:16-24`
+- [x] `formatDateBR` renders `dd/MM/yyyy`
+- [x] Existing personal agenda still builds (`npm run build`)
 
 **Tests**: unit
 **Gate**: quick

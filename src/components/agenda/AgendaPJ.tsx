@@ -29,8 +29,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   useTimeBlocks, useCreateTimeBlock, useUpdateTimeBlock, useDeleteTimeBlock,
-  hasConflict, timeToMinutes,
 } from '@/hooks/useAgendaPJ';
+import { hasConflict, timeToMinutes } from '@/lib/schedule';
 import type { TimeBlock } from '@/types/database';
 
 // ─────────────────────────────────────────────

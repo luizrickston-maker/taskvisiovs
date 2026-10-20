@@ -4,7 +4,8 @@ import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { AgendaPJ } from '@/components/agenda/AgendaPJ';
-import { useTimeBlocks, hasConflict } from '@/hooks/useAgendaPJ';
+import { useTimeBlocks } from '@/hooks/useAgendaPJ';
+import { hasConflict } from '@/lib/schedule';
 
 function useAgendaStats() {
   const today = format(new Date(), 'yyyy-MM-dd');

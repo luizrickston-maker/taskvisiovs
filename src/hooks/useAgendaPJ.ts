@@ -5,28 +5,8 @@ import { useAppStore } from '@/stores/useAppStore';
 import { toast } from 'sonner';
 import type { TimeBlock } from '@/types/database';
 
-// =====================================================
-// Helpers (exported for use in component + AI handler)
-// =====================================================
-
-export function timeToMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + (m || 0);
-}
-
-export function hasConflict(
-  a: { date?: string; start_time?: string; end_time?: string; id?: string },
-  b: TimeBlock
-): boolean {
-  if (!a.date || a.date !== b.date) return false;
-  if (a.id && a.id === b.id) return false;
-  if (!a.start_time || !a.end_time) return false;
-  const aStart = timeToMinutes(a.start_time);
-  const aEnd = timeToMinutes(a.end_time);
-  const bStart = timeToMinutes(b.start_time);
-  const bEnd = timeToMinutes(b.end_time);
-  return aStart < bEnd && aEnd > bStart;
-}
+// Schedule primitives (timeToMinutes, hasConflict, rangesOverlap,
+// parseDateOnly, formatDateBR) live in @/lib/schedule.
 
 const QUERY_KEY = 'agenda-pj-timeblocks';
 
