@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
+  SEND_TIMEOUT_MS,
   handleNotifyAppointment,
   type AppointmentRow,
   type CollaboratorRow,
@@ -208,6 +209,37 @@ describe('delivery failures (NOTIF-02, NOTIF-06)', () => {
       { attempt: 1, status: 'timeout', providerResponse: null },
     ]);
     expect(result.body.notify_status).toBe('timeout');
+  });
+
+  it('arms the abort from the 10-second default itself, with nothing injected (NOTIF-06)', async () => {
+    // The case above injects its own timeout, which proves the abort path but
+    // not the number. The spec says 10 seconds, so the default is the value.
+    expect(SEND_TIMEOUT_MS).toBe(10_000);
+
+    vi.useFakeTimers();
+    try {
+      const { store, state } = makeStore();
+      const { fetchImpl } = makeFetch(
+        (init) =>
+          new Promise<FetchResponseLike>((_resolve, reject) => {
+            init.signal.addEventListener('abort', () => {
+              const abortError = new Error('aborted');
+              abortError.name = 'AbortError';
+              reject(abortError);
+            });
+          })
+      );
+
+      // No timeoutMs: the send hangs until the default fires.
+      const pending = handleNotifyAppointment('appointment-1', deps({ store, fetchImpl }));
+      await vi.advanceTimersByTimeAsync(SEND_TIMEOUT_MS);
+
+      const result = await pending;
+      expect(result.body.notify_status).toBe('timeout');
+      expect(state.attempts).toEqual([{ attempt: 1, status: 'timeout', providerResponse: null }]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
