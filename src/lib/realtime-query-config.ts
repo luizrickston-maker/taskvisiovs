@@ -47,6 +47,12 @@ export const REALTIME_QUERY_BINDINGS: RealtimeQueryBinding[] = [
   // Agenda PJ (time_blocks também alimenta o store da agenda PF)
   { table: "time_blocks", queryKeys: ["agenda-pj-timeblocks"] },
 
+  // Agenda do colaborador: a mesma queryKey serve o gestor (/pj/agenda) e o
+  // colaborador (/colaborador/agenda), então um único binding leva a mudança
+  // de um lado para o outro sem recarregar (SYNC-01, SYNC-02, SYNC-04).
+  { table: "collaborator_appointments", queryKeys: ["collab-appointments"] },
+  { table: "collaborator_availability", queryKeys: ["collab-availability"] },
+
   // Tarefas de projeto (vinculadas aos briefings de edição)
   { table: "project_tasks", queryKeys: ["project-tasks"] },
 
