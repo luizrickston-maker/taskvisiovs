@@ -2,12 +2,12 @@ import { useMemo, useState } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  CalendarClock, ChevronLeft, ChevronRight, Plus, CheckCircle2, Ban, CalendarOff,
+  CalendarClock, ChevronLeft, ChevronRight, Plus, CheckCircle2, Ban, CalendarOff, Trash2,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCollaboratorAvailability } from '@/hooks/useCollaboratorAvailability';
+import { useCollaboratorAvailability, useDeleteAvailability } from '@/hooks/useCollaboratorAvailability';
 import {
   useCollaboratorAppointments,
   useRespondAppointment,
@@ -51,6 +51,9 @@ export default function ColaboratorAgendaPage() {
   const availability = useCollaboratorAvailability(dateFrom, dateTo);
   const appointments = useCollaboratorAppointments(dateFrom, dateTo);
   const respond = useRespondAppointment();
+  // AVAIL-09: the row can be removed here, and the mutation invalidates the
+  // query so the calendar re-renders without a full reload.
+  const removeAvailability = useDeleteAvailability();
 
   const availabilityRows = availability.data ?? [];
   const appointmentRows = appointments.data ?? [];
@@ -207,23 +210,37 @@ export default function ColaboratorAgendaPage() {
           </p>
         ) : (
           <div className="space-y-2">
-            {availabilityRows.map(row => (
-              <div
-                key={row.id}
-                className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border/50 bg-muted/30"
-              >
-                <div className="min-w-0">
-                  <p className="font-semibold text-sm">
-                    {row.reason && row.reason.trim() ? row.reason : 'Indisponível'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDateBR(row.start_date)}
-                    {row.start_date !== row.end_date && ` – ${formatDateBR(row.end_date)}`}
-                    {row.start_time && ` · ${row.start_time}–${row.end_time}`}
-                  </p>
+            {availabilityRows.map(row => {
+              const label = row.reason && row.reason.trim() ? row.reason : 'Indisponível';
+              return (
+                <div
+                  key={row.id}
+                  className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border/50 bg-muted/30"
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm">{label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDateBR(row.start_date)}
+                      {row.start_date !== row.end_date && ` – ${formatDateBR(row.end_date)}`}
+                      {row.start_time && ` · ${row.start_time}–${row.end_time}`}
+                    </p>
+                  </div>
+
+                  {/* AVAIL-09: removing the row re-renders the calendar in place. */}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    aria-label={`Remover indisponibilidade: ${label}`}
+                    disabled={removeAvailability.isPending}
+                    onClick={() => removeAvailability.mutate(row.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

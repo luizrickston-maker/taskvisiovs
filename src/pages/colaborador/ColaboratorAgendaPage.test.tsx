@@ -8,10 +8,11 @@ import type { CollaboratorAppointmentRow, CollaboratorAvailabilityRow } from '@/
 // The page always opens on the current month, so the fixtures use today.
 const TODAY = format(new Date(), 'yyyy-MM-dd');
 
-const { appointments, availabilityRows, respondMutate } = vi.hoisted(() => ({
+const { appointments, availabilityRows, respondMutate, deleteMutate } = vi.hoisted(() => ({
   appointments: [] as unknown[],
   availabilityRows: [] as unknown[],
   respondMutate: vi.fn(async (args: unknown) => args),
+  deleteMutate: vi.fn(async (id: unknown) => id),
 }));
 
 vi.mock('@/hooks/useCollaboratorAppointments', () => ({
@@ -20,8 +21,11 @@ vi.mock('@/hooks/useCollaboratorAppointments', () => ({
 }));
 
 vi.mock('@/hooks/useCollaboratorAvailability', () => ({
-  useCollaboratorAvailability: () => ({ data: availabilityRows, isLoading: false }),
+  // A copy, the way a refetch hands the page a fresh array: the page memoizes
+  // on the reference, so the same object would never drop a deleted row.
+  useCollaboratorAvailability: () => ({ data: availabilityRows.slice(), isLoading: false }),
   useCreateAvailability: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeleteAvailability: () => ({ mutate: deleteMutate, isPending: false }),
 }));
 
 vi.mock('@/hooks/useCollaboratorPermissions', () => ({
@@ -61,21 +65,26 @@ function availability(overrides: Partial<CollaboratorAvailabilityRow> = {}): Col
   };
 }
 
-function renderPage() {
-  return render(
+function pageTree() {
+  return (
     <MemoryRouter initialEntries={['/colaborador/agenda']}>
       <Routes>
         <Route path="/colaborador/agenda" element={<ColaboratorAgendaPage />} />
         <Route path="/auth" element={<div>LOGIN-SCREEN</div>} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+}
+
+function renderPage() {
+  return render(pageTree());
 }
 
 beforeEach(() => {
   appointments.length = 0;
   availabilityRows.length = 0;
   respondMutate.mockClear();
+  deleteMutate.mockClear();
 });
 
 describe('ColaboratorAgendaPage', () => {
@@ -98,6 +107,27 @@ describe('ColaboratorAgendaPage', () => {
     expect([...chips].some(c => c.textContent?.includes('Consulta médica'))).toBe(true);
     // The same row is also listed under "Indisponibilidades".
     expect(screen.getAllByText('Consulta médica').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('removes an unavailability row and re-renders the calendar without a reload (AVAIL-09)', () => {
+    availabilityRows.push(availability());
+    const { rerender } = renderPage();
+    // The row is both a blocked block on the calendar and an entry in the list.
+    expect(screen.getAllByText('Consulta médica').length).toBeGreaterThanOrEqual(2);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Remover indisponibilidade: Consulta médica' }),
+    );
+    expect(deleteMutate).toHaveBeenCalledWith('av-1');
+
+    // useDeleteAvailability invalidates the availability query on success
+    // (src/hooks/useCollaboratorAvailability.test.tsx), so the refetch drops the
+    // row and the calendar re-renders in place — the page never navigates.
+    availabilityRows.length = 0;
+    rerender(pageTree());
+
+    expect(screen.queryByText('Consulta médica')).not.toBeInTheDocument();
+    expect(screen.getByText('Nenhuma indisponibilidade declarada neste mês.')).toBeInTheDocument();
   });
 
   it('shows both confirm and cancel for a pending appointment (COLAB-06)', () => {
