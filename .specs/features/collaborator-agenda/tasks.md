@@ -349,12 +349,12 @@ T18
 
 **Done when**:
 
-- [ ] `CalendarEvent` matches the design's shape exactly
-- [ ] Availability rows spanning several days expand into one blocked entry per covered day, each with `kind: 'unavailability'` (AVAIL-07)
-- [ ] A half-day row maps to the stated `start`/`end`, not to the whole day
-- [ ] Appointments map `status` and `conflicted` (MGR-10)
-- [ ] A non-empty `notes` reaches the mapped event (COLAB-12)
-- [ ] Every mapper uses `parseDateOnly` — no `new Date(dateString)` anywhere in the file
+- [x] `CalendarEvent` matches the design's shape exactly
+- [x] Availability rows spanning several days expand into one blocked entry per covered day, each with `kind: 'unavailability'` (AVAIL-07)
+- [x] A half-day row maps to the stated `start`/`end`, not to the whole day
+- [x] Appointments map `status` and `conflicted` (MGR-10)
+- [x] A non-empty `notes` reaches the mapped event (COLAB-12)
+- [x] Every mapper uses `parseDateOnly` — no `new Date(dateString)` anywhere in the file
 
 **Tests**: unit
 **Gate**: quick
