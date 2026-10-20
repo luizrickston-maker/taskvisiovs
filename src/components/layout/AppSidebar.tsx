@@ -21,6 +21,7 @@ import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useCollaboratorPermissions } from '@/hooks/useCollaboratorPermissions';
 
 interface NavItem {
   title: string;
@@ -67,7 +68,7 @@ const businessNavItems: NavItem[] = [
   { title: 'Ferramentas', url: '/ferramentas', icon: Wrench },
 ];
 
-const collaboratorNavItems: NavItem[] = [
+const collaboratorBaseNavItems: NavItem[] = [
   { title: 'Meu Painel', url: '/colaborador', icon: Layout },
 ];
 
@@ -85,13 +86,23 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const { isSuperAdmin } = useSuperAdmin();
   const { data: userRole } = useUserRole();
+  const { can } = useCollaboratorPermissions();
 
   // Track which parent items are expanded
   const [expandedItems, setExpandedItems] = useState<string[]>(['Comercial']);
 
+  // PERM-01: the agenda entry exists only for collaborators and only while the
+  // `agenda` permission key is on.
+  const collaboratorNavItems: NavItem[] = [
+    ...collaboratorBaseNavItems,
+    ...(can('agenda')
+      ? [{ title: 'Agenda', url: '/colaborador/agenda', icon: CalendarClock } satisfies NavItem]
+      : []),
+  ];
+
   // Get nav items based on current mode and role
-  const navItems = (userRole as string) === 'collaborator' 
-    ? collaboratorNavItems 
+  const navItems = (userRole as string) === 'collaborator'
+    ? collaboratorNavItems
     : (mode === 'personal' ? personalNavItems : businessNavItems);
 
   const handleSignOut = async () => {

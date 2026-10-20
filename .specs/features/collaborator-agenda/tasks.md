@@ -490,12 +490,12 @@ T18
 
 **Done when**:
 
-- [ ] The route is nested under `CollaboratorRoute`, mirroring `App.tsx:384-390` (design R6)
-- [ ] The sidebar and mobile nav each gain an agenda entry visible only to collaborators, gated on `can('agenda')`
-- [ ] `agenda` false hides the entry **and** redirects a direct URL hit to `/colaborador` (PERM-01, PERM-02)
-- [ ] A missing permission row falls back to the schema default and grants access (PERM-03)
-- [ ] A manager typing `/colaborador/agenda` is bounced to `/caixa`
-- [ ] Component tests cover: collaborator with flag on, collaborator with flag off, manager attempting the URL
+- [x] The route is nested under `CollaboratorRoute`, mirroring `App.tsx:384-390` (design R6)
+- [x] The sidebar and mobile nav each gain an agenda entry visible only to collaborators, gated on `can('agenda')`
+- [x] `agenda` false hides the entry **and** redirects a direct URL hit to `/colaborador` (PERM-01, PERM-02)
+- [x] A missing permission row falls back to the schema default and grants access (PERM-03)
+- [x] A manager typing `/colaborador/agenda` is bounced to `/caixa`
+- [x] Component tests cover: collaborator with flag on, collaborator with flag off, manager attempting the URL
 
 **Tests**: unit
 **Gate**: full

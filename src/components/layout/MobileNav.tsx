@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { useAuthContextSafe } from '@/contexts/AuthContext';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useCollaboratorPermissions } from '@/hooks/useCollaboratorPermissions';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,18 +58,24 @@ export function MobileNav() {
   const { data: userRole } = useUserRole();
   
   const isCollaborator = userRole === 'collaborator';
+  const { can } = useCollaboratorPermissions();
 
+  // PERM-01: the agenda entry exists only for collaborators and only while the
+  // `agenda` permission key is on.
   const collaboratorNavItems = [
     { title: 'Meu Painel', url: '/colaborador', icon: Layout },
+    ...(can('agenda')
+      ? [{ title: 'Agenda', url: '/colaborador/agenda', icon: CalendarClock }]
+      : []),
     { title: 'Config', url: '/config', icon: Settings },
   ];
 
-  const mainNavItems = isCollaborator 
-    ? [collaboratorNavItems[0]]
+  const mainNavItems = isCollaborator
+    ? collaboratorNavItems.filter(item => item.url !== '/config')
     : (mode === 'personal' ? personalMainNavItems : businessMainNavItems);
-    
+
   const moreNavItems = isCollaborator
-    ? [collaboratorNavItems[1]]
+    ? collaboratorNavItems.filter(item => item.url === '/config')
     : (mode === 'personal' ? personalMoreNavItems : businessMoreNavItems);
   
   const isMoreActive = moreNavItems.some(item => location.pathname === item.url);

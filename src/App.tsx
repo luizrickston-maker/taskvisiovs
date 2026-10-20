@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SuperAdminRoute } from "@/components/SuperAdminRoute";
 import { ClientPortalRoute } from "@/components/ClientPortalRoute";
 import { CollaboratorRoute } from "@/components/auth/CollaboratorRoute";
+import { CollaboratorAgendaRoute } from "@/components/auth/CollaboratorAgendaRoute";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 // Auth pages - loaded eagerly (needed immediately)
@@ -65,6 +66,7 @@ const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdmin/SuperAdminDash
 const WorkspaceDetailsPage = lazy(() => import("@/pages/SuperAdmin/WorkspaceDetailsPage"));
 const PortalDashboard = lazy(() => import("@/pages/ClientPortal/PortalDashboard"));
 const CollaboratorPortal = lazy(() => import("@/pages/PJ/CollaboratorPortal"));
+const ColaboratorAgendaPage = lazy(() => import("@/pages/colaborador/ColaboratorAgendaPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -386,6 +388,15 @@ const App = () => {
                     <SafePage>
                       <CollaboratorPortal />
                     </SafePage>
+                  </CollaboratorRoute>
+                } />
+                <Route path="/colaborador/agenda" element={
+                  <CollaboratorRoute>
+                    <CollaboratorAgendaRoute>
+                      <SafePage>
+                        <ColaboratorAgendaPage />
+                      </SafePage>
+                    </CollaboratorAgendaRoute>
                   </CollaboratorRoute>
                 } />
                 
