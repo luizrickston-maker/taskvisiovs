@@ -68,7 +68,7 @@ The conflict algorithm exists **once**, in SQL. The client calls it as a read-on
 
 | System | Integration Method |
 | ------ | ------------------ |
-| Supabase Postgres | 1 migration: 3 tables, 2 triggers, 2 SQL functions, 6 RLS policies, realtime publication |
+| Supabase Postgres | 4 migrations: 3 tables, 4 triggers, 4 SQL functions, 6 RLS policies, realtime publication |
 | agzap | New edge function `notify-appointment`, reusing the existing request shape |
 | Supabase Realtime | `REALTIME_QUERY_BINDINGS` in `src/lib/realtime-query-config.ts` |
 | React Router | One route `/colaborador/agenda` under `CollaboratorRoute` |

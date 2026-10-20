@@ -1,0 +1,207 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 12,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::assert a derived conflict flag where it is rendered in each named view not only in the mapper that computes it",
+      "text": "Assert a derived conflict flag where it is rendered in each named view, not only in the mapper that computes it",
+      "signal": "ac_gap",
+      "scope": "agenda",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AVAIL-10 (agenda)"
+      ],
+      "created": "2026-10-20T20:54:54Z",
+      "last_seen": "2026-10-20T20:54:54Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::when the spec scopes conflict detection to one entity assert that two overlapping creations of the other entity both persist",
+      "text": "When the spec scopes conflict detection to one entity, assert that two overlapping creations of the other entity both persist",
+      "signal": "ac_gap",
+      "scope": "db",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "MGR-06 (db)"
+      ],
+      "created": "2026-10-20T20:54:54Z",
+      "last_seen": "2026-10-20T20:54:54Z"
+    },
+    {
+      "id": "L-003",
+      "key": "ac_gap::every requirement left pending in the spec traceability table needs a task or the spec must move it out of scope before execute ends",
+      "text": "Every requirement left Pending in the spec traceability table needs a task, or the spec must move it out of scope before Execute ends",
+      "signal": "ac_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ACK-01 (spec)"
+      ],
+      "created": "2026-10-20T20:54:54Z",
+      "last_seen": "2026-10-20T20:54:54Z"
+    },
+    {
+      "id": "L-004",
+      "key": "ac_gap::a deep link route guard must carry the intended location through auth instead of dropping it",
+      "text": "A deep-link route guard must carry the intended location through /auth instead of dropping it",
+      "signal": "ac_gap",
+      "scope": "routes",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/components/auth/CollaboratorRoute.tsx:27 (routes)"
+      ],
+      "created": "2026-10-20T20:54:55Z",
+      "last_seen": "2026-10-20T20:54:55Z"
+    },
+    {
+      "id": "L-005",
+      "key": "surviving_mutant::assert timeout and duration constants by value injecting the duration into the call bypasses the production default",
+      "text": "Assert timeout and duration constants by value; injecting the duration into the call bypasses the production default",
+      "signal": "surviving_mutant",
+      "scope": "edge-functions",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M5 supabase/functions/_shared/notify-appointment.ts:13 (edge-functions)"
+      ],
+      "created": "2026-10-20T20:55:23Z",
+      "last_seen": "2026-10-20T20:55:23Z"
+    },
+    {
+      "id": "L-006",
+      "key": "surviving_mutant::mutate page level wiring in the discrimination sensor not only shared modules to prove page tests discriminate",
+      "text": "Mutate page-level wiring in the discrimination sensor, not only shared modules, to prove page tests discriminate",
+      "signal": "surviving_mutant",
+      "scope": "agenda",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M8 src/pages/PJ/AgendaPage.tsx:124; M9 src/pages/colaborador/ColaboratorAgendaPage.tsx:63 (agenda)"
+      ],
+      "created": "2026-10-20T20:55:23Z",
+      "last_seen": "2026-10-20T20:55:23Z"
+    },
+    {
+      "id": "L-007",
+      "key": "surviving_mutant::probe a scope limited sql function with a widening fault or its scoping rule has no test at all",
+      "text": "Probe a scope-limited SQL function with a widening fault, or its scoping rule has no test at all",
+      "signal": "surviving_mutant",
+      "scope": "db",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M11 supabase/migrations/20261019120100_collaborator_agenda_behavior.sql:46 (db)"
+      ],
+      "created": "2026-10-20T20:55:23Z",
+      "last_seen": "2026-10-20T20:55:23Z"
+    },
+    {
+      "id": "L-008",
+      "key": "spec_precision_gap::say in the spec which values fill each placeholder in a named error message",
+      "text": "Say in the spec which values fill each placeholder in a named error message",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "MGR-04 (spec)"
+      ],
+      "created": "2026-10-20T20:55:48Z",
+      "last_seen": "2026-10-20T20:55:48Z"
+    },
+    {
+      "id": "L-009",
+      "key": "spec_precision_gap::give every rejection criterion an exact message string in the spec never leave it to the implementation",
+      "text": "Give every rejection criterion an exact message string in the spec, never leave it to the implementation",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "COLAB-05 (spec)"
+      ],
+      "created": "2026-10-20T20:55:48Z",
+      "last_seen": "2026-10-20T20:55:48Z"
+    },
+    {
+      "id": "L-010",
+      "key": "spec_deviation::write a spec deviation marker against the design s current text or re point it after the design is corrected",
+      "text": "Write a SPEC_DEVIATION marker against the design's current text, or re-point it after the design is corrected",
+      "signal": "spec_deviation",
+      "scope": "db",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "supabase/migrations/20261019120000_collaborator_agenda_schema.sql:79 (db)"
+      ],
+      "created": "2026-10-20T20:55:48Z",
+      "last_seen": "2026-10-20T20:55:48Z"
+    },
+    {
+      "id": "L-011",
+      "key": "ac_gap::a digits only field rule must be enforced at entry with the spec s exact message not by silently stripping characters",
+      "text": "A digits-only field rule must be enforced at entry with the spec's exact message, not by silently stripping characters",
+      "signal": "ac_gap",
+      "scope": "forms",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md:218 (forms)"
+      ],
+      "created": "2026-10-20T20:55:48Z",
+      "last_seen": "2026-10-20T20:55:48Z"
+    }
+  ]
+}
