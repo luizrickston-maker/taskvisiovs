@@ -116,6 +116,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: design.md:71 corrected only in an uncommitted working tree at HEAD 6d74837 (spec)
 - last seen: 2026-10-21T01:32:59Z
 
+### L-018 - Assert the rendered message for every rejection criterion, not only the schema that produces it
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `forms` · harmful: 0
+- features: collaborator-agenda
+- evidence: src/components/areapj/AvailabilityForm.test.tsx:46-56 / AVAIL-05 (forms)
+- last seen: 2026-10-21T05:06:33Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -68,11 +68,12 @@
 
 ## Handoff
 
-- **Feature**: none
-- **Phase / Task**: none
-- **Completed**: none
-- **In-progress** (file:line): none
-- **Next step**: none
-- **Blockers**: none
-- **Uncommitted files**: none
-- **Branch**: none
+- **Feature**: `collaborator-agenda` — `.specs/features/collaborator-agenda/`
+- **Phase / Task**: Execute complete (18/18 tasks). Fix rounds 1 and 2 applied. Verifier round 4 dispatched 2026-10-20, awaiting verdict.
+- **Completed**: T1–T18, plus authorised fixes `30d7c92` (manager cancel), `5212a98` (member guard), fix round 1 `a014ea3`…`6f981a1` (F1–F9), fix round 2 `2703d26`…`6d74837`, `4c9b92b` (memo deps + deviation marker), docs `fc563a0`, `f9d3acc`, `4455d5d`
+- **Gates (verified by hand)**: `npm run test` 161 passed · `npm run test:db` 61 passed · `npm run build` exit 0 · `npx tsc --noEmit` exit 0 · `npm run lint` 218 problems (pre-feature baseline 202, so the feature's net debt is 16, down from 30)
+- **Next step**: read Verifier round 4's verdict. PASS → run `python3 <skill-dir>/scripts/validate_state.py collaborator-agenda` and report done. FAIL → the iteration budget the user granted is spent; escalate rather than dispatching round 5.
+- **Blockers**: none on code. Three production actions await explicit user approval and must not be run unprompted: applying the `products`/`services` backfill to the hosted project, setting `AGZAP_URL` as a server secret, and any deploy.
+- **Known traps**: a `git checkout -- <path>` restores to HEAD, **not** to your working copy — it once wiped an uncommitted spec edit (`AVAIL-12`) while leaving its passing test. Commit `.specs/` changes before any revert. `npm run lint` cannot reach zero and is not a gate for any task here.
+- **Uncommitted files**: none except the untracked `.agents/`, `.claude/`, `.cursor/`, `.windsurf/` skill-install directories, which are deliberately never staged.
+- **Branch**: `main`
