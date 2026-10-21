@@ -374,6 +374,21 @@ describe('row-level security', () => {
       [targetId]
     );
     expect(after.rows[0].title).toBe(before.rows[0].title);
+
+    // The same rule on the statement that carries no WHERE clause. A filtered
+    // UPDATE is gated by the SELECT policy as well, so it stays at zero rows
+    // even if the update policy's USING is widened; only the unscoped form
+    // puts that predicate alone on the plan. Whatever it manages to touch,
+    // no row outside this manager's workspaces may change.
+    await asUser(MANAGER_B);
+    await client.query(`UPDATE public.collaborator_appointments SET title = 'Reescrito'`);
+
+    await asSuperuser();
+    const afterUnscoped = await client.query<{ title: string }>(
+      'SELECT title FROM public.collaborator_appointments WHERE id = $1',
+      [targetId]
+    );
+    expect(afterUnscoped.rows[0].title).toBe(before.rows[0].title);
   });
 
   it("refuses an availability insert naming someone else's member_user_id (AVAIL-11)", async () => {
