@@ -68,7 +68,7 @@ The conflict algorithm exists **once**, in SQL. The client calls it as a read-on
 
 | System | Integration Method |
 | ------ | ------------------ |
-| Supabase Postgres | 4 migrations: 3 tables, 4 triggers, 4 SQL functions, 6 RLS policies, realtime publication |
+| Supabase Postgres | 5 migrations: 3 tables, 5 triggers, 5 SQL functions, 6 RLS policies, realtime publication |
 | agzap | New edge function `notify-appointment`, reusing the existing request shape |
 | Supabase Realtime | `REALTIME_QUERY_BINDINGS` in `src/lib/realtime-query-config.ts` |
 | React Router | One route `/colaborador/agenda` under `CollaboratorRoute` |
@@ -79,12 +79,21 @@ The conflict algorithm exists **once**, in SQL. The client calls it as a read-on
 
 ## Components
 
-### `supabase/migrations/<ts>_collaborator_agenda.sql`
+### `supabase/migrations/` — five feature migrations
 
-- **Purpose**: Creates both calendar tables, the log table, the conflict function, the transition guard, all RLS policies, and the realtime registration.
-- **Interfaces**: see Data Models below.
-- **Dependencies**: `workspaces`, `workspace_members`, `corporate_team`, `auth.users`, helper `has_workspace_access()`.
-- **Reuses**: the `DO`-block realtime pattern and the no-policy log-table pattern already in the repo.
+Schema evolves across files rather than in one, because each was applied before the next was needed; editing an applied migration would rewrite history.
+
+| Migration | Owns |
+| --- | --- |
+| `20261019120000_collaborator_agenda_schema.sql` | Both calendar tables, the log table, their CHECKs, all 6 RLS policies, the realtime registration, and the `set_collaborator_appointments_updated_at` trigger |
+| `20261019120100_collaborator_agenda_behavior.sql` | `fn_collaborator_has_conflict`, `fn_assert_appointment_no_conflict`, `fn_assert_appointment_transition`, and the `assert_appointment_no_conflict` / `assert_appointment_transition` triggers |
+| `20261019130000_collaborator_appointment_manager_cancel.sql` | Replaces `fn_assert_appointment_transition` to add the manager branch (cancel from `pending`/`confirmed`, never confirm, never reopen) |
+| `20261019140000_collaborator_appointment_member_guard.sql` | `fn_assert_appointment_member_active` and its `BEFORE INSERT` trigger (AD-008) |
+| `20261019150000_collaborator_appointment_ack_notification.sql` | `collaborator_appointment_ack_notification`, a `SECURITY DEFINER` `AFTER UPDATE` trigger writing the manager's in-app acknowledgement (ACK-01) |
+
+- **Dependencies**: `workspaces`, `workspace_members`, `corporate_team`, `notifications`, `auth.users`.
+- **Reuses**: the `DO`-block realtime pattern, the no-policy log-table pattern, and the `SECURITY DEFINER` + `AFTER UPDATE` notification pattern from `handle_video_briefing_notification()` in `20260521181327_…`.
+- **Total**: 5 migrations, 5 distinct SQL functions, 5 triggers, 6 RLS policies.
 
 ### `supabase/functions/_shared/collaborator-agenda.ts`
 

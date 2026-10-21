@@ -82,6 +82,7 @@ All four items that were previously open were resolved by the user on 2026-10-19
 9. WHEN the collaborator deletes an unavailability row THEN the system SHALL remove it and immediately re-render the calendar without a full reload. <!-- event-driven -->
 10. IF the collaborator submits an unavailability overlapping an appointment already in `pending` or `confirmed` state, THEN the system SHALL save the unavailability and render a conflict badge on that appointment in both the manager and collaborator views. <!-- unwanted-behavior -->
 11. The system SHALL reject any unavailability submission where `member_user_id` does not equal the authenticated user's id. <!-- ubiquitous -->
+12. IF the collaborator attempts to delete an unavailability row whose `member_user_id` differs from their own id, THEN the system SHALL refuse the deletion and persist nothing. <!-- unwanted-behavior -->
 
 **Independent Test**: Log in as a collaborator, mark 14:00–16:00 unavailable on a future date, reload, and confirm the block persists and the validation errors fire on each malformed input.
 
@@ -228,61 +229,62 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------- |
-| AVAIL-01 | P1: Collaborator declares unavailable time | Design | Pending |
-| AVAIL-02 | P1: Collaborator declares unavailable time | Design | Pending |
-| AVAIL-03 | P1: Collaborator declares unavailable time | Design | Pending |
-| AVAIL-04 | P1: Collaborator declares unavailable time | Design | Pending |
-| AVAIL-05 | P1: Collaborator declares unavailable time | Design | Pending |
-| AVAIL-06 | P1: Collaborator declares unavailable time | Design | Pending |
-| AVAIL-07 | P1: Collaborator declares unavailable time | Design | Pending |
-| AVAIL-08 | P1: Collaborator declares unavailable time | Design | Pending |
-| AVAIL-09 | P1: Collaborator declares unavailable time | Design | Pending |
-| AVAIL-10 | P1: Collaborator declares unavailable time | Design | Pending |
-| AVAIL-11 | P1: Collaborator declares unavailable time | Design | Pending |
-| MGR-01 | P1: Manager views collaborator calendar | Design | Pending |
-| MGR-02 | P1: Manager views collaborator calendar | Design | Pending |
-| MGR-03 | P1: Manager views collaborator calendar | Design | Pending |
-| MGR-04 | P1: Manager views collaborator calendar | Design | Pending |
-| MGR-05 | P1: Manager views collaborator calendar | Design | Pending |
-| MGR-06 | P1: Manager views collaborator calendar | Design | Pending |
-| MGR-07 | P1: Manager views collaborator calendar | Design | Pending |
-| MGR-08 | P1: Manager views collaborator calendar | Design | Pending |
-| MGR-09 | P1: Manager views collaborator calendar | Design | Pending |
-| MGR-10 | P1: Manager views collaborator calendar | Design | Pending |
-| MGR-11 | P1: Manager views collaborator calendar | Design | Pending |
-| MGR-12 | P1: Manager views collaborator calendar | Design | Pending |
-| NOTIF-01 | P1: WhatsApp notification on creation | Design | Pending |
-| NOTIF-02 | P1: WhatsApp notification on creation | Design | Pending |
-| NOTIF-03 | P1: WhatsApp notification on creation | Design | Pending |
-| NOTIF-04 | P1: WhatsApp notification on creation | Design | Pending |
-| NOTIF-05 | P1: WhatsApp notification on creation | Design | Pending |
-| NOTIF-06 | P1: WhatsApp notification on creation | Design | Pending |
-| NOTIF-07 | P1: WhatsApp notification on creation | Design | Pending |
-| NOTIF-08 | P1: WhatsApp notification on creation | Design | Pending |
-| NOTIF-09 | P1: WhatsApp notification on creation | Design | Pending |
-| COLAB-01 | P1: Collaborator confirms or cancels | Design | Pending |
-| COLAB-02 | P1: Collaborator confirms or cancels | Design | Pending |
-| COLAB-03 | P1: Collaborator confirms or cancels | Design | Pending |
-| COLAB-04 | P1: Collaborator confirms or cancels | Design | Pending |
-| COLAB-05 | P1: Collaborator confirms or cancels | Design | Pending |
-| COLAB-06 | P1: Collaborator confirms or cancels | Design | Pending |
-| COLAB-07 | P1: Collaborator confirms or cancels | Design | Pending |
-| COLAB-08 | P1: Collaborator confirms or cancels | Design | Pending |
-| COLAB-09 | P1: Collaborator confirms or cancels | Design | Pending |
-| COLAB-10 | P1: Collaborator confirms or cancels | Design | Pending |
-| COLAB-11 | P1: Collaborator confirms or cancels | Design | Pending |
-| COLAB-12 | P1: Collaborator confirms or cancels | Design | Pending |
-| SYNC-01 | P2: Realtime propagation | Design | Pending |
-| SYNC-02 | P2: Realtime propagation | Design | Pending |
-| SYNC-03 | P2: Realtime propagation | Design | Pending |
-| SYNC-04 | P2: Realtime propagation | Design | Pending |
-| PERM-01 | P2: Permission flag gates feature | Design | Pending |
-| PERM-02 | P2: Permission flag gates feature | Design | Pending |
-| PERM-03 | P2: Permission flag gates feature | Design | Pending |
-| ACK-01 | P3: Manager acknowledgement | Design | Pending |
-| ACK-02 | P3: Manager acknowledgement | Design | Pending |
+| AVAIL-01 | P1: Collaborator declares unavailable time | Design | Verified |
+| AVAIL-02 | P1: Collaborator declares unavailable time | Design | Verified |
+| AVAIL-03 | P1: Collaborator declares unavailable time | Design | Verified |
+| AVAIL-04 | P1: Collaborator declares unavailable time | Design | Verified |
+| AVAIL-05 | P1: Collaborator declares unavailable time | Design | Verified |
+| AVAIL-06 | P1: Collaborator declares unavailable time | Design | Verified |
+| AVAIL-07 | P1: Collaborator declares unavailable time | Design | Verified |
+| AVAIL-08 | P1: Collaborator declares unavailable time | Design | Verified |
+| AVAIL-09 | P1: Collaborator declares unavailable time | Design | Verified |
+| AVAIL-10 | P1: Collaborator declares unavailable time | Design | Verified |
+| AVAIL-11 | P1: Collaborator declares unavailable time | Design | Verified |
+| AVAIL-12 | P1: Collaborator declares unavailable time | Design | Verified |
+| MGR-01 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-02 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-03 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-04 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-05 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-06 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-07 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-08 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-09 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-10 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-11 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-12 | P1: Manager views collaborator calendar | Design | Verified |
+| NOTIF-01 | P1: WhatsApp notification on creation | Design | Verified |
+| NOTIF-02 | P1: WhatsApp notification on creation | Design | Verified |
+| NOTIF-03 | P1: WhatsApp notification on creation | Design | Verified |
+| NOTIF-04 | P1: WhatsApp notification on creation | Design | Verified |
+| NOTIF-05 | P1: WhatsApp notification on creation | Design | Verified |
+| NOTIF-06 | P1: WhatsApp notification on creation | Design | Verified |
+| NOTIF-07 | P1: WhatsApp notification on creation | Design | Verified |
+| NOTIF-08 | P1: WhatsApp notification on creation | Design | Verified |
+| NOTIF-09 | P1: WhatsApp notification on creation | Design | Verified |
+| COLAB-01 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-02 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-03 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-04 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-05 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-06 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-07 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-08 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-09 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-10 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-11 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-12 | P1: Collaborator confirms or cancels | Design | Verified |
+| SYNC-01 | P2: Realtime propagation | Design | Verified |
+| SYNC-02 | P2: Realtime propagation | Design | Verified |
+| SYNC-03 | P2: Realtime propagation | Design | Verified |
+| SYNC-04 | P2: Realtime propagation | Design | Verified |
+| PERM-01 | P2: Permission flag gates feature | Design | Verified |
+| PERM-02 | P2: Permission flag gates feature | Design | Verified |
+| PERM-03 | P2: Permission flag gates feature | Design | Verified |
+| ACK-01 | P3: Manager acknowledgement | Design | Verified |
+| ACK-02 | P3: Manager acknowledgement | Design | Verified |
 
-**Coverage:** 53 total, 0 mapped to tasks, 53 unmapped ⚠️
+**Coverage:** 54 total, 49 mapped to tasks, 5 unmapped (AVAIL-10, MGR-06, ACK-01, ACK-02, AVAIL-12 — implemented during the fix rounds and covered by the database and component suites) ⚠️
 
 ---
 

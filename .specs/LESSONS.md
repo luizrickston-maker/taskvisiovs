@@ -80,6 +80,42 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: spec.md:218 (forms)
 - last seen: 2026-10-20T20:55:48Z
 
+### L-012 - Assert the denial side of every new RLS policy with a test that attempts the excluded actor's operation and proves the row is untouched
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `db` · harmful: 0
+- features: collaborator-agenda
+- evidence: M6 supabase/migrations/20261019120000_collaborator_agenda_schema.sql:107 (db)
+- last seen: 2026-10-20T22:53:10Z
+
+### L-013 - Recount design.md object counts from the tree after the last migration lands, not from the state the numbers were written against
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: collaborator-agenda
+- evidence: .specs/features/collaborator-agenda/design.md:71 (spec)
+- last seen: 2026-10-20T22:53:38Z
+
+### L-014 - Give every requirement id used in a test name an entry in spec.md's traceability table before writing the test, or the evidence has nothing to trace to
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: collaborator-agenda
+- evidence: spec.md:231-285 / AVAIL-12 (spec)
+- last seen: 2026-10-21T01:32:58Z
+
+### L-015 - Update the traceability table and Coverage line in the same change that completes the work, not in a later fix round, or they go stale and stay stale
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: collaborator-agenda
+- evidence: spec.md:285 coverage line (0 mapped, 53 unmapped; tasks.md names 49) (spec)
+- last seen: 2026-10-21T01:32:58Z
+
+### L-016 - Enforce one rule in one layer, or reuse a single shared literal across layers so a user never sees two different messages for the same refusal
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `repo-layer` · harmful: 0
+- features: collaborator-agenda
+- evidence: COLAB-05 useCollaboratorAppointments.ts:239 vs 20261019130000:58 (repo-layer)
+- last seen: 2026-10-21T01:32:59Z
+
+### L-017 - A design or spec correction that is not committed is not closed - the diff range is what the next verifier checks
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: collaborator-agenda
+- evidence: design.md:71 corrected only in an uncommitted working tree at HEAD 6d74837 (spec)
+- last seen: 2026-10-21T01:32:59Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

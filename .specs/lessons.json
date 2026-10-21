@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 12,
+  "next_id": 18,
   "lessons": [
     {
       "id": "L-001",
@@ -202,6 +202,114 @@
       ],
       "created": "2026-10-20T20:55:48Z",
       "last_seen": "2026-10-20T20:55:48Z"
+    },
+    {
+      "id": "L-012",
+      "key": "surviving_mutant::assert the denial side of every new rls policy with a test that attempts the excluded actor s operation and proves the row is untouched",
+      "text": "Assert the denial side of every new RLS policy with a test that attempts the excluded actor's operation and proves the row is untouched",
+      "signal": "surviving_mutant",
+      "scope": "db",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M6 supabase/migrations/20261019120000_collaborator_agenda_schema.sql:107 (db)"
+      ],
+      "created": "2026-10-20T22:53:10Z",
+      "last_seen": "2026-10-20T22:53:10Z"
+    },
+    {
+      "id": "L-013",
+      "key": "ac_gap::recount design md object counts from the tree after the last migration lands not from the state the numbers were written against",
+      "text": "Recount design.md object counts from the tree after the last migration lands, not from the state the numbers were written against",
+      "signal": "ac_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/collaborator-agenda/design.md:71 (spec)"
+      ],
+      "created": "2026-10-20T22:53:38Z",
+      "last_seen": "2026-10-20T22:53:38Z"
+    },
+    {
+      "id": "L-014",
+      "key": "ac_gap::give every requirement id used in a test name an entry in spec md s traceability table before writing the test or the evidence has nothing to trace to",
+      "text": "Give every requirement id used in a test name an entry in spec.md's traceability table before writing the test, or the evidence has nothing to trace to",
+      "signal": "ac_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md:231-285 / AVAIL-12 (spec)"
+      ],
+      "created": "2026-10-21T01:32:58Z",
+      "last_seen": "2026-10-21T01:32:58Z"
+    },
+    {
+      "id": "L-015",
+      "key": "ac_gap::update the traceability table and coverage line in the same change that completes the work not in a later fix round or they go stale and stay stale",
+      "text": "Update the traceability table and Coverage line in the same change that completes the work, not in a later fix round, or they go stale and stay stale",
+      "signal": "ac_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md:285 coverage line (0 mapped, 53 unmapped; tasks.md names 49) (spec)"
+      ],
+      "created": "2026-10-21T01:32:58Z",
+      "last_seen": "2026-10-21T01:32:58Z"
+    },
+    {
+      "id": "L-016",
+      "key": "spec_precision_gap::enforce one rule in one layer or reuse a single shared literal across layers so a user never sees two different messages for the same refusal",
+      "text": "Enforce one rule in one layer, or reuse a single shared literal across layers so a user never sees two different messages for the same refusal",
+      "signal": "spec_precision_gap",
+      "scope": "repo-layer",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "COLAB-05 useCollaboratorAppointments.ts:239 vs 20261019130000:58 (repo-layer)"
+      ],
+      "created": "2026-10-21T01:32:59Z",
+      "last_seen": "2026-10-21T01:32:59Z"
+    },
+    {
+      "id": "L-017",
+      "key": "ac_gap::a design or spec correction that is not committed is not closed the diff range is what the next verifier checks",
+      "text": "A design or spec correction that is not committed is not closed - the diff range is what the next verifier checks",
+      "signal": "ac_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "design.md:71 corrected only in an uncommitted working tree at HEAD 6d74837 (spec)"
+      ],
+      "created": "2026-10-21T01:32:59Z",
+      "last_seen": "2026-10-21T01:32:59Z"
     }
   ]
 }
