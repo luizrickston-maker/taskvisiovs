@@ -113,8 +113,8 @@ function CollaboratorAgenda({ memberUserId }: { memberUserId: string }) {
   const create = useCreateAppointment();
   const cancel = useCancelAppointment();
 
-  const availabilityRows = availability.data ?? [];
-  const appointmentRows = appointments.data ?? [];
+  const availabilityRows = useMemo(() => availability.data ?? [], [availability.data]);
+  const appointmentRows = useMemo(() => appointments.data ?? [], [appointments.data]);
 
   const events = useMemo(
     () => [

@@ -20,6 +20,12 @@
 -- `auth.users`, que a enxergava no próprio portal pela política de SELECT do
 -- colaborador (`auth.uid() = member_user_id`).
 --
+-- SPEC_DEVIATION: o Edge Case do spec nomeia apenas o colaborador
+-- DESATIVADO. A metade "sem linha alguma em corporate_team" vai além do
+-- texto e é escolhida deliberadamente por AD-008 — restringir o ALVO no
+-- INSERT WITH CHECK, não só o ator. Sem este marcador a guarda pareceria
+-- coberta pelo spec quando na verdade é uma decisão própria.
+--
 -- SECURITY DEFINER: `corporate_team` só é legível por quem é o `user_id` da
 -- linha ou o próprio membro (20260127191335 / 20260527151706), e um segundo
 -- admin do mesmo workspace não enxerga a linha do colega. Sem DEFINER esta

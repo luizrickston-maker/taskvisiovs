@@ -55,8 +55,8 @@ export default function ColaboratorAgendaPage() {
   // query so the calendar re-renders without a full reload.
   const removeAvailability = useDeleteAvailability();
 
-  const availabilityRows = availability.data ?? [];
-  const appointmentRows = appointments.data ?? [];
+  const availabilityRows = useMemo(() => availability.data ?? [], [availability.data]);
+  const appointmentRows = useMemo(() => appointments.data ?? [], [appointments.data]);
 
   const events = useMemo(
     () => [
