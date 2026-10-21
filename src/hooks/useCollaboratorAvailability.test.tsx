@@ -18,7 +18,15 @@ const { supabase, fromMock, rpcMock, toastMock } = vi.hoisted(() => {
   const args: unknown[][] = [];
   let pendingResult: { data?: unknown; error?: unknown } = { data: null, error: null };
 
-  const builder: any = {};
+  // A thenable record of every builder method: `await` in the hook resolves
+  // through `then`, and each call is logged and returns the same builder.
+  type BuilderDouble = Record<string, unknown> & {
+    then: (resolve: (value: unknown) => unknown, reject: (reason?: unknown) => unknown) => Promise<unknown>;
+  };
+
+  const builder: BuilderDouble = {
+    then: (resolve, reject) => Promise.resolve(pendingResult).then(resolve, reject),
+  };
   for (const m of ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'gte', 'order', 'single']) {
     builder[m] = (...a: unknown[]) => {
       steps.push(m);
@@ -26,7 +34,6 @@ const { supabase, fromMock, rpcMock, toastMock } = vi.hoisted(() => {
       return builder;
     };
   }
-  builder.then = (resolve: any, reject: any) => Promise.resolve(pendingResult).then(resolve, reject);
 
   const rpcMock = vi.fn();
 

@@ -12,12 +12,19 @@ import { CollaboratorAgendaRoute } from './CollaboratorAgendaRoute';
 const { supabase, permissionRows, role, setRows } = vi.hoisted(() => {
   const rows: { feature_key: string; enabled: boolean }[] = [];
   const state = { role: 'collaborator' as string | null };
-  const builder: any = {};
+  // A thenable record of the builder methods the hook chains: awaiting it
+  // resolves with a copy of the permission rows currently set.
+  type BuilderDouble = Record<string, unknown> & {
+    then: (resolve: (value: unknown) => unknown, reject: (reason?: unknown) => unknown) => Promise<unknown>;
+  };
+
+  const builder: BuilderDouble = {
+    then: (resolve, reject) =>
+      Promise.resolve({ data: [...rows], error: null }).then(resolve, reject),
+  };
   for (const m of ['select', 'eq', 'order', 'limit']) {
     builder[m] = () => builder;
   }
-  builder.then = (resolve: any, reject: any) =>
-    Promise.resolve({ data: [...rows], error: null }).then(resolve, reject);
 
   return {
     supabase: { from: vi.fn(() => builder), rpc: vi.fn() },

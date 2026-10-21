@@ -24,16 +24,23 @@ const { supabase, calls, rpcMock, queueResult, toastMock } = vi.hoisted(() => {
   const queue: Result[] = [];
   const rpcResults: Result[] = [];
 
-  function makeBuilder(table: string) {
+  // A thenable record of every builder method: `await` in the hook resolves
+  // through `then`, and each call is logged and returns the same builder.
+  type BuilderDouble = Record<string, unknown> & {
+    then: (resolve: (value: unknown) => unknown, reject: (reason?: unknown) => unknown) => Promise<unknown>;
+  };
+
+  function makeBuilder(table: string): BuilderDouble {
     const result = queue.shift() ?? { data: null, error: null };
-    const builder: any = {};
+    const builder: BuilderDouble = {
+      then: (resolve, reject) => Promise.resolve(result).then(resolve, reject),
+    };
     for (const m of ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'gte', 'order', 'single']) {
       builder[m] = (...args: unknown[]) => {
         log.push({ table, method: m, args });
         return builder;
       };
     }
-    builder.then = (resolve: any, reject: any) => Promise.resolve(result).then(resolve, reject);
     return builder;
   }
 
