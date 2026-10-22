@@ -68,12 +68,17 @@
 
 ## Handoff
 
-- **Feature**: `collaborator-agenda` — `.specs/features/collaborator-agenda/`
-- **Phase / Task**: Execute complete (18/18 tasks). Fix rounds 1 and 2 applied. Verifier round 4 dispatched 2026-10-20, awaiting verdict.
-- **Completed**: T1–T18, plus authorised fixes `30d7c92` (manager cancel), `5212a98` (member guard), fix round 1 `a014ea3`…`6f981a1` (F1–F9), fix round 2 `2703d26`…`6d74837`, `4c9b92b` (memo deps + deviation marker), docs `fc563a0`, `f9d3acc`, `4455d5d`
-- **Gates (verified by hand)**: `npm run test` 161 passed · `npm run test:db` 61 passed · `npm run build` exit 0 · `npx tsc --noEmit` exit 0 · `npm run lint` 218 problems (pre-feature baseline 202, so the feature's net debt is 16, down from 30)
-- **Next step**: read Verifier round 4's verdict. PASS → run `python3 <skill-dir>/scripts/validate_state.py collaborator-agenda` and report done. FAIL → the iteration budget the user granted is spent; escalate rather than dispatching round 5.
-- **Blockers**: none on code. Three production actions await explicit user approval and must not be run unprompted: applying the `products`/`services` backfill to the hosted project, setting `AGZAP_URL` as a server secret, and any deploy.
-- **Known traps**: a `git checkout -- <path>` restores to HEAD, **not** to your working copy — it once wiped an uncommitted spec edit (`AVAIL-12`) while leaving its passing test. Commit `.specs/` changes before any revert. `npm run lint` cannot reach zero and is not a gate for any task here.
-- **Uncommitted files**: none except the untracked `.agents/`, `.claude/`, `.cursor/`, `.windsurf/` skill-install directories, which are deliberately never staged.
-- **Branch**: `main`
+- **Feature**: `collaborator-agenda` — **SHIPPED** 2026-10-21 (migrations pushed, edge function deployed, `AGZAP_URL` set, `git push` `1716a95..a654bea`, Vercel reported `success` on `a654bea`). A live-bundle check confirmed `path:"/colaborador/agenda"` and chunk `ColaboratorAgendaPage-cy4aS0Vy.js` in production.
+- **Phase / Task**: Complete. Verifier round 4 PASS (`validate_state.py` exit 0).
+- **PENDING (user-asked, not started)**: live end-to-end verification of the feature on production — create a real appointment as manager, confirm the WhatsApp actually sends, and exercise the two hard blocks (booking over declared unavailability; booking a deactivated collaborator). Deliberately not done: proving delivery would require writing fake rows into the production database and sending a message to a real number. User said "guarde como pendencia".
+- **PENDING (active)**: feature `project-task-creation-fixes` — spec written and validated (15 ACs, 0 errors), fix worker dispatched 2026-10-21. Two defects: (a) `ProjectWizard` omits `is_corporate`, so projects created from `/pj/projetos` persist `false` and are hidden by that page's `is_corporate === true` filter; (b) manual task creation blocked three ways — `ClientTaskForm` zod rejects the `''`/`'none'` sentinels the form itself produces, the stage field silently `return null` when a project has no stages, and the Etapas tab drops stageless tasks. **Explicitly no retroactive migration** — user: "mantem os que ja existe".
+- **PENDING (found, out of scope, not started)**: `src/pages/PJ/BriefingReviewPage.tsx:165-181` — inserts go through `Promise.all` over Supabase builders, which resolve rather than reject on error, so `toast.success` fires even when every insert failed; line 171 also uses `briefingData.workspace_id` as a `user_id`. Separate defect, surfaced and deferred.
+- **PENDING (found, out of scope, not started)**: `src/components/areapj/projetos/CloseProspectModal.tsx:147-158` — project insert omits `workspace_id`, so closing a sale fails the insert under `has_workspace_access(NULL)` and surfaces as `Erro ao fechar venda`.
+- **PENDING (deferred)**: lint debt — 218 problems total, 202 pre-existing before this work, 16 added by `collaborator-agenda` and documented in code.
+
+- **Gates (verified by hand)**: `npm run test` 161 passed · `npm run test:db` 61 passed · `npm run build` exit 0 · `npx tsc --noEmit` exit 0 · `npm run lint` 218 problems (pre-feature baseline 202 → feature net debt 16, all documented in code).
+- **Blockers**: none on code. Production is up to date. Docker Desktop is installed but unusable (no WSL) and unused.
+- **Known traps**: `git checkout -- <path>` restores to HEAD, **not** to your working copy — it once wiped an uncommitted spec edit while leaving its passing test. Commit `.specs/` before any revert. The hosted Supabase migration history was **empty** until 2026-10-21, when 120 versions were baselined with `migration repair --status applied`; always run `supabase migration list` and confirm the pending count before any `db push`, and remember `db push` refuses backdated files without `--include-all`.
+- **Uncommitted files**: none except the untracked `.agents/`, `.claude/`, `.cursor/`, `.windsurf/` skill-install directories, deliberately never staged.
+- **Branch**: `main`, in sync with `origin/main`
+
