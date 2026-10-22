@@ -414,6 +414,7 @@ export default function ProjetosClientesPage() {
           if (!open) setEditingProject(null);
         }}
         editProject={editingProject}
+        isCorporate
       />
 
       {/* Form de tarefa (acionado pelo calendário) */}

@@ -22,6 +22,12 @@ interface ProjectWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editProject?: Project | null;
+  /**
+   * Se o projeto nasce corporativo. Quem monta o wizard decide: `/pj/projetos`
+   * passa `true`, `/projetos` passa `false`. O padrão `false` mantém o
+   * comportamento atual para quem ainda não passa a prop.
+   */
+  isCorporate?: boolean;
 }
 
 interface WizardStage {
@@ -37,7 +43,7 @@ const db = supabase as unknown as {
   rpc: typeof supabase.rpc;
 };
 
-export default function ProjectWizard({ open, onOpenChange, editProject }: ProjectWizardProps) {
+export default function ProjectWizard({ open, onOpenChange, editProject, isCorporate = false }: ProjectWizardProps) {
   const { projectCategories, addProject, updateProject, addProjectStages, corporateTeam } = useAppStore();
 
   const [step, setStep] = useState(1);
@@ -199,6 +205,7 @@ export default function ProjectWizard({ open, onOpenChange, editProject }: Proje
       deadline: deadline || null,
       assigned_to: assignedTo === 'none' ? null : assignedTo,
       client_name: clientName.trim() || null,
+      is_corporate: isCorporate,
     };
 
     const { data: createdProject, error: projError } = await supabase

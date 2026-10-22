@@ -297,6 +297,7 @@ export default function ProjetosDashboard() {
         open={formOpen}
         onOpenChange={handleFormClose}
         editProject={editProject}
+        isCorporate={false}
       />
 
       {/* Task Form Dialog for Calendar */}
