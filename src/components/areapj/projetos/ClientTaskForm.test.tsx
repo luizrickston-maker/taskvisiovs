@@ -72,6 +72,16 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const WORKSPACE_ID = '11111111-1111-4111-8111-111111111111';
 const MEMBER_USER_ID = '22222222-2222-4222-8222-222222222222';
+const STAGE_ID = '33333333-3333-4333-8333-333333333333';
+
+const BRIEFING = {
+  id: STAGE_ID,
+  project_id: 'p1',
+  name: 'Briefing',
+  order_index: 0,
+  icon: 'Layers',
+  status: 'todo',
+} as unknown as ProjectStage;
 
 const PROJECT: Project = {
   client_name: null,
@@ -104,10 +114,11 @@ const TEAM_MEMBER = {
 
 function seed({
   memberUserId = MEMBER_USER_ID,
-}: { memberUserId?: string } = {}) {
+  stages = [] as ProjectStage[],
+}: { memberUserId?: string; stages?: ProjectStage[] } = {}) {
   useAppStore.setState({
     projects: [PROJECT],
-    projectStages: [],
+    projectStages: stages,
     projectTasks: [],
     corporateTeam: [{ ...TEAM_MEMBER, member_user_id: memberUserId }],
   });
@@ -119,11 +130,21 @@ function renderForm() {
   return onOpenChange;
 }
 
-/** Opens a Radix Select by the text its trigger shows and picks an option. */
-async function chooseOption(triggerText: string, optionName: string) {
-  const trigger = screen.getByText(triggerText);
+/** Opens the Radix Select whose trigger shows `triggerText`. */
+async function openSelect(triggerText: string) {
+  const trigger = screen
+    .getAllByText(triggerText)
+    .map((el) => el.closest('[role="combobox"]'))
+    .find((el): el is Element => el !== null);
+  if (!trigger) throw new Error(`no select trigger showing "${triggerText}"`);
   fireEvent.pointerDown(trigger, { button: 0, pointerType: 'mouse' });
   fireEvent.click(trigger);
+  return trigger;
+}
+
+/** Opens a Radix Select by the text its trigger shows and picks an option. */
+async function chooseOption(triggerText: string, optionName: string | RegExp) {
+  await openSelect(triggerText);
   fireEvent.click(await screen.findByRole('option', { name: optionName }));
 }
 
@@ -222,5 +243,40 @@ describe('ClientTaskForm — manual inserts carry workspace_id (TSK-04)', () => 
       expect(toast.error).toHaveBeenCalledWith('Não foi possível identificar seu workspace.'),
     );
     expect(insertsFor('project_tasks')).toHaveLength(0);
+  });
+});
+
+describe('ClientTaskForm — the stage field (STG-01, STG-02, STG-03)', () => {
+  it('renders a stage selector listing the project stages (STG-01)', async () => {
+    seed({ stages: [BRIEFING] });
+    renderForm();
+
+    await openSelect('Sem etapa');
+    expect(await screen.findByRole('option', { name: '1. Briefing' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Sem etapa' })).toBeInTheDocument();
+  });
+
+  // STG-02 (and the "store not loaded yet" Edge Case, which is the same empty
+  // list): the spec asks for a message that the project has no stages but does
+  // not define its wording, so the assertion pins the rendered sentence.
+  it('states that the project has no stages instead of hiding the field (STG-02)', () => {
+    seed();
+    renderForm();
+
+    expect(
+      screen.getByText('Este projeto ainda não tem etapas. A tarefa ficará sem etapa.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Sem etapa')).not.toBeInTheDocument();
+  });
+
+  it('persists the stage_id the user selected (STG-03)', async () => {
+    seed({ stages: [BRIEFING] });
+    renderForm();
+    fillTitle();
+    await chooseOption('Sem etapa', '1. Briefing');
+    submit();
+
+    await waitFor(() => expect(insertsFor('project_tasks')).toHaveLength(1));
+    expect(insertsFor('project_tasks')[0]).toMatchObject({ stage_id: STAGE_ID });
   });
 });

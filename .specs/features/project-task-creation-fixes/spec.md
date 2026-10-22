@@ -8,7 +8,7 @@ Two creation paths are broken in production. Creating a project from `/pj/projet
 
 - [x] A project created from `/pj/projetos` persists `is_corporate = true` and is visible in that page's list without a reload.
 - [x] A task can be created manually with no assignee chosen, and it persists with `assigned_to = null`.
-- [ ] A task's stage is selectable whenever the project has stages, the absence of stages is stated rather than silent, and a stageless task is visible on the Etapas tab.
+- [x] A task's stage is selectable whenever the project has stages, the absence of stages is stated rather than silent, and a stageless task is visible on the Etapas tab.
 
 ## Out of Scope
 
@@ -124,17 +124,17 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | TSK-03 | P1: A task can be created without an assignee | Design | Verified |
 | TSK-04 | P1: A task can be created without an assignee | Design | Verified |
 | TSK-05 | P1: A task can be created without an assignee | Design | Verified |
-| STG-01 | P1: A task's stage is selectable, explained and visible | Design | Pending |
-| STG-02 | P1: A task's stage is selectable, explained and visible | Design | Pending |
-| STG-03 | P1: A task's stage is selectable, explained and visible | Design | Pending |
-| STG-04 | P1: A task's stage is selectable, explained and visible | Design | Pending |
-| STG-05 | P1: A task's stage is selectable, explained and visible | Design | Pending |
+| STG-01 | P1: A task's stage is selectable, explained and visible | Design | Verified |
+| STG-02 | P1: A task's stage is selectable, explained and visible | Design | Verified |
+| STG-03 | P1: A task's stage is selectable, explained and visible | Design | Verified |
+| STG-04 | P1: A task's stage is selectable, explained and visible | Design | Verified |
+| STG-05 | P1: A task's stage is selectable, explained and visible | Design | Verified |
 
-**Coverage:** 15 total, 10 closed in Execute (PRC-01…05, TSK-01…05), 5 open — Design and Tasks phases were skipped for this medium-scope repair, so the ACs are the task list ⚠️
+**Coverage:** 15 total, 15 closed in Execute (PRC-01…05, TSK-01…05, STG-01…05), 0 open — Design and Tasks phases were skipped for this medium-scope repair, so the ACs are the task list
 
 ## Success Criteria
 
-- [ ] Creating a project from `/pj/projetos` leaves it visible in that list after a reload.
-- [ ] Creating a task with no assignee selected persists, and the form never silently no-ops.
-- [ ] Every stageless task is reachable from the Etapas tab.
-- [ ] No pre-existing row is modified — verified by asserting the migration set contains no `UPDATE` against `projects`.
+- [x] Creating a project from `/pj/projetos` leaves it visible in that list after a reload.
+- [x] Creating a task with no assignee selected persists, and the form never silently no-ops.
+- [x] Every stageless task is reachable from the Etapas tab.
+- [x] No pre-existing row is modified — verified by asserting the migration set contains no `UPDATE` against `projects`. <!-- this change adds no migration at all. The pre-change set already carries one top-level `UPDATE public.projects` (20260601162729, the historical workspace_id backfill), which predates the feature and is out of scope by user decision; SPEC_DEVIATION recorded in tests/db/no-projects-backfill.test.ts -->

@@ -256,7 +256,16 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task, defaultSta
               const projectStagesList = projectStages
                 .filter(s => s.project_id === projectId)
                 .sort((a, b) => a.order_index - b.order_index);
-              if (projectStagesList.length === 0) return null;
+              if (projectStagesList.length === 0) {
+                // Sem etapas (ou com a lista ainda por carregar) o campo some:
+                // o usuário não consegue distinguir "o projeto não tem etapas"
+                // de "o formulário está quebrado".
+                return (
+                  <p className="text-sm text-muted-foreground">
+                    Este projeto ainda não tem etapas. A tarefa ficará sem etapa.
+                  </p>
+                );
+              }
               return (
                 <div className="space-y-2">
                   <Label htmlFor="stage_id">Etapa (opcional)</Label>

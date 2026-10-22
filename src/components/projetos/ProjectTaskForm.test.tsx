@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { toast } from 'sonner';
 import ProjectTaskForm, { INVALID_ASSIGNEE_ERROR } from './ProjectTaskForm';
 import { useAppStore } from '@/stores/useAppStore';
-import type { CorporateTeamMember, Project } from '@/types/database';
+import type { CorporateTeamMember, Project, ProjectStage } from '@/types/database';
 
 // TSK-01…05 for the manual task form used from the project detail page: the
 // `'none'` sentinel and the empty initial state both persist as null, a value
@@ -71,6 +71,7 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const WORKSPACE_ID = '11111111-1111-4111-8111-111111111111';
 const MEMBER_USER_ID = '22222222-2222-4222-8222-222222222222';
+const STAGE_ID = '33333333-3333-4333-8333-333333333333';
 
 const PROJECT: Project = {
   client_name: null,
@@ -91,6 +92,22 @@ const PROJECT: Project = {
   workspace_id: WORKSPACE_ID,
 };
 
+const PROJECT_WITHOUT_STAGES: Project = {
+  ...PROJECT,
+  id: 'p2',
+  project: 'Projeto Sem Etapas',
+  task: 'Projeto Sem Etapas',
+};
+
+const BRIEFING = {
+  id: STAGE_ID,
+  project_id: PROJECT.id,
+  name: 'Briefing',
+  order_index: 0,
+  icon: 'Layers',
+  status: 'todo',
+} as unknown as ProjectStage;
+
 const TEAM_MEMBER = {
   id: 'team-1',
   name: 'Maria Silva',
@@ -101,10 +118,13 @@ const TEAM_MEMBER = {
   workspace_id: WORKSPACE_ID,
 } as unknown as CorporateTeamMember;
 
-function seed({ memberUserId = MEMBER_USER_ID }: { memberUserId?: string } = {}) {
+function seed({
+  memberUserId = MEMBER_USER_ID,
+  stages = [] as ProjectStage[],
+}: { memberUserId?: string; stages?: ProjectStage[] } = {}) {
   useAppStore.setState({
-    projects: [PROJECT],
-    projectStages: [],
+    projects: [PROJECT, PROJECT_WITHOUT_STAGES],
+    projectStages: stages,
     projectTasks: [],
     corporateTeam: [{ ...TEAM_MEMBER, member_user_id: memberUserId }],
   });
@@ -120,8 +140,8 @@ function renderForm() {
   return onOpenChange;
 }
 
-/** Opens the Radix Select whose trigger shows `triggerText` and picks an option. */
-async function chooseOption(triggerText: string, optionName: string | RegExp) {
+/** Opens the Radix Select whose trigger shows `triggerText`. */
+async function openSelect(triggerText: string) {
   const trigger = screen
     .getAllByText(triggerText)
     .map((el) => el.closest('[role="combobox"]'))
@@ -129,6 +149,12 @@ async function chooseOption(triggerText: string, optionName: string | RegExp) {
   if (!trigger) throw new Error(`no select trigger showing "${triggerText}"`);
   fireEvent.pointerDown(trigger, { button: 0, pointerType: 'mouse' });
   fireEvent.click(trigger);
+  return trigger;
+}
+
+/** Opens a Radix Select by the text its trigger shows and picks an option. */
+async function chooseOption(triggerText: string, optionName: string | RegExp) {
+  await openSelect(triggerText);
   fireEvent.click(await screen.findByRole('option', { name: optionName }));
 }
 
@@ -214,5 +240,49 @@ describe('ProjectTaskForm — workspace resolution (Edge Case)', () => {
       expect(toast.error).toHaveBeenCalledWith('Não foi possível identificar seu workspace.'),
     );
     expect(insertsFor('project_tasks')).toHaveLength(0);
+  });
+});
+
+describe('ProjectTaskForm — the stage field (STG-01, STG-02, STG-03)', () => {
+  it('renders a stage selector listing the project stages once a project is chosen (STG-01)', async () => {
+    seed({ stages: [BRIEFING] });
+    renderForm();
+
+    await chooseOption('Nenhum projeto', 'Projeto Pessoal');
+    await openSelect('Sem etapa');
+
+    expect(await screen.findByRole('option', { name: '1. Briefing' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Sem etapa' })).toBeInTheDocument();
+  });
+
+  // STG-02 (and the "store not loaded yet" Edge Case, which is the same empty
+  // list): the spec asks for a message that the project has no stages but does
+  // not define its wording, so the assertion pins the rendered sentence.
+  it('states that the project has no stages instead of hiding the field (STG-02)', async () => {
+    seed();
+    renderForm();
+
+    await chooseOption('Nenhum projeto', 'Projeto Sem Etapas');
+
+    expect(
+      screen.getByText('O projeto ainda não tem etapas. A tarefa ficará sem etapa.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Sem etapa')).not.toBeInTheDocument();
+  });
+
+  it('persists the stage_id the user selected (STG-03)', async () => {
+    seed({ stages: [BRIEFING] });
+    renderForm();
+    fillTitle();
+
+    await chooseOption('Nenhum projeto', 'Projeto Pessoal');
+    await chooseOption('Sem etapa', '1. Briefing');
+    submit();
+
+    await waitFor(() => expect(insertsFor('project_tasks')).toHaveLength(1));
+    expect(insertsFor('project_tasks')[0]).toMatchObject({
+      stage_id: STAGE_ID,
+      project_id: PROJECT.id,
+    });
   });
 });
