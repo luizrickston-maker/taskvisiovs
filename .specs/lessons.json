@@ -360,10 +360,11 @@
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
-        ".specs/features/project-task-creation-fixes/spec.md:92 (forms)"
+        ".specs/features/project-task-creation-fixes/spec.md:92 (forms)",
+        "spec.md:75 (TSK-03) / spec.md:92 (STG-02) (forms)"
       ],
       "created": "2026-10-22T05:23:58Z",
-      "last_seen": "2026-10-22T05:23:58Z"
+      "last_seen": "2026-10-22T06:52:22Z"
     },
     {
       "id": "L-021",

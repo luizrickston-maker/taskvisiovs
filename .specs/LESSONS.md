@@ -131,8 +131,8 @@ Seen once or not yet corroborated. Tracked, not trusted.
 ### L-020 - When the spec demands a user-visible message but leaves its wording undefined, pin the exact string in the test.
 - signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `forms` · harmful: 0
 - features: project-task-creation-fixes
-- evidence: .specs/features/project-task-creation-fixes/spec.md:92 (forms)
-- last seen: 2026-10-22T05:23:58Z
+- evidence: .specs/features/project-task-creation-fixes/spec.md:92 (forms) (+1 more)
+- last seen: 2026-10-22T06:52:22Z
 
 ### L-021 - When a success criterion is already false of the pre-change baseline, pin the offender list to the exact pre-existing file instead of deleting the assertion.
 - signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `migrations` · harmful: 0
