@@ -7,7 +7,7 @@ Two creation paths are broken in production. Creating a project from `/pj/projet
 ## Goals
 
 - [x] A project created from `/pj/projetos` persists `is_corporate = true` and is visible in that page's list without a reload.
-- [ ] A task can be created manually with no assignee chosen, and it persists with `assigned_to = null`.
+- [x] A task can be created manually with no assignee chosen, and it persists with `assigned_to = null`.
 - [ ] A task's stage is selectable whenever the project has stages, the absence of stages is stated rather than silent, and a stageless task is visible on the Etapas tab.
 
 ## Out of Scope
@@ -119,18 +119,18 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PRC-03 | P1: A project created from the PJ screen is visible there | Design | Verified |
 | PRC-04 | P1: A project created from the PJ screen is visible there | Design | Verified |
 | PRC-05 | P1: A project created from the PJ screen is visible there | Design | Verified |
-| TSK-01 | P1: A task can be created without an assignee | Design | Pending |
-| TSK-02 | P1: A task can be created without an assignee | Design | Pending |
-| TSK-03 | P1: A task can be created without an assignee | Design | Pending |
-| TSK-04 | P1: A task can be created without an assignee | Design | Pending |
-| TSK-05 | P1: A task can be created without an assignee | Design | Pending |
+| TSK-01 | P1: A task can be created without an assignee | Design | Verified |
+| TSK-02 | P1: A task can be created without an assignee | Design | Verified |
+| TSK-03 | P1: A task can be created without an assignee | Design | Verified |
+| TSK-04 | P1: A task can be created without an assignee | Design | Verified |
+| TSK-05 | P1: A task can be created without an assignee | Design | Verified |
 | STG-01 | P1: A task's stage is selectable, explained and visible | Design | Pending |
 | STG-02 | P1: A task's stage is selectable, explained and visible | Design | Pending |
 | STG-03 | P1: A task's stage is selectable, explained and visible | Design | Pending |
 | STG-04 | P1: A task's stage is selectable, explained and visible | Design | Pending |
 | STG-05 | P1: A task's stage is selectable, explained and visible | Design | Pending |
 
-**Coverage:** 15 total, 5 closed in Execute (PRC-01…05), 10 open — Design and Tasks phases were skipped for this medium-scope repair, so the ACs are the task list ⚠️
+**Coverage:** 15 total, 10 closed in Execute (PRC-01…05, TSK-01…05), 5 open — Design and Tasks phases were skipped for this medium-scope repair, so the ACs are the task list ⚠️
 
 ## Success Criteria
 

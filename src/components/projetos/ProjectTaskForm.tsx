@@ -32,6 +32,12 @@ const statusOptions: { value: ProjectTaskStatus; label: string }[] = [
   { value: 'done', label: 'Concluído' },
 ];
 
+/** Erro exibido quando o atribuído não é um usuário válido. */
+export const INVALID_ASSIGNEE_ERROR =
+  'Colaborador inválido: escolha um integrante da equipe ou deixe sem atribuição.';
+
+const UUID_PATTERN = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/i;
+
 const priorityOptions = [
   { value: '1', label: 'P1 - Crítica', color: 'text-priority-critical' },
   { value: '2', label: 'P2 - Alta', color: 'text-priority-high' },
@@ -87,6 +93,14 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask, defaultP
     e.preventDefault();
     if (!title.trim()) return;
 
+    // Mesmo contrato do ClientTaskForm: 'none' ("Ninguém (Apenas eu)") e o
+    // estado inicial '' significam "sem atribuição" e viram null.
+    const mappedAssignee = assignedTo === 'none' || assignedTo === '' ? null : assignedTo;
+    if (mappedAssignee !== null && !UUID_PATTERN.test(mappedAssignee)) {
+      toast.error(INVALID_ASSIGNEE_ERROR);
+      return;
+    }
+
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -102,7 +116,7 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask, defaultP
       priority: Number(priority),
       status,
       deadline: deadline || null,
-      assigned_to: assignedTo === 'none' ? null : assignedTo,
+      assigned_to: mappedAssignee,
     };
 
     if (editTask) {
@@ -120,9 +134,16 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask, defaultP
       updateProjectTask(editTask.id, taskData);
       toast.success('Tarefa atualizada!');
     } else {
+      const { data: workspaceId, error: wsError } = await supabase.rpc('get_my_workspace_id');
+      if (wsError || !workspaceId) {
+        toast.error('Não foi possível identificar seu workspace.');
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('project_tasks')
-        .insert({ ...taskData, user_id: user.id })
+        .insert({ ...taskData, user_id: user.id, workspace_id: workspaceId })
         .select()
         .single();
 

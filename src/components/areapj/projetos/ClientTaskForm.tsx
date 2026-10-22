@@ -30,13 +30,18 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { useAppStore } from '@/stores/useAppStore';
 import { toast } from 'sonner';
 
+/** Erro exibido quando o atribuído não é um usuário válido. */
+export const INVALID_ASSIGNEE_ERROR =
+  'Colaborador inválido: escolha um integrante da equipe ou deixe sem atribuição.';
+
 const taskSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório').max(200),
   description: z.string().max(500).optional(),
   deadline: z.string().optional(),
   priority: z.number().min(1).max(5),
   status: z.enum(['todo', 'in_progress', 'done']),
-  assigned_to: z.string().uuid().nullable().optional(),
+  // O payload validado já passa pela mapagem: '' e 'none' viram null.
+  assigned_to: z.string().uuid(INVALID_ASSIGNEE_ERROR).nullable().optional(),
   estimated_hours: z.number().min(0).max(9999),
   actual_hours: z.number().min(0).max(9999),
 });
@@ -105,15 +110,36 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task, defaultSta
     e.preventDefault();
     if (!user) return;
 
-    const validation = taskSchema.safeParse(formData);
+    // O formulário produz dois sentinela de "sem atribuição": '' (estado
+    // inicial) e 'none' ("Nenhum (Somente eu)"). Ambos viram null antes da
+    // validação — validar o estado bruto rejeitava os dois e a tarefa nunca
+    // chegava ao banco.
+    const mappedAssignee = formData.assigned_to === 'none' || formData.assigned_to === ''
+      ? null
+      : formData.assigned_to;
+
+    const validation = taskSchema.safeParse({
+      ...formData,
+      assigned_to: mappedAssignee,
+    });
     if (!validation.success) {
-      toast.error((validation.error as any).errors[0].message);
+      toast.error(validation.error.issues[0].message);
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      let workspaceId: string | null = null;
+      if (!task) {
+        const { data, error: wsError } = await supabase.rpc('get_my_workspace_id');
+        if (wsError || !data) {
+          toast.error('Não foi possível identificar seu workspace.');
+          return;
+        }
+        workspaceId = data;
+      }
+
       const taskData = {
         user_id: user.id,
         project_id: projectId,
@@ -123,11 +149,12 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task, defaultSta
         deadline_days: formData.deadline_days,
         priority: formData.priority,
         status: formData.status,
-        assigned_to: formData.assigned_to === 'none' ? null : (formData.assigned_to || null),
+        assigned_to: mappedAssignee,
         estimated_hours: formData.estimated_hours,
         actual_hours: formData.actual_hours,
         stage_id: formData.stage_id || null,
         completed_at: formData.status === 'done' ? new Date().toISOString() : null,
+        ...(workspaceId ? { workspace_id: workspaceId } : {}),
       };
 
       if (task) {
