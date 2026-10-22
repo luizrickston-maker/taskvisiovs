@@ -122,6 +122,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: src/components/areapj/AvailabilityForm.test.tsx:46-56 / AVAIL-05 (forms)
 - last seen: 2026-10-21T05:06:33Z
 
+### L-019 - Do not credit an edge case as covered by an existing schema clause until that clause is tested against the exact statement the spec describes.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: project-task-creation-fixes
+- evidence: .specs/features/project-task-creation-fixes/spec.md:105 (spec)
+- last seen: 2026-10-22T05:23:58Z
+
+### L-020 - When the spec demands a user-visible message but leaves its wording undefined, pin the exact string in the test.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `forms` · harmful: 0
+- features: project-task-creation-fixes
+- evidence: .specs/features/project-task-creation-fixes/spec.md:92 (forms)
+- last seen: 2026-10-22T05:23:58Z
+
+### L-021 - When a success criterion is already false of the pre-change baseline, pin the offender list to the exact pre-existing file instead of deleting the assertion.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `migrations` · harmful: 0
+- features: project-task-creation-fixes
+- evidence: tests/db/no-projects-backfill.test.ts:18 (migrations)
+- last seen: 2026-10-22T05:23:58Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

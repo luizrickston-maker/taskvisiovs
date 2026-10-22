@@ -102,7 +102,7 @@ Every ambiguity is resolved or recorded here — nothing is left silently unclea
 
 - IF the wizard is mounted from a page that passes no `is_corporate` prop, THEN the system SHALL default to `false`, preserving today's behaviour for any unconverted call site.
 - IF `workspace_id` cannot be resolved at insert time, THEN the system SHALL refuse the submission with a visible error rather than writing a row the creator cannot read.
-- IF a stage is deleted while a task form is open, THEN the system SHALL not fail the insert — `stage_id` is `ON DELETE SET NULL`.
+- IF a stage is deleted while a task form is open, THEN the system SHALL not fail the insert — the form SHALL null `stage_id` before submitting when the selected stage no longer appears in the live stage list. Note that `ON DELETE SET NULL` does **not** provide this: it nulls rows that already exist at deletion time, while a pending insert of a now-dangling key still violates the FK constraint.
 - IF the stage list in the store has not loaded yet, THEN the system SHALL show the no-stages message rather than silently hiding the field.
 - WHEN the assignee select holds a real UUID, THEN the system SHALL pass it through unchanged.
 
