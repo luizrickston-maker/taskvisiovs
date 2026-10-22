@@ -108,11 +108,19 @@ export default function ProjectTaskForm({ open, onOpenChange, editTask, defaultP
       return;
     }
 
+    // Edge Case: a etapa selecionada pode ter sido apagada enquanto o
+    // formulário estava aberto. ON DELETE SET NULL só zera linhas já
+    // existentes — uma inserção pendente com a chave pendurada viola a FK —
+    // então stage_id volta a null quando a etapa não está mais na lista viva
+    // do projeto.
+    const stageStillExists =
+      !!stageId && projectStages.some((s) => s.project_id === projectId && s.id === stageId);
+
     const taskData = {
       title: title.trim(),
       description: description.trim() || null,
       project_id: projectId || null,
-      stage_id: stageId || null,
+      stage_id: stageStillExists ? stageId : null,
       priority: Number(priority),
       status,
       deadline: deadline || null,

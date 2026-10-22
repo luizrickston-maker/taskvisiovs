@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { toast } from 'sonner';
 import { ClientTaskForm, INVALID_ASSIGNEE_ERROR } from './ClientTaskForm';
 import { useAppStore } from '@/stores/useAppStore';
@@ -11,6 +11,9 @@ import type { CorporateTeamMember, Project, ProjectStage } from '@/types/databas
 // on the mapped payload, a value that is neither a UUID nor a sentinel is
 // refused with a visible error and no insert, and manual inserts carry
 // workspace_id (TSK-04, plus the Edge Case where it cannot be resolved).
+// Edge Case 3: uma etapa apagada enquanto o formulário está aberto não pode
+// derrubar a inserção — o payload zera stage_id quando a etapa saiu da lista
+// viva do projeto, e a preserva quando continua lá (STG-03).
 
 const { supabase, queueResult, queueRpc, insertsFor, reset } = vi.hoisted(() => {
   type Result = { data?: unknown; error?: unknown };
@@ -278,5 +281,39 @@ describe('ClientTaskForm — the stage field (STG-01, STG-02, STG-03)', () => {
 
     await waitFor(() => expect(insertsFor('project_tasks')).toHaveLength(1));
     expect(insertsFor('project_tasks')[0]).toMatchObject({ stage_id: STAGE_ID });
+  });
+
+  // Edge Case: a etapa é apagada enquanto o formulário continua aberto.
+  // ON DELETE SET NULL só protege linhas já existentes — a inserção pendente
+  // enviaria uma chave pendurada e violaria a FK — então o formulário zera
+  // stage_id antes de enviar e a tarefa é criada sem etapa.
+  it('submits stage_id = null when the selected stage is no longer in the live stage list (Edge Case)', async () => {
+    seed({ stages: [BRIEFING] });
+    const onOpenChange = renderForm();
+    fillTitle();
+    await chooseOption('Sem etapa', '1. Briefing');
+
+    // A etapa deixa de existir no projeto enquanto o formulário está aberto.
+    await act(async () => {
+      useAppStore.setState({ projectStages: [] });
+    });
+    submit();
+
+    await waitFor(() => expect(insertsFor('project_tasks')).toHaveLength(1));
+    expect(insertsFor('project_tasks')[0]).toMatchObject({ stage_id: null });
+    // Nenhum caminho de erro: a tarefa é criada e o diálogo fecha.
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('sends stage_id = null when the user selected no stage at all (Edge Case)', async () => {
+    seed({ stages: [BRIEFING] });
+    renderForm();
+    fillTitle();
+    submit();
+
+    await waitFor(() => expect(insertsFor('project_tasks')).toHaveLength(1));
+    expect(insertsFor('project_tasks')[0]).toMatchObject({ stage_id: null });
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

@@ -140,6 +140,15 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task, defaultSta
         workspaceId = data;
       }
 
+      // Edge Case: a etapa selecionada pode ter sido apagada enquanto o
+      // formulário estava aberto. ON DELETE SET NULL só zera linhas já
+      // existentes — uma inserção pendente com a chave pendurada viola a FK —
+      // então stage_id volta a null quando a etapa não está mais na lista viva
+      // do projeto.
+      const stageStillExists =
+        !!formData.stage_id &&
+        projectStages.some((s) => s.project_id === projectId && s.id === formData.stage_id);
+
       const taskData = {
         user_id: user.id,
         project_id: projectId,
@@ -152,7 +161,7 @@ export function ClientTaskForm({ open, onOpenChange, projectId, task, defaultSta
         assigned_to: mappedAssignee,
         estimated_hours: formData.estimated_hours,
         actual_hours: formData.actual_hours,
-        stage_id: formData.stage_id || null,
+        stage_id: stageStillExists ? formData.stage_id : null,
         completed_at: formData.status === 'done' ? new Date().toISOString() : null,
         ...(workspaceId ? { workspace_id: workspaceId } : {}),
       };

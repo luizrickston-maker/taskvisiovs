@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { toast } from 'sonner';
 import ProjectTaskForm, { INVALID_ASSIGNEE_ERROR } from './ProjectTaskForm';
@@ -284,5 +284,44 @@ describe('ProjectTaskForm — the stage field (STG-01, STG-02, STG-03)', () => {
       stage_id: STAGE_ID,
       project_id: PROJECT.id,
     });
+  });
+
+  // Edge Case: a etapa é apagada enquanto o formulário continua aberto.
+  // ON DELETE SET NULL só protege linhas já existentes — a inserção pendente
+  // enviaria uma chave pendurada e violaria a FK — então o formulário zera
+  // stage_id antes de enviar e a tarefa é criada sem etapa.
+  it('submits stage_id = null when the selected stage is no longer in the live stage list (Edge Case)', async () => {
+    seed({ stages: [BRIEFING] });
+    const onOpenChange = renderForm();
+    fillTitle();
+    await chooseOption('Nenhum projeto', 'Projeto Pessoal');
+    await chooseOption('Sem etapa', '1. Briefing');
+
+    // A etapa deixa de existir no projeto enquanto o formulário está aberto.
+    await act(async () => {
+      useAppStore.setState({ projectStages: [] });
+    });
+    submit();
+
+    await waitFor(() => expect(insertsFor('project_tasks')).toHaveLength(1));
+    expect(insertsFor('project_tasks')[0]).toMatchObject({
+      stage_id: null,
+      project_id: PROJECT.id,
+    });
+    // Nenhum caminho de erro: a tarefa é criada e o diálogo fecha.
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('sends stage_id = null when the user selected no stage at all (Edge Case)', async () => {
+    seed({ stages: [BRIEFING] });
+    renderForm();
+    fillTitle();
+    await chooseOption('Nenhum projeto', 'Projeto Pessoal');
+    submit();
+
+    await waitFor(() => expect(insertsFor('project_tasks')).toHaveLength(1));
+    expect(insertsFor('project_tasks')[0]).toMatchObject({ stage_id: null });
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });
