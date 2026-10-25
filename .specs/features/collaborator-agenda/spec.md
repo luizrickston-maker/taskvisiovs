@@ -220,7 +220,10 @@ All four items that were previously open were resolved by the user on 2026-10-19
 5. WHEN a cancellation notification cannot be delivered THEN the system SHALL keep the cancellation persisted and record the failed attempt. <!-- unwanted-behavior -->
 6. WHEN cancellation delivery succeeds on the first attempt THEN the system SHALL display to the party that cancelled the notice `Compromisso cancelado.` <!-- event-driven -->
 7. WHEN cancellation delivery fails THEN the system SHALL display to the party that cancelled the notice `Compromisso cancelado, mas o aviso não foi enviado.` together with an action labelled `Tentar novamente`. <!-- unwanted-behavior -->
+
+   Delivery counts as failed when the provider reports `failed` or `timeout`, when the provider reports `no_whatsapp`, and when the attempt does not resolve to a parseable verdict at all. Only an explicit `sent` counts as delivered — an unverifiable attempt is never reported as delivered.
 8. WHEN the party that cancelled activates `Tentar novamente` THEN the system SHALL attempt delivery again and, on success, replace the failure notice with `Compromisso cancelado.` <!-- event-driven -->
+9. WHEN the workspace has no active `agenda` recipient AND no `workspaces.notify_whatsapp` fallback THEN the system SHALL record the attempt as `no_whatsapp` and raise the ACK-07 failure notice, without sending anything. <!-- unwanted-behavior -->
 
 > The three notices above apply **whichever** side cancelled — a collaborator cancelling sees them, and so does a manager cancelling. They must appear immediately in the acting party's own view, because a cancelled appointment is no longer rendered anywhere (`COLAB-14`, `MGR-13`) and the failure record lives in `appointment_notification_log`, which has no RLS and is therefore unreadable by anyone.
 
@@ -314,10 +317,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ACK-04 | P3: Manager acknowledgement | Design | Verified |
 | ACK-05 | P3: Manager acknowledgement | Design | Verified |
 | ACK-06 | P3: Manager acknowledgement | Design | Verified |
-| ACK-07 | P3: Manager acknowledgement | Design | Verified |
-| ACK-08 | P3: Manager acknowledgement | Design | Verified |
+| ACK-07 | P3: Manager acknowledgement | Design | Pending |
+| ACK-08 | P3: Manager acknowledgement | Design | Pending |
+| ACK-09 | P3: Manager acknowledgement | Design | Pending |
 
-**Coverage:** 65 total, 56 mapped to tasks, 9 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds; COLAB-15, COLAB-16 closed 2026-10-25; ACK-06…ACK-08 opened 2026-10-25 with the pinned cancellation-notice text and closed the same day) ⚠️
+**Coverage:** 66 total, 56 mapped to tasks, 10 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds; COLAB-15, COLAB-16, ACK-06 closed 2026-10-25; ACK-07…ACK-09 reopened 2026-10-25 after the round-2 sensor survived a mutant that reported an unverifiable delivery as delivered) ⚠️
 
 ---
 

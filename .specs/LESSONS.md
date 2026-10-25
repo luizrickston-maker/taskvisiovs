@@ -164,6 +164,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: ACK-05 (notifications)
 - last seen: 2026-10-25T15:22:28Z
 
+### L-026 - Assert the surfaced failure verdict on the branch where the call cannot be verified, not only where the callee answers with a failure
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `notifications` · harmful: 0
+- features: collaborator-agenda
+- evidence: M3b (notifications)
+- last seen: 2026-10-25T18:32:21Z
+
+### L-027 - Enumerate in the spec exactly which outcomes count as the failure a user-visible notice requirement keys on
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `notifications` · harmful: 0
+- features: collaborator-agenda
+- evidence: ACK-07 (notifications)
+- last seen: 2026-10-25T18:32:49Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

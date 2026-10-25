@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 26,
+  "next_id": 28,
   "lessons": [
     {
       "id": "L-001",
@@ -455,6 +455,42 @@
       ],
       "created": "2026-10-25T15:22:28Z",
       "last_seen": "2026-10-25T15:22:28Z"
+    },
+    {
+      "id": "L-026",
+      "key": "surviving_mutant::assert the surfaced failure verdict on the branch where the call cannot be verified not only where the callee answers with a failure",
+      "text": "Assert the surfaced failure verdict on the branch where the call cannot be verified, not only where the callee answers with a failure",
+      "signal": "surviving_mutant",
+      "scope": "notifications",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M3b (notifications)"
+      ],
+      "created": "2026-10-25T18:32:21Z",
+      "last_seen": "2026-10-25T18:32:21Z"
+    },
+    {
+      "id": "L-027",
+      "key": "spec_precision_gap::enumerate in the spec exactly which outcomes count as the failure a user visible notice requirement keys on",
+      "text": "Enumerate in the spec exactly which outcomes count as the failure a user-visible notice requirement keys on",
+      "signal": "spec_precision_gap",
+      "scope": "notifications",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ACK-07 (notifications)"
+      ],
+      "created": "2026-10-25T18:32:49Z",
+      "last_seen": "2026-10-25T18:32:49Z"
     }
   ]
 }
