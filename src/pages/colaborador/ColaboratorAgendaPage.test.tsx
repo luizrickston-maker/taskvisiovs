@@ -8,11 +8,13 @@ import type { CollaboratorAppointmentRow, CollaboratorAvailabilityRow } from '@/
 // The page always opens on the current month, so the fixtures use today.
 const TODAY = format(new Date(), 'yyyy-MM-dd');
 
-const { appointments, availabilityRows, respondMutate, deleteMutate } = vi.hoisted(() => ({
+const { appointments, availabilityRows, respondMutate, deleteMutate, respondState } = vi.hoisted(() => ({
   appointments: [] as unknown[],
   availabilityRows: [] as unknown[],
   respondMutate: vi.fn(async (args: unknown) => args),
   deleteMutate: vi.fn(async (id: unknown) => id),
+  // ACK-06…ACK-08: the notice the respond hook records after a cancellation.
+  respondState: { notice: null as unknown },
 }));
 
 vi.mock('@/hooks/useCollaboratorAppointments', () => ({
@@ -24,7 +26,12 @@ vi.mock('@/hooks/useCollaboratorAppointments', () => ({
     data: appointments.filter(row => row.status !== 'cancelled'),
     isLoading: false,
   }),
-  useRespondAppointment: () => ({ mutateAsync: respondMutate, isPending: false }),
+  useRespondAppointment: () => ({
+    mutateAsync: respondMutate,
+    isPending: false,
+    notice: respondState.notice,
+  }),
+  NOTIFY_FUNCTION: 'notify-appointment',
 }));
 
 vi.mock('@/hooks/useCollaboratorAvailability', () => ({
@@ -92,6 +99,7 @@ beforeEach(() => {
   availabilityRows.length = 0;
   respondMutate.mockClear();
   deleteMutate.mockClear();
+  respondState.notice = null;
 });
 
 describe('ColaboratorAgendaPage', () => {
@@ -244,5 +252,34 @@ describe('ColaboratorAgendaPage', () => {
 
     fireEvent.click(popover.getByRole('button', { name: /Cancelar/ }));
     expect(respondMutate).toHaveBeenCalledWith({ appointment: row, action: 'cancel' });
+  });
+
+  // ACK-06…ACK-08 — the cancelled appointment renders nowhere on this page
+  // (COLAB-14), so the panel the collaborator is looking at is the only place
+  // the delivery verdict can be shown. Both notices are the spec's, verbatim.
+  it('reports a delivered cancellation notice in the collaborator\'s own view (ACK-06)', () => {
+    respondState.notice = {
+      appointmentId: 'ap-1',
+      kind: 'cancelled_by_collaborator',
+      status: 'sent',
+    };
+    renderPage();
+
+    expect(screen.getByText('Compromisso cancelado.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
+  });
+
+  it('reports a failed cancellation notice with its retry action (ACK-07)', () => {
+    respondState.notice = {
+      appointmentId: 'ap-1',
+      kind: 'cancelled_by_collaborator',
+      status: 'failed',
+    };
+    renderPage();
+
+    expect(
+      screen.getByText('Compromisso cancelado, mas o aviso não foi enviado.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tentar novamente' })).toBeInTheDocument();
   });
 });

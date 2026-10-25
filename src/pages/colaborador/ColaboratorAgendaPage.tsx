@@ -15,6 +15,7 @@ import {
 import { useCollaboratorPermissions } from '@/hooks/useCollaboratorPermissions';
 import { AvailabilityForm } from '@/components/areapj/AvailabilityForm';
 import { AgendaDayView, AgendaMonthView } from '@/components/agenda/views';
+import { CancellationNotifier } from '@/components/agenda/CancellationNotifier';
 import {
   availabilityConflictsWith,
   mapAppointmentToCalendarEvent,
@@ -112,6 +113,11 @@ export default function ColaboratorAgendaPage() {
           )}
         </div>
       </header>
+
+      {/* ACK-06…ACK-08: how the cancellation this collaborator just made was
+          communicated. The row is gone from the calendar and the list
+          (COLAB-14), so this is their only view of the delivery. */}
+      <CancellationNotifier notice={respond.notice} />
 
       {/* Calendar */}
       <section className="space-y-4">

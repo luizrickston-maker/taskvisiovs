@@ -313,11 +313,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ACK-03 | P3: Manager acknowledgement | Design | Verified |
 | ACK-04 | P3: Manager acknowledgement | Design | Verified |
 | ACK-05 | P3: Manager acknowledgement | Design | Verified |
-| ACK-06 | P3: Manager acknowledgement | Design | Pending |
-| ACK-07 | P3: Manager acknowledgement | Design | Pending |
-| ACK-08 | P3: Manager acknowledgement | Design | Pending |
+| ACK-06 | P3: Manager acknowledgement | Design | Verified |
+| ACK-07 | P3: Manager acknowledgement | Design | Verified |
+| ACK-08 | P3: Manager acknowledgement | Design | Verified |
 
-**Coverage:** 65 total, 56 mapped to tasks, 9 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds; COLAB-15, COLAB-16 closed 2026-10-25; ACK-06…ACK-08 opened 2026-10-25 so the cancellation-failure notice carries pinned text) ⚠️
+**Coverage:** 65 total, 56 mapped to tasks, 9 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds; COLAB-15, COLAB-16 closed 2026-10-25; ACK-06…ACK-08 opened 2026-10-25 with the pinned cancellation-notice text and closed the same day) ⚠️
 
 ---
 

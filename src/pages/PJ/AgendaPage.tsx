@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AgendaPJ } from '@/components/agenda/AgendaPJ';
 import { CollaboratorSelector } from '@/components/agenda/CollaboratorSelector';
 import { AppointmentNotifier } from '@/components/agenda/AppointmentNotifier';
+import { CancellationNotifier } from '@/components/agenda/CancellationNotifier';
 import { AgendaDayView, AgendaMonthView } from '@/components/agenda/views';
 import {
   availabilityConflictsWith,
@@ -319,6 +320,11 @@ function CollaboratorAgenda({ memberUserId }: { memberUserId: string }) {
 
       {/* NOTIF-02 / NOTIF-08: how the notification for this appointment went. */}
       {created && <AppointmentNotifier appointment={created} />}
+
+      {/* ACK-06…ACK-08: how the cancellation the manager just made was
+          communicated. The row is gone from this calendar (MGR-13), so this
+          is the manager's only view of the delivery. */}
+      <CancellationNotifier notice={cancel.notice} />
 
       {/* Create */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>

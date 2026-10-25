@@ -506,6 +506,80 @@ describe('AgendaPage — manager cancel (MGR-09, AD-007)', () => {
     expect(screen.queryByText('Cancelado')).not.toBeInTheDocument();
     expect(calls.updates()).toHaveLength(0);
   });
+
+  // ACK-06…ACK-08 — the manager cancelled, and the row is gone from this
+  // calendar too (MGR-13), so the notice carries the whole verdict: the spec
+  // sentence on a clean delivery, the pinned failure sentence plus
+  // `Tentar novamente` when it did not go out, and the replacement after a
+  // retry that finally delivers.
+  it('shows the cancellation notice and replaces it after a successful retry', async () => {
+    queueResult('collaborator_appointments', {
+      data: [appointment({ status: 'pending' })],
+      error: null,
+    });
+    queueResult('collaborator_appointments', { data: appointment({ status: 'cancelled' }), error: null });
+    queueResult('collaborator_availability', { data: [], error: null });
+    // The refetch the mutation invalidation triggers.
+    queueResult('collaborator_appointments', { data: [], error: null });
+
+    const invoke = supabase.functions.invoke as ReturnType<typeof vi.fn>;
+    invoke
+      .mockResolvedValueOnce({ data: { notify_status: 'failed' }, error: null })
+      .mockResolvedValueOnce({ data: { notify_status: 'sent' }, error: null });
+
+    renderPage();
+    await selectCollaborator();
+
+    fireEvent.click(await screen.findByRole('button', { name: /Cancelar/ }));
+
+    // ACK-07: the failure notice, with the action the spec names.
+    expect(
+      await screen.findByText('Compromisso cancelado, mas o aviso não foi enviado.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tentar novamente' })).toBeInTheDocument();
+    expect(invoke).toHaveBeenNthCalledWith(1, 'notify-appointment', {
+      body: { appointment_id: 'ap-1', kind: 'cancelled_by_manager' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    // ACK-08: the retry goes out with the same appointment and the same act,
+    // and on success the failure notice is replaced, not joined.
+    await waitFor(() => expect(invoke).toHaveBeenCalledTimes(2));
+    expect(invoke).toHaveBeenNthCalledWith(2, 'notify-appointment', {
+      body: { appointment_id: 'ap-1', kind: 'cancelled_by_manager' },
+    });
+    expect(await screen.findByText('Compromisso cancelado.')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Compromisso cancelado, mas o aviso não foi enviado.'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
+  });
+
+  it('shows the delivered notice, with no retry action, when the first attempt succeeds (ACK-06)', async () => {
+    queueResult('collaborator_appointments', {
+      data: [appointment({ status: 'pending' })],
+      error: null,
+    });
+    queueResult('collaborator_appointments', { data: appointment({ status: 'cancelled' }), error: null });
+    queueResult('collaborator_availability', { data: [], error: null });
+
+    (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      data: { notify_status: 'sent' },
+      error: null,
+    });
+
+    renderPage();
+    await selectCollaborator();
+
+    fireEvent.click(await screen.findByRole('button', { name: /Cancelar/ }));
+
+    expect(await screen.findByText('Compromisso cancelado.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Compromisso cancelado, mas o aviso não foi enviado.'),
+    ).not.toBeInTheDocument();
+  });
 });
 
 // COLAB-15 — the answer actions belong to the collaborator's panel. This page

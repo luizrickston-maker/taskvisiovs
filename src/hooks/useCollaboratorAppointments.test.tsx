@@ -310,6 +310,57 @@ describe('useRespondAppointment', () => {
     expect(invokeMock).toHaveBeenCalledTimes(1);
     expect(calls.of('update')).toHaveLength(1);
   });
+
+  // ACK-06 / ACK-07 — the collaborator's own view has nothing else to read the
+  // delivery from: the row is dropped by COLAB-14 and the log has no RLS. The
+  // notice is therefore recorded here, at call time, when the actor is known.
+  it('records a delivered verdict so the panel can say so (ACK-06)', async () => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+    invokeMock.mockResolvedValueOnce({ data: { notify_status: 'sent' }, error: null });
+
+    const { result } = renderHook(() => useRespondAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ appointment: appointment(), action: 'cancel' });
+    });
+
+    expect(result.current.notice).toEqual({
+      appointmentId: 'ap-1',
+      kind: 'cancelled_by_collaborator',
+      status: 'sent',
+    });
+  });
+
+  it('records a failed delivery so the panel can offer a retry (ACK-07)', async () => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+    invokeMock.mockResolvedValueOnce({ data: { notify_status: 'failed' }, error: null });
+
+    const { result } = renderHook(() => useRespondAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ appointment: appointment(), action: 'cancel' });
+    });
+
+    expect(result.current.notice).toEqual({
+      appointmentId: 'ap-1',
+      kind: 'cancelled_by_collaborator',
+      status: 'failed',
+    });
+    // The cancellation itself is untouched by the delivery problem (ACK-05).
+    expect(calls.of('update')).toHaveLength(1);
+  });
+
+  it('records no notice when the collaborator confirms (ACK-02)', async () => {
+    queueResult({ data: appointment({ status: 'confirmed' }), error: null });
+
+    const { result } = renderHook(() => useRespondAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ appointment: appointment(), action: 'confirm' });
+    });
+
+    expect(result.current.notice).toBeNull();
+  });
 });
 
 describe('useUpdateAppointment (MGR-09)', () => {
@@ -411,6 +462,42 @@ describe('useCancelAppointment (MGR-09, AD-007)', () => {
 
     expect(invokeMock).toHaveBeenCalledTimes(1);
     expect(calls.of('update')).toHaveLength(1);
+  });
+
+  // ACK-06 / ACK-07 — the manager sees the same two notices as the
+  // collaborator, from the same record, written while the actor is still known.
+  it('records a delivered verdict for the manager view (ACK-06)', async () => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+    invokeMock.mockResolvedValueOnce({ data: { notify_status: 'sent' }, error: null });
+
+    const { result } = renderHook(() => useCancelAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ id: 'ap-1' });
+    });
+
+    expect(result.current.notice).toEqual({
+      appointmentId: 'ap-1',
+      kind: 'cancelled_by_manager',
+      status: 'sent',
+    });
+  });
+
+  it('records a timeout as a failure for the manager view (ACK-07)', async () => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+    invokeMock.mockResolvedValueOnce({ data: { notify_status: 'timeout' }, error: null });
+
+    const { result } = renderHook(() => useCancelAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ id: 'ap-1' });
+    });
+
+    expect(result.current.notice).toEqual({
+      appointmentId: 'ap-1',
+      kind: 'cancelled_by_manager',
+      status: 'timeout',
+    });
   });
 });
 

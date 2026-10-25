@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -14,24 +15,64 @@ export const ALREADY_ANSWERED_MESSAGE = 'Esta solicitação já foi respondida.'
 /** The edge function that sends the WhatsApp, invoked with a `kind`. */
 export const NOTIFY_FUNCTION = 'notify-appointment';
 
+/** ACK-03 / ACK-04 — the two acts that reach out, and who performed them. */
+export type CancellationKind = 'cancelled_by_collaborator' | 'cancelled_by_manager';
+
+/** ACK-06…ACK-08 — the same vocabulary the edge function answers with. */
+export type CancellationDelivery = 'sent' | 'failed' | 'timeout' | 'no_whatsapp';
+
+const DELIVERY_VERDICTS: readonly string[] = ['sent', 'failed', 'timeout', 'no_whatsapp'];
+
 /**
- * ACK-03 / ACK-04 — a cancellation tells the other party.
+ * ACK-06…ACK-08 — one cancellation delivery attempt, and its verdict.
  *
- * Fire-and-forget by contract: the cancellation is already persisted by the
- * time this runs, and a delivery failure must never roll it back (ACK-05). The
- * attempt itself is recorded server-side, in `appointment_notification_log`.
+ * The same contract as the creation notifier (`AppointmentNotifier`): the edge
+ * function owns the message, the provider and the attempt number, and its body
+ * carries the verdict. Anything that is not a known verdict — a rejected call,
+ * an error response, a body without `notify_status` — is a failure, so a
+ * cancellation is never reported as delivered when it was not.
+ *
+ * Fire-and-forget as far as the cancellation goes: the row is already
+ * cancelled by the time this runs, and a delivery failure must never roll it
+ * back (ACK-05). The attempt itself is recorded server-side, in
+ * `appointment_notification_log`.
  */
-async function notifyCancellation(
+export async function sendCancellationNotice(
   appointmentId: string,
-  kind: 'cancelled_by_collaborator' | 'cancelled_by_manager',
-) {
+  kind: CancellationKind,
+): Promise<CancellationDelivery> {
   try {
-    await supabase.functions.invoke(NOTIFY_FUNCTION, {
+    const { data, error } = await supabase.functions.invoke(NOTIFY_FUNCTION, {
       body: { appointment_id: appointmentId, kind },
     });
+    const verdict = (data as { notify_status?: unknown } | null)?.notify_status;
+    if (!error && typeof verdict === 'string' && DELIVERY_VERDICTS.includes(verdict)) {
+      return verdict as CancellationDelivery;
+    }
+    return 'failed';
   } catch {
-    // ACK-05: nothing to undo — the row is cancelled and the log has the attempt.
+    return 'failed';
   }
+}
+
+/**
+ * ACK-06…ACK-08 — what the party that cancelled must see afterwards.
+ *
+ * A cancelled appointment is dropped from every read path the moment it is
+ * cancelled (COLAB-14, MGR-13) and `appointment_notification_log` has no RLS
+ * by design, so this record — written at call time, while the actor is still
+ * known — is the only thing the acting view can render the notice from.
+ */
+export type CancellationNotice = {
+  appointmentId: string;
+  kind: CancellationKind;
+  status: CancellationDelivery;
+};
+
+/** One notice per cancel hook, reset only by a new cancellation. */
+function useCancellationNotice() {
+  const [notice, setNotice] = useState<CancellationNotice | null>(null);
+  return { notice, record: setNotice };
 }
 
 /** MGR-04 — the exact refusal the spec names. */
@@ -216,12 +257,15 @@ export function useUpdateAppointment() {
  *
  * ACK-04: the collaborator is told on WhatsApp, to the number they already
  * receive the appointment on. The write lands first and stands on its own.
+ * ACK-06…ACK-08: how that delivery went is handed back as `notice`, for the
+ * manager's own view to render.
  */
 export function useCancelAppointment() {
   const qc = useQueryClient();
   const { user } = useAuthContext();
+  const cancellation = useCancellationNotice();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
       if (!user) throw new Error('Não autenticado');
 
@@ -238,12 +282,18 @@ export function useCancelAppointment() {
       if (error) throw new Error(error.message);
 
       qc.invalidateQueries({ queryKey: [APPOINTMENT_QUERY_KEY] });
-      await notifyCancellation(id, 'cancelled_by_manager');
+      // ACK-06…ACK-08: the verdict goes straight to the view, because the row
+      // is about to disappear from it (MGR-13) and nothing else can carry it.
+      const status = await sendCancellationNotice(id, 'cancelled_by_manager');
+      cancellation.record({ appointmentId: id, kind: 'cancelled_by_manager', status });
       return data as unknown as CollaboratorAppointmentRow;
     },
-    onSuccess: () => toast.success('Compromisso cancelado!'),
     onError: (err: Error) => toast.error(err.message || 'Erro ao cancelar compromisso'),
   });
+
+  // The notice is the cancel's own feedback (ACK-06 pins its text), so the
+  // generic success toast is gone from this path.
+  return { ...mutation, notice: cancellation.notice };
 }
 
 // =====================================================
@@ -262,8 +312,9 @@ export type AppointmentAction = 'confirm' | 'cancel';
 export function useRespondAppointment() {
   const qc = useQueryClient();
   const { user } = useAuthContext();
+  const cancellation = useCancellationNotice();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async ({
       appointment,
       action,
@@ -300,12 +351,25 @@ export function useRespondAppointment() {
       // ACK-02 / ACK-03 — only the cancellation reaches out, and only after
       // the row is already cancelled.
       if (action === 'cancel') {
-        await notifyCancellation(appointment.id, 'cancelled_by_collaborator');
+        // ACK-06…ACK-08: the verdict goes straight to the view, because the
+        // row is about to disappear from it (COLAB-14) and nothing else can
+        // carry it.
+        const status = await sendCancellationNotice(appointment.id, 'cancelled_by_collaborator');
+        cancellation.record({
+          appointmentId: appointment.id,
+          kind: 'cancelled_by_collaborator',
+          status,
+        });
       }
       return data as unknown as CollaboratorAppointmentRow;
     },
-    onSuccess: (_data, { action }) =>
-      toast.success(action === 'confirm' ? 'Compromisso confirmado!' : 'Compromisso cancelado!'),
+    // The cancellation's own feedback is the notice (ACK-06 pins its text), so
+    // only the confirmation still toasts.
+    onSuccess: (_data, { action }) => {
+      if (action === 'confirm') toast.success('Compromisso confirmado!');
+    },
     onError: (err: Error) => toast.error(err.message || 'Erro ao responder compromisso'),
   });
+
+  return { ...mutation, notice: cancellation.notice };
 }
