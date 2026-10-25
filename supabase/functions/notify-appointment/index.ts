@@ -1,14 +1,20 @@
 /**
  * notify-appointment
  *
- * Envia pelo WhatsApp o compromisso recém-criado para o colaborador e registra
- * a tentativa. Invocado pelo cliente logo após um INSERT bem-sucedido - não
- * existe caminho aqui para edição ou cancelamento (NOTIF-07).
+ * Envia pelo WhatsApp o aviso de um compromisso e registra a tentativa.
+ * O corpo pede `kind` (ACK-02..ACK-05); sem ele vale a criação, que é o que o
+ * cliente antigo manda:
+ *   - `created`                   -> o colaborador;
+ *   - `cancelled_by_collaborator` -> os destinatários `agenda` do workspace;
+ *   - `cancelled_by_manager`      -> o colaborador.
+ * Edição continua sem notificação nenhuma (NOTIF-07).
  *
- * Leitura com a identidade de quem chamou (cliente montado a partir do header
- * Authorization): a RLS decide se esse chamador enxerga o compromisso.
- * Escrita no log vai pelo service_role, porque appointment_notification_log
- * não tem policy nenhuma de propósito.
+ * Leitura do compromisso com a identidade de quem chamou (cliente montado a
+ * partir do header Authorization): a RLS decide se esse chamador enxerga a
+ * linha. Destinatários do workspace são lidos com service_role, porque o
+ * colaborador que cancela não é membro dele. Escrita no log vai pelo
+ * service_role, porque appointment_notification_log não tem policy nenhuma de
+ * propósito.
  *
  * Env: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
  *      AGZAP_URL, AGZAP_TOKEN.
@@ -18,6 +24,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   handleNotifyAppointment,
   type AppointmentRow,
+  type NotifyKind,
   type NotifyStore,
 } from "../_shared/notify-appointment.ts";
 
@@ -33,11 +40,26 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+/** Mesma regra do process-agenda-reminders: só dígitos, com DDI 55 se faltar. */
+function normalizeNumber(raw: string | null): string | null {
+  if (!raw) return null;
+  let digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+  if (digits.length === 10 || digits.length === 11) digits = "55" + digits;
+  return digits;
+}
+
+const KINDS: readonly NotifyKind[] = [
+  "created",
+  "cancelled_by_collaborator",
+  "cancelled_by_manager",
+];
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
 
-  let payload: { appointment_id?: unknown };
+  let payload: { appointment_id?: unknown; kind?: unknown };
   try {
     payload = await req.json();
   } catch {
@@ -47,6 +69,14 @@ Deno.serve(async (req) => {
   const appointmentId = payload?.appointment_id;
   if (typeof appointmentId !== "string" || appointmentId.length === 0) {
     return json({ error: "appointment_id é obrigatório" }, 400);
+  }
+
+  // Sem `kind` vale a criação: o cliente que ainda não foi atualizado continua
+  // notificando do jeito certo.
+  const kind: NotifyKind =
+    payload?.kind === undefined || payload?.kind === null ? "created" : (payload.kind as NotifyKind);
+  if (!KINDS.includes(kind)) {
+    return json({ error: `kind inválido: ${String(payload.kind)}` }, 400);
   }
 
   const baseUrl = Deno.env.get("SUPABASE_URL");
@@ -65,7 +95,7 @@ Deno.serve(async (req) => {
     async getAppointment(id) {
       const { data } = await userClient
         .from("collaborator_appointments")
-        .select("id, member_user_id, title, notes, date, start_time, end_time, status, notify_status")
+        .select("id, workspace_id, member_user_id, title, notes, date, start_time, end_time, status, notify_status")
         .eq("id", id)
         .maybeSingle();
       if (!data) return null;
@@ -80,6 +110,30 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!data) return null;
       return { name: data.name ?? "", whatsapp: data.whatsapp ?? null };
+    },
+
+    // ACK-03: mesma resolução do process-agenda-reminders (linhas ativas com
+    // types @> {agenda}), lida com service_role porque quem cancela é o
+    // colaborador e ele não é membro do workspace.
+    async getAgendaRecipients(workspaceId) {
+      const { data } = await adminClient
+        .from("notification_recipients")
+        .select("whatsapp")
+        .eq("workspace_id", workspaceId)
+        .eq("is_active", true)
+        .contains("types", ["agenda"]);
+      return ((data ?? []) as Array<{ whatsapp: string | null }>)
+        .map((row) => normalizeNumber(row.whatsapp))
+        .filter((number): number is string => number !== null);
+    },
+
+    async getWorkspaceNotifyWhatsapp(workspaceId) {
+      const { data } = await adminClient
+        .from("workspaces")
+        .select("notify_whatsapp")
+        .eq("id", workspaceId)
+        .maybeSingle();
+      return normalizeNumber((data?.notify_whatsapp as string | null) ?? null);
     },
 
     async nextAttempt(id) {
@@ -125,11 +179,15 @@ Deno.serve(async (req) => {
   };
 
   try {
-    const result = await handleNotifyAppointment(appointmentId, {
-      env: (name) => Deno.env.get(name),
-      fetchImpl: (url, init) => fetch(url, init),
-      store,
-    });
+    const result = await handleNotifyAppointment(
+      appointmentId,
+      {
+        env: (name) => Deno.env.get(name),
+        fetchImpl: (url, init) => fetch(url, init),
+        store,
+      },
+      kind
+    );
     return json(result.body, result.status);
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : String(error) }, 500);

@@ -11,6 +11,29 @@ export const APPOINTMENT_QUERY_KEY = 'collab-appointments';
 /** COLAB-04 — the exact message the database trigger raises. */
 export const ALREADY_ANSWERED_MESSAGE = 'Esta solicitação já foi respondida.';
 
+/** The edge function that sends the WhatsApp, invoked with a `kind`. */
+export const NOTIFY_FUNCTION = 'notify-appointment';
+
+/**
+ * ACK-03 / ACK-04 — a cancellation tells the other party.
+ *
+ * Fire-and-forget by contract: the cancellation is already persisted by the
+ * time this runs, and a delivery failure must never roll it back (ACK-05). The
+ * attempt itself is recorded server-side, in `appointment_notification_log`.
+ */
+async function notifyCancellation(
+  appointmentId: string,
+  kind: 'cancelled_by_collaborator' | 'cancelled_by_manager',
+) {
+  try {
+    await supabase.functions.invoke(NOTIFY_FUNCTION, {
+      body: { appointment_id: appointmentId, kind },
+    });
+  } catch {
+    // ACK-05: nothing to undo — the row is cancelled and the log has the attempt.
+  }
+}
+
 /** MGR-04 — the exact refusal the spec names. */
 export function formatConflictMessage(name: string, from: string, to: string): string {
   return `Este período está indisponível para ${name} de ${from} a ${to}.`;
@@ -159,7 +182,7 @@ export type AppointmentEditableFields = Pick<
  * Manager edit (MGR-09). The status and decided_* columns are deliberately
  * absent from the payload type: an edit changes the body of the appointment
  * only — withdrawing is `useCancelAppointment`, accepting stays the
- * collaborator's — and neither edit nor cancel sends a notification.
+ * collaborator's. An edit sends no notification; cancelling does (ACK-04).
  */
 export function useUpdateAppointment() {
   const qc = useQueryClient();
@@ -189,8 +212,10 @@ export function useUpdateAppointment() {
  * The payload carries no status field at all: the caller names a row, and the
  * mutation writes `cancelled`. The type therefore cannot advertise `confirmed`,
  * and the body cannot send it either, so the client never offers an operation
- * the `20261019130000` trigger would reject at runtime. Like every edit or
- * cancel, this path sends no notification (MGR-09).
+ * the `20261019130000` trigger would reject at runtime.
+ *
+ * ACK-04: the collaborator is told on WhatsApp, to the number they already
+ * receive the appointment on. The write lands first and stands on its own.
  */
 export function useCancelAppointment() {
   const qc = useQueryClient();
@@ -213,6 +238,7 @@ export function useCancelAppointment() {
       if (error) throw new Error(error.message);
 
       qc.invalidateQueries({ queryKey: [APPOINTMENT_QUERY_KEY] });
+      await notifyCancellation(id, 'cancelled_by_manager');
       return data as unknown as CollaboratorAppointmentRow;
     },
     onSuccess: () => toast.success('Compromisso cancelado!'),
@@ -226,6 +252,13 @@ export function useCancelAppointment() {
 
 export type AppointmentAction = 'confirm' | 'cancel';
 
+/**
+ * Collaborator's answer.
+ *
+ * ACK-02: confirming sends nothing — the manager already has the in-app
+ * notification (ACK-01). ACK-03: cancelling tells the workspace's `agenda`
+ * recipients, because the appointment is about to disappear from their view.
+ */
 export function useRespondAppointment() {
   const qc = useQueryClient();
   const { user } = useAuthContext();
@@ -264,6 +297,11 @@ export function useRespondAppointment() {
       if (error) throw new Error(error.message);
 
       qc.invalidateQueries({ queryKey: [APPOINTMENT_QUERY_KEY] });
+      // ACK-02 / ACK-03 — only the cancellation reaches out, and only after
+      // the row is already cancelled.
+      if (action === 'cancel') {
+        await notifyCancellation(appointment.id, 'cancelled_by_collaborator');
+      }
       return data as unknown as CollaboratorAppointmentRow;
     },
     onSuccess: (_data, { action }) =>

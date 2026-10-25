@@ -299,12 +299,12 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PERM-02 | P2: Permission flag gates feature | Design | Verified |
 | PERM-03 | P2: Permission flag gates feature | Design | Verified |
 | ACK-01 | P3: Manager acknowledgement | Design | Verified |
-| ACK-02 | P3: Manager acknowledgement | Design | Pending |
-| ACK-03 | P3: Manager acknowledgement | Design | Pending |
-| ACK-04 | P3: Manager acknowledgement | Design | Pending |
-| ACK-05 | P3: Manager acknowledgement | Design | Pending |
+| ACK-02 | P3: Manager acknowledgement | Design | Verified |
+| ACK-03 | P3: Manager acknowledgement | Design | Verified |
+| ACK-04 | P3: Manager acknowledgement | Design | Verified |
+| ACK-05 | P3: Manager acknowledgement | Design | Verified |
 
-**Coverage:** 60 total, 49 mapped to tasks, 11 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds; COLAB-13, COLAB-14, MGR-13, ACK-02…ACK-05 opened 2026-10-22 by the cancel-notification amendment) ⚠️
+**Coverage:** 60 total, 56 mapped to tasks, 4 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 — closed during the fix rounds and covered by the database and component suites) ⚠️
 
 ---
 

@@ -24,6 +24,7 @@ const indexSource = sourceOf('supabase/functions/notify-appointment/index.ts');
 
 const baseAppointment: AppointmentRow = {
   id: 'appointment-1',
+  workspace_id: 'workspace-1',
   member_user_id: 'member-1',
   title: 'Reunião de alinhamento',
   notes: null,
@@ -37,6 +38,11 @@ const baseAppointment: AppointmentRow = {
 type FakeState = {
   appointment: AppointmentRow | null;
   collaborator: CollaboratorRow | null;
+  /** ACK-03 — the `agenda` recipients the fake hands back, and the legacy one. */
+  agendaRecipients: string[];
+  workspaceNotifyWhatsapp: string | null;
+  /** Which workspace each recipient lookup asked about (ACK-03). */
+  recipientLookups: string[];
   attempts: Array<{ attempt: number; status: NotifyStatus | null; providerResponse: string | null }>;
   /** Every argument the module handed to the log write (NOTIF-08). */
   logged: Array<{
@@ -51,6 +57,8 @@ type FakeState = {
 function makeStore(options: {
   appointment?: AppointmentRow | null;
   collaborator?: CollaboratorRow | null;
+  agendaRecipients?: string[];
+  workspaceNotifyWhatsapp?: string | null;
   nextAttempt?: number;
 } = {}): { store: NotifyStore; state: FakeState } {
   const state: FakeState = {
@@ -59,6 +67,9 @@ function makeStore(options: {
       options.collaborator === undefined
         ? { name: 'Maria Silva', whatsapp: '5511999990001' }
         : options.collaborator,
+    agendaRecipients: options.agendaRecipients ?? [],
+    workspaceNotifyWhatsapp: options.workspaceNotifyWhatsapp ?? null,
+    recipientLookups: [],
     attempts: [],
     logged: [],
     notifyStatus: 'pending',
@@ -67,6 +78,11 @@ function makeStore(options: {
   const store: NotifyStore = {
     getAppointment: async () => state.appointment,
     getCollaborator: async () => state.collaborator,
+    getAgendaRecipients: async (workspaceId) => {
+      state.recipientLookups.push(workspaceId);
+      return state.agendaRecipients;
+    },
+    getWorkspaceNotifyWhatsapp: async () => state.workspaceNotifyWhatsapp,
     // Fixed value when given, so two invocations race for the same attempt.
     nextAttempt: async () => options.nextAttempt ?? state.attempts.length + 1,
     claimAttempt: async (_id, attempt) => {
@@ -404,14 +420,213 @@ describe('server-side credentials (NOTIF-05)', () => {
   });
 });
 
-describe('no edit or cancellation path (NOTIF-07)', () => {
-  it('exposes exactly one operation and accepts nothing but POST', async () => {
+describe('one operation, three reasons (NOTIF-07)', () => {
+  it('exposes exactly one handler and accepts nothing but POST', async () => {
     const shared = await import('../_shared/notify-appointment.ts');
 
-    // The runtime surface is one handler: there is no edit, cancel or status
-    // operation to call, and every verb but POST is refused with 405.
+    // The runtime surface is one handler wearing a `kind`. There is no edit,
+    // cancel or status operation to call, and every verb but POST is refused
+    // with 405.
     expect(Object.keys(shared).sort()).toEqual(['SEND_TIMEOUT_MS', 'handleNotifyAppointment']);
     expect(indexSource).toContain('req.method !== "POST"');
+  });
+
+  it('knows exactly three reasons to send, none of them an edit (NOTIF-07)', () => {
+    const declared = /const KINDS[^=]*=\s*\[([\s\S]*?)\]/.exec(indexSource)?.[1] ?? '';
+    expect(declared.match(/"[a-z_]+"/g)).toEqual([
+      '"created"',
+      '"cancelled_by_collaborator"',
+      '"cancelled_by_manager"',
+    ]);
+  });
+});
+
+// ACK-02..ACK-05 — a cancellation reaches the other party in both directions,
+// and a failure to deliver it changes nothing about the cancellation itself.
+describe('cancellation notifications (ACK-02..ACK-05)', () => {
+  const cancelledAppointment: AppointmentRow = { ...baseAppointment, status: 'cancelled' };
+  const PJ_DEEP_LINK = 'https://taskvisiovs.vercel.app/pj/agenda';
+
+  const messageOf = (call: { init: FetchInitLike }): string =>
+    (JSON.parse(call.init.body) as { message: string }).message;
+  const numberOn = (call: { init: FetchInitLike }): string =>
+    (JSON.parse(call.init.body) as { number: string }).number;
+
+  it('tells the collaborator, on their own number, when the manager cancels (ACK-04)', async () => {
+    const { store, state } = makeStore({ appointment: { ...cancelledAppointment } });
+    const { calls, fetchImpl } = makeFetch(() => okFetch());
+
+    const result = await handleNotifyAppointment(
+      'appointment-1',
+      deps({ store, fetchImpl }),
+      'cancelled_by_manager'
+    );
+
+    expect(calls).toHaveLength(1);
+    expect(numberOn(calls[0])).toBe('5511999990001');
+    const message = messageOf(calls[0]);
+    expect(message).toContain('Olá Maria,');
+    expect(message).toContain('seu gestor cancelou');
+    expect(message).toContain('Reunião de alinhamento');
+    expect(message).toContain('05/11/2026');
+    expect(message).toContain('14:00–16:00');
+    expect(message).toContain(DEEP_LINK);
+
+    expect(result.body.notify_status).toBe('sent');
+    expect(state.attempts).toEqual([{ attempt: 1, status: 'sent', providerResponse: null }]);
+  });
+
+  it('tells the workspace agenda recipients when the collaborator cancels (ACK-03)', async () => {
+    const { store, state } = makeStore({
+      appointment: { ...cancelledAppointment },
+      agendaRecipients: ['5511888880002', '5511888880003'],
+    });
+    const { calls, fetchImpl } = makeFetch(() => okFetch());
+
+    const result = await handleNotifyAppointment(
+      'appointment-1',
+      deps({ store, fetchImpl }),
+      'cancelled_by_collaborator'
+    );
+
+    // One message per recipient, and never to the collaborator's own number.
+    expect(calls.map(numberOn)).toEqual(['5511888880002', '5511888880003']);
+    expect(messageOf(calls[0])).toContain('Maria cancelou um compromisso');
+    expect(messageOf(calls[0])).toContain(PJ_DEEP_LINK);
+    expect(result.body.notify_status).toBe('sent');
+    expect(state.attempts).toEqual([{ attempt: 1, status: 'sent', providerResponse: null }]);
+  });
+
+  it('asks for the recipients of the workspace that owns the row (ACK-03)', async () => {
+    const { store, state } = makeStore({
+      appointment: { ...cancelledAppointment, workspace_id: 'workspace-owning' },
+      agendaRecipients: ['5511888880002'],
+    });
+
+    await handleNotifyAppointment('appointment-1', deps({ store, fetchImpl: makeFetch(() => okFetch()).fetchImpl }), 'cancelled_by_collaborator');
+
+    // No phone number is written anywhere in this module: the recipients come
+    // from the row's workspace.
+    expect(state.recipientLookups).toEqual(['workspace-owning']);
+  });
+
+  it('falls back to the legacy workspace number when no agenda recipient is set (ACK-03)', async () => {
+    const { store } = makeStore({
+      appointment: { ...cancelledAppointment },
+      agendaRecipients: [],
+      workspaceNotifyWhatsapp: '5511777770004',
+    });
+    const { calls, fetchImpl } = makeFetch(() => okFetch());
+
+    await handleNotifyAppointment(
+      'appointment-1',
+      deps({ store, fetchImpl }),
+      'cancelled_by_collaborator'
+    );
+
+    expect(calls).toHaveLength(1);
+    expect(numberOn(calls[0])).toBe('5511777770004');
+  });
+
+  it('records a failed cancellation send and leaves the cancellation standing (ACK-05)', async () => {
+    const { store, state } = makeStore({
+      appointment: { ...cancelledAppointment },
+      agendaRecipients: ['5511888880002'],
+    });
+    const { fetchImpl } = makeFetch(async () => ({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+      text: async () => 'boom',
+    }));
+
+    const result = await handleNotifyAppointment(
+      'appointment-1',
+      deps({ store, fetchImpl }),
+      'cancelled_by_collaborator'
+    );
+
+    // The row is still cancelled — a WhatsApp outage cancels nothing back.
+    expect(state.appointment?.status).toBe('cancelled');
+    // …and the attempt is on the record, with the provider's answer.
+    expect(state.attempts).toEqual([
+      { attempt: 1, status: 'failed', providerResponse: expect.stringContaining('agzap_500') },
+    ]);
+    expect(result.body.notify_status).toBe('failed');
+  });
+
+  it('reports no_whatsapp when the workspace has nobody to tell (ACK-03)', async () => {
+    const { store, state } = makeStore({
+      appointment: { ...cancelledAppointment },
+      agendaRecipients: [],
+      workspaceNotifyWhatsapp: null,
+    });
+    const { calls, fetchImpl } = makeFetch(() => okFetch());
+
+    const result = await handleNotifyAppointment(
+      'appointment-1',
+      deps({ store, fetchImpl }),
+      'cancelled_by_collaborator'
+    );
+
+    expect(calls).toHaveLength(0);
+    expect(state.notifyStatus).toBe('pending');
+    expect(state.attempts).toEqual([{ attempt: 1, status: 'no_whatsapp', providerResponse: null }]);
+    expect(result.body.notify_status).toBe('no_whatsapp');
+  });
+
+  it('leaves the creation verdict alone when a cancellation is sent', async () => {
+    const { store, state } = makeStore({
+      appointment: { ...cancelledAppointment, notify_status: 'sent' },
+      agendaRecipients: ['5511888880002'],
+    });
+
+    await handleNotifyAppointment(
+      'appointment-1',
+      deps({ store, fetchImpl: makeFetch(() => okFetch()).fetchImpl }),
+      'cancelled_by_collaborator'
+    );
+
+    // `notify_status` belongs to the creation notice the manager can still
+    // resend; the cancellation attempt lives in the log.
+    expect(state.appointment?.notify_status).toBe('sent');
+    expect(state.logged[0].status).toBe('sent');
+  });
+
+  it('appends the observation to a cancellation message, like the creation one (NOTIF-09)', async () => {
+    const { store } = makeStore({
+      appointment: { ...cancelledAppointment, notes: 'Cliente desmarcou' },
+      agendaRecipients: ['5511888880002'],
+    });
+    const { calls, fetchImpl } = makeFetch(() => okFetch());
+
+    await handleNotifyAppointment(
+      'appointment-1',
+      deps({ store, fetchImpl }),
+      'cancelled_by_collaborator'
+    );
+
+    expect(messageOf(calls[0])).toContain('Observação: Cliente desmarcou');
+  });
+
+  it('resolves the workspace recipients in the Deno entry point, with no number in code', () => {
+    // SPEC_PRECISION_GAP: Deno is not installed (AD-003), so the real query
+    // never runs here. ACK-03's mechanism — active `notification_recipients`
+    // with `types @> {agenda}`, falling back to `workspaces.notify_whatsapp` —
+    // is pinned at the only boundary this suite can reach, the same way NOTIF-08
+    // pins the log write.
+    expect(indexSource).toContain('.from("notification_recipients")');
+    expect(indexSource).toContain('.eq("is_active", true)');
+    expect(indexSource).toContain('.contains("types", ["agenda"])');
+    expect(indexSource).toContain('.from("workspaces")');
+    expect(indexSource).toContain('notify_whatsapp');
+    // NOTIF-05: the provider URL still comes from the environment — the entry
+    // point only injects `Deno.env.get`, the shared module asks for AGZAP_URL —
+    // and no recipient phone number lives anywhere in the module.
+    expect(indexSource).toContain('env: (name) => Deno.env.get(name)');
+    expect(coreSource).toContain("deps.env('AGZAP_URL')");
+    expect(coreSource).not.toMatch(/55\d{10}/);
+    expect(indexSource).not.toMatch(/55\d{10}/);
   });
 });
 

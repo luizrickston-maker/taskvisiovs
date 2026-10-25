@@ -3,7 +3,7 @@ import { Send } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { APPOINTMENT_QUERY_KEY } from '@/hooks/useCollaboratorAppointments';
+import { APPOINTMENT_QUERY_KEY, NOTIFY_FUNCTION } from '@/hooks/useCollaboratorAppointments';
 import type { CollaboratorAppointmentRow } from './CalendarEvent';
 
 // =====================================================
@@ -18,8 +18,8 @@ import type { CollaboratorAppointmentRow } from './CalendarEvent';
 // a previous attempt (NOTIF-03).
 // =====================================================
 
-/** The edge function, invoked with `{ appointment_id }` and nothing else. */
-export const NOTIFY_FUNCTION = 'notify-appointment';
+/** The edge function lives with the mutations that also invoke it. */
+export { NOTIFY_FUNCTION };
 
 /** MGR-07 — the exact sentence the spec names. */
 export const NO_WHATSAPP_MESSAGE =

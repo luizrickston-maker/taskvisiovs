@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import {
   ALREADY_ANSWERED_MESSAGE,
+  NOTIFY_FUNCTION,
   formatConflictMessage,
   useCancelAppointment,
   useCollaboratorAppointments,
@@ -18,7 +19,7 @@ import type { CollaboratorAppointmentRow } from '@/components/agenda/CalendarEve
 // next queued result, so a chain of reads and writes can be scripted.
 // ─────────────────────────────────────────────
 
-const { supabase, calls, rpcMock, queueResult, toastMock } = vi.hoisted(() => {
+const { supabase, calls, rpcMock, queueResult, toastMock, invokeMock } = vi.hoisted(() => {
   type Result = { data?: unknown; error?: unknown };
   const log: { table: string; method: string; args: unknown[] }[] = [];
   const queue: Result[] = [];
@@ -44,6 +45,8 @@ const { supabase, calls, rpcMock, queueResult, toastMock } = vi.hoisted(() => {
     return builder;
   }
 
+  const invokeMock = vi.fn(async () => ({ data: {}, error: null }));
+
   return {
     supabase: {
       from: vi.fn((table: string) => makeBuilder(table)),
@@ -51,7 +54,9 @@ const { supabase, calls, rpcMock, queueResult, toastMock } = vi.hoisted(() => {
         log.push({ table: fn, method: 'rpc', args: args ? [args] : [] });
         return rpcResults.shift() ?? { data: false, error: null };
       }),
+      functions: { invoke: invokeMock },
     },
+    invokeMock,
     calls: {
       log,
       of: (method: string) => log.filter(c => c.method === method),
@@ -258,6 +263,53 @@ describe('useRespondAppointment', () => {
       })).rejects.toThrow(ALREADY_ANSWERED_MESSAGE);
     });
   });
+
+  // ACK-02 / ACK-03 — the collaborator's answer reaches the other party only
+  // when it is a cancellation.
+  it('sends nothing when the collaborator confirms (ACK-02)', async () => {
+    queueResult({ data: appointment({ status: 'confirmed' }), error: null });
+
+    const { result } = renderHook(() => useRespondAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ appointment: appointment(), action: 'confirm' });
+    });
+
+    expect(invokeMock).not.toHaveBeenCalled();
+  });
+
+  it('names the cancellation reason when the collaborator cancels (ACK-03)', async () => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+
+    const { result } = renderHook(() => useRespondAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ appointment: appointment(), action: 'cancel' });
+    });
+
+    expect(invokeMock).toHaveBeenCalledWith(NOTIFY_FUNCTION, {
+      body: { appointment_id: 'ap-1', kind: 'cancelled_by_collaborator' },
+    });
+  });
+
+  it('keeps the cancellation when the notification call fails (ACK-05)', async () => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+    invokeMock.mockRejectedValueOnce(new Error('função de borda fora do ar'));
+
+    const { result } = renderHook(() => useRespondAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      // The mutation resolves: the row is cancelled and the delivery problem
+      // is the edge function's to record.
+      await expect(result.current.mutateAsync({
+        appointment: appointment(),
+        action: 'cancel',
+      })).resolves.toMatchObject({ status: 'cancelled' });
+    });
+
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    expect(calls.of('update')).toHaveLength(1);
+  });
 });
 
 describe('useUpdateAppointment (MGR-09)', () => {
@@ -284,15 +336,18 @@ describe('useUpdateAppointment (MGR-09)', () => {
     expect(payload).not.toHaveProperty('decided_by');
   });
 
-  it('sends no notification on any path (MGR-09)', async () => {
-    const fs = await import('node:fs');
-    const path = await import('node:path');
-    const { fileURLToPath } = await import('node:url');
-    const source = fs.readFileSync(
-      path.join(path.dirname(fileURLToPath(import.meta.url)), 'useCollaboratorAppointments.ts'),
-      'utf-8',
-    );
-    expect(source).not.toMatch(/functions\.invoke|notify-appointment|AGZAP/i);
+  it('sends no notification on an edit (MGR-09)', async () => {
+    queueResult({ data: appointment({ title: 'Reunião reagendada' }), error: null });
+
+    const { result } = renderHook(() => useUpdateAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ id: 'ap-1', title: 'Reunião reagendada' });
+    });
+
+    // NOTIF-07 stands for edits: an edit names no reason to send, so it never
+    // reaches the edge function. Cancelling does — ACK-04, asserted below.
+    expect(invokeMock).not.toHaveBeenCalled();
   });
 });
 
@@ -325,6 +380,37 @@ describe('useCancelAppointment (MGR-09, AD-007)', () => {
 
     const payload = calls.of('update')[0].args[0] as Record<string, unknown>;
     expect(payload.status).toBe('cancelled');
+  });
+
+  // ACK-04 / ACK-05 — withdrawing tells the collaborator, and the write never
+  // depends on the delivery.
+  it('names the cancellation reason so the collaborator is told (ACK-04)', async () => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+
+    const { result } = renderHook(() => useCancelAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ id: 'ap-1' });
+    });
+
+    expect(invokeMock).toHaveBeenCalledWith(NOTIFY_FUNCTION, {
+      body: { appointment_id: 'ap-1', kind: 'cancelled_by_manager' },
+    });
+  });
+
+  it('keeps the withdrawal when the notification call fails (ACK-05)', async () => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+    invokeMock.mockRejectedValueOnce(new Error('função de borda fora do ar'));
+
+    const { result } = renderHook(() => useCancelAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await expect(result.current.mutateAsync({ id: 'ap-1' }))
+        .resolves.toMatchObject({ status: 'cancelled' });
+    });
+
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    expect(calls.of('update')).toHaveLength(1);
   });
 });
 
