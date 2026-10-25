@@ -279,6 +279,8 @@ export function AgendaPJ() {
               mode="edit"
               onDaySelect={(d) => { setSelectedDate(d); setView('day'); }}
               onAddAt={(d) => openAdd(d)}
+              onEdit={openEditFromEvent}
+              onRequestDelete={requestDeleteFromEvent}
             />
           )}
         </CardContent>

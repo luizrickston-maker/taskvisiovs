@@ -73,6 +73,22 @@ describe('AgendaPJ (personal agenda, day view)', () => {
     expect(screen.getByRole('button', { name: /Editar/ })).toBeInTheDocument();
   });
 
+  it('keeps edit and delete working from the month grid popover', async () => {
+    // The month grid gained the popover the day and week views already had, so
+    // the personal agenda's own actions have to follow it there.
+    render(<AgendaPJ />);
+    fireEvent.click(screen.getByRole('button', { name: /Mês/ }));
+
+    fireEvent.click(screen.getByText('Reunião com cliente'));
+    const popover = within(screen.getByRole('dialog'));
+    expect(popover.queryByRole('button', { name: /Confirmar/ })).not.toBeInTheDocument();
+
+    fireEvent.click(popover.getByRole('button', { name: /Editar/ }));
+
+    expect(await screen.findByText('Editar Compromisso')).toBeInTheDocument();
+    expect(screen.getByLabelText('Título *')).toHaveValue('Reunião com cliente');
+  });
+
   it('never offers the collaborator answer actions (COLAB-13 gate)', () => {
     // The popover content is shared with the collaborator agenda. The personal
     // agenda supplies neither onConfirm nor onCancel and never produces an
