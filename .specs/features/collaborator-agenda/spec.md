@@ -20,7 +20,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Feature | Reason |
 | ------- | ------ |
 | Collaborators registered without an email/password account | User decision: only collaborators with a full account (`member_user_id` set) participate. `member_user_id IS NULL` rows are filtered out of the feature entirely. |
-| WhatsApp notification on appointment edit or cancellation | User decision: notification is sent "somente quando eu marcar" (creation only). Edit/cancel propagate in-app only. |
+| WhatsApp notification on appointment edit | User decision 3 fixed the notification to creation ("somente quando eu marcar"). The 2026-10-22 amendment reversed half of that: a cancellation now notifies the other party in both directions (ACK-03, ACK-04). An edit still propagates in-app only. |
 | Manager notification when a collaborator confirms/cancels | Not requested. Logged as an assumption with a default, deferred to P3. |
 | Email / push / SMS channels | The only requested channel is WhatsApp. |
 | Shared or team-wide calendars beyond one collaborator at a time | User asked for a per-collaborator selector, not a merged multi-collaborator grid. |
@@ -39,8 +39,8 @@ Every ambiguity is resolved or recorded here — nothing is left silently unclea
 | --------------------- | --------------- | --------- | ---------- |
 | Availability model granularity | One table with `start_date`, `end_date`, nullable `start_time`/`end_time`. Times may be set only when `start_date = end_date`. | Covers all five requested granularities (hour range, half day, full day, multi-day range, month) in a single row shape without a special-case "month" type. | n — inferred from answer 1, awaiting spec approval |
 | Collaborator marks availability over an appointment that already exists | The availability saves successfully; the overlapping appointment is rendered with a conflict badge in both views. No stored status is added — the conflict is computed at read time. | Blocking the collaborator from taking time off because the manager booked first would invert the purpose of the feature. User confirmed 2026-10-19. | y |
-| Manager can edit or cancel a created appointment | Manager can edit and cancel. Neither sends a WhatsApp. | A mistyped appointment must be fixable; the user confirmed the no-extra-notification rule on 2026-10-19 ("para nao gerar notificacoes desnecessarias"). | y |
-| Collaborator re-notification after manager edits/cancels | In-app only (realtime refresh of the panel). | Follows directly from the confirmed edit/cancel decision — no extra notifications. | y |
+| Manager can edit or cancel a created appointment | Manager can edit and cancel. An edit sends no WhatsApp; a cancellation notifies the collaborator (ACK-04, reversed 2026-10-22). | A mistyped appointment must be fixable. The no-extra-notification rule of 2026-10-19 ("para nao gerar notificacoes desnecessarias") held for both acts until the 2026-10-22 amendment; it survives for edits. | y |
+| Collaborator re-notification after manager edits/cancels | In-app (realtime refresh of the panel) for edits; WhatsApp to the collaborator for cancellations (ACK-04). | A cancelled appointment disappears from both calendars, so the collaborator must not lose it silently. | y |
 | Appointment carries a free-text observation | `notes text` on `collaborator_appointments`, optional, written by the manager at creation or edit, rendered in the collaborator's panel, and appended to the WhatsApp message when non-empty. | User asked on 2026-10-19 for an observation to travel with the notification. | y |
 | Message body of the WhatsApp notification | Portuguese text containing collaborator first name, appointment title, date in `dd/MM/yyyy`, time range `HH:MM–HH:MM`, the observation when present, and a deep link to `https://taskvisiovs.vercel.app/colaborador/agenda`. | User approved the copy on 2026-10-19 ("ta perfeito assim"). | y |
 | WhatsApp provider | Keep the existing agzap integration — `POST https://app.agzap.com.br/send` with body `{ token, number, type: "text", message }` — behind a single `sendWhatsAppText(number, text)` adapter. Migration to the user's own UAZapi instance is deferred. | User decision 4 on 2026-10-19: keep what already generates notifications today and change later. The adapter seam means swapping providers afterwards is a one-file change. The contract is already implemented in six existing edge functions, so it needs no guessing. | y |
@@ -51,7 +51,7 @@ Every ambiguity is resolved or recorded here — nothing is left silently unclea
 | Date construction | Every date-only value is constructed as `YYYY-MM-DDT12:00:00` client-side, never `new Date(dateString)`. | The codebase already does this at `CollaboratorPortal.tsx:604` and already gets it wrong at `:251` (off-by-one in UTC-3). New code must not copy the bug. | n |
 | Collaborators without a full account | Filtered out of the collaborator selector and the portal entirely. | User decision 4. | **y** |
 | Conflict is a hard block for the manager | Save is rejected with a visible error naming the conflicting availability range. | User decision 2: "nao pode ser possivel". | **y** |
-| WhatsApp is sent only on creation | Exactly one message per created appointment. | User decision 3: "somente quando eu marcar". | **y** |
+| WhatsApp is sent on creation and on cancellation | One message per created appointment, one per cancellation, none on confirm and none on edit. | User decision 3 ("somente quando eu marcar") covered creation; the 2026-10-22 amendment added cancellation in both directions (ACK-03, ACK-04). | **y** |
 | Manager selects a collaborator in `/pj/agenda` to view their calendar | Dropdown of active collaborators (`is_active = true`, `member_user_id IS NOT NULL`) in the agenda page header; default selection = the manager's own calendar (current behavior). | User decision 5. Keeps today's personal agenda as the default so nothing changes until the manager opts in. | **y** |
 | Collaborator's own agenda route | New route `/colaborador/agenda`, reachable from the sidebar nav and from the WhatsApp deep link. | User decision 3 requires a link into "a agenda dele do painel dele". | **y** |
 
@@ -111,6 +111,8 @@ All four items that were previously open were resolved by the user on 2026-10-19
 
 13. WHEN an appointment's status is `cancelled` THEN the system SHALL not render it in the manager's `/pj/agenda`, whether the manager is viewing their own calendar or a collaborator's. <!-- state-driven -->
 
+> **Supersession (half of MGR-09).** Item 9 forbade a WhatsApp when the manager cancelled. The user reversed that on 2026-10-22: cancelling now reaches the collaborator (ACK-04), because the appointment disappears from their calendar. The persistence half of item 9 stands, and the edit half still sends nothing.
+
 **Independent Test**: As the manager, select a collaborator, attempt to book inside a range they marked unavailable, and confirm the save is refused with the named range; then book a free slot and confirm the row lands with `pending`.
 
 ---
@@ -132,6 +134,8 @@ All four items that were previously open were resolved by the user on 2026-10-19
 7. WHEN an appointment is edited or cancelled THEN the system SHALL send no WhatsApp message. <!-- event-driven -->
 8. The system SHALL log one row per send attempt with `appointment_id`, `attempt`, `status`, `provider_response`, and `created_at`. <!-- ubiquitous -->
 9. WHEN the appointment being notified carries a non-empty `notes` value THEN the system SHALL append it to the message body between the time range and the deep link. <!-- event-driven -->
+
+> **Supersession (half of NOTIF-07).** Item 7 forbade a WhatsApp when an appointment was cancelled. The user reversed that on 2026-10-22 (ACK-03, ACK-04). The edit half of item 7 stands: editing still sends nothing, and the send path stays the one adapter, the one function and the one attempt log this story built.
 
 **Independent Test**: Create an appointment with a valid number and confirm exactly one message with the deep link; point the adapter at a dead endpoint and confirm the appointment still saves with a visible resend affordance.
 
