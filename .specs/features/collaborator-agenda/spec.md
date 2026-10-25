@@ -289,7 +289,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | COLAB-10 | P1: Collaborator confirms or cancels | Design | Verified |
 | COLAB-11 | P1: Collaborator confirms or cancels | Design | Verified |
 | COLAB-12 | P1: Collaborator confirms or cancels | Design | Verified |
-| COLAB-13 | P1: Collaborator confirms or cancels | Design | Pending |
+| COLAB-13 | P1: Collaborator confirms or cancels | Design | Verified |
 | COLAB-14 | P1: Collaborator confirms or cancels | Design | Pending |
 | SYNC-01 | P2: Realtime propagation | Design | Verified |
 | SYNC-02 | P2: Realtime propagation | Design | Verified |

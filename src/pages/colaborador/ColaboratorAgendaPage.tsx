@@ -122,6 +122,8 @@ export default function ColaboratorAgendaPage() {
               events={events}
               mode="read"
               onDaySelect={setSelectedDate}
+              onConfirm={ev => { void respondTo('confirm', ev.id); }}
+              onCancel={ev => { void respondTo('cancel', ev.id); }}
             />
           </CardContent>
         </Card>
@@ -131,7 +133,13 @@ export default function ColaboratorAgendaPage() {
             <p className="text-sm font-semibold capitalize">
               {format(selectedDate, "EEEE, d 'de' MMMM", { locale: ptBR })}
             </p>
-            <AgendaDayView date={selectedDate} events={events} mode="read" />
+            <AgendaDayView
+              date={selectedDate}
+              events={events}
+              mode="read"
+              onConfirm={ev => { void respondTo('confirm', ev.id); }}
+              onCancel={ev => { void respondTo('cancel', ev.id); }}
+            />
           </CardContent>
         </Card>
       </section>

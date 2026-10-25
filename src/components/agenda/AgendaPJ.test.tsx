@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { format } from 'date-fns';
 import { AgendaPJ } from './AgendaPJ';
 import type { TimeBlock } from '@/types/database';
@@ -71,6 +71,22 @@ describe('AgendaPJ (personal agenda, day view)', () => {
     expect(screen.getByText('09:00 – 10:00')).toBeInTheDocument();
     expect(screen.getByText('Reunião')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Editar/ })).toBeInTheDocument();
+  });
+
+  it('never offers the collaborator answer actions (COLAB-13 gate)', () => {
+    // The popover content is shared with the collaborator agenda. The personal
+    // agenda supplies neither onConfirm nor onCancel and never produces an
+    // `appointment` event, so all three gates hold here and the personal
+    // popover must stay exactly as it was.
+    render(<AgendaPJ />);
+
+    fireEvent.click(screen.getByText('Reunião com cliente'));
+    const popover = within(screen.getByRole('dialog'));
+
+    expect(popover.queryByRole('button', { name: /Confirmar/ })).not.toBeInTheDocument();
+    expect(popover.queryByRole('button', { name: /Cancelar/ })).not.toBeInTheDocument();
+    // Exactly Editar plus the unnamed delete icon — nothing was added.
+    expect(popover.getAllByRole('button')).toHaveLength(2);
   });
 
   it('shows the period header and the three view modes', () => {

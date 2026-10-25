@@ -207,4 +207,25 @@ describe('ColaboratorAgendaPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Cancelar/ }));
     expect(respondMutate).toHaveBeenCalledWith({ appointment: row, action: 'cancel' });
   });
+
+  it('answers from the month grid, where the tap used to do nothing (COLAB-13)', () => {
+    const row = appointment({ status: 'pending' });
+    appointments.push(row);
+    renderPage();
+
+    // The month grid chip — the surface the user tapped, which had no popover.
+    const chip = [...document.querySelectorAll('.grid.grid-cols-7 .truncate')]
+      .find(el => el.textContent?.includes('Reunião com cliente'));
+    expect(chip).toBeTruthy();
+    fireEvent.click(chip!);
+
+    const popover = within(screen.getByRole('dialog'));
+    expect(popover.getByText('Pendente')).toBeInTheDocument();
+
+    fireEvent.click(popover.getByRole('button', { name: /Confirmar/ }));
+    expect(respondMutate).toHaveBeenCalledWith({ appointment: row, action: 'confirm' });
+
+    fireEvent.click(popover.getByRole('button', { name: /Cancelar/ }));
+    expect(respondMutate).toHaveBeenCalledWith({ appointment: row, action: 'cancel' });
+  });
 });

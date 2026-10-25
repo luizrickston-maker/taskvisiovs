@@ -2,19 +2,29 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInte
 import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
-  APPOINTMENT_TYPES, getTypeConf, groupEventsByDate, type AgendaViewEvent,
+  APPOINTMENT_TYPES, getTypeConf, groupEventsByDate, isConflicted, type AgendaViewEvent,
 } from './events';
 import { EventPopoverContent, KIND_LABELS, type EventViewMode } from './EventPopoverContent';
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface MonthViewProps {
   selectedDate: Date;
   events: AgendaViewEvent[];
   onDaySelect: (d: Date) => void;
   onAddAt?: (d: Date) => void;
+  onEdit?: (e: AgendaViewEvent) => void;
+  onRequestDelete?: (e: AgendaViewEvent) => void;
+  /** COLAB-13 — the collaborator's answer to a pending appointment. */
+  onConfirm?: (e: AgendaViewEvent) => void;
+  onCancel?: (e: AgendaViewEvent) => void;
   mode: EventViewMode;
 }
 
-export function AgendaMonthView({ selectedDate, events, onDaySelect, onAddAt, mode }: MonthViewProps) {
+export function AgendaMonthView({
+  selectedDate, events, onDaySelect, onAddAt, onEdit, onRequestDelete, onConfirm, onCancel, mode,
+}: MonthViewProps) {
   const monthStart = startOfMonth(selectedDate);
   const monthEnd   = endOfMonth(selectedDate);
   const gridStart  = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -85,14 +95,37 @@ export function AgendaMonthView({ selectedDate, events, onDaySelect, onAddAt, mo
 
               <div className="space-y-0.5">
                 {dayEvents.slice(0, MAX_VISIBLE).map(ev => (
-                  <div
-                    key={ev.id}
-                    className="truncate rounded px-1 py-0.5 text-[9px] md:text-[10px] font-medium text-white leading-tight"
-                    style={{ background: ev.color ?? undefined }}
-                  >
-                    <span className="hidden sm:inline opacity-80 mr-0.5">{ev.start} </span>
-                    {ev.title}
-                  </div>
+                  <Popover key={ev.id}>
+                    <PopoverTrigger asChild>
+                      <div
+                        className="truncate rounded px-1 py-0.5 text-[9px] md:text-[10px] font-medium text-white leading-tight cursor-pointer select-none"
+                        style={{ background: ev.color ?? undefined }}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <span className="hidden sm:inline opacity-80 mr-0.5">{ev.start} </span>
+                        {ev.title}
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="bottom"
+                      align="center"
+                      sideOffset={6}
+                      avoidCollisions
+                      collisionPadding={12}
+                      className="w-[min(224px,calc(100vw-24px))] p-3 z-30"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <EventPopoverContent
+                        event={ev}
+                        conflicted={isConflicted(ev, events)}
+                        mode={mode}
+                        onEdit={onEdit}
+                        onRequestDelete={onRequestDelete}
+                        onConfirm={onConfirm}
+                        onCancel={onCancel}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 ))}
                 {overflow > 0 && (
                   <div className="text-[9px] md:text-[10px] text-muted-foreground font-medium px-0.5">

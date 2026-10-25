@@ -80,6 +80,18 @@ const TOUCHING: AgendaViewEvent = {
   kind: 'personal',
 };
 
+/** COLAB-13 — the shape a manager's appointment takes in the collaborator's panel. */
+const PENDING_APPOINTMENT: AgendaViewEvent = {
+  id: 'ap-1',
+  date: NOV_05,
+  start: '09:00',
+  end: '10:00',
+  title: 'Compromisso do gestor',
+  color: '#3b82f6',
+  kind: 'appointment',
+  status: 'pending',
+};
+
 function nov05(): Date {
   return new Date(2026, 10, 5, 12, 0, 0);
 }
@@ -154,6 +166,35 @@ describe('AgendaDayView', () => {
     fireEvent.click(container.querySelector('.flex-1.relative')!);
     expect(onAddAt).not.toHaveBeenCalled();
   });
+
+  it('answers a pending appointment from the popover in read mode (COLAB-13)', () => {
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    render(
+      <AgendaDayView
+        date={nov05()}
+        events={[PENDING_APPOINTMENT]}
+        mode="read"
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Compromisso do gestor'));
+    const popover = within(screen.getByRole('dialog'));
+
+    // Exactly the two answer actions: read mode keeps the manager's Editar and
+    // delete buttons (the delete one is an icon with no accessible name, so the
+    // count is what rules them out) out of the collaborator's panel.
+    expect(popover.getAllByRole('button')).toHaveLength(2);
+    expect(popover.queryByRole('button', { name: /Editar/ })).not.toBeInTheDocument();
+
+    fireEvent.click(popover.getByRole('button', { name: /Confirmar/ }));
+    expect(onConfirm).toHaveBeenCalledWith(PENDING_APPOINTMENT);
+
+    fireEvent.click(popover.getByRole('button', { name: /Cancelar/ }));
+    expect(onCancel).toHaveBeenCalledWith(PENDING_APPOINTMENT);
+  });
 });
 
 describe('AgendaWeekView', () => {
@@ -182,6 +223,29 @@ describe('AgendaWeekView', () => {
     fireEvent.click(screen.getByText('2'));
     expect(onDaySelect).toHaveBeenCalledTimes(1);
     expect(format(onDaySelect.mock.calls[0][0], 'yyyy-MM-dd')).toBe('2026-11-02');
+  });
+
+  it('answers a pending appointment from the popover (COLAB-13)', () => {
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    render(
+      <AgendaWeekView
+        days={days}
+        events={[PENDING_APPOINTMENT]}
+        mode="read"
+        onDaySelect={() => {}}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Compromisso do gestor'));
+    const popover = within(screen.getByRole('dialog'));
+    fireEvent.click(popover.getByRole('button', { name: /Confirmar/ }));
+    expect(onConfirm).toHaveBeenCalledWith(PENDING_APPOINTMENT);
+
+    fireEvent.click(popover.getByRole('button', { name: /Cancelar/ }));
+    expect(onCancel).toHaveBeenCalledWith(PENDING_APPOINTMENT);
   });
 });
 
@@ -233,6 +297,78 @@ describe('AgendaMonthView', () => {
     expect(screen.queryByTitle('Adicionar compromisso')).not.toBeInTheDocument();
     expect(screen.getByText('Compromisso')).toBeInTheDocument();
     expect(screen.getByText('Indisponível')).toBeInTheDocument();
+  });
+
+  // COLAB-13: the month grid is the largest surface and the one the tap lands
+  // on, and it had no popover at all — the chip only selected the day.
+  it('opens the answer actions when a pending appointment chip is tapped (COLAB-13)', () => {
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    const onDaySelect = vi.fn();
+    render(
+      <AgendaMonthView
+        selectedDate={nov05()}
+        events={[PENDING_APPOINTMENT]}
+        mode="read"
+        onDaySelect={onDaySelect}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Compromisso do gestor'));
+
+    const popover = within(screen.getByRole('dialog'));
+    expect(popover.getByText('Pendente')).toBeInTheDocument();
+    expect(popover.getByRole('button', { name: /Confirmar/ })).toBeInTheDocument();
+    expect(popover.getByRole('button', { name: /Cancelar/ })).toBeInTheDocument();
+
+    fireEvent.click(popover.getByRole('button', { name: /Confirmar/ }));
+    expect(onConfirm).toHaveBeenCalledWith(PENDING_APPOINTMENT);
+
+    fireEvent.click(popover.getByRole('button', { name: /Cancelar/ }));
+    expect(onCancel).toHaveBeenCalledWith(PENDING_APPOINTMENT);
+
+    // The tap belongs to the popover, not to the day cell.
+    expect(onDaySelect).not.toHaveBeenCalled();
+  });
+
+  it('offers no answer actions for an appointment that is no longer pending (COLAB-13)', () => {
+    render(
+      <AgendaMonthView
+        selectedDate={nov05()}
+        events={[{ ...PENDING_APPOINTMENT, status: 'confirmed' }]}
+        mode="read"
+        onDaySelect={() => {}}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Compromisso do gestor'));
+    const popover = within(screen.getByRole('dialog'));
+    expect(popover.getByText('Confirmado')).toBeInTheDocument();
+    expect(popover.queryByRole('button', { name: /Confirmar/ })).not.toBeInTheDocument();
+    expect(popover.queryByRole('button', { name: /Cancelar/ })).not.toBeInTheDocument();
+  });
+
+  it('offers no answer actions for a personal event even with the callbacks supplied', () => {
+    render(
+      <AgendaMonthView
+        selectedDate={nov05()}
+        events={[REUNIAO]}
+        mode="edit"
+        onDaySelect={() => {}}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Reunião com cliente'));
+    const popover = within(screen.getByRole('dialog'));
+    expect(popover.getByRole('button', { name: /Editar/ })).toBeInTheDocument();
+    expect(popover.queryByRole('button', { name: /Confirmar/ })).not.toBeInTheDocument();
+    expect(popover.queryByRole('button', { name: /Cancelar/ })).not.toBeInTheDocument();
   });
 });
 

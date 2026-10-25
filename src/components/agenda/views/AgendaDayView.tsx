@@ -17,10 +17,15 @@ interface DayViewProps {
   onAddAt?: (startTime: string) => void;
   onEdit?: (e: AgendaViewEvent) => void;
   onRequestDelete?: (e: AgendaViewEvent) => void;
+  /** COLAB-13 — the collaborator's answer to a pending appointment. */
+  onConfirm?: (e: AgendaViewEvent) => void;
+  onCancel?: (e: AgendaViewEvent) => void;
   mode: EventViewMode;
 }
 
-export function AgendaDayView({ date, events, onAddAt, onEdit, onRequestDelete, mode }: DayViewProps) {
+export function AgendaDayView({
+  date, events, onAddAt, onEdit, onRequestDelete, onConfirm, onCancel, mode,
+}: DayViewProps) {
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const nowTop = ((nowMin - START_HOUR * 60) / (TOTAL_HOURS * 60)) * 100;
@@ -131,6 +136,8 @@ export function AgendaDayView({ date, events, onAddAt, onEdit, onRequestDelete, 
                     mode={mode}
                     onEdit={onEdit}
                     onRequestDelete={onRequestDelete}
+                    onConfirm={onConfirm}
+                    onCancel={onCancel}
                   />
                 </PopoverContent>
               </Popover>

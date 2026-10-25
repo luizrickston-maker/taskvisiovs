@@ -1,4 +1,4 @@
-import { Clock, Edit2, Trash2, AlertTriangle } from 'lucide-react';
+import { Clock, Edit2, Trash2, AlertTriangle, CheckCircle2, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getTypeConf, type AgendaViewEvent } from './events';
@@ -23,12 +23,25 @@ interface EventPopoverContentProps {
   mode: EventViewMode;
   onEdit?: (e: AgendaViewEvent) => void;
   onRequestDelete?: (e: AgendaViewEvent) => void;
+  /**
+   * COLAB-13 — the answer a collaborator gives to a pending appointment.
+   *
+   * This content is shared with the personal PJ agenda, which supplies neither
+   * callback and never produces a `kind: 'appointment'` event, so all three
+   * conditions have to hold before the actions appear.
+   */
+  onConfirm?: (e: AgendaViewEvent) => void;
+  onCancel?: (e: AgendaViewEvent) => void;
 }
 
-export function EventPopoverContent({ event, conflicted, mode, onEdit, onRequestDelete }: EventPopoverContentProps) {
+export function EventPopoverContent({
+  event, conflicted, mode, onEdit, onRequestDelete, onConfirm, onCancel,
+}: EventPopoverContentProps) {
   const tc = getTypeConf(event.type);
   const accent = event.color ?? tc.color;
   const badgeLabel = event.type ? tc.label : KIND_LABELS[event.kind];
+  const canAnswer =
+    event.kind === 'appointment' && event.status === 'pending' && !!onConfirm && !!onCancel;
 
   return (
     <div className="space-y-2" onClick={e => e.stopPropagation()}>
@@ -62,6 +75,24 @@ export function EventPopoverContent({ event, conflicted, mode, onEdit, onRequest
           </div>
         )}
       </div>
+      {canAnswer && (
+        <div className="flex gap-2 pt-2 border-t border-border/50">
+          <Button
+            size="sm"
+            className="flex-1 h-9 text-xs gap-1 touch-manipulation"
+            onClick={() => onConfirm?.(event)}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" /> Confirmar
+          </Button>
+          <Button
+            variant="outline" size="sm"
+            className="flex-1 h-9 text-xs gap-1 touch-manipulation"
+            onClick={() => onCancel?.(event)}
+          >
+            <Ban className="w-3.5 h-3.5" /> Cancelar
+          </Button>
+        </div>
+      )}
       {mode === 'edit' && (
         <div className="flex gap-2 pt-2 border-t border-border/50">
           <Button

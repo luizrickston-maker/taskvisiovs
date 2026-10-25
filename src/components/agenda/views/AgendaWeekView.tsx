@@ -18,10 +18,15 @@ interface WeekViewProps {
   onAddAt?: (d: Date, time: string) => void;
   onEdit?: (e: AgendaViewEvent) => void;
   onRequestDelete?: (e: AgendaViewEvent) => void;
+  /** COLAB-13 — the collaborator's answer to a pending appointment. */
+  onConfirm?: (e: AgendaViewEvent) => void;
+  onCancel?: (e: AgendaViewEvent) => void;
   mode: EventViewMode;
 }
 
-export function AgendaWeekView({ days, events, onDaySelect, onAddAt, onEdit, onRequestDelete, mode }: WeekViewProps) {
+export function AgendaWeekView({
+  days, events, onDaySelect, onAddAt, onEdit, onRequestDelete, onConfirm, onCancel, mode,
+}: WeekViewProps) {
   const byDate = groupEventsByDate(events);
 
   function handleColClick(day: Date, e: React.MouseEvent<HTMLDivElement>) {
@@ -128,6 +133,8 @@ export function AgendaWeekView({ days, events, onDaySelect, onAddAt, onEdit, onR
                           mode={mode}
                           onEdit={onEdit}
                           onRequestDelete={onRequestDelete}
+                          onConfirm={onConfirm}
+                          onCancel={onCancel}
                         />
                       </PopoverContent>
                     </Popover>
