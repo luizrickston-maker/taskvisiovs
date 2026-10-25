@@ -292,7 +292,7 @@ describe('useRespondAppointment', () => {
     });
   });
 
-  it('keeps the cancellation when the notification call fails (ACK-05)', async () => {
+  it('keeps the cancellation and reports an unverifiable delivery as undelivered (ACK-05, ACK-07)', async () => {
     queueResult({ data: appointment({ status: 'cancelled' }), error: null });
     invokeMock.mockRejectedValueOnce(new Error('função de borda fora do ar'));
 
@@ -307,6 +307,61 @@ describe('useRespondAppointment', () => {
       })).resolves.toMatchObject({ status: 'cancelled' });
     });
 
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    expect(calls.of('update')).toHaveLength(1);
+    // ACK-07: an attempt that never produced a parseable verdict counts as
+    // failed, so the panel shows the failure notice and its retry (ACK-08)
+    // instead of reporting a delivery that did not happen.
+    expect(result.current.notice).toEqual({
+      appointmentId: 'ap-1',
+      kind: 'cancelled_by_collaborator',
+      status: 'failed',
+    });
+  });
+
+  // ACK-07 — the other shape of "does not resolve to a parseable verdict": the
+  // call answers, but the body carries no verdict the client can read.
+  it.each([
+    ['a body with no verdict', { data: {}, error: null }],
+    ['a verdict the edge function does not know', { data: { notify_status: 'banana' }, error: null }],
+    ['an error response', { data: null, error: { message: 'função indisponível' } }],
+  ])('reports %s as an undelivered cancellation (ACK-07)', async (_label, answer) => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+    invokeMock.mockResolvedValueOnce(answer);
+
+    const { result } = renderHook(() => useRespondAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ appointment: appointment(), action: 'cancel' });
+    });
+
+    expect(result.current.notice).toEqual({
+      appointmentId: 'ap-1',
+      kind: 'cancelled_by_collaborator',
+      status: 'failed',
+    });
+    expect(calls.of('update')).toHaveLength(1);
+  });
+
+  // ACK-09 — nobody to tell: the edge function answers `no_whatsapp` and the
+  // acting view must raise the ACK-07 failure notice from it.
+  it('records `no_whatsapp` so the panel raises the failure notice (ACK-09)', async () => {
+    queueResult({ data: appointment({ status: 'cancelled' }), error: null });
+    invokeMock.mockResolvedValueOnce({ data: { notify_status: 'no_whatsapp' }, error: null });
+
+    const { result } = renderHook(() => useRespondAppointment(), { wrapper: makeWrapper(freshClient()) });
+
+    await act(async () => {
+      await result.current.mutateAsync({ appointment: appointment(), action: 'cancel' });
+    });
+
+    expect(result.current.notice).toEqual({
+      appointmentId: 'ap-1',
+      kind: 'cancelled_by_collaborator',
+      status: 'no_whatsapp',
+    });
+    // Exactly one attempt, made by the client; the client itself sends
+    // nothing, and the no-recipient outcome reaches it as this verdict (ACK-09).
     expect(invokeMock).toHaveBeenCalledTimes(1);
     expect(calls.of('update')).toHaveLength(1);
   });
@@ -449,7 +504,7 @@ describe('useCancelAppointment (MGR-09, AD-007)', () => {
     });
   });
 
-  it('keeps the withdrawal when the notification call fails (ACK-05)', async () => {
+  it('keeps the withdrawal and reports an unverifiable delivery as undelivered (ACK-05, ACK-07)', async () => {
     queueResult({ data: appointment({ status: 'cancelled' }), error: null });
     invokeMock.mockRejectedValueOnce(new Error('função de borda fora do ar'));
 
@@ -462,6 +517,13 @@ describe('useCancelAppointment (MGR-09, AD-007)', () => {
 
     expect(invokeMock).toHaveBeenCalledTimes(1);
     expect(calls.of('update')).toHaveLength(1);
+    // ACK-07 applies to the manager exactly as it does to the collaborator, so
+    // an unreachable edge function can never be shown as a delivered notice.
+    expect(result.current.notice).toEqual({
+      appointmentId: 'ap-1',
+      kind: 'cancelled_by_manager',
+      status: 'failed',
+    });
   });
 
   // ACK-06 / ACK-07 — the manager sees the same two notices as the

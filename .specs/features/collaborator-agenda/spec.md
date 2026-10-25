@@ -317,11 +317,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ACK-04 | P3: Manager acknowledgement | Design | Verified |
 | ACK-05 | P3: Manager acknowledgement | Design | Verified |
 | ACK-06 | P3: Manager acknowledgement | Design | Verified |
-| ACK-07 | P3: Manager acknowledgement | Design | Pending |
-| ACK-08 | P3: Manager acknowledgement | Design | Pending |
-| ACK-09 | P3: Manager acknowledgement | Design | Pending |
+| ACK-07 | P3: Manager acknowledgement | Design | Verified |
+| ACK-08 | P3: Manager acknowledgement | Design | Verified |
+| ACK-09 | P3: Manager acknowledgement | Design | Verified |
 
-**Coverage:** 66 total, 56 mapped to tasks, 10 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds; COLAB-15, COLAB-16, ACK-06 closed 2026-10-25; ACK-07…ACK-09 reopened 2026-10-25 after the round-2 sensor survived a mutant that reported an unverifiable delivery as delivered) ⚠️
+**Coverage:** 66 total, 56 mapped to tasks, 10 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds; COLAB-15, COLAB-16, ACK-06 closed 2026-10-25; ACK-07…ACK-09 reopened 2026-10-25 after the round-2 sensor survived a mutant that reported an unverifiable delivery as delivered, and closed the same day once the unverifiable, `no_whatsapp` and zero-recipient paths were asserted) ⚠️
 
 ---
 

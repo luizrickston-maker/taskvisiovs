@@ -75,6 +75,22 @@ describe('CancellationNotifier — the notice was not delivered (ACK-07)', () =>
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Tentar novamente' })).toBeInTheDocument();
   });
+
+  // ACK-07 enumerates `no_whatsapp` as a failure, and ACK-09 is the case that
+  // produces it: nobody to send to, nothing sent, and the party that cancelled
+  // is still told the aviso did not go out.
+  it('raises the failure notice when there was nobody to send to (ACK-07, ACK-09)', () => {
+    render(<CancellationNotifier notice={notice({ status: 'no_whatsapp' })} />);
+
+    expect(
+      screen.getByText('Compromisso cancelado, mas o aviso não foi enviado.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Compromisso cancelado.')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tentar novamente' })).toBeInTheDocument();
+    // The notice itself sends nothing; the attempt already ran inside the
+    // cancel mutation and the edge function answered with nobody to tell.
+    expect(invokeMock).not.toHaveBeenCalled();
+  });
 });
 
 describe('CancellationNotifier — `Tentar novamente` (ACK-08)', () => {
