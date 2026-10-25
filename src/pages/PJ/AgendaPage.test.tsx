@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import AgendaPage from './AgendaPage';
@@ -505,5 +505,62 @@ describe('AgendaPage — manager cancel (MGR-09, AD-007)', () => {
     });
     expect(screen.queryByText('Cancelado')).not.toBeInTheDocument();
     expect(calls.updates()).toHaveLength(0);
+  });
+});
+
+// COLAB-15 — the answer actions belong to the collaborator's panel. This page
+// renders the same pending appointment with mode="read" and no onConfirm /
+// onCancel (AgendaPage.tsx:213-218, :227), so the popover must carry neither
+// action: a dead Confirmar/Cancelar here would offer the manager an answer
+// control that cannot answer anything, and the callback check is the only
+// thing keeping it out.
+describe('AgendaPage — the popover withholds the answer actions (COLAB-15)', () => {
+  it('offers no confirm or cancel on a pending appointment from the month grid', async () => {
+    queueResult('collaborator_appointments', {
+      data: [appointment({ status: 'pending' })],
+      error: null,
+    });
+    queueResult('collaborator_availability', { data: [], error: null });
+
+    renderPage();
+    await selectCollaborator();
+    await screen.findAllByText('Visita técnica');
+
+    const chip = [...document.querySelectorAll('.grid.grid-cols-7 .truncate')]
+      .find(el => el.textContent?.includes('Visita técnica'));
+    expect(chip).toBeTruthy();
+    fireEvent.click(chip!);
+
+    const popover = within(screen.getByRole('dialog'));
+    expect(popover.getByText('Pendente')).toBeInTheDocument();
+    // Zero buttons, not just no named ones: the read-mode popover the manager
+    // gets has no actions at all, so any added button fails loudly instead of
+    // hiding behind a name the assertion does not know.
+    expect(popover.queryAllByRole('button')).toHaveLength(0);
+    expect(popover.queryByRole('button', { name: /Confirmar/ })).not.toBeInTheDocument();
+    expect(popover.queryByRole('button', { name: /Cancelar/ })).not.toBeInTheDocument();
+  });
+
+  it('offers no confirm or cancel on a pending appointment from the day timeline', async () => {
+    queueResult('collaborator_appointments', {
+      data: [appointment({ status: 'pending' })],
+      error: null,
+    });
+    queueResult('collaborator_availability', { data: [], error: null });
+
+    renderPage();
+    await selectCollaborator();
+    await screen.findAllByText('Visita técnica');
+
+    const dayEvent = [...document.querySelectorAll('[data-event]')]
+      .find(el => el.textContent?.includes('Visita técnica'));
+    expect(dayEvent).toBeTruthy();
+    fireEvent.click(dayEvent!);
+
+    const popover = within(screen.getByRole('dialog'));
+    expect(popover.getByText('Pendente')).toBeInTheDocument();
+    expect(popover.queryAllByRole('button')).toHaveLength(0);
+    expect(popover.queryByRole('button', { name: /Confirmar/ })).not.toBeInTheDocument();
+    expect(popover.queryByRole('button', { name: /Cancelar/ })).not.toBeInTheDocument();
   });
 });

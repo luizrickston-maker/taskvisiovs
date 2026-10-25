@@ -372,6 +372,62 @@ describe('AgendaMonthView', () => {
   });
 });
 
+// COLAB-16 — isolate the `kind` conjunct of the popover's answer gate. The
+// fixture varies only `kind`: it keeps `status: 'pending'` and supplies both
+// callbacks, so a failure points at the kind check alone (AgendaPJ and the
+// other existing negatives fail two conjuncts at once and cannot tell them
+// apart). Both views below are the ones the manager's /pj/agenda and the
+// collaborator's /colaborador/agenda render, so the shared popover is covered
+// for both pages.
+describe('the answer gate requires an appointment (COLAB-16)', () => {
+  const NOT_AN_APPOINTMENT = ['unavailability', 'personal'] as const;
+
+  it.each(NOT_AN_APPOINTMENT)(
+    'month grid: a pending %s event gets no answer actions',
+    kind => {
+      render(
+        <AgendaMonthView
+          selectedDate={nov05()}
+          events={[{ ...PENDING_APPOINTMENT, kind }]}
+          mode="read"
+          onDaySelect={() => {}}
+          onConfirm={vi.fn()}
+          onCancel={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByText('Compromisso do gestor'));
+      const popover = within(screen.getByRole('dialog'));
+      // The popover really holds the fixture, status badge included, so the
+      // negatives below are not passing on an unopened popover.
+      expect(popover.getByText('Pendente')).toBeInTheDocument();
+      expect(popover.queryByRole('button', { name: /Confirmar/ })).not.toBeInTheDocument();
+      expect(popover.queryByRole('button', { name: /Cancelar/ })).not.toBeInTheDocument();
+    },
+  );
+
+  it.each(NOT_AN_APPOINTMENT)(
+    'day timeline: a pending %s event gets no answer actions',
+    kind => {
+      render(
+        <AgendaDayView
+          date={nov05()}
+          events={[{ ...PENDING_APPOINTMENT, kind }]}
+          mode="read"
+          onConfirm={vi.fn()}
+          onCancel={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByText('Compromisso do gestor'));
+      const popover = within(screen.getByRole('dialog'));
+      expect(popover.getByText('Pendente')).toBeInTheDocument();
+      expect(popover.queryByRole('button', { name: /Confirmar/ })).not.toBeInTheDocument();
+      expect(popover.queryByRole('button', { name: /Cancelar/ })).not.toBeInTheDocument();
+    },
+  );
+});
+
 describe('extracted views are presentational', () => {
   it('import no data hook, query client or supabase client', async () => {
     const fs = await import('node:fs');

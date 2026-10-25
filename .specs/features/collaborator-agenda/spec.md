@@ -155,7 +155,7 @@ All four items that were previously open were resolved by the user on 2026-10-19
 4. IF the collaborator attempts to confirm or cancel an appointment whose status is already `confirmed` or `cancelled`, THEN the system SHALL reject the transition, persist nothing, and display `Esta solicitação já foi respondida.` <!-- unwanted-behavior -->
 5. IF the collaborator attempts an action on an appointment whose `member_user_id` does not equal their own id, THEN the system SHALL reject it and persist nothing. <!-- unwanted-behavior -->
 6. WHILE an appointment is `pending`, the system SHALL render both a confirm and a cancel action for it in `/colaborador/agenda`. <!-- state-driven -->
-7. WHILE an appointment is `confirmed` or `cancelled`, the system SHALL render no confirm or cancel action for it. <!-- state-driven -->
+7. WHILE an appointment is `confirmed` or `cancelled`, the system SHALL render no confirm or cancel action for it. <!-- state-driven --> <!-- VACUOUS for `cancelled` since COLAB-14: a cancelled appointment is no longer rendered at all, so this half now only bites for `confirmed`. --> 
 8. WHEN the manager changes the appointment while the collaborator's panel is open THEN the system SHALL update the rendered status without a manual reload. <!-- event-driven -->
 9. The system SHALL deny a collaborator SELECT access to any appointment or unavailability row whose `member_user_id` differs from their own id. <!-- ubiquitous -->
 10. WHEN the collaborator's `collaborator_permissions.agenda` flag is disabled THEN the system SHALL hide the agenda nav item and redirect `/colaborador/agenda` to `/colaborador`. <!-- event-driven -->
@@ -164,6 +164,9 @@ All four items that were previously open were resolved by the user on 2026-10-19
 
 13. WHEN the collaborator taps a `pending` appointment rendered by any calendar view, including the month grid, THEN the system SHALL open an affordance exposing both the confirm and the cancel action. <!-- event-driven -->
 14. WHEN an appointment's status is `cancelled` THEN the system SHALL not render it in `/colaborador/agenda`, neither in the calendar nor in the appointment list. <!-- state-driven -->
+
+15. WHEN the manager's `/pj/agenda` renders a `pending` appointment, THEN the system SHALL not render the confirm or the cancel action for it. <!-- state-driven -->
+16. WHEN any calendar view renders an event that is not an appointment, THEN the system SHALL not render the confirm or the cancel action for it. <!-- state-driven -->
 
 **Independent Test**: From the WhatsApp link, confirm a pending appointment and reload to see it stays `confirmed`; then attempt to cancel that same one and confirm the transition is refused.
 
@@ -291,6 +294,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | COLAB-12 | P1: Collaborator confirms or cancels | Design | Verified |
 | COLAB-13 | P1: Collaborator confirms or cancels | Design | Verified |
 | COLAB-14 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-15 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-16 | P1: Collaborator confirms or cancels | Design | Verified |
 | SYNC-01 | P2: Realtime propagation | Design | Verified |
 | SYNC-02 | P2: Realtime propagation | Design | Verified |
 | SYNC-03 | P2: Realtime propagation | Design | Verified |
@@ -304,7 +309,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ACK-04 | P3: Manager acknowledgement | Design | Verified |
 | ACK-05 | P3: Manager acknowledgement | Design | Verified |
 
-**Coverage:** 60 total, 56 mapped to tasks, 4 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 — closed during the fix rounds and covered by the database and component suites) ⚠️
+**Coverage:** 62 total, 56 mapped to tasks, 6 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds and covered by the database and component suites; COLAB-15 and COLAB-16 opened 2026-10-25 after the cancellation-round sensor showed the popover's withholding conjuncts were untested) ⚠️
 
 ---
 
