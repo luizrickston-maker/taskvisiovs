@@ -109,6 +109,8 @@ All four items that were previously open were resolved by the user on 2026-10-19
 11. WHEN the manager switches the selector back to their own calendar THEN the system SHALL restore the personal `time_blocks` view with no residual collaborator rows. <!-- event-driven -->
 12. WHEN the manager supplies an observation while creating or editing an appointment THEN the system SHALL persist it as `notes` on that row, and SHALL store `NULL` when no observation is given. <!-- event-driven -->
 
+13. WHEN an appointment's status is `cancelled` THEN the system SHALL not render it in the manager's `/pj/agenda`, whether the manager is viewing their own calendar or a collaborator's. <!-- state-driven -->
+
 **Independent Test**: As the manager, select a collaborator, attempt to book inside a range they marked unavailable, and confirm the save is refused with the named range; then book a free slot and confirm the row lands with `pending`.
 
 ---
@@ -156,6 +158,9 @@ All four items that were previously open were resolved by the user on 2026-10-19
 11. WHEN a collaborator without a `member_user_id` is inspected anywhere in this feature THEN the system SHALL exclude them from the selector, the portal, and all appointment queries. <!-- ubiquitous -->
 12. WHILE an appointment carries a non-empty `notes` value, the system SHALL render that observation in `/colaborador/agenda` alongside the appointment details. <!-- state-driven -->
 
+13. WHEN the collaborator taps a `pending` appointment rendered by any calendar view, including the month grid, THEN the system SHALL open an affordance exposing both the confirm and the cancel action. <!-- event-driven -->
+14. WHEN an appointment's status is `cancelled` THEN the system SHALL not render it in `/colaborador/agenda`, neither in the calendar nor in the appointment list. <!-- state-driven -->
+
 **Independent Test**: From the WhatsApp link, confirm a pending appointment and reload to see it stays `confirmed`; then attempt to cancel that same one and confirm the transition is refused.
 
 ---
@@ -202,9 +207,14 @@ All four items that were previously open were resolved by the user on 2026-10-19
 **Acceptance Criteria**:
 
 1. WHEN a collaborator confirms or cancels an appointment THEN the system SHALL write an in-app notification to the creating manager. <!-- event-driven -->
-2. WHEN a collaborator confirms or cancels an appointment THEN the system SHALL send no WhatsApp message. <!-- event-driven -->
+2. WHEN a collaborator confirms an appointment THEN the system SHALL send no WhatsApp message. <!-- event-driven -->
+3. WHEN a collaborator cancels an appointment THEN the system SHALL send a WhatsApp message to the creating manager's workspace's active `agenda` notification recipients. <!-- event-driven -->
+4. WHEN a manager cancels an appointment THEN the system SHALL send a WhatsApp message to the collaborator's `corporate_team.whatsapp`. <!-- event-driven -->
+5. WHEN a cancellation notification cannot be delivered THEN the system SHALL keep the cancellation persisted and record the failed attempt. <!-- unwanted-behavior -->
 
-**Independent Test**: Confirm an appointment as the collaborator and observe the manager's in-app notification appear with no WhatsApp sent.
+> **Supersession.** The original ACK-02 forbade any WhatsApp on confirm or cancel, so that responding never produced noise. The user reversed that on 2026-10-22: a cancellation now notifies the other party in both directions, because a cancelled appointment disappears from both calendars and must not vanish silently. Confirming still sends nothing.
+
+**Independent Test**: Confirm an appointment as the collaborator and observe the manager's in-app notification appear with no WhatsApp sent; then cancel one and observe a WhatsApp reaching the workspace's `agenda` recipient instead.
 
 ---
 
@@ -253,6 +263,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | MGR-10 | P1: Manager views collaborator calendar | Design | Verified |
 | MGR-11 | P1: Manager views collaborator calendar | Design | Verified |
 | MGR-12 | P1: Manager views collaborator calendar | Design | Verified |
+| MGR-13 | P1: Manager views collaborator calendar | Design | Pending |
 | NOTIF-01 | P1: WhatsApp notification on creation | Design | Verified |
 | NOTIF-02 | P1: WhatsApp notification on creation | Design | Verified |
 | NOTIF-03 | P1: WhatsApp notification on creation | Design | Verified |
@@ -274,6 +285,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | COLAB-10 | P1: Collaborator confirms or cancels | Design | Verified |
 | COLAB-11 | P1: Collaborator confirms or cancels | Design | Verified |
 | COLAB-12 | P1: Collaborator confirms or cancels | Design | Verified |
+| COLAB-13 | P1: Collaborator confirms or cancels | Design | Pending |
+| COLAB-14 | P1: Collaborator confirms or cancels | Design | Pending |
 | SYNC-01 | P2: Realtime propagation | Design | Verified |
 | SYNC-02 | P2: Realtime propagation | Design | Verified |
 | SYNC-03 | P2: Realtime propagation | Design | Verified |
@@ -282,9 +295,12 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PERM-02 | P2: Permission flag gates feature | Design | Verified |
 | PERM-03 | P2: Permission flag gates feature | Design | Verified |
 | ACK-01 | P3: Manager acknowledgement | Design | Verified |
-| ACK-02 | P3: Manager acknowledgement | Design | Verified |
+| ACK-02 | P3: Manager acknowledgement | Design | Pending |
+| ACK-03 | P3: Manager acknowledgement | Design | Pending |
+| ACK-04 | P3: Manager acknowledgement | Design | Pending |
+| ACK-05 | P3: Manager acknowledgement | Design | Pending |
 
-**Coverage:** 54 total, 49 mapped to tasks, 5 unmapped (AVAIL-10, MGR-06, ACK-01, ACK-02, AVAIL-12 — implemented during the fix rounds and covered by the database and component suites) ⚠️
+**Coverage:** 60 total, 49 mapped to tasks, 11 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds; COLAB-13, COLAB-14, MGR-13, ACK-02…ACK-05 opened 2026-10-22 by the cancel-notification amendment) ⚠️
 
 ---
 
