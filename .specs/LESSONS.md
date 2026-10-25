@@ -176,6 +176,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: ACK-07 (notifications)
 - last seen: 2026-10-25T18:32:49Z
 
+### L-028 - State a fallback recipient's positive branch as its own WHEN/THEN; naming it only inside a failure condition leaves the send target inferable by elimination rather than specified.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `notifications` · harmful: 0
+- features: collaborator-agenda
+- evidence: spec.md ACK-03 (:218) / ACK-09 (:226) — gap A' in validation.md (notifications)
+- last seen: 2026-10-25T19:37:04Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

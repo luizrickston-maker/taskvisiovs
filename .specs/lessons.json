@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 28,
+  "next_id": 29,
   "lessons": [
     {
       "id": "L-001",
@@ -491,6 +491,24 @@
       ],
       "created": "2026-10-25T18:32:49Z",
       "last_seen": "2026-10-25T18:32:49Z"
+    },
+    {
+      "id": "L-028",
+      "key": "spec_precision_gap::state a fallback recipient s positive branch as its own when then naming it only inside a failure condition leaves the send target inferable by elimination rather than specified",
+      "text": "State a fallback recipient's positive branch as its own WHEN/THEN; naming it only inside a failure condition leaves the send target inferable by elimination rather than specified.",
+      "signal": "spec_precision_gap",
+      "scope": "notifications",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md ACK-03 (:218) / ACK-09 (:226) — gap A' in validation.md (notifications)"
+      ],
+      "created": "2026-10-25T19:37:04Z",
+      "last_seen": "2026-10-25T19:37:04Z"
     }
   ]
 }

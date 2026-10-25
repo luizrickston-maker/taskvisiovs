@@ -224,6 +224,7 @@ All four items that were previously open were resolved by the user on 2026-10-19
    Delivery counts as failed when the provider reports `failed` or `timeout`, when the provider reports `no_whatsapp`, and when the attempt does not resolve to a parseable verdict at all. Only an explicit `sent` counts as delivered — an unverifiable attempt is never reported as delivered.
 8. WHEN the party that cancelled activates `Tentar novamente` THEN the system SHALL attempt delivery again and, on success, replace the failure notice with `Compromisso cancelado.` <!-- event-driven -->
 9. WHEN the workspace has no active `agenda` recipient AND no `workspaces.notify_whatsapp` fallback THEN the system SHALL record the attempt as `no_whatsapp` and raise the ACK-07 failure notice, without sending anything. <!-- unwanted-behavior -->
+10. WHEN the workspace has no active `agenda` recipient but `workspaces.notify_whatsapp` is set THEN the system SHALL send the cancellation message to that fallback number. <!-- event-driven -->
 
 > The three notices above apply **whichever** side cancelled — a collaborator cancelling sees them, and so does a manager cancelling. They must appear immediately in the acting party's own view, because a cancelled appointment is no longer rendered anywhere (`COLAB-14`, `MGR-13`) and the failure record lives in `appointment_notification_log`, which has no RLS and is therefore unreadable by anyone.
 
@@ -320,8 +321,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ACK-07 | P3: Manager acknowledgement | Design | Verified |
 | ACK-08 | P3: Manager acknowledgement | Design | Verified |
 | ACK-09 | P3: Manager acknowledgement | Design | Verified |
+| ACK-10 | P3: Manager acknowledgement | Design | Verified |
 
-**Coverage:** 66 total, 56 mapped to tasks, 10 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds; COLAB-15, COLAB-16, ACK-06 closed 2026-10-25; ACK-07…ACK-09 reopened 2026-10-25 after the round-2 sensor survived a mutant that reported an unverifiable delivery as delivered, and closed the same day once the unverifiable, `no_whatsapp` and zero-recipient paths were asserted) ⚠️
+**Coverage:** 67 total, 56 mapped to tasks, 11 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds; COLAB-15, COLAB-16, ACK-06 closed 2026-10-25; ACK-07…ACK-09 reopened and closed the same day once the unverifiable, `no_whatsapp` and zero-recipient paths were asserted; ACK-10 added 2026-10-25 to state the legacy-fallback branch the round-3 Verifier found only derivable by elimination, covered by `notify-appointment.test.ts:513-529`) ⚠️
 
 ---
 

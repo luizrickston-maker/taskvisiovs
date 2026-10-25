@@ -555,7 +555,7 @@ describe('cancellation notifications (ACK-02..ACK-05)', () => {
     expect(result.body.notify_status).toBe('failed');
   });
 
-  it('reports no_whatsapp when the workspace has nobody to tell (ACK-03)', async () => {
+  it('reports no_whatsapp when the workspace has nobody to tell (ACK-09)', async () => {
     const { store, state } = makeStore({
       appointment: { ...cancelledAppointment },
       agendaRecipients: [],
