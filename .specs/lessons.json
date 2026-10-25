@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 22,
+  "next_id": 26,
   "lessons": [
     {
       "id": "L-001",
@@ -383,6 +383,78 @@
       ],
       "created": "2026-10-22T05:23:58Z",
       "last_seen": "2026-10-22T05:23:58Z"
+    },
+    {
+      "id": "L-022",
+      "key": "surviving_mutant::render a shared gated component exactly as the consumer that withholds the optional callback does so the prop gate is proven to matter",
+      "text": "Render a shared gated component exactly as the consumer that withholds the optional callback does, so the prop gate is proven to matter.",
+      "signal": "surviving_mutant",
+      "scope": "agenda",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M5 src/components/agenda/views/EventPopoverContent.tsx:43 (agenda)"
+      ],
+      "created": "2026-10-25T15:22:10Z",
+      "last_seen": "2026-10-25T15:22:10Z"
+    },
+    {
+      "id": "L-023",
+      "key": "surviving_mutant::vary one gate attribute per fixture kind status callback so each conjunct of a compound render condition is isolated",
+      "text": "Vary one gate attribute per fixture (kind, status, callback) so each conjunct of a compound render condition is isolated.",
+      "signal": "surviving_mutant",
+      "scope": "agenda",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M1 src/components/agenda/views/EventPopoverContent.tsx:43 (agenda)"
+      ],
+      "created": "2026-10-25T15:22:10Z",
+      "last_seen": "2026-10-25T15:22:10Z"
+    },
+    {
+      "id": "L-024",
+      "key": "spec_precision_gap::when a notification resolves its recipient through a fallback write the fallback and its empty recipient outcome into the spec instead of leaving them implied",
+      "text": "When a notification resolves its recipient through a fallback, write the fallback and its empty-recipient outcome into the spec instead of leaving them implied.",
+      "signal": "spec_precision_gap",
+      "scope": "notifications",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ACK-03 (notifications)"
+      ],
+      "created": "2026-10-25T15:22:28Z",
+      "last_seen": "2026-10-25T15:22:28Z"
+    },
+    {
+      "id": "L-025",
+      "key": "spec_precision_gap::pair every record the failed attempt requirement with an explicit surfacing requirement or the recorded failure stays invisible",
+      "text": "Pair every 'record the failed attempt' requirement with an explicit surfacing requirement, or the recorded failure stays invisible.",
+      "signal": "spec_precision_gap",
+      "scope": "notifications",
+      "status": "candidate",
+      "features": [
+        "collaborator-agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ACK-05 (notifications)"
+      ],
+      "created": "2026-10-25T15:22:28Z",
+      "last_seen": "2026-10-25T15:22:28Z"
     }
   ]
 }

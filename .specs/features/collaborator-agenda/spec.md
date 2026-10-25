@@ -218,6 +218,11 @@ All four items that were previously open were resolved by the user on 2026-10-19
 3. WHEN a collaborator cancels an appointment THEN the system SHALL send a WhatsApp message to the creating manager's workspace's active `agenda` notification recipients. <!-- event-driven -->
 4. WHEN a manager cancels an appointment THEN the system SHALL send a WhatsApp message to the collaborator's `corporate_team.whatsapp`. <!-- event-driven -->
 5. WHEN a cancellation notification cannot be delivered THEN the system SHALL keep the cancellation persisted and record the failed attempt. <!-- unwanted-behavior -->
+6. WHEN cancellation delivery succeeds on the first attempt THEN the system SHALL display to the party that cancelled the notice `Compromisso cancelado.` <!-- event-driven -->
+7. WHEN cancellation delivery fails THEN the system SHALL display to the party that cancelled the notice `Compromisso cancelado, mas o aviso não foi enviado.` together with an action labelled `Tentar novamente`. <!-- unwanted-behavior -->
+8. WHEN the party that cancelled activates `Tentar novamente` THEN the system SHALL attempt delivery again and, on success, replace the failure notice with `Compromisso cancelado.` <!-- event-driven -->
+
+> The three notices above apply **whichever** side cancelled — a collaborator cancelling sees them, and so does a manager cancelling. They must appear immediately in the acting party's own view, because a cancelled appointment is no longer rendered anywhere (`COLAB-14`, `MGR-13`) and the failure record lives in `appointment_notification_log`, which has no RLS and is therefore unreadable by anyone.
 
 > **Supersession.** The original ACK-02 forbade any WhatsApp on confirm or cancel, so that responding never produced noise. The user reversed that on 2026-10-22: a cancellation now notifies the other party in both directions, because a cancelled appointment disappears from both calendars and must not vanish silently. Confirming still sends nothing.
 
@@ -308,8 +313,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ACK-03 | P3: Manager acknowledgement | Design | Verified |
 | ACK-04 | P3: Manager acknowledgement | Design | Verified |
 | ACK-05 | P3: Manager acknowledgement | Design | Verified |
+| ACK-06 | P3: Manager acknowledgement | Design | Pending |
+| ACK-07 | P3: Manager acknowledgement | Design | Pending |
+| ACK-08 | P3: Manager acknowledgement | Design | Pending |
 
-**Coverage:** 62 total, 56 mapped to tasks, 6 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds and covered by the database and component suites; COLAB-15 and COLAB-16 opened 2026-10-25 after the cancellation-round sensor showed the popover's withholding conjuncts were untested) ⚠️
+**Coverage:** 65 total, 56 mapped to tasks, 9 unmapped (AVAIL-10, MGR-06, ACK-01, AVAIL-12 closed during the fix rounds; COLAB-15, COLAB-16 closed 2026-10-25; ACK-06…ACK-08 opened 2026-10-25 so the cancellation-failure notice carries pinned text) ⚠️
 
 ---
 

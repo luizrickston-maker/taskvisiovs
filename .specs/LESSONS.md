@@ -140,6 +140,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: tests/db/no-projects-backfill.test.ts:18 (migrations)
 - last seen: 2026-10-22T05:23:58Z
 
+### L-022 - Render a shared gated component exactly as the consumer that withholds the optional callback does, so the prop gate is proven to matter.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `agenda` · harmful: 0
+- features: collaborator-agenda
+- evidence: M5 src/components/agenda/views/EventPopoverContent.tsx:43 (agenda)
+- last seen: 2026-10-25T15:22:10Z
+
+### L-023 - Vary one gate attribute per fixture (kind, status, callback) so each conjunct of a compound render condition is isolated.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `agenda` · harmful: 0
+- features: collaborator-agenda
+- evidence: M1 src/components/agenda/views/EventPopoverContent.tsx:43 (agenda)
+- last seen: 2026-10-25T15:22:10Z
+
+### L-024 - When a notification resolves its recipient through a fallback, write the fallback and its empty-recipient outcome into the spec instead of leaving them implied.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `notifications` · harmful: 0
+- features: collaborator-agenda
+- evidence: ACK-03 (notifications)
+- last seen: 2026-10-25T15:22:28Z
+
+### L-025 - Pair every 'record the failed attempt' requirement with an explicit surfacing requirement, or the recorded failure stays invisible.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `notifications` · harmful: 0
+- features: collaborator-agenda
+- evidence: ACK-05 (notifications)
+- last seen: 2026-10-25T15:22:28Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
