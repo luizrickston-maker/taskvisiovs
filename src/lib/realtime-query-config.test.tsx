@@ -18,7 +18,7 @@ const { authUser, supabase } = vi.hoisted(() => ({
   supabase: {
     from: vi.fn(() => {
       const builder: Record<string, unknown> = {};
-      for (const method of ['select', 'eq', 'lte', 'gte', 'order', 'single']) {
+      for (const method of ['select', 'eq', 'neq', 'lte', 'gte', 'order', 'single']) {
         builder[method] = () => builder;
       }
       builder.then = (resolve: unknown, reject: unknown) =>

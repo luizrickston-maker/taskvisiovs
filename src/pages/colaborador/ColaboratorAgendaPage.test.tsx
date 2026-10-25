@@ -16,7 +16,14 @@ const { appointments, availabilityRows, respondMutate, deleteMutate } = vi.hoist
 }));
 
 vi.mock('@/hooks/useCollaboratorAppointments', () => ({
-  useCollaboratorAppointments: () => ({ data: appointments, isLoading: false }),
+  // The real hook excludes cancelled rows at the query
+  // (src/hooks/useCollaboratorAppointments.ts, asserted in its own suite); the
+  // double applies the same exclusion so a cancelled fixture means what it
+  // means in production.
+  useCollaboratorAppointments: () => ({
+    data: appointments.filter(row => row.status !== 'cancelled'),
+    isLoading: false,
+  }),
   useRespondAppointment: () => ({ mutateAsync: respondMutate, isPending: false }),
 }));
 
@@ -174,13 +181,23 @@ describe('ColaboratorAgendaPage', () => {
     expect(screen.queryByRole('button', { name: /Cancelar/ })).not.toBeInTheDocument();
   });
 
-  it('shows no actions for a cancelled appointment (COLAB-07)', () => {
-    appointments.push(appointment({ status: 'cancelled', decided_at: '2026-11-05T12:00:00Z' }));
+  // Requirement change 2026-10-22: a cancelled appointment used to render with
+  // a "Cancelado" badge and no actions (COLAB-07). It now disappears from the
+  // page entirely (COLAB-14), so the assertion is absence in both surfaces.
+  it('shows a cancelled appointment nowhere — neither calendar nor list (COLAB-14)', () => {
+    appointments.push(
+      appointment({ id: 'ap-cancelled', title: 'Cancelado pela agenda', status: 'cancelled', decided_at: '2026-11-05T12:00:00Z' }),
+      appointment({ id: 'ap-pending', title: 'Ainda de pé' }),
+    );
     renderPage();
 
-    expect(screen.getByText('Cancelado')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Confirmar/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Cancelar/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Cancelado')).not.toBeInTheDocument();
+    expect(screen.queryByText('Cancelado pela agenda')).not.toBeInTheDocument();
+    // The day the cancelled one sat on now holds nothing but the live one.
+    expect(document.querySelectorAll('.grid.grid-cols-7 .truncate')).toHaveLength(1);
+    // COLAB-07 still holds for whatever is left: only the pending one answers.
+    expect(screen.getAllByRole('button', { name: /Confirmar/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /Cancelar/ })).toHaveLength(1);
   });
 
   it('renders the observation next to the appointment (COLAB-12)', () => {

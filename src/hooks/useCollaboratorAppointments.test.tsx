@@ -35,7 +35,7 @@ const { supabase, calls, rpcMock, queueResult, toastMock } = vi.hoisted(() => {
     const builder: BuilderDouble = {
       then: (resolve, reject) => Promise.resolve(result).then(resolve, reject),
     };
-    for (const m of ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'gte', 'order', 'single']) {
+    for (const m of ['select', 'insert', 'update', 'delete', 'eq', 'neq', 'lte', 'gte', 'order', 'single']) {
       builder[m] = (...args: unknown[]) => {
         log.push({ table, method: m, args });
         return builder;
@@ -341,5 +341,20 @@ describe('useCollaboratorAppointments', () => {
     expect(calls.of('eq')[0].args).toEqual(['member_user_id', 'member-1']);
     expect(calls.of('gte')[0].args).toEqual(['date', '2026-12-01']);
     expect(calls.of('lte')[0].args).toEqual(['date', '2026-12-31']);
+  });
+
+  it('excludes a cancelled appointment for both pages that read here (COLAB-14, MGR-13)', async () => {
+    // The collaborator's panel and the manager's /pj/agenda read through this
+    // one hook, so the exclusion below is the single place a cancelled row is
+    // dropped: neither the calendar nor the list of either page can receive it.
+    queueResult({ data: [appointment({ status: 'pending' })], error: null });
+
+    const { result } = renderHook(
+      () => useCollaboratorAppointments('2026-12-01', '2026-12-31', 'member-1'),
+      { wrapper: makeWrapper(freshClient()) },
+    );
+
+    await waitFor(() => expect(result.current.data).toHaveLength(1));
+    expect(calls.of('neq')[0].args).toEqual(['status', 'cancelled']);
   });
 });

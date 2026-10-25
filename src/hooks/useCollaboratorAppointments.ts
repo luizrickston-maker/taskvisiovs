@@ -34,6 +34,11 @@ function formatBound(date: string, time: string | null): string {
  * disabled and the manager's own `time_blocks` are the only source
  * (Edge Case: "the manager's own calendar ... SHALL not query
  * `collaborator_appointments` at all").
+ *
+ * Both pages read through this one hook, so a cancelled appointment is dropped
+ * here once and disappears from the collaborator's calendar and list (COLAB-14)
+ * and from the manager's `/pj/agenda` (MGR-13) alike. The row stays in the
+ * database — only the read path hides it.
  */
 export function useCollaboratorAppointments(
   dateFrom: string,
@@ -52,6 +57,7 @@ export function useCollaboratorAppointments(
         .from('collaborator_appointments' as any)
         .select('*')
         .eq('member_user_id', target)
+        .neq('status', 'cancelled')
         .gte('date', dateFrom)
         .lte('date', dateTo)
         .order('date', { ascending: true })

@@ -267,7 +267,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | MGR-10 | P1: Manager views collaborator calendar | Design | Verified |
 | MGR-11 | P1: Manager views collaborator calendar | Design | Verified |
 | MGR-12 | P1: Manager views collaborator calendar | Design | Verified |
-| MGR-13 | P1: Manager views collaborator calendar | Design | Pending |
+| MGR-13 | P1: Manager views collaborator calendar | Design | Verified |
 | NOTIF-01 | P1: WhatsApp notification on creation | Design | Verified |
 | NOTIF-02 | P1: WhatsApp notification on creation | Design | Verified |
 | NOTIF-03 | P1: WhatsApp notification on creation | Design | Verified |
@@ -290,7 +290,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | COLAB-11 | P1: Collaborator confirms or cancels | Design | Verified |
 | COLAB-12 | P1: Collaborator confirms or cancels | Design | Verified |
 | COLAB-13 | P1: Collaborator confirms or cancels | Design | Verified |
-| COLAB-14 | P1: Collaborator confirms or cancels | Design | Pending |
+| COLAB-14 | P1: Collaborator confirms or cancels | Design | Verified |
 | SYNC-01 | P2: Realtime propagation | Design | Verified |
 | SYNC-02 | P2: Realtime propagation | Design | Verified |
 | SYNC-03 | P2: Realtime propagation | Design | Verified |

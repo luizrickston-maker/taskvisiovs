@@ -29,7 +29,7 @@ const { supabase, calls, queueResult, queueRpc, MANAGER_ID } = vi.hoisted(() => 
     const bucket = queues.get(table);
     const result = bucket && bucket.length > 0 ? bucket.shift()! : { data: null, error: null };
     const builder: Record<string, unknown> = {};
-    for (const method of ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'gte', 'order', 'single']) {
+    for (const method of ['select', 'insert', 'update', 'delete', 'eq', 'neq', 'lte', 'gte', 'order', 'single']) {
       builder[method] = (...args: unknown[]) => {
         log.push({ table, method, args });
         return builder;
@@ -482,18 +482,28 @@ describe('AgendaPage — manager cancel (MGR-09, AD-007)', () => {
     });
   });
 
-  it('offers no cancel on an already cancelled row', async () => {
+  // Requirement change 2026-10-22: a cancelled appointment used to render here
+  // with a "Cancelado" badge and no cancel button (MGR-09). MGR-13 now keeps it
+  // out of /pj/agenda altogether, so the assertion is absence.
+  it('never asks for a cancelled row, so none can render (MGR-13)', async () => {
     queueResult('collaborator_appointments', {
-      data: [appointment({ status: 'cancelled', decided_at: '2026-11-05T12:00:00Z' })],
+      data: [appointment({ status: 'pending' })],
       error: null,
     });
     queueResult('collaborator_availability', { data: [], error: null });
 
     renderPage();
     await selectCollaborator();
+    await screen.findAllByText('Visita técnica');
 
-    expect(await screen.findByText('Cancelado')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Cancelar/ })).not.toBeInTheDocument();
+    // The read both this view and the collaborator's panel share carries the
+    // exclusion, so no cancelled row reaches either calendar.
+    expect(calls.log).toContainEqual({
+      table: 'collaborator_appointments',
+      method: 'neq',
+      args: ['status', 'cancelled'],
+    });
+    expect(screen.queryByText('Cancelado')).not.toBeInTheDocument();
     expect(calls.updates()).toHaveLength(0);
   });
 });
