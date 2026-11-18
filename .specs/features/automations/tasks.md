@@ -501,12 +501,12 @@ T16
 
 **Done when**:
 
-- [ ] The preview shows the exact folder name that will be created, e.g. `2026-11-05_Quinta-Video-Lancamento`
-- [ ] A test asserts this component's `buildProjectFolderName` returns the same value as `_shared/frameio/names.ts` for a table covering all 7 weekdays, all 12 months and accented input (PROJ-07/08/09)
-- [ ] `Crie primeiro a estrutura do cliente` renders when the function reports a missing project, and nothing else renders as success (PROJ-10)
-- [ ] The submit control is disabled while `isPending` and while required fields are empty (PROJ-11)
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `src/components/automacoes/VideoProjectForm.test.tsx` passes
+- [x] The preview shows the exact folder name that will be created, e.g. `2026-11-05_Quinta-Video-Lancamento`
+- [x] A test asserts this component's `buildProjectFolderName` returns the same value as `_shared/frameio/names.ts` for a table covering all 7 weekdays, all 12 months and accented input (PROJ-07/08/09)
+- [x] `Crie primeiro a estrutura do cliente` renders when the function reports a missing project, and nothing else renders as success (PROJ-10)
+- [x] The submit control is disabled while `isPending` and while required fields are empty (PROJ-11)
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `src/components/automacoes/VideoProjectForm.test.tsx` passes
 
 **Tests**: unit
 **Gate**: quick
