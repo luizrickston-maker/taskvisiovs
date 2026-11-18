@@ -186,6 +186,21 @@ describe('ensureStructure — falha honesta (FAIL-01, PART-01, PART-02, EDGE-02)
     expect(res.failedAt).toBe('Artes');
     expect(res.remaining).toEqual(['Artes', 'Textos e Roteiros', 'Relatórios', 'Vídeos']);
     expect(res.error).toBe('indisponível');
+    // É isto que discrimina o retry de 5xx: 350 ms da pasta de Artes + as três
+    // esperas de 1 s. Sem o ramo `status >= 500` a lista encolhe para [350, 350].
+    expect(fake.state.delays).toEqual([350, 350, 1000, 1000, 1000]);
+  });
+
+  it('falha de rede, sem status HTTP, também repete três vezes (FAIL-01)', async () => {
+    const fake = makeFake({
+      fail: (m, arg) =>
+        m === 'createFolder' && arg === 'Artes' ? new Error('rede fora') : undefined,
+    });
+    const res = await run(fake);
+
+    expect(res.status).toBe('failed');
+    expect(res.error).toBe('rede fora');
+    expect(fake.state.delays).toEqual([350, 350, 1000, 1000, 1000]);
   });
 
   it('falha no primeiro item relata nada criado (PART-02)', async () => {
@@ -227,6 +242,23 @@ describe('ensureStructure — falha honesta (FAIL-01, PART-01, PART-02, EDGE-02)
     expect(res.remaining).toEqual(ALL);
     expect(res.created).toEqual([]);
     expect(res.error).toBe('fora do ar');
+  });
+});
+
+describe('ensureStructure — recusa do nome do projeto (EDGE-02)', () => {
+  it('chega intacta ao chamador e nenhuma pasta é criada', async () => {
+    const fake = makeFake({
+      projectExists: false,
+      fail: (m) =>
+        m === 'createProject' ? new FrameioHttpError(422, 'nome de projeto inválido') : undefined,
+    });
+    const res = await run(fake);
+
+    expect(res.status).toBe('failed');
+    expect(res.error).toBe('nome de projeto inválido');
+    expect(res.created).toEqual([]);
+    // 422 não é transitória: nenhuma espera de repetição.
+    expect(fake.state.delays).toEqual([]);
   });
 });
 

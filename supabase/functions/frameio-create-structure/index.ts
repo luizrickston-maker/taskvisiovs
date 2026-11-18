@@ -250,6 +250,14 @@ Deno.serve(async (req) => {
           .eq('workspace_id', workspaceId);
       },
 
+      listFrameioWorkspaces: async (token, accountId) => {
+        const payload = await frameioFetch(
+          `${FRAMEIO_API}/accounts/${accountId}/workspaces`,
+          token,
+        );
+        return rows(payload).map((w) => ({ id: text(w.id) }));
+      },
+
       frameio: makeFrameio,
     };
 

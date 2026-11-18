@@ -109,7 +109,7 @@ export function FrameioConnectionCard({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={startConnect}>{reconnecting ? 'Reconectar Frameio' : 'Conectar Frame.io'}</Button>
+          <Button onClick={startConnect}>{reconnecting ? 'Reconectar Frame.io' : 'Conectar Frame.io'}</Button>
         </CardContent>
       </Card>
     );

@@ -26,7 +26,7 @@ Evidence for the commands: `package.json` scripts (`test` = `vitest run`, `test:
 | React pages / components / hooks | unit | Every state named in an AC: loading, disconnected, reconnecting, success, partial, failure, denied | `src/**/*.test.tsx` | `npm run test` |
 | Database: schema, RLS, RPC, unique index | integration | Every AC enforced in the DB: no client policy, admin-only RPC, one-live-run mutex | `tests/db/*.test.ts` | `npm run test:db` |
 | Route + sidebar wiring | unit | MENU-01, MENU-02, MENU-03 outcomes | `src/components/layout/AppSidebar.test.tsx`, `src/AppRoutes.test.tsx` | `npm run test` |
-| Config (`config.toml`) / secrets | none | — build gate only; `FRAMEIO_*` secrets are set by hand with `supabase secrets set` | — | build gate |
+| Config (`config.toml`) / secrets | none | — build gate only, ending in `tests/check-bundle-secrets.mjs` which scans `dist/assets` for the marker (AUTH-05) | — | `node tests/check-bundle-secrets.mjs` |
 
 ## Gate Check Commands
 
@@ -36,7 +36,7 @@ Evidence for the commands: `package.json` scripts (`test` = `vitest run`, `test:
 | ---------- | ----------- | ------- |
 | Quick | After unit-only tasks | `npm run test` |
 | Full | After a task that touches the schema | `npm run test && npm run test:db` |
-| Build | After phase completion | `npm run test && npm run test:db && npx tsc --noEmit && npm run build` |
+| Build | After phase completion | `npm run test && npm run test:db && npx tsc --noEmit && npm run build && node tests/check-bundle-secrets.mjs` |
 
 ---
 

@@ -92,6 +92,7 @@ function makeDeps(overrides: Partial<RunDeps> = {}, state: {
     markReconnect: async (workspaceId) => {
       log.marked.push(workspaceId);
     },
+    listFrameioWorkspaces: async () => [{ id: 'fi-ws-1' }],
     frameio: (ctx) => {
       log.frameioContexts.push(ctx);
       return api;
@@ -269,6 +270,33 @@ describe('handleRun — ciclo de vida do token (AUTH-08, AUTH-09)', () => {
 
     expect(res.status).toBe(409);
     expect(log.frameioContexts).toEqual([]);
+  });
+});
+
+describe('handleRun — workspace sumido (EDGE-05)', () => {
+  it('pedido reconexão em vez de falhar genérica, e não toca no Frame.io', async () => {
+    const { deps, log } = makeDeps({
+      listFrameioWorkspaces: async () => [{ id: 'outro-workspace' }],
+    });
+    const res = await handleRun(clientInput, deps);
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe(RECONNECT_MESSAGE);
+    expect(log.marked).toEqual(['ws-tv-1']);
+    expect(log.frameioContexts).toEqual([]);
+    expect(log.created).toEqual([]);
+    expect(log.finishes[0].status).toBe('failed');
+  });
+
+  it('workspace ainda presente executa normalmente', async () => {
+    const { deps, log } = makeDeps({
+      listFrameioWorkspaces: async () => [{ id: 'fi-ws-1' }],
+    });
+    const res = await handleRun(clientInput, deps);
+
+    expect(res.status).toBe(200);
+    expect(log.marked).toEqual([]);
+    expect(log.created).toEqual(ALL);
   });
 });
 

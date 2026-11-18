@@ -48,6 +48,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Acentuação nos nomes de pasta | Preservada; só sequências de espaço viram `-` | Frame.io aceita acentos. Normalizar seria perda de informação sem ganho. | y |
 | `verify_jwt` das funções novas | Padrão Supabase (**não** declarar `verify_jwt = false`) | Ambas as funções são chamadas da aplicação com JWT do usuário. O padrão `false` do repositório existe para webhooks externos, que este fluxo não tem. | y |
 
+| Retentativas em 5xx e em falha de rede | Mesmo orçamento do RATE-01: até 3 tentativas, 1 s entre elas | O runner tem uma única política de repetição. O spec fixava o número só para 429 e deixava "the permitted retries" de FAIL-01 sem valor, o que impedia discriminar a implementação. | n |
+
 **Open questions:** none - all resolved or logged above (required before the spec is confirmed).
 
 ---
@@ -184,7 +186,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | EDGE-02 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | EDGE-03 | P2: Projeto de vídeo | Pending | Verified |
 | EDGE-04 | P1: Conexão + estrutura de cliente | Pending | Verified |
-| EDGE-05 | P1: Conexão + estrutura de cliente | Pending | Pending |
+| EDGE-05 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | EDGE-06 | P1: Conexão + estrutura de cliente | Pending | Verified |
 
 **ID format:** `MENU-NN`, `AUTH-NN`, `STRU-NN`, `RETY-NN`, `FAIL-NN`, `PROJ-NN`, `RATE-NN`, `PART-NN`, `EDGE-NN`

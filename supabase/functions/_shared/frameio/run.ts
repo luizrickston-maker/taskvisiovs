@@ -13,7 +13,7 @@
 
 import { NO_PROJECT_ERROR, ensureStructure, type FrameioApi, type RunResult } from './runner.ts';
 import { planClientStructure, planVideoProject, type FolderSpec } from './plan.ts';
-import { needsRefresh } from './tokens.ts';
+import { needsRefresh, workspaceStillPresent } from './tokens.ts';
 
 export const LOCK_BUSY_MESSAGE = 'Já existe uma criação em andamento para este cliente';
 export const RECONNECT_MESSAGE = 'Conexão com o Frame.io expirada. Reconecte para continuar.';
@@ -80,6 +80,8 @@ export interface RunDeps {
   refreshSession(refreshToken: string): Promise<RefreshedTokens | { invalid: true }>;
   saveRefreshed(workspaceId: string, tokens: RefreshedTokens): Promise<void>;
   markReconnect(workspaceId: string): Promise<void>;
+  /** Workspaces visíveis na conta — é assim que se detecta que o gravado sumiu (EDGE-05). */
+  listFrameioWorkspaces(accessToken: string, accountId: string): Promise<{ id: string }[]>;
   frameio(ctx: FrameioContext): FrameioApi;
   delay(ms: number): Promise<void>;
 }
@@ -162,6 +164,16 @@ export async function handleRun(input: RunInput, deps: RunDeps): Promise<RunOutc
     }
     accessToken = refreshed.access_token;
     await deps.saveRefreshed(client.workspace_id, refreshed);
+  }
+
+  // EDGE-05: o workspace gravado pode ter sumido da conta. Sem isto o fluxo
+  // só levaria 404 do Frame.io e reportaria falha genérica em vez de pedir
+  // reconexão.
+  const available = await deps.listFrameioWorkspaces(accessToken, conn.frameio_account_id);
+  if (!workspaceStillPresent(available, conn.frameio_workspace_id)) {
+    await deps.markReconnect(client.workspace_id);
+    await finish('failed', undefined, RECONNECT_MESSAGE);
+    return fail(409, RECONNECT_MESSAGE);
   }
 
   const result = await ensureStructure({

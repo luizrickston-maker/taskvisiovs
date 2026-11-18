@@ -52,10 +52,10 @@ describe('FrameioConnectionCard — estados da conexão (AUTH-06, AUTH-07, AUTH-
     expect(screen.queryByRole('button', { name: 'Conectar Frame.io' })).toBeNull();
   });
 
-  it('reconexão pendente: exige Reconectar Frameio e esconde as ações de criação', () => {
+  it('reconexão pendente: exige Reconectar Frame.io e esconde as ações de criação', () => {
     renderCard({ connection: reconnect, children: <button>Criar estrutura</button> });
 
-    expect(screen.getByRole('button', { name: 'Reconectar Frameio' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reconectar Frame.io' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Criar estrutura' })).toBeNull();
     expect(screen.getByText(/expirou/)).toBeInTheDocument();
   });
