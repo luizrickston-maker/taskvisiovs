@@ -66,6 +66,14 @@
 - **Date**: 2026-10-19
 - **Status**: active
 
+### AD-009
+- **Decision**: A table that stores a third-party credential is created with `ENABLE ROW LEVEL SECURITY` and **no policies at all** (only `service_role` can read it). The client learns its state through a `SECURITY DEFINER` function with an explicit `SET search_path` that returns only non-secret columns, gated on `is_workspace_admin(workspace_id, auth.uid())`. Edge functions read the credential itself exclusively from `Deno.env.get`.
+- **Reason**: RLS cannot restrict columns, so any read policy on the base table puts the credential one careless `select('*')` away from the browser. `frameio_connections` is the first such table; the pattern exists partly already in `appointment_notification_log` (RLS on, no policies), which is the precedent AD-009 generalizes. It makes the spec's "secret never reaches client code" requirement structural rather than a convention someone can forget.
+- **Trade-off**: Reading a non-secret fact (connected / reconnect required) costs an RPC round trip instead of a plain `select`, and every future credential table must remember to grant nothing to `authenticated`.
+- **Scope**: Any table holding a third-party credential, API key or OAuth token.
+- **Date**: 2026-11-18
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `collaborator-agenda` — **SHIPPED** 2026-10-21 (migrations pushed, edge function deployed, `AGZAP_URL` set, `git push` `1716a95..a654bea`, Vercel reported `success` on `a654bea`). A live-bundle check confirmed `path:"/colaborador/agenda"` and chunk `ColaboratorAgendaPage-cy4aS0Vy.js` in production. **Cancellation round closed 2026-10-25** (`3edf8ce..bc7db2e`): COLAB-13, COLAB-14, MGR-13 and ACK-02…ACK-05 implemented and marked Verified.
@@ -83,6 +91,8 @@
 - **Blockers**: none on code. Production runs the 2026-10-21 build; the `notify-appointment` change above is **not** deployed yet. Docker Desktop is installed but unusable (no WSL) and unused.
 - **Known traps**: `git checkout -- <path>` restores to HEAD, **not** to your working copy — it once wiped an uncommitted spec edit while leaving its passing test. Commit `.specs/` before any revert. The hosted Supabase migration history was **empty** until 2026-10-21, when 120 versions were baselined with `migration repair --status applied`; always run `supabase migration list` and confirm the pending count before any `db push`, and remember `db push` refuses backdated files without `--include-all`.
 - **Requirement change (2026-10-22)**: a `cancelled` appointment disappears from both calendars (COLAB-14, MGR-13) — the two suites that asserted a rendered `Cancelado` badge now assert its absence. ACK-03/ACK-04 supersede the cancellation halves of MGR-09 and NOTIF-07; both are annotated in the spec with supersession notes.
-- **Uncommitted files**: none except the untracked `.agents/`, `.claude/`, `.cursor/`, `.windsurf/` skill-install directories, deliberately never staged.
-- **Branch**: `main`, **5 commits ahead of `origin/main`** (`9ddd2fe..bc7db2e`), not pushed — a `git push` needs its own go-ahead.
+- **PENDING (active, 2026-11-18)**: feature `automations` — menu Automações + first automation (Adobe Frame.io folder structure). Spec **42 ACs** validated 0 errors; `context.md` written; `design.md` **Approved**. User decisions locked: one Frame.io project per client, the 5 fixed folders, one connection per workspace, buttons+selectors only, and `Brutos`/`Cenas de Apoio`/`Editados` as three **sibling** folders. User has already registered the production redirect URI `https://taskvisiovs.vercel.app/auth/frameio/callback` in the Adobe console. **AD-009 added 2026-11-18.** Next phase: Tasks. `Client Secret` was pasted into a chat transcript — **rotate it before any deploy**, and the three `FRAMEIO_*` values go only into Supabase secrets.
+- **PENDING (deploy blocker)**: the `frameio-connect` and `frameio-create-structure` functions and the new migration cannot go live until the three `FRAMEIO_*` secrets are set. Ordering rule from the cancellation round still applies: **function before front**.
+- **Uncommitted files**: only the untracked `.specs/features/automations/` plus the `.agents/`, `.claude/`, `.cursor/`, `.windsurf/` skill-install directories, the latter deliberately never staged.
+- **Branch**: `main`, **in sync with `origin/main`** (both `6e3335e`) — evidence reconciled 2026-11-18; the older note claiming 5 commits ahead was stale. A `git push` still needs its own go-ahead.
 
