@@ -161,10 +161,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | STRU-03 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | STRU-04 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | STRU-05 | P1: Conexão + estrutura de cliente | Pending | Verified |
-| STRU-06 | P1: Conexão + estrutura de cliente | Pending | Pending |
+| STRU-06 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | STRU-07 | P1: Conexão + estrutura de cliente | Pending | Pending |
-| RETY-01 | P1: Conexão + estrutura de cliente | Pending | Pending |
-| FAIL-01 | P1: Conexão + estrutura de cliente | Pending | Pending |
+| RETY-01 | P1: Conexão + estrutura de cliente | Pending | Verified |
+| FAIL-01 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | PROJ-01 | P2: Projeto de vídeo | Pending | Verified |
 | PROJ-02 | P2: Projeto de vídeo | Pending | Verified |
 | PROJ-03 | P2: Projeto de vídeo | Pending | Verified |
@@ -177,11 +177,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PROJ-10 | P2: Projeto de vídeo | Pending | Pending |
 | PROJ-11 | P2: Projeto de vídeo | Pending | Verified |
 | PROJ-12 | P2: Projeto de vídeo | Pending | Pending |
-| RATE-01 | P3: Resiliência | Pending | Pending |
-| PART-01 | P3: Resiliência | Pending | Pending |
-| PART-02 | P3: Resiliência | Pending | Pending |
+| RATE-01 | P3: Resiliência | Pending | Verified |
+| PART-01 | P3: Resiliência | Pending | Verified |
+| PART-02 | P3: Resiliência | Pending | Verified |
 | EDGE-01 | P1: Conexão + estrutura de cliente | Pending | Verified |
-| EDGE-02 | P1: Conexão + estrutura de cliente | Pending | Pending |
+| EDGE-02 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | EDGE-03 | P2: Projeto de vídeo | Pending | Verified |
 | EDGE-04 | P1: Conexão + estrutura de cliente | Pending | Pending |
 | EDGE-05 | P1: Conexão + estrutura de cliente | Pending | Pending |

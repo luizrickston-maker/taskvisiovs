@@ -201,15 +201,15 @@ T16
 
 **Done when**:
 
-- [ ] Folder creations are issued one at a time with ≥350 ms between consecutive requests (STRU-06), asserted by an instrumented fake `delay`
-- [ ] A 401 triggers one refresh-and-retry of that call, not a second refresh (RETY-01)
-- [ ] A 429 waits `Retry-After` when present, 1 s when absent, up to 3 attempts, then gives up (RATE-01)
-- [ ] A 5xx after retries stops the run and reports `failedAt` naming the step plus `remaining` (FAIL-01, PART-01)
-- [ ] A failure on the very first item reports `created: []` (PART-02)
-- [ ] A resumed run creates only what is still missing and reports the rest as `existing` (STRU-04, PROJ-06, STRU-07)
-- [ ] When the API rejects a name, its reason reaches the returned error rather than being swallowed (EDGE-02)
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `supabase/functions/_shared/frameio/runner.test.ts` passes
+- [x] Folder creations are issued one at a time with ≥350 ms between consecutive requests (STRU-06), asserted by an instrumented fake `delay`
+- [x] A 401 triggers one refresh-and-retry of that call, not a second refresh (RETY-01)
+- [x] A 429 waits `Retry-After` when present, 1 s when absent, up to 3 attempts, then gives up (RATE-01)
+- [x] A 5xx after retries stops the run and reports `failedAt` naming the step plus `remaining` (FAIL-01, PART-01)
+- [x] A failure on the very first item reports `created: []` (PART-02)
+- [x] A resumed run creates only what is still missing and reports the rest as `existing` (STRU-04, PROJ-06, STRU-07)
+- [x] When the API rejects a name, its reason reaches the returned error rather than being swallowed (EDGE-02)
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `supabase/functions/_shared/frameio/runner.test.ts` passes
 
 **Tests**: unit
 **Gate**: quick
