@@ -530,13 +530,13 @@ T16
 
 **Done when**:
 
-- [ ] While status is loading the page shows a loading state and neither creation action (AUTH-06)
-- [ ] `disconnected` renders the connection card alone (AUTH-06)
-- [ ] `connected` renders the connection card plus both forms (AUTH-07)
-- [ ] A signed-in user who is not a workspace admin sees no connection or creation action (MENU-03)
-- [ ] The forms receive `onRun` from this page — the forms do not import the mutation hook themselves
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `src/pages/PJ/AutomacoesPage.test.tsx` passes
+- [x] While status is loading the page shows a loading state and neither creation action (AUTH-06)
+- [x] `disconnected` renders the connection card alone (AUTH-06)
+- [x] `connected` renders the connection card plus both forms (AUTH-07)
+- [x] A signed-in user who is not a workspace admin sees no connection or creation action (MENU-03)
+- [x] The forms receive `onRun` from this page — the forms do not import the mutation hook themselves
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `src/pages/PJ/AutomacoesPage.test.tsx` passes
 
 **Tests**: unit
 **Gate**: quick
