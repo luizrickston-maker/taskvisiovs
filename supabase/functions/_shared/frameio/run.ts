@@ -184,8 +184,15 @@ export async function handleRun(input: RunInput, deps: RunDeps): Promise<RunOutc
 
   if (result.status === 'failed') {
     await finish('failed', result, result.error);
-    if (result.error === NO_PROJECT_MESSAGE) return fail(409, NO_PROJECT_MESSAGE);
-    return fail(502, result.error ?? 'Falha ao criar a estrutura no Frame.io');
+    // O corpo carrega o resultado inteiro: PART-01 exige mostrar o que foi
+    // criado e o que não foi, e isso não sobreviveria num `fail()` de texto só.
+    if (result.error === NO_PROJECT_MESSAGE) {
+      return { status: 409, body: { error: NO_PROJECT_MESSAGE, failed: result } };
+    }
+    return {
+      status: 502,
+      body: { error: result.error ?? 'Falha ao criar a estrutura no Frame.io', failed: result },
+    };
   }
 
   await finish('done', result);

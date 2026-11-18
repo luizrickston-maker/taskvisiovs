@@ -444,11 +444,11 @@ T16
 
 **Done when**:
 
-- [ ] `isPending` is true from submit until the promise settles — the value the forms use to disable the control (STRU-05, PROJ-11)
-- [ ] A 409 mutex rejection surfaces as its own message, not as a generic failure
-- [ ] An invoke error and a `status:'failed'` payload are kept distinct, so a transport failure never renders as a completed run
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `src/hooks/useFrameioCreateStructure.test.tsx` passes
+- [x] `isPending` is true from submit until the promise settles — the value the forms use to disable the control (STRU-05, PROJ-11)
+- [x] A 409 mutex rejection surfaces as its own message, not as a generic failure
+- [x] An invoke error and a `status:'failed'` payload are kept distinct, so a transport failure never renders as a completed run
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `src/hooks/useFrameioCreateStructure.test.tsx` passes
 
 **Tests**: unit
 **Gate**: quick
