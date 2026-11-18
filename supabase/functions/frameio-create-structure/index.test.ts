@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import {
   LOCK_BUSY_MESSAGE,
   handleListProjects,
@@ -463,5 +465,27 @@ describe('handleListProjects — prévia de correspondência', () => {
 
     expect(res.status).toBe(409);
     expect(log.marked).toEqual(['ws-tv-1']);
+  });
+});
+
+
+describe('getMyWorkspaceId no entry point (Deno glue)', () => {
+  // Não há Deno aqui (AD-003), então o que se garante é a forma do glue: a RPC
+  // precisa rodar com o JWT do chamador, porque auth.uid() é NULL sob
+  // service_role e a listagem morreria em 404.
+  it('usa o cabeçalho do chamador, nunca supabaseAdmin, nesta RPC', () => {
+    const source = readFileSync(
+      path.resolve(process.cwd(), 'supabase/functions/frameio-create-structure/index.ts'),
+      'utf8',
+    );
+
+    const from = source.indexOf('getMyWorkspaceId:');
+    const eol = String.fromCharCode(10);
+    const to = source.indexOf(eol + '      },', from);
+    const block = source.slice(from, to === -1 ? undefined : to);
+
+    expect(block).toContain('authHeader');
+    expect(block).toContain("rpc('get_my_workspace_id')");
+    expect(block).not.toContain('supabaseAdmin.rpc');
   });
 });

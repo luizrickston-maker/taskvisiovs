@@ -159,7 +159,8 @@ export default function AutomacoesPage() {
 
                   {projectsQuery.isError && (
                     <p role="alert" className="text-sm text-destructive">
-                      Não foi possível listar os projetos do Frame.io.
+                      Não foi possível listar os projetos do Frame.io.{' '}
+                      {(projectsQuery.error as Error | null)?.message}
                     </p>
                   )}
 

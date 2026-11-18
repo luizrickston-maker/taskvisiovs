@@ -142,7 +142,15 @@ Deno.serve(async (req) => {
       delay: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 
       getMyWorkspaceId: async () => {
-        const { data } = await supabaseAdmin.rpc('get_my_workspace_id');
+        // get_my_workspace_id lê auth.uid(). Sob service_role não existe `sub`
+        // nas claims, então auth.uid() é NULL, a RPC devolve NULL e a listagem
+        // morria em 404. Tem de rodar com o JWT de quem pediu — igual ao getUser.
+        const userClient = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_ANON_KEY')!,
+          { global: { headers: { Authorization: authHeader ?? '' } } },
+        );
+        const { data } = await userClient.rpc('get_my_workspace_id');
         return (data as string | null) ?? null;
       },
 
