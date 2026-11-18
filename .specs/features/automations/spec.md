@@ -171,9 +171,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PROJ-04 | P2: Projeto de vídeo | Pending | Pending |
 | PROJ-05 | P2: Projeto de vídeo | Pending | Pending |
 | PROJ-06 | P2: Projeto de vídeo | Pending | Pending |
-| PROJ-07 | P2: Projeto de vídeo | Pending | Pending |
-| PROJ-08 | P2: Projeto de vídeo | Pending | Pending |
-| PROJ-09 | P2: Projeto de vídeo | Pending | Pending |
+| PROJ-07 | P2: Projeto de vídeo | Pending | Verified |
+| PROJ-08 | P2: Projeto de vídeo | Pending | Verified |
+| PROJ-09 | P2: Projeto de vídeo | Pending | Verified |
 | PROJ-10 | P2: Projeto de vídeo | Pending | Pending |
 | PROJ-11 | P2: Projeto de vídeo | Pending | Verified |
 | PROJ-12 | P2: Projeto de vídeo | Pending | Pending |

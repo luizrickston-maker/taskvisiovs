@@ -140,13 +140,13 @@ T16
 
 **Done when**:
 
-- [ ] `buildMonthFolderName('2026-11-05')` returns `2026-11-Novembro`
-- [ ] `buildProjectFolderName({dateISO:'2026-11-05', tipo:'Video', nomeProjeto:'Lancamento'})` returns `2026-11-05_Quinta-Video-Lancamento`
-- [ ] All 7 weekdays and all 12 months are covered by the test table
-- [ ] Each whitespace run in `tipo`/`nomeProjeto` collapses to one hyphen; accents and every other character survive (PROJ-09)
-- [ ] File uses no Deno-specific API, so `tsc --noEmit` accepts it when reached from `src`
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `supabase/functions/_shared/frameio/names.test.ts` passes alongside `collaborator-agenda.test.ts`
+- [x] `buildMonthFolderName('2026-11-05')` returns `2026-11-Novembro`
+- [x] `buildProjectFolderName({dateISO:'2026-11-05', tipo:'Video', nomeProjeto:'Lancamento'})` returns `2026-11-05_Quinta-Video-Lancamento`
+- [x] All 7 weekdays and all 12 months are covered by the test table
+- [x] Each whitespace run in `tipo`/`nomeProjeto` collapses to one hyphen; accents and every other character survive (PROJ-09)
+- [x] File uses no Deno-specific API, so `tsc --noEmit` accepts it when reached from `src`
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `supabase/functions/_shared/frameio/names.test.ts` passes alongside `collaborator-agenda.test.ts`
 
 **Tests**: unit
 **Gate**: quick
