@@ -42,8 +42,9 @@ export function ClientStructureForm({
 }: ClientStructureFormProps) {
   const [clientId, setClientId] = useState('');
 
-  // MENU-03 / spec: só cliente ativo entra no seletor.
-  const active = clients.filter((client) => client.isActive);
+  // O inativo entra marcado, não some: omitir cadastro é o que fez a lista
+  // parecer vazia para quem tem clientes.
+  const active = clients;
 
   if (!canManage) return null;
 
@@ -75,6 +76,7 @@ export function ClientStructureForm({
             {active.map((client) => (
               <SelectItem key={client.id} value={client.id}>
                 {client.name}
+                {client.isActive ? '' : ' (inativo)'}
               </SelectItem>
             ))}
           </SelectContent>

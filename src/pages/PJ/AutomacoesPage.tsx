@@ -33,11 +33,15 @@ export default function AutomacoesPage() {
   const clientsQuery = useQuery<ClientOption[]>({
     queryKey: ['automation-clients'],
     enabled: canManage,
+    // Cliente criado em outra aba tem que aparecer aqui sem recarregar à mão.
+    refetchOnMount: 'always',
     queryFn: async () => {
+      // Sem filtro de is_active: esconder cliente foi o que deixou a lista
+      // vazia para quem tem cadastro. O seletor marca o inativo em vez de
+      // omiti-lo (o flag continua sendo gerido em Comercial -> Clientes).
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name, is_active')
-        .eq('is_active', true);
+        .select('id, name, is_active');
       // Sem isto a query falha silenciosamente: devolveria [] e a tela não
       // teria como distinguir "sem clientes" de "não consegui ler".
       if (error) throw error;

@@ -48,7 +48,7 @@ const submit = () => fireEvent.click(screen.getByRole('button', { name: /Criar e
 beforeEach(() => toast.success.mockReset());
 
 describe('ClientStructureForm — seletor', () => {
-  it('lista só os clientes ativos', async () => {
+  it('lista todos, marcando o inativo em vez de omiti-lo', async () => {
     renderForm();
     const trigger = screen.getByRole('combobox', { name: 'Cliente' });
     fireEvent.pointerDown(trigger, { button: 0, pointerType: 'mouse' });
@@ -56,7 +56,17 @@ describe('ClientStructureForm — seletor', () => {
 
     expect(await screen.findByRole('option', { name: 'Cliente Ativo' })).toBeInTheDocument();
     expect(await screen.findByRole('option', { name: 'Outro Ativo' })).toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: 'Cliente Inativo' })).toBeNull();
+    // Omitir deixava a lista parecer vazia para quem tem cadastro.
+    expect(await screen.findByRole('option', { name: 'Cliente Inativo (inativo)' })).toBeInTheDocument();
+  });
+
+  it('dá para escolher um cliente inativo — o flag é anotação, não trava', async () => {
+    const onRun = renderForm();
+    await chooseClient('Cliente Inativo (inativo)');
+
+    expect(screen.getByRole('button', { name: 'Criar estrutura' })).toBeEnabled();
+    submit();
+    expect(onRun).toHaveBeenCalledWith('cl-2');
   });
 
   it('sem cliente selecionado o envio fica desabilitado (STRU-05)', () => {
@@ -109,8 +119,8 @@ describe('ClientStructureForm — seletor', () => {
     expect(onRun).toHaveBeenCalledWith('cl-1');
   });
 
-  it('sem cliente ativo nenhum não deixa enviar', () => {
-    const onRun = renderForm({ clients: [{ id: 'cl-2', name: 'Inativo', isActive: false }] });
+  it('sem cliente nenhum não deixa enviar', () => {
+    const onRun = renderForm({ clients: [] });
     expect(screen.getByRole('button', { name: 'Criar estrutura' })).toBeDisabled();
     submit();
     expect(onRun).not.toHaveBeenCalled();

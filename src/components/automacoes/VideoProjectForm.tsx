@@ -78,7 +78,7 @@ export function VideoProjectForm({
 
   if (!canManage) return null;
 
-  const active = clients.filter((client) => client.isActive);
+  const active = clients;
   const ready = Boolean(clientId && dateISO && tipo.trim() && nomeProjeto.trim());
   const disabled = isPending || !ready;
 
@@ -109,6 +109,7 @@ export function VideoProjectForm({
             {active.map((client) => (
               <SelectItem key={client.id} value={client.id}>
                 {client.name}
+                {client.isActive ? '' : ' (inativo)'}
               </SelectItem>
             ))}
           </SelectContent>
