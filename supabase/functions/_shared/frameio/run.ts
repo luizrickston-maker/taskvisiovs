@@ -25,6 +25,8 @@ export interface RunInput {
   authHeader: string | null;
   flow?: unknown;
   clientId?: unknown;
+  /** Projeto do Frame.io escolhido diretamente; sobrepõe a busca por nome. */
+  frameioProjectId?: unknown;
   dateISO?: unknown;
   tipo?: unknown;
   nomeProjeto?: unknown;
@@ -239,22 +241,38 @@ export async function handleRun(input: RunInput, deps: RunDeps): Promise<RunOutc
     return fail(409, RECONNECT_MESSAGE);
   }
 
+  const api = deps.frameio({
+    accessToken,
+    refreshToken: conn.refresh_token,
+    accountId: conn.frameio_account_id,
+    frameioWorkspaceId: conn.frameio_workspace_id,
+    onRefreshed: (tokens) => deps.saveRefreshed(client.workspace_id, tokens),
+    onReconnect: () => deps.markReconnect(client.workspace_id),
+    refreshSession: deps.refreshSession,
+  });
+
+  // Projeto escolhido diretamente: resolve antes e o runner usa ele em vez de
+  // procurar por nome. Id que não existe nesta conta é recusa, não criação.
+  let target: { id: string; name: string; root_folder_id: string } | undefined;
+  const chosenId = typeof input.frameioProjectId === 'string' ? input.frameioProjectId : '';
+  if (chosenId) {
+    const found = (await api.listProjects()).find((project) => project.id === chosenId);
+    if (!found) {
+      await finish('failed', undefined, 'Projeto do Frame.io não encontrado nesta conta');
+      return fail(404, 'Projeto do Frame.io não encontrado nesta conta');
+    }
+    target = found;
+  }
+
   const result = await ensureStructure({
-    api: deps.frameio({
-      accessToken,
-      refreshToken: conn.refresh_token,
-      accountId: conn.frameio_account_id,
-      frameioWorkspaceId: conn.frameio_workspace_id,
-      onRefreshed: (tokens) => deps.saveRefreshed(client.workspace_id, tokens),
-      onReconnect: () => deps.markReconnect(client.workspace_id),
-      refreshSession: deps.refreshSession,
-    }),
+    api,
     specs,
     projectName: client.name,
     options: { delay: deps.delay },
+    ...(target ? { project: target } : {}),
     // O fluxo de vídeo só escreve onde o projeto do cliente já existe (PROJ-10);
     // o de cliente novo cria o projeto se faltar (STRU-01).
-    createProjectIfMissing: flow === 'client_structure',
+    createProjectIfMissing: flow === 'client_structure' && !target,
   });
 
   if (result.status === 'failed') {

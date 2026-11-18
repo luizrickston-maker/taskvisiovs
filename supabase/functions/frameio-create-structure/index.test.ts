@@ -489,3 +489,39 @@ describe('getMyWorkspaceId no entry point (Deno glue)', () => {
     expect(block).not.toContain('supabaseAdmin.rpc');
   });
 });
+
+describe('handleRun — projeto escolhido diretamente', () => {
+  it('usa o projeto indicado mesmo quando o nome não bate com o do cliente', async () => {
+    const { deps, log } = makeDeps({}, {
+      projects: [{ id: 'p-alvo', name: 'Nome Diferente', root_folder_id: 'root' }],
+    });
+    const res = await handleRun(
+      { ...clientInput, frameioProjectId: 'p-alvo' },
+      deps,
+    );
+
+    expect(res.status).toBe(200);
+    // Sem a escolha, o nome não bateria e o projeto do cliente seria criado.
+    expect(log.createdProject).toEqual([]);
+    expect(log.created).toEqual(ALL);
+  });
+
+  it('id que não existe nesta conta é recusa, sem criar nada', async () => {
+    const { deps, log } = makeDeps();
+    const res = await handleRun({ ...clientInput, frameioProjectId: 'sumiu' }, deps);
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Projeto do Frame.io não encontrado nesta conta');
+    expect(log.createdProject).toEqual([]);
+    expect(log.created).toEqual([]);
+    expect(log.finishes[0].status).toBe('failed');
+  });
+
+  it('sem frameioProjectId continua buscando por nome (EDGE-04)', async () => {
+    const { deps, log } = makeDeps({}, { projects: [] });
+    const res = await handleRun(clientInput, deps);
+
+    expect(res.status).toBe(200);
+    expect(log.createdProject).toEqual(['Cliente Xyz']);
+  });
+});

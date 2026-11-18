@@ -35,7 +35,9 @@ export function useFrameioConnection() {
   const query = useQuery<FrameioConnection>({
     queryKey: ['frameio-connection'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('frameio_connection_status');
+      // types.ts é gerado e ainda não conhece esta RPC — a migração que a
+      // criou é nova. `never` é o escape até o types ser regenerado.
+      const { data, error } = await supabase.rpc('frameio_connection_status' as never);
       if (error) throw error;
       return toConnection(data as ConnectionRow[] | null);
     },

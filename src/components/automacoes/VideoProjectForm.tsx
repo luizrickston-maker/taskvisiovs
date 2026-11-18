@@ -52,6 +52,7 @@ export interface VideoRunInput {
   dateISO: string;
   tipo: string;
   nomeProjeto: string;
+  frameioProjectId?: string;
 }
 
 interface VideoProjectFormProps {
@@ -60,8 +61,8 @@ interface VideoProjectFormProps {
   isPending: boolean;
   result: FrameioRunResult | null;
   message: string | null;
-  /** Nomes de projeto que já existem no Frame.io — a prévia de correspondência. */
-  frameioProjectNames?: string[];
+  /** Projetos que já existem no Frame.io — alvo opcional deste vídeo. */
+  frameioProjects?: { id: string; name: string }[];
   onRun: (input: VideoRunInput) => void;
 }
 
@@ -71,13 +72,14 @@ export function VideoProjectForm({
   isPending,
   result,
   message,
-  frameioProjectNames,
+  frameioProjects,
   onRun,
 }: VideoProjectFormProps) {
   const [clientId, setClientId] = useState('');
   const [dateISO, setDateISO] = useState('');
   const [tipo, setTipo] = useState(DEFAULT_TIPO);
   const [nomeProjeto, setNomeProjeto] = useState('');
+  const [frameioProjectId, setFrameioProjectId] = useState('');
 
   if (!canManage) return null;
 
@@ -87,7 +89,7 @@ export function VideoProjectForm({
 
   const submit = () => {
     if (disabled) return;
-    onRun({ clientId, dateISO, tipo, nomeProjeto });
+    onRun({ clientId, dateISO, tipo, nomeProjeto, frameioProjectId: frameioProjectId || undefined });
   };
 
   const preview = dateISO && tipo.trim() && nomeProjeto.trim();
@@ -163,11 +165,35 @@ export function VideoProjectForm({
           </div>
         )}
 
+        {(frameioProjects ?? []).length > 0 && (
+          <Select
+            value={frameioProjectId}
+            onValueChange={setFrameioProjectId}
+            disabled={isPending}
+          >
+            <SelectTrigger aria-label="Projeto no Frame.io" className="w-full">
+              <SelectValue placeholder="Projeto no Frame.io: mesmo nome do cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              {(frameioProjects ?? []).map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
         {clientId && (
           <p className="text-xs text-muted-foreground" data-testid="frameio-preview">
-            {frameioProjectNames?.includes(clients.find((c) => c.id === clientId)?.name ?? '')
-              ? 'Projeto já existe no Frame.io — as pastas deste vídeo serão criadas nele.'
-              : 'Projeto do cliente ainda não existe no Frame.io. Rode "Cliente novo" antes.'}
+            {frameioProjectId
+              ? 'As pastas deste vídeo serão criadas no projeto escolhido.'
+              : (frameioProjects ?? []).some(
+                    (project) =>
+                      project.name === clients.find((c) => c.id === clientId)?.name,
+                  )
+                ? 'Projeto já existe no Frame.io — as pastas deste vídeo serão criadas nele.'
+                : 'Projeto do cliente ainda não existe no Frame.io. Rode "Cliente novo" antes.'}
           </p>
         )}
 

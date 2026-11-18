@@ -11,7 +11,8 @@ type Mutation = { isPending?: boolean; data?: unknown; mutate: ReturnType<typeof
 const { state, rpc, from, connectionHook, mutationHook, projectsHook } = vi.hoisted(() => {
   const state = {
     admin: true,
-    clients: [{ id: 'cl-1', name: 'Cliente Xyz', isActive: true }],
+    // Formato do banco: a página faz o mapeamento para isActive.
+    clients: [{ id: 'cl-1', name: 'Cliente Xyz', is_active: true }],
     clientsError: false,
     connection: {
       connection: { status: 'connected', workspaceName: 'Produção', accountName: 'Chapada' },
@@ -79,7 +80,7 @@ const hasVideoForm = () => !!screen.queryByRole('button', { name: /Criar projeto
 
 beforeEach(() => {
   state.admin = true;
-  state.clients = [{ id: 'cl-1', name: 'Cliente Xyz', isActive: true }];
+  state.clients = [{ id: 'cl-1', name: 'Cliente Xyz', is_active: true }];
   state.clientsError = false;
   state.connection = {
     connection: { status: 'connected', workspaceName: 'Produção', accountName: 'Chapada' },
@@ -149,7 +150,7 @@ describe('AutomacoesPage — conectado (AUTH-07)', () => {
     renderPage();
     await screen.findByRole('button', { name: 'Criar estrutura' });
 
-    const trigger = screen.getAllByRole('combobox')[0];
+    const trigger = screen.getAllByRole('combobox', { name: 'Cliente' })[0];
     fireEvent.pointerDown(trigger, { button: 0, pointerType: 'mouse' });
     fireEvent.click(trigger);
     fireEvent.click(await screen.findByRole('option', { name: 'Cliente Xyz' }));
@@ -166,7 +167,8 @@ describe('AutomacoesPage — conectado (AUTH-07)', () => {
     renderPage();
     await screen.findByRole('button', { name: 'Criar projeto de vídeo' });
 
-    const trigger = screen.getAllByRole('combobox')[1];
+    // O segundo formulário: o segundo seletor chamado "Cliente".
+    const trigger = screen.getAllByRole('combobox', { name: 'Cliente' })[1];
     fireEvent.pointerDown(trigger, { button: 0, pointerType: 'mouse' });
     fireEvent.click(trigger);
     fireEvent.click(await screen.findByRole('option', { name: 'Cliente Xyz' }));
@@ -197,7 +199,7 @@ describe('AutomacoesPage — conflito (do próprio hook)', () => {
     );
     await screen.findByRole('button', { name: 'Criar estrutura' });
 
-    const trigger = screen.getAllByRole('combobox')[0];
+    const trigger = screen.getAllByRole('combobox', { name: 'Cliente' })[0];
     fireEvent.pointerDown(trigger, { button: 0, pointerType: 'mouse' });
     fireEvent.click(trigger);
     fireEvent.click(await screen.findByRole('option', { name: 'Cliente Xyz' }));

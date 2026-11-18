@@ -293,3 +293,21 @@ describe('ensureStructure — projeto ausente (PROJ-10)', () => {
     expect(res.created).toEqual(ALL);
   });
 });
+
+describe('ensureStructure — projeto já resolvido', () => {
+  it('pula a busca por nome e a criação quando o projeto vem pronto', async () => {
+    const fake = makeFake({ projectExists: false });
+    const res = await ensureStructure({
+      api: fake.api,
+      specs: planClientStructure(),
+      projectName: 'Qualquer Coisa',
+      options: fake.options,
+      project: { id: 'p-escolhido', name: 'Outro Nome', root_folder_id: 'root' },
+    });
+
+    expect(res.status).toBe('ok');
+    expect(res.created).toEqual(ALL);
+    // Nem listou projetos nem criou: o root veio de fora.
+    expect(fake.state.createsProject).toBe(0);
+  });
+});

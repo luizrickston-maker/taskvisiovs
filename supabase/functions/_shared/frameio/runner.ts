@@ -102,6 +102,12 @@ export async function ensureStructure(args: {
   options: RunnerOptions;
   /** Padrão `true` (STRU-01). `false` = recusa com NO_PROJECT_ERROR (PROJ-10). */
   createProjectIfMissing?: boolean;
+  /**
+   * Projeto escolhido pelo usuário. Quando presente, pula a busca por nome e a
+   * criação — é o que permite montar as pastas dentro de um projeto que já
+   * existe, mesmo que o nome não bata com o do cliente.
+   */
+  project?: { id: string; name: string; root_folder_id: string };
 }): Promise<RunResult> {
   const { api, specs, projectName, options } = args;
   const delay = options.delay;
@@ -116,11 +122,15 @@ export async function ensureStructure(args: {
   let index = -1;
 
   try {
-    const projects = await hit(() => api.listProjects());
-    let project = projects.find((p) => p.name === projectName);
+    let project = args.project;
     if (!project) {
-      if (args.createProjectIfMissing === false) throw new Error(NO_PROJECT_ERROR);
-      project = await hit(() => api.createProject(projectName));
+      const projects = await hit(() => api.listProjects());
+      project = projects.find((p) => p.name === projectName);
+      if (!project) {
+        if (args.createProjectIfMissing === false) throw new Error(NO_PROJECT_ERROR);
+        const created = await hit(() => api.createProject(projectName));
+        project = { name: projectName, ...created };
+      }
     }
     const rootId = project.root_folder_id;
 

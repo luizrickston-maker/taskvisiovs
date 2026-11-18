@@ -186,7 +186,7 @@ describe('ClientStructureForm — permissão (MENU-03)', () => {
 
 describe('ClientStructureForm — prévia de correspondência', () => {
   it('avisa quando o projeto já existe no Frame.io', async () => {
-    renderForm({ frameioProjectNames: ['Cliente Ativo'] });
+    renderForm({ frameioProjects: [{ id: 'p1', name: 'Cliente Ativo' }] });
     await chooseClient('Cliente Ativo');
 
     expect(screen.getByTestId('frameio-preview')).toHaveTextContent(
@@ -195,7 +195,7 @@ describe('ClientStructureForm — prévia de correspondência', () => {
   });
 
   it('avisa quando o projeto será criado', async () => {
-    renderForm({ frameioProjectNames: ['Outro'] });
+    renderForm({ frameioProjects: [{ id: 'p2', name: 'Outro' }] });
     await chooseClient('Cliente Ativo');
 
     expect(screen.getByTestId('frameio-preview')).toHaveTextContent(
@@ -204,7 +204,7 @@ describe('ClientStructureForm — prévia de correspondência', () => {
   });
 
   it('sem projeto escolhido não mostra prévia', () => {
-    renderForm({ frameioProjectNames: ['Cliente Ativo'] });
+    renderForm({ frameioProjects: [{ id: 'p1', name: 'Cliente Ativo' }] });
     expect(screen.queryByTestId('frameio-preview')).toBeNull();
   });
 });

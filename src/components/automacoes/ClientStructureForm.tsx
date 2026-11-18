@@ -29,9 +29,9 @@ interface ClientStructureFormProps {
   result: FrameioRunResult | null;
   /** Conflito de trava, recusa de conexão, ou qualquer outro aviso da função. */
   message: string | null;
-  /** Nomes de projeto que já existem no Frame.io — a prévia de correspondência. */
-  frameioProjectNames?: string[];
-  onRun: (clientId: string) => void;
+  /** Projetos que já existem no Frame.io — alvo opcional da criação. */
+  frameioProjects?: { id: string; name: string }[];
+  onRun: (clientId: string, frameioProjectId?: string) => void;
 }
 
 export function ClientStructureForm({
@@ -40,10 +40,11 @@ export function ClientStructureForm({
   isPending,
   result,
   message,
-  frameioProjectNames,
+  frameioProjects,
   onRun,
 }: ClientStructureFormProps) {
   const [clientId, setClientId] = useState('');
+  const [frameioProjectId, setFrameioProjectId] = useState('');
 
   // O inativo entra marcado, não some: omitir cadastro é o que fez a lista
   // parecer vazia para quem tem clientes.
@@ -86,11 +87,32 @@ export function ClientStructureForm({
           </SelectContent>
         </Select>
 
+        {(frameioProjects ?? []).length > 0 && (
+          <Select
+            value={frameioProjectId}
+            onValueChange={setFrameioProjectId}
+            disabled={isPending}
+          >
+            <SelectTrigger aria-label="Projeto no Frame.io" className="w-full">
+              <SelectValue placeholder="Projeto no Frame.io: mesmo nome do cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              {(frameioProjects ?? []).map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
         {selected && (
           <p className="text-xs text-muted-foreground" data-testid="frameio-preview">
-            {frameioProjectNames?.includes(selected.name)
-              ? `Projeto "${selected.name}" já existe no Frame.io — só as pastas serão criadas.`
-              : `Projeto "${selected.name}" será criado no Frame.io.`}
+            {frameioProjectId
+              ? `As pastas serão criadas no projeto escolhido.`
+              : frameioProjects?.some((project) => project.name === selected.name)
+                ? `Projeto "${selected.name}" já existe no Frame.io — só as pastas serão criadas.`
+                : `Projeto "${selected.name}" será criado no Frame.io.`}
           </p>
         )}
 

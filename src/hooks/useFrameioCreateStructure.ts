@@ -16,13 +16,20 @@ export type RunInvocation =
   | { kind: 'conflict'; message: string }
   | { kind: 'error'; message: string };
 
-export type ClientStructureInput = { flow: 'client_structure'; clientId: string };
+export type ClientStructureInput = {
+  flow: 'client_structure';
+  clientId: string;
+  /** Projeto do Frame.io escolhido; quando ausente, busca por nome. */
+  frameioProjectId?: string;
+};
 export type VideoProjectInput = {
   flow: 'video_project';
   clientId: string;
   dateISO: string;
   tipo: string;
   nomeProjeto: string;
+  /** Projeto do Frame.io escolhido; quando ausente, busca por nome. */
+  frameioProjectId?: string;
 };
 export type CreateStructureInput = ClientStructureInput | VideoProjectInput;
 

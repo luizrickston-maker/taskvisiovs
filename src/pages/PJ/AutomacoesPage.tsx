@@ -46,7 +46,13 @@ export default function AutomacoesPage() {
       // Sem isto a query falha silenciosamente: devolveria [] e a tela não
       // teria como distinguir "sem clientes" de "não consegui ler".
       if (error) throw error;
-      return (data ?? []) as ClientOption[];
+      // O banco grava `is_active`; o componente lê `isActive`. Sem este
+      // mapeamento o rótulo "(inativo)" sairia para todo cliente.
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        name: row.name,
+        isActive: row.is_active,
+      }));
     },
   });
 
@@ -76,7 +82,7 @@ export default function AutomacoesPage() {
   const projectsQuery = useFrameioProjects(
     canManage && connection.connection?.status === 'connected',
   );
-  const frameioProjectNames = (projectsQuery.data ?? []).map((project) => project.name);
+  const frameioProjects = projectsQuery.data ?? [];
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
@@ -141,17 +147,17 @@ export default function AutomacoesPage() {
 
                   {/* A lista já vem da mesma chamada da prévia — renderizar é
                       de graça e responde "o que eu já tenho no Frame.io". */}
-                  {frameioProjectNames.length > 0 && (
+                  {frameioProjects.length > 0 && (
                     <div
                       className="rounded-md border p-3 text-sm"
                       data-testid="frameio-projects"
                     >
                       <p className="font-medium">
-                        Projetos existentes no Frame.io ({frameioProjectNames.length})
+                        Projetos existentes no Frame.io ({frameioProjects.length})
                       </p>
                       <ul className="mt-1 space-y-0.5 text-muted-foreground">
-                        {frameioProjectNames.map((name) => (
-                          <li key={name}>{name}</li>
+                        {frameioProjects.map((project) => (
+                          <li key={project.id}>{project.name}</li>
                         ))}
                       </ul>
                     </div>
@@ -170,8 +176,8 @@ export default function AutomacoesPage() {
                     isPending={pending('client_structure')}
                     result={clientOutcome.result}
                     message={clientOutcome.message}
-                    frameioProjectNames={frameioProjectNames}
-                    onRun={(clientId) => runClient({ clientId })}
+                    frameioProjects={frameioProjects}
+                    onRun={(clientId, frameioProjectId) => runClient({ clientId, frameioProjectId })}
                   />
                   <VideoProjectForm
                     clients={clients}
@@ -179,7 +185,7 @@ export default function AutomacoesPage() {
                     isPending={pending('video_project')}
                     result={videoOutcome.result}
                     message={videoOutcome.message}
-                    frameioProjectNames={frameioProjectNames}
+                    frameioProjects={frameioProjects}
                     onRun={(input: VideoRunInput) => runVideo(input)}
                   />
                 </div>

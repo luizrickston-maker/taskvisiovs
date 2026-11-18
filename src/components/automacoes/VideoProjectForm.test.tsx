@@ -214,7 +214,7 @@ describe('VideoProjectForm — permissão (MENU-03)', () => {
 
 describe('VideoProjectForm — prévia de correspondência', () => {
   it('projeto existente: diz que as pastas entram nele', async () => {
-    renderForm({ frameioProjectNames: ['Cliente Xyz'] });
+    renderForm({ frameioProjects: [{ id: 'p1', name: 'Cliente Xyz' }] });
     chooseClient();
     fillAll();
 
@@ -224,7 +224,7 @@ describe('VideoProjectForm — prévia de correspondência', () => {
   });
 
   it('projeto ausente: manda rodar Cliente novo antes, porque o fluxo falharia (PROJ-10)', async () => {
-    renderForm({ frameioProjectNames: ['Outro'] });
+    renderForm({ frameioProjects: [{ id: 'p2', name: 'Outro' }] });
     chooseClient();
     fillAll();
 
