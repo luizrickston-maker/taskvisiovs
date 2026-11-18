@@ -8,7 +8,7 @@ import AutomacoesPage from './AutomacoesPage';
 type Conn = { connection?: unknown; isLoading?: boolean; error?: unknown };
 type Mutation = { isPending?: boolean; data?: unknown; mutate: ReturnType<typeof vi.fn> };
 
-const { state, rpc, from, connectionHook, mutationHook } = vi.hoisted(() => {
+const { state, rpc, from, connectionHook, mutationHook, projectsHook } = vi.hoisted(() => {
   const state = {
     admin: true,
     clients: [{ id: 'cl-1', name: 'Cliente Xyz', isActive: true }],
@@ -19,6 +19,8 @@ const { state, rpc, from, connectionHook, mutationHook } = vi.hoisted(() => {
       error: null,
     } as Conn,
     mutation: { isPending: false, data: undefined, mutate: vi.fn() } as Mutation,
+    frameioProjects: [] as { id: string; name: string }[],
+    frameioProjectsError: false,
   };
 
   return {
@@ -27,6 +29,7 @@ const { state, rpc, from, connectionHook, mutationHook } = vi.hoisted(() => {
     from: vi.fn(),
     connectionHook: vi.fn(() => state.connection),
     mutationHook: vi.fn(() => state.mutation),
+    projectsHook: vi.fn(),
   };
 });
 
@@ -42,6 +45,9 @@ function builder(result: unknown) {
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { rpc, from, functions: { invoke: vi.fn() } },
+}));
+vi.mock('@/hooks/useFrameioProjects', () => ({
+  useFrameioProjects: projectsHook,
 }));
 vi.mock('@/contexts/AuthContext', () => ({
   useAuthContext: () => ({ user: { id: 'user-1' } }),
@@ -81,6 +87,13 @@ beforeEach(() => {
     error: null,
   };
   state.mutation = { isPending: false, data: undefined, mutate: vi.fn() };
+  state.frameioProjects = [];
+  state.frameioProjectsError = false;
+  projectsHook.mockImplementation(() => ({
+    data: state.frameioProjects,
+    isError: state.frameioProjectsError,
+    isLoading: false,
+  }));
   rpc.mockReset().mockResolvedValue({ data: 'ws-1', error: null });
   from.mockReset().mockImplementation((table: string) =>
     table === 'workspace_members'
@@ -251,5 +264,39 @@ describe('AutomacoesPage — lista de clientes', () => {
       'Não foi possível carregar os clientes',
     );
     expect(screen.queryByRole('link', { name: /Cadastre em Comercial/ })).toBeNull();
+  });
+});
+
+describe('AutomacoesPage — projetos do Frame.io', () => {
+  it('lista os projetos que já existem no Frame.io, ao lado dos clientes', async () => {
+    state.frameioProjects = [
+      { id: 'p1', name: 'Xyz Ltda' },
+      { id: 'p2', name: 'Abc Films' },
+    ];
+    renderPage();
+
+    const panel = await screen.findByTestId('frameio-projects');
+    expect(panel).toHaveTextContent('Projetos existentes no Frame.io (2)');
+    expect(panel).toHaveTextContent('Xyz Ltda');
+    expect(panel).toHaveTextContent('Abc Films');
+    // Os clientes continuam vindo do TaskVisio, numa lista separada.
+    expect(await screen.findByRole('button', { name: 'Criar estrutura' })).toBeInTheDocument();
+  });
+
+  it('sem projetos no Frame.io não mostra o painel vazio', async () => {
+    state.frameioProjects = [];
+    renderPage();
+
+    await screen.findByRole('button', { name: 'Criar estrutura' });
+    expect(screen.queryByTestId('frameio-projects')).toBeNull();
+  });
+
+  it('falha ao listar vira alerta, não silêncio', async () => {
+    state.frameioProjectsError = true;
+    renderPage();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível listar os projetos do Frame.io',
+    );
   });
 });

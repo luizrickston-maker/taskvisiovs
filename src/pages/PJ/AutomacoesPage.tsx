@@ -139,6 +139,30 @@ export default function AutomacoesPage() {
                     </p>
                   )}
 
+                  {/* A lista já vem da mesma chamada da prévia — renderizar é
+                      de graça e responde "o que eu já tenho no Frame.io". */}
+                  {frameioProjectNames.length > 0 && (
+                    <div
+                      className="rounded-md border p-3 text-sm"
+                      data-testid="frameio-projects"
+                    >
+                      <p className="font-medium">
+                        Projetos existentes no Frame.io ({frameioProjectNames.length})
+                      </p>
+                      <ul className="mt-1 space-y-0.5 text-muted-foreground">
+                        {frameioProjectNames.map((name) => (
+                          <li key={name}>{name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {projectsQuery.isError && (
+                    <p role="alert" className="text-sm text-destructive">
+                      Não foi possível listar os projetos do Frame.io.
+                    </p>
+                  )}
+
                   <ClientStructureForm
                     clients={clients}
                     canManage
