@@ -148,7 +148,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | MENU-02 | P1: Conexão + estrutura de cliente | Pending | Pending |
 | MENU-03 | P1: Conexão + estrutura de cliente | Pending | Pending |
 | AUTH-01 | P1: Conexão + estrutura de cliente | Pending | Pending |
-| AUTH-02 | P1: Conexão + estrutura de cliente | Pending | Pending |
+| AUTH-02 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | AUTH-03 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | AUTH-04 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | AUTH-05 | P1: Conexão + estrutura de cliente | Pending | Verified |

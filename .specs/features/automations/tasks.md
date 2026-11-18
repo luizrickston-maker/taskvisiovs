@@ -293,12 +293,12 @@ T16
 
 **Done when**:
 
-- [ ] A `state` that does not match the stored value aborts **before** `functions.invoke` is called, and no token is requested (AUTH-02)
-- [ ] A matching `state` invokes `frameio-connect` with the `code` exactly once
-- [ ] The `sessionStorage` entry is removed after the first read, so a replay cannot reuse it
-- [ ] An Adobe `error`/`error_description` is sanitised and capped at 200 characters before display
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `src/pages/Auth/FrameioCallbackPage.test.tsx` passes
+- [x] A `state` that does not match the stored value aborts **before** `functions.invoke` is called, and no token is requested (AUTH-02)
+- [x] A matching `state` invokes `frameio-connect` with the `code` exactly once
+- [x] The `sessionStorage` entry is removed after the first read, so a replay cannot reuse it
+- [x] An Adobe `error`/`error_description` is sanitised and capped at 200 characters before display
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `src/pages/Auth/FrameioCallbackPage.test.tsx` passes
 
 **Tests**: unit
 **Gate**: quick
