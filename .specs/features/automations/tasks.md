@@ -413,14 +413,14 @@ T16
 
 **Done when**:
 
-- [ ] A run with `created` and `existing` lists both, labelling the second group as already present (STRU-07, PROJ-12)
-- [ ] A partial run lists what was created **and** what was not (PART-01)
-- [ ] A run with `created: []` states that nothing was created (PART-02)
-- [ ] Every failure state renders a `Tentar novamente` control that fires `onRetry` (FAIL-01)
-- [ ] The component's own file exports `FrameioRunResult`; a type-level test asserts it is identical to the `RunResult` exported by `_shared/frameio/runner.ts`
-- [ ] No success state is reachable from a `status: 'failed'` payload — asserted as a test, not by inspection
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `src/components/automacoes/RunResult.test.tsx` passes
+- [x] A run with `created` and `existing` lists both, labelling the second group as already present (STRU-07, PROJ-12)
+- [x] A partial run lists what was created **and** what was not (PART-01)
+- [x] A run with `created: []` states that nothing was created (PART-02)
+- [x] Every failure state renders a `Tentar novamente` control that fires `onRetry` (FAIL-01)
+- [x] The component's own file exports `FrameioRunResult`; a type-level test asserts it is identical to the `RunResult` exported by `_shared/frameio/runner.ts`
+- [x] No success state is reachable from a `status: 'failed'` payload — asserted as a test, not by inspection
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `src/components/automacoes/RunResult.test.tsx` passes
 
 **Tests**: unit
 **Gate**: quick
