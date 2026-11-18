@@ -160,7 +160,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | STRU-02 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | STRU-03 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | STRU-04 | P1: Conexão + estrutura de cliente | Pending | Verified |
-| STRU-05 | P1: Conexão + estrutura de cliente | Pending | Pending |
+| STRU-05 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | STRU-06 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | STRU-07 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | RETY-01 | P1: Conexão + estrutura de cliente | Pending | Verified |

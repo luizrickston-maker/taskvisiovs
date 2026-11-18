@@ -472,12 +472,12 @@ T16
 
 **Done when**:
 
-- [ ] The picker lists only `is_active` clients of the caller's workspace
-- [ ] The submit control is disabled while `isPending` **and** while no client is selected (STRU-05)
-- [ ] A completed run renders through `RunResult`, never a bare success toast
-- [ ] With the page's `canManage` flag false, no creation action renders (MENU-03)
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `src/components/automacoes/ClientStructureForm.test.tsx` passes
+- [x] The picker lists only `is_active` clients of the caller's workspace
+- [x] The submit control is disabled while `isPending` **and** while no client is selected (STRU-05)
+- [x] A completed run renders through `RunResult`, never a bare success toast
+- [x] With the page's `canManage` flag false, no creation action renders (MENU-03)
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `src/components/automacoes/ClientStructureForm.test.tsx` passes
 
 **Tests**: unit
 **Gate**: quick
