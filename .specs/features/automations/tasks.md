@@ -588,11 +588,11 @@ T16
 
 **Done when**:
 
-- [ ] Navigating to `/pj/automacoes` renders `AutomacoesPage` (MENU-01's target resolves)
-- [ ] Navigating to `/auth/frameio/callback` renders `FrameioCallbackPage`
-- [ ] `/pj/automacoes` sits inside the same auth guard as its `/pj/*` siblings, so an unauthenticated visit is redirected
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `src/AppRoutes.test.tsx` passes
+- [x] Navigating to `/pj/automacoes` renders `AutomacoesPage` (MENU-01's target resolves)
+- [x] Navigating to `/auth/frameio/callback` renders `FrameioCallbackPage`
+- [x] `/pj/automacoes` sits inside the same auth guard as its `/pj/*` siblings, so an unauthenticated visit is redirected
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `src/AppRoutes.test.tsx` passes
 
 **Tests**: unit
 **Gate**: quick

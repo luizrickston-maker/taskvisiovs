@@ -67,6 +67,8 @@ const WorkspaceDetailsPage = lazy(() => import("@/pages/SuperAdmin/WorkspaceDeta
 const PortalDashboard = lazy(() => import("@/pages/ClientPortal/PortalDashboard"));
 const CollaboratorPortal = lazy(() => import("@/pages/PJ/CollaboratorPortal"));
 const ColaboratorAgendaPage = lazy(() => import("@/pages/colaborador/ColaboratorAgendaPage"));
+const AutomacoesPage = lazy(() => import("@/pages/PJ/AutomacoesPage"));
+const FrameioCallbackPage = lazy(() => import("@/pages/Auth/FrameioCallbackPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -126,23 +128,16 @@ if (import.meta.env.DEV) {
   console.log('[App] Bootstrap iniciado', { timestamp: new Date().toISOString() });
 }
 
-const App = () => {
-  // Log de montagem em dev
-  if (import.meta.env.DEV) {
-    console.log('[App] Componente montado');
-  }
-
+/**
+ * A tabela de rotas, extraída de App para que um teste possa montá-la sob um
+ * MemoryRouter. App só a envolve em BrowserRouter — nada mais muda.
+ */
+export function AppRoutes() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme" attribute="class">
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-          <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/auth/frameio/callback" element={<FrameioCallbackPage />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/" element={<RootRedirect />} />
               {/* Removed individual top-level /colaborador route to use AppLayout instead */}
@@ -300,6 +295,13 @@ const App = () => {
                     <TimePage />
                   </SafePage>
                 } />
+
+                {/* Automações: mesma cerca do resto de /pj (MENU-01) */}
+                <Route path="/pj/automacoes" element={
+                  <SafePage>
+                    <AutomacoesPage />
+                  </SafePage>
+                } />
                 <Route path="/pj/agenda" element={
                   <SafePage>
                     <AgendaPage />
@@ -403,6 +405,24 @@ const App = () => {
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
+  );
+}
+
+const App = () => {
+  // Log de montagem em dev
+  if (import.meta.env.DEV) {
+    console.log('[App] Componente montado');
+  }
+
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme" attribute="class">
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
           </BrowserRouter>
           </AuthProvider>
         </ThemeProvider>
