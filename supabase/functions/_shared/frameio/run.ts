@@ -62,6 +62,8 @@ export interface FrameioContext {
 
 export interface RunDeps {
   getUser(authHeader: string): Promise<{ id: string } | null>;
+  /** Workspace do chamador — a listagem não recebe `clientId`. */
+  getMyWorkspaceId(): Promise<string | null>;
   getClient(clientId: string): Promise<{ name: string; workspace_id: string } | null>;
   isWorkspaceAdmin(workspaceId: string, userId: string): Promise<boolean>;
   now(): Date;
@@ -93,6 +95,51 @@ export interface RunOutcome {
 
 const fail = (status: number, error: string): RunOutcome => ({ status, body: { error } });
 
+/**
+ * Prévia: quais projetos já existem no Frame.io para o workspace do chamador.
+ * Só leitura — não reivindica trava nem escreve nada. É o que permite a tela
+ * dizer "já existe" antes do usuário clicar em criar.
+ */
+export async function handleListProjects(
+  input: { authHeader: string | null },
+  deps: RunDeps,
+): Promise<RunOutcome> {
+  if (!input.authHeader) return fail(401, 'Missing authorization header');
+
+  const user = await deps.getUser(input.authHeader);
+  if (!user) return fail(401, 'Unauthorized');
+
+  const workspaceId = await deps.getMyWorkspaceId();
+  if (!workspaceId) return fail(404, 'Workspace não encontrado');
+
+  if (!(await deps.isWorkspaceAdmin(workspaceId, user.id))) {
+    return fail(403, 'Forbidden: must be workspace admin');
+  }
+
+  const resolved = await resolveConnection(workspaceId, deps);
+  if (resolved.kind === 'unavailable') {
+    if (resolved.mark) await deps.markReconnect(workspaceId);
+    return fail(409, RECONNECT_MESSAGE);
+  }
+
+  const { accessToken, conn } = resolved;
+  const api = deps.frameio({
+    accessToken,
+    refreshToken: conn.refresh_token,
+    accountId: conn.frameio_account_id,
+    frameioWorkspaceId: conn.frameio_workspace_id,
+    onRefreshed: (tokens) => deps.saveRefreshed(workspaceId, tokens),
+    onReconnect: () => deps.markReconnect(workspaceId),
+    refreshSession: deps.refreshSession,
+  });
+
+  const projects = await api.listProjects();
+  return {
+    status: 200,
+    body: { ok: true, projects: projects.map((p) => ({ id: p.id, name: p.name })) },
+  };
+}
+
 export function parseFlow(flow: unknown): RunFlow | null {
   return flow === 'client_structure' || flow === 'video_project' ? flow : null;
 }
@@ -107,6 +154,32 @@ export function buildSpecs(flow: RunFlow, input: RunInput): FolderSpec[] | null 
   if (!dateISO || !tipo || !nomeProjeto) return null;
 
   return planVideoProject({ dateISO, tipo, nomeProjeto });
+}
+
+/**
+ * Resolve o token da conexão. Compartilhado entre o fluxo de criação e a
+ * listagem de projetos, que precisam da mesma sequência: carregar, ver se
+ * precisa renovar, renovar. `mark: true` significa que o refresh foi recusado
+ * e a conexão precisa ser marcada (AUTH-09).
+ */
+async function resolveConnection(
+  workspaceId: string,
+  deps: RunDeps,
+): Promise<
+  | { kind: 'ready'; accessToken: string; conn: RunConnection }
+  | { kind: 'unavailable'; mark: boolean }
+> {
+  const conn = await deps.loadConnection(workspaceId);
+  if (!conn || conn.requires_reconnect) return { kind: 'unavailable', mark: false };
+
+  let accessToken = conn.access_token;
+  if (needsRefresh(new Date(conn.access_token_expires_at), undefined, deps.now())) {
+    const refreshed = await deps.refreshSession(conn.refresh_token);
+    if ('invalid' in refreshed) return { kind: 'unavailable', mark: true };
+    accessToken = refreshed.access_token;
+    await deps.saveRefreshed(workspaceId, refreshed);
+  }
+  return { kind: 'ready', accessToken, conn };
 }
 
 export async function handleRun(input: RunInput, deps: RunDeps): Promise<RunOutcome> {
@@ -148,23 +221,13 @@ export async function handleRun(input: RunInput, deps: RunDeps): Promise<RunOutc
   const finish = async (status: 'done' | 'failed', result?: RunResult, error?: string) =>
     deps.finishRun({ runId, status, result, error });
 
-  const conn = await deps.loadConnection(client.workspace_id);
-  if (!conn || conn.requires_reconnect) {
+  const resolved = await resolveConnection(client.workspace_id, deps);
+  if (resolved.kind === 'unavailable') {
+    if (resolved.mark) await deps.markReconnect(client.workspace_id);
     await finish('failed', undefined, RECONNECT_MESSAGE);
     return fail(409, RECONNECT_MESSAGE);
   }
-
-  let accessToken = conn.access_token;
-  if (needsRefresh(new Date(conn.access_token_expires_at), undefined, deps.now())) {
-    const refreshed = await deps.refreshSession(conn.refresh_token);
-    if ('invalid' in refreshed) {
-      await deps.markReconnect(client.workspace_id);
-      await finish('failed', undefined, RECONNECT_MESSAGE);
-      return fail(409, RECONNECT_MESSAGE);
-    }
-    accessToken = refreshed.access_token;
-    await deps.saveRefreshed(client.workspace_id, refreshed);
-  }
+  const { accessToken, conn } = resolved;
 
   // EDGE-05: o workspace gravado pode ter sumido da conta. Sem isto o fluxo
   // só levaria 404 do Frame.io e reportaria falha genérica em vez de pedir

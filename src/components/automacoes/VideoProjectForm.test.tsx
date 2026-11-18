@@ -211,3 +211,26 @@ describe('VideoProjectForm — permissão (MENU-03)', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 });
+
+describe('VideoProjectForm — prévia de correspondência', () => {
+  it('projeto existente: diz que as pastas entram nele', async () => {
+    renderForm({ frameioProjectNames: ['Cliente Xyz'] });
+    chooseClient();
+    fillAll();
+
+    expect(screen.getByTestId('frameio-preview')).toHaveTextContent(
+      'Projeto já existe no Frame.io',
+    );
+  });
+
+  it('projeto ausente: manda rodar Cliente novo antes, porque o fluxo falharia (PROJ-10)', async () => {
+    renderForm({ frameioProjectNames: ['Outro'] });
+    chooseClient();
+    fillAll();
+
+    expect(screen.getByTestId('frameio-preview')).toHaveTextContent(
+      'ainda não existe no Frame.io',
+    );
+    expect(screen.getByTestId('frameio-preview')).toHaveTextContent('Cliente novo');
+  });
+});

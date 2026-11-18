@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   LOCK_BUSY_MESSAGE,
+  handleListProjects,
   NO_PROJECT_MESSAGE,
   RECONNECT_MESSAGE,
   buildSpecs,
@@ -61,6 +62,7 @@ function makeDeps(overrides: Partial<RunDeps> = {}, state: {
 
   const deps: RunDeps = {
     getUser: async () => ({ id: 'user-1' }),
+    getMyWorkspaceId: async () => 'ws-tv-1',
     getClient: async () => ({ name: 'Cliente Xyz', workspace_id: 'ws-tv-1' }),
     isWorkspaceAdmin: async () => true,
     now: () => NOW,
@@ -399,5 +401,67 @@ describe('puras (buildSpecs, parseFlow)', () => {
 
   it('vídeo com campo vazio devolve null, sinalizando 400', () => {
     expect(buildSpecs('video_project', { ...videoInput, tipo: '' })).toBeNull();
+  });
+});
+
+
+describe('handleListProjects — prévia de correspondência', () => {
+  it('sem cabeçalho é 401', async () => {
+    const { deps } = makeDeps();
+    const res = await handleListProjects({ authHeader: null }, deps);
+    expect(res.status).toBe(401);
+  });
+
+  it('não-admin é 403, sem chegar no Frame.io', async () => {
+    const { deps, log } = makeDeps({ isWorkspaceAdmin: async () => false });
+    const res = await handleListProjects({ authHeader: 'Bearer x' }, deps);
+
+    expect(res.status).toBe(403);
+    expect(log.frameioContexts).toEqual([]);
+  });
+
+  it('sem workspace é 404', async () => {
+    const { deps, log } = makeDeps({ getMyWorkspaceId: async () => null });
+    const res = await handleListProjects({ authHeader: 'Bearer x' }, deps);
+
+    expect(res.status).toBe(404);
+    expect(log.frameioContexts).toEqual([]);
+  });
+
+  it('devolve os nomes dos projetos existentes, sem reivindicar trava', async () => {
+    const { deps, log } = makeDeps();
+    const res = await handleListProjects({ authHeader: 'Bearer x' }, deps);
+
+    expect(res.status).toBe(200);
+    expect(res.body.projects).toEqual([{ id: 'p1', name: 'Cliente Xyz' }]);
+    expect(log.claims).toEqual([]);
+    expect(log.sweeps).toBe(0);
+    expect(log.created).toEqual([]);
+  });
+
+  it('sem conexão devolve reconexão e não grava nada', async () => {
+    const { deps, log } = makeDeps({ loadConnection: async () => null });
+    const res = await handleListProjects({ authHeader: 'Bearer x' }, deps);
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe(RECONNECT_MESSAGE);
+    expect(log.frameioContexts).toEqual([]);
+  });
+
+  it('marca reconexão quando o refresh é recusado (AUTH-09)', async () => {
+    const { deps, log } = makeDeps({
+      loadConnection: async () => ({
+        access_token: 'at-velho',
+        access_token_expires_at: NEAR,
+        refresh_token: 'rt',
+        frameio_account_id: 'acc-1',
+        frameio_workspace_id: 'fi-ws-1',
+      }),
+      refreshSession: async () => ({ invalid: true }),
+    });
+    const res = await handleListProjects({ authHeader: 'Bearer x' }, deps);
+
+    expect(res.status).toBe(409);
+    expect(log.marked).toEqual(['ws-tv-1']);
   });
 });

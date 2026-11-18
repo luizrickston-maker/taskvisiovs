@@ -11,6 +11,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
+  handleListProjects,
   handleRun,
   type FrameioContext,
   type RefreshedTokens,
@@ -134,9 +135,16 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
+    const mode = (body as { mode?: unknown }).mode;
+
     const deps: RunDeps = {
       now: () => new Date(),
       delay: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+
+      getMyWorkspaceId: async () => {
+        const { data } = await supabaseAdmin.rpc('get_my_workspace_id');
+        return (data as string | null) ?? null;
+      },
 
       getUser: async (header) => {
         const client = createClient(
@@ -261,7 +269,12 @@ Deno.serve(async (req) => {
       frameio: makeFrameio,
     };
 
-    const result = await handleRun(input, deps);
+    // `mode: 'list_projects'` é a prévia de correspondência: leitura pura,
+    // sem travar execução. O padrão executa o fluxo de criação.
+    const result =
+      mode === 'list_projects'
+        ? await handleListProjects({ authHeader }, deps)
+        : await handleRun(input, deps);
     return json(result.status, result.body);
   } catch (err) {
     return json(500, { error: err instanceof Error ? err.message : 'Erro inesperado' });

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useWorkspaceAdmin } from '@/hooks/useWorkspaceAdmin';
 import { useFrameioConnection } from '@/hooks/useFrameioConnection';
+import { useFrameioProjects } from '@/hooks/useFrameioProjects';
 import {
   useFrameioCreateStructure,
   type CreateStructureInput,
@@ -70,6 +71,12 @@ export default function AutomacoesPage() {
 
   const loading = admin.isLoading || connection.isLoading;
   const clients = clientsQuery.data ?? [];
+
+  // Prévia de correspondência: busca só quando há conexão ativa.
+  const projectsQuery = useFrameioProjects(
+    canManage && connection.connection?.status === 'connected',
+  );
+  const frameioProjectNames = (projectsQuery.data ?? []).map((project) => project.name);
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
@@ -138,6 +145,7 @@ export default function AutomacoesPage() {
                     isPending={pending('client_structure')}
                     result={clientOutcome.result}
                     message={clientOutcome.message}
+                    frameioProjectNames={frameioProjectNames}
                     onRun={(clientId) => runClient({ clientId })}
                   />
                   <VideoProjectForm
@@ -146,6 +154,7 @@ export default function AutomacoesPage() {
                     isPending={pending('video_project')}
                     result={videoOutcome.result}
                     message={videoOutcome.message}
+                    frameioProjectNames={frameioProjectNames}
                     onRun={(input: VideoRunInput) => runVideo(input)}
                   />
                 </div>

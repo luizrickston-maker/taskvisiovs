@@ -60,6 +60,8 @@ interface VideoProjectFormProps {
   isPending: boolean;
   result: FrameioRunResult | null;
   message: string | null;
+  /** Nomes de projeto que já existem no Frame.io — a prévia de correspondência. */
+  frameioProjectNames?: string[];
   onRun: (input: VideoRunInput) => void;
 }
 
@@ -69,6 +71,7 @@ export function VideoProjectForm({
   isPending,
   result,
   message,
+  frameioProjectNames,
   onRun,
 }: VideoProjectFormProps) {
   const [clientId, setClientId] = useState('');
@@ -158,6 +161,14 @@ export function VideoProjectForm({
               <code>{buildProjectFolderName({ dateISO, tipo, nomeProjeto })}</code>
             </p>
           </div>
+        )}
+
+        {clientId && (
+          <p className="text-xs text-muted-foreground" data-testid="frameio-preview">
+            {frameioProjectNames?.includes(clients.find((c) => c.id === clientId)?.name ?? '')
+              ? 'Projeto já existe no Frame.io — as pastas deste vídeo serão criadas nele.'
+              : 'Projeto do cliente ainda não existe no Frame.io. Rode "Cliente novo" antes.'}
+          </p>
         )}
 
         <Button className="w-full" disabled={disabled} onClick={submit}>

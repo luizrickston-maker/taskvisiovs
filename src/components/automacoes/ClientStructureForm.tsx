@@ -29,6 +29,8 @@ interface ClientStructureFormProps {
   result: FrameioRunResult | null;
   /** Conflito de trava, recusa de conexão, ou qualquer outro aviso da função. */
   message: string | null;
+  /** Nomes de projeto que já existem no Frame.io — a prévia de correspondência. */
+  frameioProjectNames?: string[];
   onRun: (clientId: string) => void;
 }
 
@@ -38,6 +40,7 @@ export function ClientStructureForm({
   isPending,
   result,
   message,
+  frameioProjectNames,
   onRun,
 }: ClientStructureFormProps) {
   const [clientId, setClientId] = useState('');
@@ -48,6 +51,7 @@ export function ClientStructureForm({
 
   if (!canManage) return null;
 
+  const selected = clients.find((client) => client.id === clientId);
   const disabled = isPending || !clientId;
   const rerun = () => onRun(clientId);
 
@@ -81,6 +85,14 @@ export function ClientStructureForm({
             ))}
           </SelectContent>
         </Select>
+
+        {selected && (
+          <p className="text-xs text-muted-foreground" data-testid="frameio-preview">
+            {frameioProjectNames?.includes(selected.name)
+              ? `Projeto "${selected.name}" já existe no Frame.io — só as pastas serão criadas.`
+              : `Projeto "${selected.name}" será criado no Frame.io.`}
+          </p>
+        )}
 
         <Button className="w-full" disabled={disabled} onClick={rerun}>
           {isPending ? 'Criando...' : SUBMIT_LABEL}

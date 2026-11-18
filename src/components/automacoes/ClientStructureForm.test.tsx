@@ -183,3 +183,28 @@ describe('ClientStructureForm — permissão (MENU-03)', () => {
     expect(toast.success).not.toHaveBeenCalled();
   });
 });
+
+describe('ClientStructureForm — prévia de correspondência', () => {
+  it('avisa quando o projeto já existe no Frame.io', async () => {
+    renderForm({ frameioProjectNames: ['Cliente Ativo'] });
+    await chooseClient('Cliente Ativo');
+
+    expect(screen.getByTestId('frameio-preview')).toHaveTextContent(
+      'já existe no Frame.io — só as pastas serão criadas',
+    );
+  });
+
+  it('avisa quando o projeto será criado', async () => {
+    renderForm({ frameioProjectNames: ['Outro'] });
+    await chooseClient('Cliente Ativo');
+
+    expect(screen.getByTestId('frameio-preview')).toHaveTextContent(
+      'será criado no Frame.io',
+    );
+  });
+
+  it('sem projeto escolhido não mostra prévia', () => {
+    renderForm({ frameioProjectNames: ['Cliente Ativo'] });
+    expect(screen.queryByTestId('frameio-preview')).toBeNull();
+  });
+});
