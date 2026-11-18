@@ -110,13 +110,13 @@ T16
 
 **Done when**:
 
-- [ ] Both tables exist with the columns and CHECKs in design's Data Models
-- [ ] `SELECT` as `authenticated` against either base table returns zero rows and raises no error (no policy ⇒ deny)
-- [ ] `frameio_connection_status()` returns a row for a workspace admin and an empty set for a plain member (AD-006)
-- [ ] A second `INSERT ... WHERE status='running'` for the same `client_id` raises the unique violation
-- [ ] A row stuck in `running` for 11 minutes no longer blocks the insert
-- [ ] Gate check passes: `npm run test && npm run test:db`
-- [ ] Test count: new `tests/db/schema-automations.test.ts` passes with the pre-existing 63 DB tests intact
+- [x] Both tables exist with the columns and CHECKs in design's Data Models
+- [x] `SELECT` as `authenticated` against either base table returns zero rows and raises no error (no policy ⇒ deny)
+- [x] `frameio_connection_status()` returns a row for a workspace admin and an empty set for a plain member (AD-006)
+- [x] A second `INSERT ... WHERE status='running'` for the same `client_id` raises the unique violation
+- [x] A row stuck in `running` for 11 minutes no longer blocks the insert
+- [x] Gate check passes: `npm run test && npm run test:db`
+- [x] Test count: new `tests/db/schema-automations.test.ts` passes with the pre-existing 63 DB tests intact
 
 **Tests**: integration
 **Gate**: full
