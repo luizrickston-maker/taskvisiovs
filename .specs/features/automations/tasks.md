@@ -322,11 +322,11 @@ T16
 
 **Done when**:
 
-- [ ] An empty RPC result maps to `status: 'disconnected'`
-- [ ] A row with `requires_reconnect: false` maps to `'connected'`; `true` maps to `'requires_reconnect'`
-- [ ] Loading and error are distinct states, not collapsed into `disconnected`
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `src/hooks/useFrameioConnection.test.tsx` passes
+- [x] An empty RPC result maps to `status: 'disconnected'`
+- [x] A row with `requires_reconnect: false` maps to `'connected'`; `true` maps to `'requires_reconnect'`
+- [x] Loading and error are distinct states, not collapsed into `disconnected`
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `src/hooks/useFrameioConnection.test.tsx` passes
 
 **Tests**: unit
 **Gate**: quick
