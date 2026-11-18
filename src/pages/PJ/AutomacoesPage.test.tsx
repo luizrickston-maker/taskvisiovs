@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import AutomacoesPage from './AutomacoesPage';
 
@@ -11,6 +12,7 @@ const { state, rpc, from, connectionHook, mutationHook } = vi.hoisted(() => {
   const state = {
     admin: true,
     clients: [{ id: 'cl-1', name: 'Cliente Xyz', isActive: true }],
+    clientsError: false,
     connection: {
       connection: { status: 'connected', workspaceName: 'Produção', accountName: 'Chapada' },
       isLoading: false,
@@ -57,9 +59,11 @@ function renderPage() {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <QueryClientProvider client={client}>
-      <AutomacoesPage />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={client}>
+        <AutomacoesPage />
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -70,6 +74,7 @@ const hasVideoForm = () => !!screen.queryByRole('button', { name: /Criar projeto
 beforeEach(() => {
   state.admin = true;
   state.clients = [{ id: 'cl-1', name: 'Cliente Xyz', isActive: true }];
+  state.clientsError = false;
   state.connection = {
     connection: { status: 'connected', workspaceName: 'Produção', accountName: 'Chapada' },
     isLoading: false,
@@ -80,7 +85,11 @@ beforeEach(() => {
   from.mockReset().mockImplementation((table: string) =>
     table === 'workspace_members'
       ? builder({ data: { role: state.admin ? 'admin' : 'member' }, error: null })
-      : builder({ data: state.clients, error: null }),
+      : builder(
+          state.clientsError
+            ? { data: null, error: { message: 'permission denied' } }
+            : { data: state.clients, error: null },
+        ),
   );
   connectionHook.mockImplementation(() => state.connection);
   mutationHook.mockImplementation(() => state.mutation);
@@ -221,5 +230,26 @@ describe('AutomacoesPage — sem permissão (MENU-03)', () => {
     await screen.findByText('Sem acesso');
     expect(screen.queryByText('Produção')).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+});
+
+
+describe('AutomacoesPage — lista de clientes', () => {
+  it('sem clientes ativos, aponta onde cadastrar em vez de deixar mudo', async () => {
+    state.clients = [];
+    renderPage();
+
+    const link = await screen.findByRole('link', { name: /Cadastre em Comercial/ });
+    expect(link).toHaveAttribute('href', '/comercial/clientes');
+  });
+
+  it('query que falha é distinta da lista vazia, não some como "nenhum cliente"', async () => {
+    state.clientsError = true;
+    renderPage();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível carregar os clientes',
+    );
+    expect(screen.queryByRole('link', { name: /Cadastre em Comercial/ })).toBeNull();
   });
 });

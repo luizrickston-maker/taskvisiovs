@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,10 +34,13 @@ export default function AutomacoesPage() {
     queryKey: ['automation-clients'],
     enabled: canManage,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('clients')
         .select('id, name, is_active')
         .eq('is_active', true);
+      // Sem isto a query falha silenciosamente: devolveria [] e a tela não
+      // teria como distinguir "sem clientes" de "não consegui ler".
+      if (error) throw error;
       return (data ?? []) as ClientOption[];
     },
   });
@@ -103,6 +107,27 @@ export default function AutomacoesPage() {
             >
               {connection.connection?.status === 'connected' && (
                 <div className="space-y-4">
+                  {/* Uma query que falha parecia idêntica à lista vazia: o usuário
+                      via "nenhum cliente" e não tinha como saber se era dado ou
+                      defeito. Agora os dois casos se distinguem. */}
+                  {clientsQuery.isError && (
+                    <p role="alert" className="text-sm text-destructive">
+                      Não foi possível carregar os clientes. Recarregue a página.
+                    </p>
+                  )}
+
+                  {!clientsQuery.isLoading && !clientsQuery.isError && clients.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum cliente ativo no cadastro.{' '}
+                      <Link
+                        to="/comercial/clientes"
+                        className="font-medium underline underline-offset-2"
+                      >
+                        Cadastre em Comercial → Clientes
+                      </Link>
+                    </p>
+                  )}
+
                   <ClientStructureForm
                     clients={clients}
                     canManage
