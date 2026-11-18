@@ -5,8 +5,9 @@ import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-/** Chave do `state` guardado pelo card ao iniciar o fluxo. Leitura única. */
-export const FRAMEIO_OAUTH_KEY = 'frameio_oauth';
+/** Chave do `state` guardado pelo card — definida lá, lida aqui uma única vez. */
+import { FRAMEIO_OAUTH_KEY } from '@/components/automacoes/FrameioConnectionCard';
+export { FRAMEIO_OAUTH_KEY };
 
 /** Mesma regra do AuthCallback: tira HTML e corta em 200 caracteres. */
 function sanitizeErrorMessage(msg: string | null | undefined): string {

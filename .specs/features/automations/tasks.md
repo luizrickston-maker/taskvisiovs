@@ -350,13 +350,13 @@ T16
 
 **Done when**:
 
-- [ ] `disconnected` shows the connect action and hides the two creation actions (AUTH-06)
-- [ ] `connected` shows the connected state and reveals both creation actions (AUTH-07)
-- [ ] `requires_reconnect` shows `Reconectar Frameio` and hides the creation actions (AUTH-09)
-- [ ] The constructed URL targets `https://ims-na1.adobelogin.com/ims/authorize/v2` and carries `response_type=code`, `client_id`, `redirect_uri`, `scope=openid email profile offline_access additional_info.roles` and a fresh `state` (AUTH-01)
-- [ ] The `state` written to `sessionStorage` is deleted before a new one is generated, so a retry cannot reuse it
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `src/components/automacoes/FrameioConnectionCard.test.tsx` passes
+- [x] `disconnected` shows the connect action and hides the two creation actions (AUTH-06)
+- [x] `connected` shows the connected state and reveals both creation actions (AUTH-07)
+- [x] `requires_reconnect` shows `Reconectar Frameio` and hides the creation actions (AUTH-09)
+- [x] The constructed URL targets `https://ims-na1.adobelogin.com/ims/authorize/v2` and carries `response_type=code`, `client_id`, `redirect_uri`, `scope=openid email profile offline_access additional_info.roles` and a fresh `state` (AUTH-01)
+- [x] The `state` written to `sessionStorage` is deleted before a new one is generated, so a retry cannot reuse it
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `src/components/automacoes/FrameioConnectionCard.test.tsx` passes
 
 **Tests**: unit
 **Gate**: quick
