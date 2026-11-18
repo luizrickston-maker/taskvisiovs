@@ -154,8 +154,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | AUTH-05 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | AUTH-06 | P1: Conexão + estrutura de cliente | Pending | Pending |
 | AUTH-07 | P1: Conexão + estrutura de cliente | Pending | Pending |
-| AUTH-08 | P1: Conexão + estrutura de cliente | Pending | Pending |
-| AUTH-09 | P1: Conexão + estrutura de cliente | Pending | Pending |
+| AUTH-08 | P1: Conexão + estrutura de cliente | Pending | Verified |
+| AUTH-09 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | STRU-01 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | STRU-02 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | STRU-03 | P1: Conexão + estrutura de cliente | Pending | Verified |
@@ -174,7 +174,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PROJ-07 | P2: Projeto de vídeo | Pending | Verified |
 | PROJ-08 | P2: Projeto de vídeo | Pending | Verified |
 | PROJ-09 | P2: Projeto de vídeo | Pending | Verified |
-| PROJ-10 | P2: Projeto de vídeo | Pending | Pending |
+| PROJ-10 | P2: Projeto de vídeo | Pending | Verified |
 | PROJ-11 | P2: Projeto de vídeo | Pending | Pending |
 | PROJ-12 | P2: Projeto de vídeo | Pending | Pending |
 | RATE-01 | P3: Resiliência | Pending | Verified |
@@ -183,9 +183,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | EDGE-01 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | EDGE-02 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | EDGE-03 | P2: Projeto de vídeo | Pending | Verified |
-| EDGE-04 | P1: Conexão + estrutura de cliente | Pending | Pending |
+| EDGE-04 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | EDGE-05 | P1: Conexão + estrutura de cliente | Pending | Pending |
-| EDGE-06 | P1: Conexão + estrutura de cliente | Pending | Pending |
+| EDGE-06 | P1: Conexão + estrutura de cliente | Pending | Verified |
 
 **ID format:** `MENU-NN`, `AUTH-NN`, `STRU-NN`, `RETY-NN`, `FAIL-NN`, `PROJ-NN`, `RATE-NN`, `PART-NN`, `EDGE-NN`
 

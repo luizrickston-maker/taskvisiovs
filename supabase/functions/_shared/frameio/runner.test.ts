@@ -229,3 +229,35 @@ describe('ensureStructure — falha honesta (FAIL-01, PART-01, PART-02, EDGE-02)
     expect(res.error).toBe('fora do ar');
   });
 });
+
+describe('ensureStructure — projeto ausente (PROJ-10)', () => {
+  it('sem createProjectIfMissing recusa antes de criar qualquer pasta', async () => {
+    const fake = makeFake({ projectExists: false });
+    const res = await ensureStructure({
+      api: fake.api,
+      specs: planClientStructure(),
+      projectName: 'Cliente',
+      options: fake.options,
+      createProjectIfMissing: false,
+    });
+
+    expect(res.status).toBe('failed');
+    expect(res.error).toBe('Crie primeiro a estrutura do cliente');
+    expect(fake.state.createsProject).toBe(0);
+    expect(fake.state.creates).toEqual([]);
+  });
+
+  it('por padrão cria o projeto que falta (STRU-01)', async () => {
+    const fake = makeFake({ projectExists: false });
+    const res = await ensureStructure({
+      api: fake.api,
+      specs: planClientStructure(),
+      projectName: 'Cliente',
+      options: fake.options,
+    });
+
+    expect(res.status).toBe('ok');
+    expect(fake.state.createsProject).toBe(1);
+    expect(res.created).toEqual(ALL);
+  });
+});

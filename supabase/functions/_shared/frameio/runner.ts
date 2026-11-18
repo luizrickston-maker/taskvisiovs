@@ -51,6 +51,9 @@ const FOLDER_INTERVAL_MS = 350;
 const MAX_RETRIES = 3;
 const RETRY_WAIT_MS = 1000;
 
+/** PROJ-10: o projeto do cliente não existe e este fluxo não pode criá-lo. */
+export const NO_PROJECT_ERROR = 'Crie primeiro a estrutura do cliente';
+
 /**
  * Repetir só o que pode se recuperar sozinho: rede fora, 5xx e 429. Um 400/422
  * é recusa do Frame.io (nome rejeitado) e chega intacto ao chamador.
@@ -97,6 +100,8 @@ export async function ensureStructure(args: {
   specs: FolderSpec[];
   projectName: string;
   options: RunnerOptions;
+  /** Padrão `true` (STRU-01). `false` = recusa com NO_PROJECT_ERROR (PROJ-10). */
+  createProjectIfMissing?: boolean;
 }): Promise<RunResult> {
   const { api, specs, projectName, options } = args;
   const delay = options.delay;
@@ -113,7 +118,10 @@ export async function ensureStructure(args: {
   try {
     const projects = await hit(() => api.listProjects());
     let project = projects.find((p) => p.name === projectName);
-    if (!project) project = await hit(() => api.createProject(projectName));
+    if (!project) {
+      if (args.createProjectIfMissing === false) throw new Error(NO_PROJECT_ERROR);
+      project = await hit(() => api.createProject(projectName));
+    }
     const rootId = project.root_folder_id;
 
     // Pré-carrega os filhos de cada pai planejado, do mais raso ao mais fundo.

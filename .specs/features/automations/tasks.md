@@ -380,16 +380,16 @@ T16
 
 **Done when**:
 
-- [ ] Non-admin and unauthenticated callers are refused before any Frame.io call
-- [ ] Taking the mutex while another run holds it returns HTTP 409 with `Já existe uma criação em andamento para este cliente` (EDGE-06)
-- [ ] A token within 5 minutes of expiry is refreshed before the first Frame.io call (AUTH-08)
-- [ ] A rejected refresh marks `requires_reconnect` and returns a reconnect error instead of retrying forever (AUTH-09)
-- [ ] `flow: 'video_project'` with no project for the client returns `Crie primeiro a estrutura do cliente` **after zero writes** (PROJ-10)
-- [ ] `flow: 'client_structure'` matches the project by `clients.name`, so two clients with the same name share one project (EDGE-04)
-- [ ] The run row is closed as `done` or `failed` with `result`/`error` filled, never left `running`
-- [ ] The returned object's keys equal `FrameioRunResult` in `src/components/automacoes/RunResult.tsx` (type-level contract test)
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `supabase/functions/frameio-create-structure/index.test.ts` passes
+- [x] Non-admin and unauthenticated callers are refused before any Frame.io call
+- [x] Taking the mutex while another run holds it returns HTTP 409 with `Já existe uma criação em andamento para este cliente` (EDGE-06)
+- [x] A token within 5 minutes of expiry is refreshed before the first Frame.io call (AUTH-08)
+- [x] A rejected refresh marks `requires_reconnect` and returns a reconnect error instead of retrying forever (AUTH-09)
+- [x] `flow: 'video_project'` with no project for the client returns `Crie primeiro a estrutura do cliente` **after zero writes** (PROJ-10)
+- [x] `flow: 'client_structure'` matches the project by `clients.name`, so two clients with the same name share one project (EDGE-04)
+- [x] The run row is closed as `done` or `failed` with `result`/`error` filled, never left `running`
+- [x] The returned object's keys equal `FrameioRunResult` in `src/components/automacoes/RunResult.tsx` (type-level contract test)
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `supabase/functions/frameio-create-structure/index.test.ts` passes
 
 **Tests**: unit
 **Gate**: quick
