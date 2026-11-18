@@ -261,15 +261,15 @@ T16
 
 **Done when**:
 
-- [ ] A missing or invalid `Authorization` header is refused with 401 before any Frame.io call
-- [ ] A caller who is not a workspace admin is refused (AD-006 predicate)
-- [ ] A missing `FRAMEIO_CLIENT_SECRET` fails fast with an explicit "not configured" error, before any network call
-- [ ] The exchange sends exactly `grant_type`, `code`, `client_id`, `client_secret`, `redirect_uri`
-- [ ] Upsert keys on `workspace_id`, so a second connect replaces the first row instead of adding one (AUTH-04)
-- [ ] Account/workspace resolution stores the **first** of each (context.md assumption)
-- [ ] A test asserts `FRAMEIO_CLIENT_SECRET` appears in no file under `src/`, in no `VITE_*` variable, and in no `vite.config.ts` entry (AUTH-05)
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `supabase/functions/frameio-connect/index.test.ts` passes
+- [x] A missing or invalid `Authorization` header is refused with 401 before any Frame.io call
+- [x] A caller who is not a workspace admin is refused (AD-006 predicate)
+- [x] A missing `FRAMEIO_CLIENT_SECRET` fails fast with an explicit "not configured" error, before any network call
+- [x] The exchange sends exactly `grant_type`, `code`, `client_id`, `client_secret`, `redirect_uri`
+- [x] Upsert keys on `workspace_id`, so a second connect replaces the first row instead of adding one (AUTH-04)
+- [x] Account/workspace resolution stores the **first** of each (context.md assumption)
+- [x] A test asserts `FRAMEIO_CLIENT_SECRET` appears in no file under `src/`, in no `VITE_*` variable, and in no `vite.config.ts` entry (AUTH-05)
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `supabase/functions/frameio-connect/index.test.ts` passes
 
 **Tests**: unit
 **Gate**: quick
