@@ -170,14 +170,14 @@ T16
 
 **Done when**:
 
-- [ ] `planClientStructure()` yields `Contratos`, `Artes`, `Textos e Roteiros`, `Relatórios`, `Vídeos` under the project root, in that order
-- [ ] `planVideoProject()` yields `Vídeos` → month folder → project folder → `Brutos`, `Cenas de Apoio`, `Editados` (three **siblings**, confirmed by the user 2026-11-18)
-- [ ] `planSteps` never emits `create` for a name already present under that parent (STRU-03, PROJ-05)
-- [ ] Re-running against a fully-populated tree yields zero `create` steps (STRU-04, PROJ-06)
-- [ ] A tree missing only `Editados` yields exactly one `create` (EDGE-01)
-- [ ] A tree missing only the project folder under an existing month yields only that branch (EDGE-03)
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `supabase/functions/_shared/frameio/plan.test.ts` passes
+- [x] `planClientStructure()` yields `Contratos`, `Artes`, `Textos e Roteiros`, `Relatórios`, `Vídeos` under the project root, in that order
+- [x] `planVideoProject()` yields `Vídeos` → month folder → project folder → `Brutos`, `Cenas de Apoio`, `Editados` (three **siblings**, confirmed by the user 2026-11-18)
+- [x] `planSteps` never emits `create` for a name already present under that parent (STRU-03, PROJ-05)
+- [x] Re-running against a fully-populated tree yields zero `create` steps (STRU-04, PROJ-06)
+- [x] A tree missing only `Editados` yields exactly one `create` (EDGE-01)
+- [x] A tree missing only the project folder under an existing month yields only that branch (EDGE-03)
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `supabase/functions/_shared/frameio/plan.test.ts` passes
 
 **Tests**: unit
 **Gate**: quick
