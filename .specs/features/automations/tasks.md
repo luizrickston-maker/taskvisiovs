@@ -233,11 +233,11 @@ T16
 
 **Done when**:
 
-- [ ] `needsRefresh` is true within 5 minutes of expiry and false well before it
-- [ ] It accepts an explicit `now`, so no test depends on the wall clock
-- [ ] `classifyTokenError` maps a rejected refresh to `'reconnect'`, a transient 401/429 to `'retryable'`, and other failures to `'fatal'`
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: new `supabase/functions/_shared/frameio/tokens.test.ts` passes
+- [x] `needsRefresh` is true within 5 minutes of expiry and false well before it
+- [x] It accepts an explicit `now`, so no test depends on the wall clock
+- [x] `classifyTokenError` maps a rejected refresh to `'reconnect'`, a transient 401/429 to `'retryable'`, and other failures to `'fatal'`
+- [x] Gate check passes: `npm run test`
+- [x] Test count: new `supabase/functions/_shared/frameio/tokens.test.ts` passes
 
 **Tests**: unit
 **Gate**: quick
