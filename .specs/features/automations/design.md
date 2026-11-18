@@ -127,7 +127,7 @@ Three forks had more than one viable answer. Recommendation first in each.
 - **Interfaces**: default export, no props.
 - **Dependencies**: `useFrameioConnection`, `FrameioConnectionCard`, `ClientStructureForm`, `VideoProjectForm`.
 - **Reuses**: page shell/layout conventions of `src/pages/PJ/*`.
-- **Behaviour**: renders nothing but the shell while status is loading; `requires_reconnect` shows `Reconectar Frameio` instead of the forms (AUTH-09); no connection shows only the connect action (AUTH-06).
+- **Behaviour**: renders nothing but the shell while status is loading; `requires_reconnect` shows `Reconectar Frame.io` instead of the forms (AUTH-09); no connection shows only the connect action (AUTH-06).
 
 ### `src/components/automacoes/FrameioConnectionCard.tsx`
 
@@ -335,7 +335,7 @@ Returns the caller's row only when `public.is_workspace_admin(ws, auth.uid())` �
 | Adobe returns `error=…` on callback | Sanitised, truncated to 200 chars (same rule as `AuthCallback`) | Readable Portuguese message |
 | Code exchange fails (400/401) | Surface Adobe's `error_description` | "Não foi possível conectar: …" |
 | `client_secret` missing from env | Fail fast before any network call | "Integração não configurada no servidor" |
-| Refresh token rejected | `requires_reconnect = true`, stop | `Reconectar Frameio` action (AUTH-09) |
+| Refresh token rejected | `requires_reconnect = true`, stop | `Reconectar Frame.io` action (AUTH-09) |
 | Frame.io 401 mid-run | Refresh once, retry that call once (RETY-01) | Invisible to the user |
 | Frame.io 429 | Wait `Retry-After`, else 1 s; up to 3 attempts (RATE-01) | Brief pause, then normal result |
 | Frame.io 5xx / network down | After retries: stop, report `failedAt` + `remaining` (FAIL-01, PART-01) | "Falha em <etapa>" + `Tentar novamente` |

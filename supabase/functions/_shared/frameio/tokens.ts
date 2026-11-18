@@ -41,7 +41,7 @@ export function classifyTokenError(status: number, body: unknown): TokenErrorKin
 
 /**
  * EDGE-05: a conta Adobe ainda devolve o workspace gravado na conexão? Se não,
- * a conexão está morta e a UI mostra `Reconectar Frameio` em vez de reportar
+ * a conexão está morta e a UI mostra `Reconectar Frame.io` em vez de reportar
  * sucesso sem nenhuma pasta.
  */
 export function workspaceStillPresent(

@@ -352,7 +352,7 @@ T16
 
 - [x] `disconnected` shows the connect action and hides the two creation actions (AUTH-06)
 - [x] `connected` shows the connected state and reveals both creation actions (AUTH-07)
-- [x] `requires_reconnect` shows `Reconectar Frameio` and hides the creation actions (AUTH-09)
+- [x] `requires_reconnect` shows `Reconectar Frame.io` and hides the creation actions (AUTH-09)
 - [x] The constructed URL targets `https://ims-na1.adobelogin.com/ims/authorize/v2` and carries `response_type=code`, `client_id`, `redirect_uri`, `scope=openid email profile offline_access additional_info.roles` and a fresh `state` (AUTH-01)
 - [x] The `state` written to `sessionStorage` is deleted before a new one is generated, so a retry cannot reuse it
 - [x] Gate check passes: `npm run test`
