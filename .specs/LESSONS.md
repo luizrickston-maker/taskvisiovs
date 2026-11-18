@@ -182,6 +182,42 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: spec.md ACK-03 (:218) / ACK-09 (:226) — gap A' in validation.md (notifications)
 - last seen: 2026-10-25T19:37:04Z
 
+### L-029 - A pure helper with no production caller is dead code, not coverage - wire every spec-required predicate into a code path before claiming the AC.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `supabase/functions/_shared` · harmful: 0
+- features: automations
+- evidence: EDGE-05 (supabase/functions/_shared)
+- last seen: 2026-11-18T08:32:30Z
+
+### L-030 - Assert every conjunct of a SHALL-NOT separately, including the built artifact - scanning source does not prove the bundle is clean.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `build` · harmful: 0
+- features: automations
+- evidence: AUTH-05 (build)
+- last seen: 2026-11-18T08:32:30Z
+
+### L-031 - Drive the exact failure branch the AC names, not a neighbouring one - a generic pre-step failure does not prove the named rejection path.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `supabase/functions/_shared` · harmful: 0
+- features: automations
+- evidence: EDGE-02 (supabase/functions/_shared)
+- last seen: 2026-11-18T08:32:30Z
+
+### L-032 - Assert the retry count and delay array on every transient path, not just the terminal outcome - the outcome is identical with or without retries.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `supabase/functions/_shared` · harmful: 0
+- features: automations
+- evidence: M1 (supabase/functions/_shared)
+- last seen: 2026-11-18T08:32:30Z
+
+### L-033 - When the same guard exists in two layers, mutating either alone survives - mutate the layer the test actually pins, or assert the redundant guard directly.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src` · harmful: 0
+- features: automations
+- evidence: M6 (src)
+- last seen: 2026-11-18T08:32:30Z
+
+### L-034 - When an AC says after the permitted retries, the spec must fix the count - an unspecified bound cannot be asserted and silently admits zero retries.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: automations
+- evidence: FAIL-01 (spec)
+- last seen: 2026-11-18T08:32:30Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

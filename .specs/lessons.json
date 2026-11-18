@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 29,
+  "next_id": 35,
   "lessons": [
     {
       "id": "L-001",
@@ -509,6 +509,114 @@
       ],
       "created": "2026-10-25T19:37:04Z",
       "last_seen": "2026-10-25T19:37:04Z"
+    },
+    {
+      "id": "L-029",
+      "key": "ac_gap::a pure helper with no production caller is dead code not coverage wire every spec required predicate into a code path before claiming the ac",
+      "text": "A pure helper with no production caller is dead code, not coverage - wire every spec-required predicate into a code path before claiming the AC.",
+      "signal": "ac_gap",
+      "scope": "supabase/functions/_shared",
+      "status": "candidate",
+      "features": [
+        "automations"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "EDGE-05 (supabase/functions/_shared)"
+      ],
+      "created": "2026-11-18T08:32:30Z",
+      "last_seen": "2026-11-18T08:32:30Z"
+    },
+    {
+      "id": "L-030",
+      "key": "ac_gap::assert every conjunct of a shall not separately including the built artifact scanning source does not prove the bundle is clean",
+      "text": "Assert every conjunct of a SHALL-NOT separately, including the built artifact - scanning source does not prove the bundle is clean.",
+      "signal": "ac_gap",
+      "scope": "build",
+      "status": "candidate",
+      "features": [
+        "automations"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AUTH-05 (build)"
+      ],
+      "created": "2026-11-18T08:32:30Z",
+      "last_seen": "2026-11-18T08:32:30Z"
+    },
+    {
+      "id": "L-031",
+      "key": "ac_gap::drive the exact failure branch the ac names not a neighbouring one a generic pre step failure does not prove the named rejection path",
+      "text": "Drive the exact failure branch the AC names, not a neighbouring one - a generic pre-step failure does not prove the named rejection path.",
+      "signal": "ac_gap",
+      "scope": "supabase/functions/_shared",
+      "status": "candidate",
+      "features": [
+        "automations"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "EDGE-02 (supabase/functions/_shared)"
+      ],
+      "created": "2026-11-18T08:32:30Z",
+      "last_seen": "2026-11-18T08:32:30Z"
+    },
+    {
+      "id": "L-032",
+      "key": "surviving_mutant::assert the retry count and delay array on every transient path not just the terminal outcome the outcome is identical with or without retries",
+      "text": "Assert the retry count and delay array on every transient path, not just the terminal outcome - the outcome is identical with or without retries.",
+      "signal": "surviving_mutant",
+      "scope": "supabase/functions/_shared",
+      "status": "candidate",
+      "features": [
+        "automations"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M1 (supabase/functions/_shared)"
+      ],
+      "created": "2026-11-18T08:32:30Z",
+      "last_seen": "2026-11-18T08:32:30Z"
+    },
+    {
+      "id": "L-033",
+      "key": "surviving_mutant::when the same guard exists in two layers mutating either alone survives mutate the layer the test actually pins or assert the redundant guard directly",
+      "text": "When the same guard exists in two layers, mutating either alone survives - mutate the layer the test actually pins, or assert the redundant guard directly.",
+      "signal": "surviving_mutant",
+      "scope": "src",
+      "status": "candidate",
+      "features": [
+        "automations"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M6 (src)"
+      ],
+      "created": "2026-11-18T08:32:30Z",
+      "last_seen": "2026-11-18T08:32:30Z"
+    },
+    {
+      "id": "L-034",
+      "key": "spec_precision_gap::when an ac says after the permitted retries the spec must fix the count an unspecified bound cannot be asserted and silently admits zero retries",
+      "text": "When an AC says after the permitted retries, the spec must fix the count - an unspecified bound cannot be asserted and silently admits zero retries.",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "automations"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "FAIL-01 (spec)"
+      ],
+      "created": "2026-11-18T08:32:30Z",
+      "last_seen": "2026-11-18T08:32:30Z"
     }
   ]
 }
