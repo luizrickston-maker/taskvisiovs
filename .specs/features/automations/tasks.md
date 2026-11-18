@@ -560,11 +560,11 @@ T16
 
 **Done when**:
 
-- [ ] A workspace admin's sidebar contains an entry titled `Automações` whose href is `/pj/automacoes` (MENU-01)
-- [ ] A user with no workspace admin role gets no `Automações` entry (MENU-02)
-- [ ] The collaborator navigation list is untouched
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count: `src/components/layout/AppSidebar.test.tsx` grows; no existing assertion is deleted
+- [x] A workspace admin's sidebar contains an entry titled `Automações` whose href is `/pj/automacoes` (MENU-01)
+- [x] A user with no workspace admin role gets no `Automações` entry (MENU-02)
+- [x] The collaborator navigation list is untouched
+- [x] Gate check passes: `npm run test`
+- [x] Test count: `src/components/layout/AppSidebar.test.tsx` grows; no existing assertion is deleted
 
 **Tests**: unit
 **Gate**: quick

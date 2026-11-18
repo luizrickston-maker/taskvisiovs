@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useWorkspaceAdmin } from '@/hooks/useWorkspaceAdmin';
 import { useFrameioConnection } from '@/hooks/useFrameioConnection';
 import {
   useFrameioCreateStructure,
@@ -20,33 +20,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Flow = 'client_structure' | 'video_project';
-
-/**
- * MENU-03 exige que a página não mostre **nenhuma** ação de conexão ou de
- * criação para quem não é admin do workspace. O predicado é o da AD-006
- * (`workspace_members.role` em owner/admin), não a role global de `user_roles`.
- */
-function useWorkspaceAdmin() {
-  const { user } = useAuthContext();
-
-  return useQuery({
-    queryKey: ['workspace-admin', user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data: workspaceId } = await supabase.rpc('get_my_workspace_id');
-      if (!workspaceId) return false;
-
-      const { data } = await supabase
-        .from('workspace_members')
-        .select('role')
-        .eq('workspace_id', workspaceId)
-        .eq('user_id', user!.id)
-        .maybeSingle();
-
-      return !!data && ['owner', 'admin'].includes(data.role);
-    },
-  });
-}
 
 export default function AutomacoesPage() {
   const admin = useWorkspaceAdmin();

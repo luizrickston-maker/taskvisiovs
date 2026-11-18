@@ -43,6 +43,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 vi.mock('@/contexts/AuthContext', () => ({
   useAuthContext: () => ({ user: { id: 'user-1' } }),
+  useAuthContextSafe: () => ({ user: { id: 'user-1' } }),
 }));
 vi.mock('@/hooks/useFrameioConnection', () => ({
   useFrameioConnection: connectionHook,

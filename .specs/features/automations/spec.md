@@ -144,8 +144,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| MENU-01 | P1: Conexão + estrutura de cliente | Pending | Pending |
-| MENU-02 | P1: Conexão + estrutura de cliente | Pending | Pending |
+| MENU-01 | P1: Conexão + estrutura de cliente | Pending | Verified |
+| MENU-02 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | MENU-03 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | AUTH-01 | P1: Conexão + estrutura de cliente | Pending | Verified |
 | AUTH-02 | P1: Conexão + estrutura de cliente | Pending | Verified |

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays, Wrench, Shield, ChevronDown, Workflow, Layout, CalendarClock, Sparkles } from 'lucide-react';
+import { Wallet, TrendingUp, FolderKanban, FileText, Pen, Settings, LogOut, Briefcase, Package, Users, Calendar, Brain, ShoppingBag, CalendarDays, Wrench, Shield, ChevronDown, Workflow, Layout, CalendarClock, Sparkles, Zap } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useCollaboratorPermissions } from '@/hooks/useCollaboratorPermissions';
+import { useWorkspaceAdmin } from '@/hooks/useWorkspaceAdmin';
 
 interface NavItem {
   title: string;
@@ -100,10 +101,24 @@ export function AppSidebar() {
       : []),
   ];
 
+  // MENU-01: o item aparece só para admin de workspace; MENU-02: para quem não
+  // é, ele não existe. O modo pessoal fica de fora — a rota é /pj/.
+  const workspaceAdmin = useWorkspaceAdmin();
+  const businessNavItemsForMode: NavItem[] =
+    workspaceAdmin.data === true
+      ? (() => {
+          const at = businessNavItems.findIndex((item) => item.title === 'Ferramentas');
+          const entry: NavItem = { title: 'Automações', url: '/pj/automacoes', icon: Zap };
+          return at === -1
+            ? [...businessNavItems, entry]
+            : [...businessNavItems.slice(0, at), entry, ...businessNavItems.slice(at)];
+        })()
+      : businessNavItems;
+
   // Get nav items based on current mode and role
   const navItems = (userRole as string) === 'collaborator'
     ? collaboratorNavItems
-    : (mode === 'personal' ? personalNavItems : businessNavItems);
+    : (mode === 'personal' ? personalNavItems : businessNavItemsForMode);
 
   const handleSignOut = async () => {
     if (signOut) {

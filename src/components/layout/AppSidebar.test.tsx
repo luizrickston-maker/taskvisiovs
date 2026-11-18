@@ -4,9 +4,11 @@ import { MemoryRouter } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
-const { role, canAgenda } = vi.hoisted(() => ({
+const { role, canAgenda, workspaceAdmin, appMode } = vi.hoisted(() => ({
   role: { value: 'collaborator' as string | null },
   canAgenda: { value: true },
+  workspaceAdmin: { value: false as boolean | null },
+  appMode: { value: 'personal' as string },
 }));
 
 vi.mock('@/hooks/useUserRole', () => ({
@@ -23,6 +25,12 @@ vi.mock('@/contexts/AuthContext', () => ({
 vi.mock('@/components/layout/ContextSwitcher', () => ({
   ContextSwitcher: () => <div data-testid="context-switcher" />,
 }));
+vi.mock('@/hooks/useWorkspaceAdmin', () => ({
+  useWorkspaceAdmin: () => ({ data: workspaceAdmin.value, isLoading: false }),
+}));
+vi.mock('@/hooks/useAppContext', () => ({
+  useAppContext: () => ({ mode: appMode.value, setMode: vi.fn() }),
+}));
 
 function renderSidebar() {
   return render(
@@ -37,6 +45,8 @@ function renderSidebar() {
 beforeEach(() => {
   role.value = 'collaborator';
   canAgenda.value = true;
+  workspaceAdmin.value = false;
+  appMode.value = 'personal';
 });
 
 describe('AppSidebar collaborator agenda entry (PERM-01)', () => {
@@ -64,5 +74,37 @@ describe('AppSidebar collaborator agenda entry (PERM-01)', () => {
     // collaborator route must not appear for them.
     const hrefs = screen.getAllByRole('link').map(l => l.getAttribute('href'));
     expect(hrefs).not.toContain('/colaborador/agenda');
+  });
+});
+
+
+describe('AppSidebar automations entry (MENU-01, MENU-02)', () => {
+  it('shows the entry for a workspace admin, pointing at /pj/automacoes', () => {
+    role.value = 'manager';
+    appMode.value = 'business';
+    workspaceAdmin.value = true;
+    renderSidebar();
+
+    const link = screen.getByRole('link', { name: /Automações/ });
+    expect(link).toHaveAttribute('href', '/pj/automacoes');
+  });
+
+  it('omits the entry for a signed-in user who is not a workspace admin', () => {
+    role.value = 'manager';
+    appMode.value = 'business';
+    workspaceAdmin.value = false;
+    renderSidebar();
+
+    expect(screen.queryByRole('link', { name: /Automações/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Ferramentas/ })).toBeInTheDocument();
+  });
+
+  it('never shows the entry to a collaborator, even when the admin flag is on', () => {
+    role.value = 'collaborator';
+    workspaceAdmin.value = true;
+    renderSidebar();
+
+    expect(screen.queryByRole('link', { name: /Automações/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Meu Painel/ })).toBeInTheDocument();
   });
 });
