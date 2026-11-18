@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyTokenError, needsRefresh, workspaceStillPresent } from './tokens';
+import { classifyTokenError, needsRefresh, workspaceStillPresent } from './tokens.ts';
 
 const at = (iso: string) => new Date(iso);
 

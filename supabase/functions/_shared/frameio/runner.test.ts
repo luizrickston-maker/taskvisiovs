@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FrameioHttpError, ensureStructure, type FrameioApi } from './runner';
-import { planClientStructure, type ExistingChild } from './plan';
+import { FrameioHttpError, ensureStructure, type FrameioApi } from './runner.ts';
+import { planClientStructure, type ExistingChild } from './plan.ts';
 
 const ALL = ['Contratos', 'Artes', 'Textos e Roteiros', 'Relatórios', 'Vídeos'];
 

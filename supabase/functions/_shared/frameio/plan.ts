@@ -4,7 +4,7 @@
 // re-execução contra uma árvore completa não emite nenhum `create`
 // (STRU-04, PROJ-06).
 
-import { CLIENT_FIXED_FOLDERS, MATERIAL_FOLDERS, buildMonthFolderName, buildProjectFolderName } from './names';
+import { CLIENT_FIXED_FOLDERS, MATERIAL_FOLDERS, buildMonthFolderName, buildProjectFolderName } from './names.ts';
 
 /** `path` são os nomes das pastas da raiz do projeto até o pai, inclusive. */
 export type FolderSpec = { path: string[]; name: string };

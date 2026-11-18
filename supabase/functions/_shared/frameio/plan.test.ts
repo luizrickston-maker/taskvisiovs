@@ -6,7 +6,7 @@ import {
   type ExistingChild,
   type FolderSpec,
   type Step,
-} from './plan';
+} from './plan.ts';
 
 const EXAMPLE = {
   dateISO: '2026-11-05',

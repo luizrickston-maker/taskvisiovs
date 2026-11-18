@@ -4,7 +4,7 @@
 //
 // Cobre STRU-04/06/07, RETY-01, FAIL-01, RATE-01, PART-01/02 e EDGE-02.
 
-import { planSteps, type ExistingChild, type FolderSpec } from './plan';
+import { planSteps, type ExistingChild, type FolderSpec } from './plan.ts';
 
 export interface FrameioApi {
   listProjects(): Promise<{ id: string; name: string; root_folder_id: string }[]>;

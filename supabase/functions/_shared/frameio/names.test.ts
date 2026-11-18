@@ -8,7 +8,7 @@ import {
   buildProjectFolderName,
   slugPart,
   weekDayPtBR,
-} from './names';
+} from './names.ts';
 
 const SOURCE_PATH = path.resolve(
   process.cwd(),

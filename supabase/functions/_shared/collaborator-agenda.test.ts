@@ -8,7 +8,7 @@ import {
   buildCollaboratorCancellationMessage,
   buildManagerCancellationMessage,
   formatRange,
-} from './collaborator-agenda';
+} from './collaborator-agenda.ts';
 
 const SOURCE_PATH = path.resolve(
   process.cwd(),
