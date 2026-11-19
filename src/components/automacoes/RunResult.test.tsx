@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import {
   ALREADY_EXISTED,
   NOTHING_CREATED,
@@ -138,5 +138,58 @@ describe('RunResult — falha honesta (FAIL-01, PART-01, PART-02, EDGE-02)', () 
 
     expect(screen.queryByRole('button', { name: RETRY_LABEL })).toBeNull();
     expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+});
+
+describe('RunResult — link para o Frame.io', () => {
+  it('no fluxo de cliente abre o projeto', () => {
+    render(
+      <RunResult
+        result={{ ...ok, projectViewUrl: 'https://app.frame.io/p/1' }}
+        onRetry={vi.fn()}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: /Abrir no Frame.io/ });
+    expect(link).toHaveAttribute('href', 'https://app.frame.io/p/1');
+    expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('no fluxo de vídeo a pasta do vídeo tem prioridade sobre o projeto', () => {
+    render(
+      <RunResult
+        result={{
+          ...ok,
+          projectViewUrl: 'https://app.frame.io/p/1',
+          folderViewUrl: 'https://app.frame.io/f/2',
+        }}
+        onRetry={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: /Abrir no Frame.io/ })).toHaveAttribute(
+      'href',
+      'https://app.frame.io/f/2',
+    );
+  });
+
+  it('copiar manda o link para a área de transferência', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+
+    render(
+      <RunResult result={{ ...ok, projectViewUrl: 'https://app.frame.io/p/1' }} onRetry={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Copiar link/ }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith('https://app.frame.io/p/1'));
+    expect(screen.getByRole('button', { name: /Copiado/ })).toBeInTheDocument();
+  });
+
+  it('sem link não mostra os controles', () => {
+    render(<RunResult result={ok} onRetry={vi.fn()} />);
+
+    expect(screen.queryByRole('link', { name: /Abrir no Frame.io/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Copiar link/ })).toBeNull();
   });
 });

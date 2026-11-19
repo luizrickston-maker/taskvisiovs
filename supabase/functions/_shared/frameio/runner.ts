@@ -7,10 +7,10 @@
 import { planSteps, type ExistingChild, type FolderSpec } from './plan.ts';
 
 export interface FrameioApi {
-  listProjects(): Promise<{ id: string; name: string; root_folder_id: string }[]>;
-  createProject(name: string): Promise<{ id: string; root_folder_id: string }>;
+  listProjects(): Promise<{ id: string; name: string; root_folder_id: string; view_url?: string }[]>;
+  createProject(name: string): Promise<{ id: string; root_folder_id: string; view_url?: string }>;
   listChildren(parentId: string): Promise<ExistingChild[]>;
-  createFolder(parentId: string, name: string): Promise<{ id: string; name: string }>;
+  createFolder(parentId: string, name: string): Promise<{ id: string; name: string; view_url?: string }>;
   /** Troca o access token vencido. Uma vez por chamada, no máximo (RETY-01). */
   refreshToken(): Promise<void>;
 }
@@ -33,6 +33,10 @@ export interface RunResult {
   remaining?: string[];
   /** Falha: a razão original, sem ser engolida (EDGE-02). */
   error?: string;
+  /** Link para o projeto no Frame.io — o que se abre depois de criar. */
+  projectViewUrl?: string;
+  /** Link da pasta-alvo, quando o plano define uma (só o fluxo de vídeo). */
+  folderViewUrl?: string;
 }
 
 /** Erro com status HTTP. Sem status, é falha de rede — instável por definição. */
@@ -107,7 +111,9 @@ export async function ensureStructure(args: {
    * criação — é o que permite montar as pastas dentro de um projeto que já
    * existe, mesmo que o nome não bata com o do cliente.
    */
-  project?: { id: string; name: string; root_folder_id: string };
+  project?: { id: string; name: string; root_folder_id: string; view_url?: string };
+  /** Pasta cujo link interessa devolver — no fluxo de vídeo, a do projeto. */
+  linkTargetPath?: string[];
 }): Promise<RunResult> {
   const { api, specs, projectName, options } = args;
   const delay = options.delay;
@@ -133,12 +139,14 @@ export async function ensureStructure(args: {
       }
     }
     const rootId = project.root_folder_id;
+    const projectViewUrl = project.view_url;
 
     // Pré-carrega os filhos de cada pai planejado, do mais raso ao mais fundo.
     // Um pai que ainda não existe devolve `[]`, e é isso que faz o filho ser
     // criado — a árvore inteira se resolve sem segundas voltas.
     stage = 'pastas existentes';
     const idByPath = new Map<string, string>([[key([]), rootId]]);
+    const urlByPath = new Map<string, string>(project?.view_url ? [[key([]), project.view_url]] : []);
     const childrenByPath = new Map<string, ExistingChild[]>();
     const paths = [...new Map(specs.map((s) => [key(s.path), s.path])).values()]
       .sort((a, b) => a.length - b.length);
@@ -159,6 +167,7 @@ export async function ensureStructure(args: {
       if (step.kind === 'reuse') {
         existing.push(step.name);
         idByPath.set(key([...step.path, step.name]), step.id);
+        if (step.view_url) urlByPath.set(key([...step.path, step.name]), step.view_url);
         continue;
       }
 
@@ -166,9 +175,16 @@ export async function ensureStructure(args: {
       const folder = await hit(() => api.createFolder(parentId, step.name));
       created.push(step.name);
       idByPath.set(key([...step.path, step.name]), folder.id);
+      if (folder.view_url) urlByPath.set(key([...step.path, step.name]), folder.view_url);
     }
 
-    return { status: 'ok', created, existing };
+    return {
+      status: 'ok',
+      created,
+      existing,
+      projectViewUrl,
+      ...(args.linkTargetPath ? { folderViewUrl: urlByPath.get(key(args.linkTargetPath)) } : {}),
+    };
   } catch (err) {
     const failedAt = index >= 0 ? labels[index] : stage;
     return {

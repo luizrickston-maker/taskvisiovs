@@ -255,7 +255,7 @@ export async function handleRun(input: RunInput, deps: RunDeps): Promise<RunOutc
 
   // Projeto escolhido diretamente: resolve antes e o runner usa ele em vez de
   // procurar por nome. Id que não existe nesta conta é recusa, não criação.
-  let target: { id: string; name: string; root_folder_id: string } | undefined;
+  let target: { id: string; name: string; root_folder_id: string; view_url?: string } | undefined;
   const chosenId = typeof input.frameioProjectId === 'string' ? input.frameioProjectId : '';
   if (chosenId) {
     const found = (await api.listProjects()).find((project) => project.id === chosenId);
@@ -278,6 +278,11 @@ export async function handleRun(input: RunInput, deps: RunDeps): Promise<RunOutc
     projectName: chosenName,
     options: { delay: deps.delay },
     ...(target ? { project: target } : {}),
+    // No fluxo de vídeo a pasta que interessa é a do projeto (path de nível 2);
+    // no de cliente novo devolve-se só o link do projeto.
+    ...(flow === 'video_project'
+      ? { linkTargetPath: (() => { const t = specs.find((spec) => spec.path.length === 2); return t ? [...t.path, t.name] : undefined; })() }
+      : {}),
     // O fluxo de vídeo só escreve onde o projeto do cliente já existe (PROJ-10);
     // o de cliente novo cria o projeto se faltar (STRU-01).
     createProjectIfMissing: flow === 'client_structure' && !target,

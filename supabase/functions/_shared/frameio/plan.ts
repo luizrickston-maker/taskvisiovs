@@ -10,10 +10,10 @@ import { CLIENT_FIXED_FOLDERS, MATERIAL_FOLDERS, buildMonthFolderName, buildProj
 export type FolderSpec = { path: string[]; name: string };
 
 /** Filhos de uma pasta no estado atual da árvore. */
-export type ExistingChild = { name: string; id: string };
+export type ExistingChild = { name: string; id: string; view_url?: string };
 
 export type Step =
-  | { kind: 'reuse'; path: string[]; name: string; id: string }
+  | { kind: 'reuse'; path: string[]; name: string; id: string; view_url?: string }
   | { kind: 'create'; path: string[]; name: string };
 
 /** Projeto + as cinco pastas fixas, na ordem do spec (STRU-02, P1 AC 12). */
@@ -59,7 +59,13 @@ export function planSteps(
   return specs.map((spec) => {
     const existing = childrenOf(spec.path).find((child) => child.name === spec.name);
     return existing
-      ? { kind: 'reuse', path: spec.path, name: spec.name, id: existing.id }
+      ? {
+          kind: 'reuse',
+          path: spec.path,
+          name: spec.name,
+          id: existing.id,
+          ...(existing.view_url ? { view_url: existing.view_url } : {}),
+        }
       : { kind: 'create', path: spec.path, name: spec.name };
   });
 }

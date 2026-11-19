@@ -1,4 +1,5 @@
-import { AlertTriangle, CheckCircle2, RotateCcw } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, CheckCircle2, Copy, ExternalLink, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -14,6 +15,10 @@ export interface FrameioRunResult {
   failedAt?: string;
   remaining?: string[];
   error?: string;
+  /** Link para o projeto no Frame.io. */
+  projectViewUrl?: string;
+  /** Link da pasta-alvo, quando o plano define uma. */
+  folderViewUrl?: string;
 }
 
 export const CREATE_FAILED_TITLE = 'Não foi possível criar tudo';
@@ -30,6 +35,21 @@ interface RunResultProps {
 
 export function RunResult({ result, onRetry }: RunResultProps) {
   const failed = result.status === 'failed';
+  const [copied, setCopied] = useState(false);
+
+  // No fluxo de vídeo vale a pasta do vídeo; no de cliente, o projeto.
+  const link = result.folderViewUrl ?? result.projectViewUrl;
+
+  const copyLink = async () => {
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+    } catch {
+      // jsdom e navegadores sem permissão de clipboard: nada a fazer além de
+      // deixar o link visível para seleção manual.
+    }
+  };
 
   return (
     <Card role={failed ? 'alert' : 'status'} className="mt-4">
@@ -84,6 +104,19 @@ export function RunResult({ result, onRetry }: RunResultProps) {
           <Button size="sm" variant="outline" className="mt-2 gap-1.5" onClick={onRetry}>
             <RotateCcw className="h-3.5 w-3.5" /> {RETRY_LABEL}
           </Button>
+        )}
+
+        {link && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button asChild size="sm" variant="outline" className="gap-1.5">
+              <a href={link} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-3.5 w-3.5" /> Abrir no Frame.io
+              </a>
+            </Button>
+            <Button size="sm" variant="ghost" className="gap-1.5" onClick={copyLink}>
+              <Copy className="h-3.5 w-3.5" /> {copied ? 'Copiado' : 'Copiar link'}
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

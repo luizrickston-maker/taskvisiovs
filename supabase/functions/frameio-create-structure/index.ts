@@ -80,6 +80,7 @@ function makeFrameio(ctx: FrameioContext): FrameioApi {
         id: text(p.id),
         name: text(p.name),
         root_folder_id: text(p.root_folder_id),
+        view_url: text(p.view_url) || undefined,
       })),
 
     createProject: async (name) => {
@@ -87,19 +88,24 @@ function makeFrameio(ctx: FrameioContext): FrameioApi {
         data: { name },
       });
       const p = (project as { data?: Record<string, unknown> })?.data ?? {};
-      return { id: text(p.id), root_folder_id: text(p.root_folder_id) };
+      return {
+        id: text(p.id),
+        root_folder_id: text(p.root_folder_id),
+        view_url: text(p.view_url) || undefined,
+      };
     },
 
     listChildren: async (parentId) =>
       rows(await get(`${base}/folders/${parentId}/folders`)).map((f) => ({
         name: text(f.name),
         id: text(f.id),
+        view_url: text(f.view_url) || undefined,
       })),
 
     createFolder: async (parentId, name) => {
       const folder = await post(`${base}/folders/${parentId}/folders`, { data: { name } });
       const f = (folder as { data?: Record<string, unknown> })?.data ?? {};
-      return { id: text(f.id), name: text(f.name) };
+      return { id: text(f.id), name: text(f.name), view_url: text(f.view_url) || undefined };
     },
 
     refreshToken: async () => {
