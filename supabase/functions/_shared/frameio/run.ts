@@ -27,6 +27,8 @@ export interface RunInput {
   clientId?: unknown;
   /** Projeto do Frame.io escolhido diretamente; sobrepõe a busca por nome. */
   frameioProjectId?: unknown;
+  /** Nome do projeto a criar; quando ausente, usa o nome do cliente. */
+  projectName?: unknown;
   dateISO?: unknown;
   tipo?: unknown;
   nomeProjeto?: unknown;
@@ -264,10 +266,16 @@ export async function handleRun(input: RunInput, deps: RunDeps): Promise<RunOutc
     target = found;
   }
 
+  // Quem digita o nome manda nele; sem nome, vale o do cliente (EDGE-04).
+  const chosenName =
+    typeof input.projectName === 'string' && input.projectName.trim()
+      ? input.projectName.trim()
+      : client.name;
+
   const result = await ensureStructure({
     api,
     specs,
-    projectName: client.name,
+    projectName: chosenName,
     options: { delay: deps.delay },
     ...(target ? { project: target } : {}),
     // O fluxo de vídeo só escreve onde o projeto do cliente já existe (PROJ-10);

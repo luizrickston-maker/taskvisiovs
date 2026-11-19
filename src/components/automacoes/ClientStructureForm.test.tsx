@@ -66,7 +66,7 @@ describe('ClientStructureForm — seletor', () => {
 
     expect(screen.getByRole('button', { name: 'Criar estrutura' })).toBeEnabled();
     submit();
-    expect(onRun).toHaveBeenCalledWith('cl-2');
+    expect(onRun).toHaveBeenCalledWith('cl-2', 'Cliente Inativo');
   });
 
   it('sem cliente selecionado o envio fica desabilitado (STRU-05)', () => {
@@ -116,7 +116,7 @@ describe('ClientStructureForm — seletor', () => {
 
     submit();
     expect(onRun).toHaveBeenCalledTimes(1);
-    expect(onRun).toHaveBeenCalledWith('cl-1');
+    expect(onRun).toHaveBeenCalledWith('cl-1', 'Cliente Ativo');
   });
 
   it('sem cliente nenhum não deixa enviar', () => {
@@ -142,7 +142,7 @@ describe('ClientStructureForm — resultado (MENU-03)', () => {
     await chooseClient('Cliente Ativo');
 
     fireEvent.click(screen.getByRole('button', { name: RETRY_LABEL }));
-    expect(onRun).toHaveBeenCalledWith('cl-1');
+    expect(onRun).toHaveBeenCalledWith('cl-1', 'Cliente Ativo');
   });
 
   it('mensagem de conflito aparece como alerta, sem tocar em RunResult', () => {
@@ -206,5 +206,59 @@ describe('ClientStructureForm — prévia de correspondência', () => {
   it('sem projeto escolhido não mostra prévia', () => {
     renderForm({ frameioProjects: [{ id: 'p1', name: 'Cliente Ativo' }] });
     expect(screen.queryByTestId('frameio-preview')).toBeNull();
+  });
+});
+
+
+describe('ClientStructureForm — nome do projeto digitado', () => {
+  it('semeia o nome com o do cliente ao escolher', async () => {
+    renderForm();
+    await chooseClient('Cliente Ativo');
+
+    expect(screen.getByLabelText('Nome do projeto no Frame.io')).toHaveValue('Cliente Ativo');
+  });
+
+  it('manda o nome DIGITADO, não o do cliente', async () => {
+    const onRun = renderForm();
+    await chooseClient('Cliente Ativo');
+    fireEvent.change(screen.getByLabelText('Nome do projeto no Frame.io'), {
+      target: { value: 'Nome Que Eu Digitei' },
+    });
+
+    submit();
+    expect(onRun).toHaveBeenCalledWith('cl-1', 'Nome Que Eu Digitei');
+  });
+
+  it('trocar de cliente volta a semear com o nome do novo', async () => {
+    renderForm();
+    await chooseClient('Cliente Ativo');
+    fireEvent.change(screen.getByLabelText('Nome do projeto no Frame.io'), {
+      target: { value: 'Editado' },
+    });
+    await chooseClient('Outro Ativo');
+
+    expect(screen.getByLabelText('Nome do projeto no Frame.io')).toHaveValue('Outro Ativo');
+  });
+
+  it('sem nome não envia, mesmo com cliente escolhido', async () => {
+    const onRun = renderForm();
+    await chooseClient('Cliente Ativo');
+    fireEvent.change(screen.getByLabelText('Nome do projeto no Frame.io'), {
+      target: { value: '   ' },
+    });
+
+    expect(screen.getByRole('button', { name: 'Criar estrutura' })).toBeDisabled();
+    submit();
+    expect(onRun).not.toHaveBeenCalled();
+  });
+
+  it('prévia acompanha o nome digitado, não o do cliente', async () => {
+    renderForm({ frameioProjects: [{ id: 'p1', name: 'Existe Esse' }] });
+    await chooseClient('Cliente Ativo');
+    fireEvent.change(screen.getByLabelText('Nome do projeto no Frame.io'), {
+      target: { value: 'Existe Esse' },
+    });
+
+    expect(screen.getByTestId('frameio-preview')).toHaveTextContent('já existe no Frame.io');
   });
 });

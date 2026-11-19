@@ -56,10 +56,15 @@ export default function AutomacoesPage() {
     },
   });
 
-  const start = (flow: Flow) => (input: Omit<CreateStructureInput, 'flow'>) => {
-    setLastFlow(flow);
-    create.mutate({ flow, ...input } as CreateStructureInput);
+  const mutate = (input: CreateStructureInput) => {
+    setLastFlow(input.flow);
+    create.mutate(input);
   };
+
+  const runClient = (clientId: string, projectName: string) =>
+    mutate({ flow: 'client_structure', clientId, projectName });
+
+  const runVideo = (input: VideoRunInput) => mutate({ flow: 'video_project', ...input });
 
   const outcome = (flow: Flow) =>
     lastFlow === flow && create.data
@@ -69,9 +74,6 @@ export default function AutomacoesPage() {
       : { result: null, message: null };
 
   const pending = (flow: Flow) => create.isPending && lastFlow === flow;
-
-  const runClient = start('client_structure');
-  const runVideo = start('video_project');
   const clientOutcome = outcome('client_structure');
   const videoOutcome = outcome('video_project');
 
@@ -177,7 +179,7 @@ export default function AutomacoesPage() {
                     result={clientOutcome.result}
                     message={clientOutcome.message}
                     frameioProjects={frameioProjects}
-                    onRun={(clientId, frameioProjectId) => runClient({ clientId, frameioProjectId })}
+                    onRun={(clientId, projectName) => runClient(clientId, projectName)}
                   />
                   <VideoProjectForm
                     clients={clients}

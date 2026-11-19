@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
       flow: (body as { flow?: unknown }).flow,
       clientId: (body as { clientId?: unknown }).clientId,
       frameioProjectId: (body as { frameioProjectId?: unknown }).frameioProjectId,
+      projectName: (body as { projectName?: unknown }).projectName,
       dateISO: (body as { dateISO?: unknown }).dateISO,
       tipo: (body as { tipo?: unknown }).tipo,
       nomeProjeto: (body as { nomeProjeto?: unknown }).nomeProjeto,

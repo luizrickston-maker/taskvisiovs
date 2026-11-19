@@ -525,3 +525,27 @@ describe('handleRun — projeto escolhido diretamente', () => {
     expect(log.createdProject).toEqual(['Cliente Xyz']);
   });
 });
+
+describe('handleRun — nome de projeto digitado', () => {
+  it('cria com o nome digitado, não com o do cliente', async () => {
+    const { deps, log } = makeDeps({}, { projects: [] });
+    const res = await handleRun({ ...clientInput, projectName: 'Nome Digitado' }, deps);
+
+    expect(res.status).toBe(200);
+    expect(log.createdProject).toEqual(['Nome Digitado']);
+  });
+
+  it('sem nome digitado continua usando o do cliente (EDGE-04)', async () => {
+    const { deps, log } = makeDeps({}, { projects: [] });
+    const res = await handleRun(clientInput, deps);
+
+    expect(log.createdProject).toEqual(['Cliente Xyz']);
+  });
+
+  it('só em branco conta como ausente', async () => {
+    const { deps, log } = makeDeps({}, { projects: [] });
+    await handleRun({ ...clientInput, projectName: '   ' }, deps);
+
+    expect(log.createdProject).toEqual(['Cliente Xyz']);
+  });
+});

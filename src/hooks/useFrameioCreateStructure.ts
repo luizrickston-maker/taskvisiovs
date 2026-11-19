@@ -19,8 +19,8 @@ export type RunInvocation =
 export type ClientStructureInput = {
   flow: 'client_structure';
   clientId: string;
-  /** Projeto do Frame.io escolhido; quando ausente, busca por nome. */
-  frameioProjectId?: string;
+  /** Projeto do Frame.io a criar; quando ausente, usa o nome do cliente. */
+  projectName?: string;
 };
 export type VideoProjectInput = {
   flow: 'video_project';

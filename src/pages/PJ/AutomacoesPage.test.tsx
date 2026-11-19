@@ -160,6 +160,8 @@ describe('AutomacoesPage — conectado (AUTH-07)', () => {
     expect(state.mutation.mutate).toHaveBeenCalledWith({
       flow: 'client_structure',
       clientId: 'cl-1',
+      // Escolher o cliente semeia o nome do projeto com o dele.
+      projectName: 'Cliente Xyz',
     });
   });
 
